@@ -266,7 +266,21 @@ Apagar o texto do commit não torna uma credencial novamente segura. A rotação
 
 Para um projeto público, habilitar **Private Vulnerability Reporting** permite receber relatos sem exposição antecipada. GitHub Security Advisories possibilita discutir, corrigir e preparar uma release de segurança de forma privada antes da divulgação coordenada.
 
-A política pública de reporte permanece em `.github/SECURITY.md`.
+Private Vulnerability Reporting é um recurso da plataforma GitHub, não um arquivo adicional do repositório. Quando habilitado, o pesquisador utiliza a aba **Security**, entra em **Advisories** e seleciona **Report a vulnerability** para enviar o relato em um canal privado.
+
+Para habilitá-lo posteriormente, um administrador do repositório deve:
+
+1. abrir **Settings** no repositório GitHub;
+2. acessar **Security** ou **Code security and analysis**;
+3. localizar **Private vulnerability reporting**;
+4. selecionar **Enable**;
+5. confirmar na aba **Security** que a opção de reporte privado está disponível.
+
+Os nomes e a organização dos menus podem mudar conforme a evolução da interface do GitHub. Se o recurso não estiver disponível, verificar a visibilidade do repositório, o plano da conta e a documentação oficial antes de publicar um canal alternativo.
+
+A política pública de reporte permanece no arquivo [`.github/SECURITY.md`](../.github/SECURITY.md). Esse documento orienta o pesquisador sobre versões suportadas, escopo e informações esperadas; o Private Vulnerability Reporting é o canal que recebe e gerencia o relato de forma privada.
+
+**Ação pendente:** habilitar o Private Vulnerability Reporting nas configurações do repositório antes de divulgar a política de segurança como canal oficial.
 
 ## 7. Secrets, variables e identidade
 
