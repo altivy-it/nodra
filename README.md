@@ -358,5 +358,6 @@ O produto estará apto a receber a versão `1.0.0` quando:
 - [Implementação do Frontend](docs/frontend.md)
 - [Implementação do Backend](docs/backend.md)
 - [Evolução do Produto](docs/evolucao-produto.md)
+- [CI/CD e Segurança no GitHub](docs/ci-cd-seguranca.md)
 
 Esses documentos detalham a execução. Em caso de divergência sobre visão, escopo, princípios ou decisões arquiteturais, este plano mestre prevalece e deve ser atualizado por decisão explícita.
