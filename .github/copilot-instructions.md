@@ -38,6 +38,14 @@ Não crie dependências circulares. `apps/*` compõem e hospedam; regras reutili
 5. Atualize contrato, migração, documentação e observabilidade quando o comportamento exigir.
 6. Não corrija nem reformate código fora do escopo.
 
+## ADRs e planos
+
+- Crie ADRs em `docs/adr/NNNN-titulo.md` desde o status `proposed`, seguindo `.github/ADR_TEMPLATE.md`.
+- Crie planos em `docs/plan/<tema>.md`, seguindo `.github/PLAN_TEMPLATE.md`; não use `docs/planos` nem mantenha plano apenas no chat.
+- Todo plano possui status geral e status em cada etapa. Atualize o histórico ao mudar qualquer status.
+- Registre `Origem` como humano ou IA assistida e identifique o revisor humano.
+- IA não marca ADR como `accepted`, plano como `approved` ou etapa como `completed` ou `skipped` sem decisão ou evidência humana explícita e referenciada.
+
 ## Commits
 
 - Todo commit criado ou sugerido segue [Conventional Commits](COMMIT_CONVENTIONS.md) e usa os tipos e escopos aprovados pelo projeto.
@@ -58,8 +66,14 @@ Não crie dependências circulares. `apps/*` compõem e hospedam; regras reutili
 - Preserve conteúdo do usuário; conflitos nunca podem causar sobrescrita silenciosa.
 - Normalize e autorize paths antes de qualquer acesso ao filesystem.
 - Nunca registre conteúdo integral de notas, tokens, senhas ou secrets.
-- Funcionalidades essenciais não podem depender de embeddings, nuvem ou acesso à internet.
+- Conteúdo, persistência, busca e edição não podem depender de embeddings, nuvem ou internet; acesso autenticado depende somente do Keycloak configurado, que pode operar na rede local.
+- Keycloak é a plataforma externa obrigatória de identidade e decisão de autorização. Não implemente cadastro, senha, recuperação de conta, diretório de usuários, memberships ou políticas de autorização no Basalt Notes.
+- O BFF atua somente como cliente OIDC e proteção de tokens; a API atua como PEP e falha fechada ao aplicar as permissões emitidas pelo Keycloak.
 - Não adicione Redis, object storage, banco de grafos ou microsserviço sem ADR e evidência operacional.
+- Use somente dependências externas com licença permissiva, gratuita para todos os usos previstos e previamente verificada, como MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC ou PostgreSQL.
+- Nunca sugira, instale ou adicione biblioteca paga, proprietária, source-available, com licença comercial obrigatória, copyleft ou outra restrição incompatível com distribuição e uso self-hosted. Licença ausente, ambígua ou não verificada bloqueia a dependência.
+- O padrão arquitetural Mediator é permitido e deve ser aplicado quando houver necessidade comprovada de desacoplar dispatch, handlers e pipelines. Nesses casos, use `Nuuvify.CommonPack.Mediator` com versão centralizada e licença da versão exata verificada.
+- Nunca use a biblioteca MediatR; a proibição é específica ao pacote e ao seu licenciamento, não ao padrão Mediator.
 - Use tags de container e dependências fixadas de forma reproduzível; não publique nem faça deploy sem solicitação explícita.
 - APIs públicas usam OpenAPI, `application/problem+json`, ETags e versionamento explícito.
 - Mudanças de schema seguem expand-contract e devem ser testadas com PostgreSQL real.

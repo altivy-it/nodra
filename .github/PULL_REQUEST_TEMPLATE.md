@@ -40,6 +40,9 @@
 - [ ] Markdown, HTML e uploads foram avaliados
 - [ ] Nenhum secret ou conteúdo sensível foi incluído
 - [ ] Logs e telemetria não expõem conteúdo de notas
+- [ ] Dependências novas ou atualizadas têm necessidade justificada e licença permissiva, gratuita e verificada
+
+Evidência de licença e fonte oficial da versão exata:
 
 ## Dados e operação
 

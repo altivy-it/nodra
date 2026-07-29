@@ -1,0 +1,42 @@
+﻿<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ícone Monocromático do Basalt Notes">
+    <title>Ícone Monocromático do Basalt Notes</title>
+    <desc>Versão monocromática do ícone com a rocha central contornada e 2 órbitas em X.</desc>
+    <style>
+        .shape {
+            fill: currentColor;
+            stroke: none;
+        }
+        .rock-outline {
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 12;
+            stroke-linejoin: round;
+        }
+        .orbit-outline {
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 8;
+        }
+    </style>
+    <defs>
+        <clipPath id="clipIconMono">
+            <rect x="0" y="0" width="256" height="256" rx="56" />
+        </clipPath>
+    </defs>
+    <g clip-path="url(#clipIconMono)">
+        <!-- Órbitas em X -->
+        <g transform="translate(128 128)" class="orbit-outline">
+            <ellipse cx="0" cy="0" rx="90" ry="35" transform="rotate(45)"/>
+            <ellipse cx="0" cy="0" rx="90" ry="35" transform="rotate(-45)"/>
+        </g>
+        <!-- Rocha Contornada -->
+        <g transform="translate(64, 64) scale(0.5)">
+            <path class="rock-outline" d="M45,195 C40,120 80,50 95,45 L180,40 L225,110 C215,180 150,225 135,220 L45,195Z" />
+        </g>
+        <!-- Nodos -->
+        <g class="shape">
+            <circle cx="198" cy="83" r="7"/>
+            <circle cx="58" cy="83" r="7"/>
+        </g>
+    </g>
+</svg>

@@ -1,6 +1,6 @@
 ---
 name: "Basalt Angular Engineer"
-description: "Use para implementar, corrigir e testar Angular 21, TypeScript, CodeMirror, Cytoscape, componentes, estado, acessibilidade e UX em apps/web e libs/frontend."
+description: "Use para implementar, corrigir e testar Angular 22, TypeScript, CodeMirror, Cytoscape, componentes, estado, acessibilidade e UX em apps/web e libs/frontend."
 argument-hint: "Feature ou problema frontend a implementar"
 tools: [read, search, edit, execute, web, todo]
 agents: ["Basalt Code Reviewer", "Basalt Security Reviewer", "Basalt Quality Engineer"]

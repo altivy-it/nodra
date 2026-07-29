@@ -43,7 +43,7 @@ Arquitetura validada e riscos técnicos mais relevantes testados antes da constr
 
 - entrevistas e mapa de jornadas das três personas;
 - matriz de capacidades inspiradas no Obsidian, sem promessa de compatibilidade;
-- ADRs para wiki links, concorrência, identidade e histórico;
+- ADRs para wiki links, concorrência, BFF/Keycloak/autorização e histórico;
 - prova de conceito do CodeMirror com arquivos grandes;
 - prova de gravação e reconciliação em bind mount local, SMB e NFS disponível;
 - benchmark inicial de PostgreSQL full-text e pgvector;
@@ -66,7 +66,7 @@ Um profissional consegue usar o Basalt Notes diariamente para criar e encontrar 
 ### Entregas
 
 - implantação local por Docker Compose;
-- bootstrap de administrador local;
+- integração com realm Keycloak de teste e login pelo BFF;
 - um vault por instalação;
 - árvore de arquivos e CRUD de notas/pastas;
 - editor Markdown, preview, tabs e autosave com ETag;
@@ -80,7 +80,8 @@ Um profissional consegue usar o Basalt Notes diariamente para criar e encontrar 
 
 ### Não inclui
 
-- OIDC;
+- cadastro, senha ou recuperação de conta dentro do Basalt Notes;
+- administração de usuários ou políticas na interface do Basalt Notes;
 - colaboração;
 - embeddings;
 - grafo global avançado;
@@ -144,8 +145,9 @@ Equipes podem adotar a solução quando identidade, autorização, operação e 
 ### Entregas
 
 - múltiplos vaults;
-- OpenID Connect e Microsoft Entra ID;
-- papéis `Owner`, `Editor` e `Reader`;
+- autorização fina por recurso e scope no Keycloak Authorization Services;
+- papéis `Owner`, `Editor` e `Reader` administrados no Keycloak;
+- reconciliação observável dos recursos de vault com o Keycloak;
 - auditoria e políticas de retenção;
 - proxy reverso e headers encaminhados configuráveis;
 - dashboards OpenTelemetry e alertas recomendados;

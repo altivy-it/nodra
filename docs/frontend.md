@@ -6,7 +6,7 @@ Definir a arquitetura e o plano de implementação da aplicação Angular do Bas
 
 ## 2. Stack
 
-- Angular 21 com componentes standalone;
+- Angular 22 com componentes standalone;
 - TypeScript em modo estrito;
 - Angular Signals para estado local e derivado;
 - RxJS para fluxos assíncronos e integrações;
@@ -24,7 +24,7 @@ Evitar uma biblioteca visual completa como dependência estrutural. O design sys
 
 ```text
 src/app/
-├── core/                 # bootstrap, auth, HTTP, config e telemetria
+├── core/                 # bootstrap, sessão BFF, HTTP, config e telemetria
 ├── shell/                # layout, navegação, painéis e command palette
 ├── shared/               # componentes e utilitários sem regra de domínio
 ├── features/
@@ -162,7 +162,8 @@ Usar Lucide Angular para ícones, com labels acessíveis e tooltips em ações n
 - não usar `bypassSecurityTrustHtml` em features;
 - bloquear `javascript:`, data URLs não permitidas e iframes arbitrários;
 - adotar CSP sem `unsafe-eval` em produção;
-- evitar tokens persistidos em `localStorage` quando autenticação por cookie for possível;
+- nunca integrar o Angular diretamente ao Keycloak nem expor access token ou refresh token ao browser;
+- usar apenas a sessão same-origin do BFF com cookie `Secure`, `HttpOnly` e antiforgery nas mutações;
 - não registrar conteúdo de notas em telemetria ou console;
 - validar origem e tipo das mensagens SignalR.
 
@@ -208,7 +209,7 @@ Metas iniciais em desktop corporativo intermediário:
 
 ### 10.2 Ponta a ponta
 
-- login local e federado simulado;
+- login e logout no Keycloak por meio do BFF, incluindo revogação e acesso negado;
 - criar, editar, autosalvar e reabrir nota;
 - conflito entre duas sessões;
 - criar link e navegar por backlink;

@@ -7,32 +7,104 @@ Definir a implementação da API, worker, persistência e integrações do Basal
 ## 2. Estrutura da solução .NET
 
 ```text
-src/
-├── BasaltNotes.Api/              # HTTP, OpenAPI, auth e SignalR
-├── BasaltNotes.Worker/           # jobs, reconciliação e indexação
-├── BasaltNotes.Application/      # casos de uso e portas
-├── BasaltNotes.Domain/           # entidades, valores e regras
-├── BasaltNotes.Infrastructure/   # PostgreSQL, filesystem e providers
-└── BasaltNotes.Contracts/        # contratos públicos versionados
+apps/
+├── api/                          # host HTTP, OpenAPI, auth e SignalR
+└── worker/                       # host de jobs, reconciliação e indexação
+libs/backend/
+├── domain/                       # entidades, value objects, invariantes e eventos
+├── application/                  # casos de uso, commands, queries e portas
+└── infrastructure/               # PostgreSQL, filesystem, Keycloak e providers
+contracts/                        # OpenAPI e contratos públicos versionados
 tests/
-├── BasaltNotes.UnitTests/
-├── BasaltNotes.IntegrationTests/
-├── BasaltNotes.ArchitectureTests/
-└── BasaltNotes.PerformanceTests/
+└── backend/                      # testes unitários, integração, arquitetura e desempenho
 ```
 
-Usar monólito modular e arquitetura em camadas pragmática. Regras de domínio não dependem de ASP.NET Core, EF Core ou filesystem. Não criar interfaces para classes sem fronteira ou substituição real.
+Usar monólito modular orientado a domínio, Clean Architecture pragmática e Ports and Adapters. Regras de domínio não dependem de ASP.NET Core, EF Core ou filesystem. API e worker são composition roots e não contêm regras reutilizáveis. Não criar interfaces para classes sem fronteira ou substituição real.
+
+### 2.1 Dependências entre camadas
+
+```mermaid
+flowchart LR
+	API[apps/api] --> APP[application]
+	WORKER[apps/worker] --> APP
+	API --> INFRA[infrastructure]
+	WORKER --> INFRA
+	INFRA --> APP
+	APP --> DOMAIN[domain]
+	CONTRACTS[contracts] -. geração .-> API
+```
+
+- Domain contém regras, aggregates, value objects e eventos de domínio.
+- Application contém casos de uso, commands, queries, autorização contextual e portas requeridas pelo negócio.
+- Infrastructure implementa adapters de PostgreSQL, filesystem, Keycloak e providers externos.
+- API e worker resolvem dependências e convertem entradas e saídas, sem acessar detalhes internos de outros módulos.
+- Contracts define o contrato público; DTOs não são entidades de domínio nem modelos EF Core.
+
+### 2.2 Padrões obrigatórios
+
+| Padrão | Uso no Basalt Notes |
+| --- | --- |
+| DDD estratégico | módulos, linguagem ubíqua e limites de negócio explícitos |
+| Aggregate e Value Object | invariantes de `Vault`, `Note`, jobs, paths, hashes, versões e ETags |
+| Application Service / Use Case | uma classe explícita coordena cada operação pública |
+| Ports and Adapters | isola PostgreSQL, filesystem, Keycloak e embeddings |
+| Dependency Inversion | domínio e aplicação dependem de portas, não de adapters concretos |
+| Repository orientado a aggregate | persiste aggregates somente quando a fronteira de domínio justificar |
+| Unit of Work | delimita a transação PostgreSQL do caso de uso, normalmente pelo `DbContext` |
+| CQRS pragmático | commands alteram estado; queries leem projeções sem reconstruir aggregates |
+| Optimistic Concurrency | versão, hash, ETag e `If-Match` impedem sobrescrita silenciosa |
+| Outbox / Durable Job | estado assíncrono é persistido na mesma transação da projeção PostgreSQL |
+| Idempotent Consumer | repetição ou entrega duplicada não corrompe projeções |
+| Competing Consumers e Lease | `FOR UPDATE SKIP LOCKED` distribui jobs e permite recuperar abandono |
+| Retry, backoff, jitter e Dead Letter | falhas transitórias são limitadas e falhas persistentes ficam observáveis |
+| Reconciliation | detecta e repara divergência entre a fonte canônica e a projeção |
+| Circuit Breaker | interrompe chamadas repetidamente falhas a providers externos opcionais |
+| Strategy e Adapter | seleciona provider, ranking ou política sem contaminar o domínio |
+| PEP e Keycloak Authorization Services | Keycloak decide por recurso e scope; a API aplica a permissão antes de revelar dados |
+| Problem Details | erros HTTP seguem `application/problem+json` sem detalhes internos |
+
+Eventos de domínio comunicam fatos dentro do processo. Eventos de integração ou solicitações de trabalho destinadas ao worker são versionados e persistidos como Outbox/job durável antes de qualquer notificação. SignalR informa clientes, mas não é canal durável.
+
+O Outbox não cria atomicidade entre filesystem e PostgreSQL. O caso de uso grava o arquivo de forma segura, persiste estado reconciliável e usa hash e reconciliação para recuperar falhas parciais. Não usar transação distribuída nem framework de Saga para esse fluxo.
+
+### 2.3 Padrões condicionais e padrões excluídos
+
+Specification, Factory, Decorator, Pipeline, State, Cache-Aside e Bulkhead só devem ser introduzidos quando removerem complexidade observada ou atenderem requisito medido. O padrão deve permanecer local ao problema e possuir teste que demonstre seu valor.
+
+O padrão Mediator também é condicional: use chamada direta quando ela mantiver o fluxo simples e aplique Mediator quando múltiplos remetentes, resolução desacoplada de handlers ou behaviors transversais de pipeline reduzirem acoplamento mensurável. Nessa situação, use `Nuuvify.CommonPack.Mediator`, com registro nos composition roots, versão centralizada e testes dos handlers e behaviors.
+
+A biblioteca MediatR não pode ser usada por sua política de licenciamento. Essa proibição é específica à biblioteca e não ao padrão Mediator. O domínio não referencia o mediator, behaviors não ocultam autorização ou transações, e notificações in-process não substituem Outbox ou jobs duráveis.
+
+Não usar inicialmente:
+
+- microsserviços, Event Sourcing ou CQRS com bancos separados;
+- Kafka, RabbitMQ, Redis ou banco de grafos;
+- repository genérico sobre EF Core ou abstração para toda API do framework;
+- service locator, entidades anêmicas por convenção ou interfaces sem fronteira real;
+- a biblioteca MediatR ou implementação alternativa de Mediator diferente de `Nuuvify.CommonPack.Mediator` sem nova decisão arquitetural.
+
+### 2.4 Política de dependências e licenças
+
+Antes de adicionar pacote NuGet ou npm, imagem, GitHub Action, fonte, asset ou ferramenta, verificar na fonte oficial a licença da versão exata, gratuidade para todos os usos previstos, manutenção, vulnerabilidades e necessidade real. Registrar a evidência no pull request e incluir o componente no inventário/SBOM aplicável.
+
+São aceitas automaticamente licenças permissivas como MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC e PostgreSQL. É proibida dependência paga, proprietária, source-available, com licença comercial obrigatória, copyleft ou restrição incompatível com uso, modificação, distribuição ou operação self-hosted. Licença ausente, ambígua, não verificada ou alterada entre versões bloqueia a inclusão.
+
+Código publicamente acessível ou pacote gratuito não significa licença permissiva. Quando houver dúvida, não adicionar a dependência; prefira a plataforma, uma dependência já aprovada ou uma implementação local pequena e testável.
+
+`Nuuvify.CommonPack.Mediator` é a implementação aprovada para o padrão Mediator. Antes de adicionar a versão escolhida ao manifest, ainda é obrigatório verificar e registrar licença, manutenção e vulnerabilidades da versão exata, fixar a versão centralmente e refletir o componente no SBOM.
 
 ## 3. Módulos
 
-### 3.1 Identity
+### 3.1 Integração com Keycloak
 
-- usuário administrador inicial criado por fluxo de bootstrap;
-- contas locais com hash de senha por algoritmo recomendado pelo ASP.NET Core Identity;
-- federação por OpenID Connect;
-- mapeamento de claims e grupos para funções internas;
-- sessões revogáveis e política de lockout;
-- funções iniciais `Owner`, `Editor` e `Reader` por vault.
+- nenhum cadastro, senha, recuperação de conta, usuário, membership ou política de autorização é mantido pelo Basalt Notes;
+- o BFF usa OIDC Authorization Code com PKCE e mantém tokens fora do browser;
+- Keycloak administra usuários, credenciais, MFA, federação, SSO, sessões, grupos e roles;
+- Keycloak Authorization Services mantém recursos, scopes, políticas e decisões de acesso;
+- cada vault é registrado como recurso externo por integração idempotente e reconciliável;
+- a API valida token e permissão como PEP antes de consultar path, metadado ou conteúdo;
+- referências ao claim estável `sub` são permitidas somente para auditoria e rastreabilidade técnica;
+- roles `Owner`, `Editor` e `Reader` e sua associação com scopes permanecem no Keycloak, sem cópia em PostgreSQL.
 
 ### 3.2 Vaults
 
@@ -109,8 +181,10 @@ Começar com busca vetorial exata em bases pequenas. Índice aproximado não dev
 
 ### 5.1 Padrões
 
-- REST sob `/api/v1`;
+- API RESTful sob `/api/v1`, com recursos e sub-recursos nomeados por substantivos e sem rotas RPC ou sufixos de ação;
+- `QUERY` para consultas seguras e idempotentes que exijam corpo estruturado e não possam ser representadas adequadamente por `GET`;
 - OpenAPI gerado e validado no CI;
+- documentação OpenAPI informativa em toda operação, incluindo finalidade, autenticação, autorização, entradas, respostas, erros, headers e exemplos;
 - `application/problem+json` para erros;
 - correlation ID em resposta e logs;
 - paginação por cursor para listas mutáveis;
@@ -128,14 +202,14 @@ GET    /api/v1/vaults/{vaultId}/tree
 POST   /api/v1/vaults/{vaultId}/notes
 GET    /api/v1/vaults/{vaultId}/notes/{noteId}
 PUT    /api/v1/vaults/{vaultId}/notes/{noteId}
-POST   /api/v1/vaults/{vaultId}/notes/{noteId}:move
+PATCH  /api/v1/vaults/{vaultId}/notes/{noteId}
 DELETE /api/v1/vaults/{vaultId}/notes/{noteId}
 GET    /api/v1/vaults/{vaultId}/notes/{noteId}/backlinks
 GET    /api/v1/vaults/{vaultId}/search
 GET    /api/v1/vaults/{vaultId}/graph
 POST   /api/v1/vaults/{vaultId}/attachments
 GET    /api/v1/vaults/{vaultId}/index/status
-POST   /api/v1/vaults/{vaultId}/index:rebuild
+POST   /api/v1/vaults/{vaultId}/index-jobs
 ```
 
 IDs são usados nos recursos; paths aparecem como dados e não devem ser inseridos diretamente em segmentos sem encoding e validação.
@@ -227,14 +301,15 @@ O padrão do produto é embeddings desabilitados. Ativação de provedor remoto 
 
 ## 10. Autenticação e autorização
 
-- ASP.NET Core Identity para modo local;
-- OpenID Connect para federação;
+- Keycloak como autoridade externa de identidade, sessão de SSO e decisão de autorização;
+- OpenID Connect Authorization Code com PKCE no BFF confidencial;
 - cookies `Secure`, `HttpOnly` e `SameSite` apropriado para UI same-origin;
 - antiforgery em operações mutáveis;
-- políticas por ação e vault, não apenas por rota;
-- validação de autorização antes de consultar path ou conteúdo;
-- auditoria de login, administração, exportação e alterações de permissão;
-- bootstrap inicial com segredo efêmero ou fluxo de primeiro acesso, nunca senha padrão.
+- recursos e scopes por vault no Keycloak Authorization Services;
+- API como PEP, validando issuer, audience, expiração e permissão antes de consultar path ou conteúdo;
+- Protection API acessada por credencial de serviço de menor privilégio, nunca por conta administrativa do realm;
+- falha fechada quando token, permissão ou decisão estiver ausente, inválida, expirada ou indisponível;
+- auditoria de acesso sensível e alterações de recurso sem conteúdo de token ou claims pessoais desnecessárias.
 
 ## 11. Observabilidade e saúde
 
@@ -247,12 +322,13 @@ O padrão do produto é embeddings desabilitados. Ativação de provedor remoto 
 - atraso entre arquivo e projeção;
 - latência e quantidade de resultados de busca;
 - disponibilidade do provider de embeddings;
+- disponibilidade e latência de login, decisão de autorização e reconciliação com Keycloak;
 - conexões SignalR.
 
 ### 11.2 Health checks
 
 - liveness verifica apenas o processo;
-- readiness verifica PostgreSQL, schema e acesso ao vault;
+- readiness verifica PostgreSQL, schema, acesso ao vault e dependências obrigatórias da integração Keycloak;
 - startup permite migração e primeira reconciliação sem reinício prematuro;
 - indisponibilidade de embeddings não torna a API indisponível.
 
@@ -263,7 +339,7 @@ O padrão do produto é embeddings desabilitados. Ativação de provedor remoto 
 - normalização e segurança de paths;
 - resolução de wiki links e aliases;
 - parsing de frontmatter;
-- política de autorização;
+- mapeamento de operação para recurso e scope exigidos;
 - ETags e conflitos;
 - chunking e Reciprocal Rank Fusion;
 - transições de jobs.

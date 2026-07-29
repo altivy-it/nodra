@@ -14,6 +14,7 @@ Se você está começando a usar IA ou GitHub Copilot, leia primeiro o [tutorial
 | `prompts/*.prompt.md` | tarefas focadas invocáveis por `/` |
 | `skills/*/SKILL.md` | workflows multi-etapas invocáveis por `/` |
 | `ADR_TEMPLATE.md` | estrutura canônica para decisões arquiteturais |
+| `PLAN_TEMPLATE.md` | estrutura canônica para planos e status por etapa |
 | `COPILOT_GUIDE.md` | tutorial de uso com fluxos e exemplos reais |
 | `COMMIT_CONVENTIONS.md` | tipos, escopos e formato obrigatório de Conventional Commits |
 | [CI/CD e segurança](../docs/ci-cd-seguranca.md) | referência canônica de CI/CD, Sonar, segurança e supply chain |
@@ -28,6 +29,7 @@ Se você está começando a usar IA ou GitHub Copilot, leia primeiro o [tutorial
 - Use **Basalt Angular Engineer** para trabalho isolado em Angular.
 - Use **Basalt .NET Engineer** para trabalho isolado em backend.
 - Use **Basalt Solution Architect** ou `/create-adr` para decisões de arquitetura.
+- Use `/plan-feature` para criar ou atualizar um plano em `docs/plan`.
 - Use `/generate-tests` para aumentar evidência de um comportamento.
 - Use `/review-change` ou `/pull-request-review` para revisão.
 - Use `/release-readiness` antes de publicar uma versão.
@@ -41,6 +43,14 @@ Se você está começando a usar IA ou GitHub Copilot, leia primeiro o [tutorial
 5. convenções observadas no módulo e nos testes próximos.
 
 Em caso de conflito, preserve integridade e segurança, interrompa alterações irreversíveis e registre a decisão necessária.
+
+## ADRs e planos
+
+- ADRs criados por humanos ou IA vivem em `docs/adr/NNNN-titulo.md` desde o status `proposed` e seguem [ADR_TEMPLATE.md](ADR_TEMPLATE.md).
+- Planos criados por humanos ou IA vivem em `docs/plan/<tema>.md` e seguem [PLAN_TEMPLATE.md](PLAN_TEMPLATE.md).
+- ADRs usam `proposed`, `accepted`, `superseded` ou `deprecated`.
+- Planos possuem status geral e status em todas as etapas; transições registram autor, data e evidência.
+- IA pode propor artefatos e atualizar progresso comprovado, mas aceite de ADR, aprovação de plano e dispensa de etapa são decisões humanas explícitas.
 
 ## Manutenção
 

@@ -22,7 +22,10 @@ Você é responsável pelo backend .NET do Basalt Notes.
 ## Regras
 
 - Não use mocks para provar comportamento de PostgreSQL ou filesystem.
-- Não introduza repository genérico, MediatR ou serviço novo sem decisão arquitetural.
+- Não introduza repository genérico nem a biblioteca MediatR.
+- Use chamada direta para casos simples e o padrão Mediator quando houver necessidade comprovada de dispatch ou pipeline; nesse caso, use `Nuuvify.CommonPack.Mediator`.
+- Não adicione dependência externa sem licença permissiva, gratuita e verificada; licença paga, restritiva, ambígua ou ausente bloqueia a inclusão.
+- Não introduza serviço novo sem decisão arquitetural.
 - Não exponha entidade EF em contrato HTTP.
 - Não registre conteúdo de notas ou secrets.
 - Não tente transação distribuída; preserve reconciliação e idempotência.

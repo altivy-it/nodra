@@ -31,7 +31,7 @@ Essa ideia de robustez também representa a motivação técnica do produto: ofe
 
 1. **Markdown como fonte canônica:** o conteúdo do usuário pertence aos arquivos `.md`.
 2. **Banco reconstruível:** metadados, índices, links e vetores podem ser refeitos a partir do vault.
-3. **Local-first no servidor:** as funções essenciais não dependem de serviços externos ou internet.
+3. **Local-first no servidor:** conteúdo, persistência, busca e edição não dependem de nuvem; o acesso autenticado exige um Keycloak configurado, que pode operar na rede local em ambientes isolados.
 4. **Segurança por padrão:** menor privilégio, isolamento de rede e conteúdo não confiável sanitizado.
 5. **Operação simples:** uma implantação deve ser iniciada e atualizada por Docker Compose.
 6. **Evolução orientada por evidências:** componentes adicionais entram somente quando houver necessidade medida.
@@ -57,9 +57,8 @@ Essa ideia de robustez também representa a motivação técnica do produto: ofe
 
 ### 2.2 Capacidades corporativas
 
-- autenticação local para instalações isoladas;
-- OpenID Connect para Microsoft Entra ID e outros provedores compatíveis;
-- autorização por vault e função;
+- autenticação, federação, SSO e MFA centralizados no Keycloak por OpenID Connect;
+- autorização fina por vault, recurso e scope decidida pelo Keycloak Authorization Services;
 - trilha de auditoria para ações sensíveis;
 - políticas de sessão, upload, retenção e tipos de arquivo;
 - execução atrás de proxy reverso com TLS;
@@ -74,6 +73,7 @@ Essa ideia de robustez também representa a motivação técnica do produto: ofe
 - aplicativo desktop ou móvel nativo;
 - banco de grafos dedicado;
 - dependência obrigatória de LLM, embeddings em nuvem ou Redis;
+- implementação interna de cadastro, senha, diretório de usuários, memberships ou políticas de autorização;
 - paridade imediata com todo o ecossistema do Obsidian.
 
 Esses itens podem ser reavaliados conforme os critérios definidos em [Evolução do Produto](docs/evolucao-produto.md).
@@ -84,12 +84,13 @@ Esses itens podem ser reavaliados conforme os critérios definidos em [Evoluçã
 
 | Camada | Decisão | Motivo principal |
 | --- | --- | --- |
-| Frontend | Angular 21 e TypeScript | experiência da equipe, ecossistema web e separação clara da API |
+| Frontend | Angular 22 e TypeScript | experiência da equipe, ecossistema web e separação clara da API |
 | Editor | CodeMirror 6 | edição de texto extensível e preservação fiel do Markdown |
 | Visualização do grafo | Cytoscape.js | filtros, layouts, eventos e desempenho adequados ao domínio |
 | Backend | ASP.NET Core em .NET 10 LTS | robustez, desempenho, tipagem e suporte de longo prazo |
 | Acesso a dados | EF Core, Npgsql e pgvector-dotnet | integração madura com PostgreSQL e migrações versionadas |
 | Banco | PostgreSQL 18 com pgvector 0.8.5 | dados relacionais, full-text search e vetores no mesmo motor |
+| Identidade e autorização | Keycloak por OIDC e Authorization Services | IAM e decisão de política fora da solução, com autorização fina por recurso e scope |
 | Tempo real | SignalR | notificação de alteração e progresso de indexação |
 | Observabilidade | OpenTelemetry | padrão aberto para logs, métricas e traces |
 | Empacotamento | Docker, imagens multi-stage e Docker Compose | execução sem instalação da stack no cliente |
@@ -117,27 +118,42 @@ flowchart LR
     U[Browser] -->|HTTPS| P[Proxy reverso opcional]
     P --> W[basalt-web]
     U -->|HTTP local| W
-    W -->|/api e /hubs| A[basalt-api]
+    W -->|/bff, /api e /hubs| B[basalt-bff]
+    B -->|OIDC Authorization Code + PKCE| KC[Keycloak]
+    B -->|Bearer ou RPT| A[basalt-api]
+    A -->|decisão de autorização e Protection API| KC
     A --> V[(Bind mount do vault)]
     A --> D[(PostgreSQL + pgvector)]
     A --> Q[(Fila no PostgreSQL)]
-    K[basalt-worker] --> Q
-    K --> V
-    K --> D
-    K -. opcional .-> E[Provedor de embeddings]
+    R[basalt-worker] --> Q
+    R --> V
+    R --> D
+    R -. opcional .-> E[Provedor de embeddings]
 ```
 
 ### 3.4 Containers
 
 | Serviço | Responsabilidade | Exposição | Persistência |
 | --- | --- | --- | --- |
-| `basalt-web` | arquivos estáticos, headers e roteamento para API | única porta pública | nenhuma |
-| `basalt-api` | autenticação, autorização, arquivos, consultas e SignalR | somente rede interna | vault em leitura e escrita |
+| `basalt-web` | arquivos estáticos, headers e roteamento para o BFF | única porta pública | nenhuma |
+| `basalt-bff` | cliente OIDC, sessão técnica, antiforgery e relay para API/SignalR | somente rede interna | key ring e estado técnico conforme ADR |
+| `basalt-api` | PEP, regras de negócio, arquivos, consultas e SignalR | somente rede interna | vault em leitura e escrita |
 | `basalt-worker` | reconciliação, parsing, indexação e embeddings | nenhuma | mesmo vault, conforme estratégia de escrita |
 | `basalt-postgres` | catálogo, busca, relações, jobs e vetores | somente rede interna | dados e backups em bind mounts |
 | `embedding-provider` | embeddings locais opcionais | somente rede interna | cache/modelos, se necessário |
+| Keycloak externo | identidade, sessões de SSO e decisão de autorização | HTTPS configurado pelo operador | fora do ciclo de vida do Basalt Notes |
 
 A imagem de banco obrigatória é `lzocateli/postgresql:18.4-pgvector0.8.5-bookworm`, mantida separadamente em `containers-lzo/postgres`. O Basalt Notes não deve duplicar seu Dockerfile.
+
+### 3.5 Estilo arquitetural e padrões
+
+O Basalt Notes adota **monólito modular orientado a domínio**, com hosts separados para BFF, API e worker, **Clean Architecture pragmática** e **Ports and Adapters** nas integrações. Os módulos seguem limites de negócio explícitos; dependências apontam para o domínio, e os hosts apenas compõem e expõem casos de uso.
+
+O backend usa **DDD** para linguagem, invariantes, aggregates e value objects; **CQRS pragmático** para separar commands de consultas sobre projeções; **optimistic concurrency** com ETag; e processamento assíncrono por **Outbox/jobs duráveis**, consumers idempotentes, lease, retry com backoff e dead letter. Como filesystem e PostgreSQL não compartilham transação, gravação segura, detecção por hash e reconciliação periódica fazem parte da consistência do sistema.
+
+Não serão adotados inicialmente microsserviços, Event Sourcing, broker externo, banco de grafos, transação distribuída ou repository genérico. Frameworks estruturais só entram por necessidade comprovada, respeitando a política de licenças. O padrão Mediator pode ser aplicado para desacoplar dispatch, handlers e pipelines; quando necessário, a implementação adotada é `Nuuvify.CommonPack.Mediator`. A biblioteca MediatR permanece proibida especificamente por seu licenciamento.
+
+Dependências externas devem possuir licença permissiva, gratuita para distribuição, modificação e operação self-hosted, e verificada antes da inclusão. Dependências pagas, proprietárias, source-available, com licença comercial obrigatória, copyleft ou licença ausente, ambígua ou incompatível são proibidas. Licenças permissivas aceitas incluem MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC e PostgreSQL.
 
 ## 4. Domínios e componentes
 
@@ -145,7 +161,6 @@ O backend será um monólito modular com worker separado. Essa forma preserva li
 
 | Módulo | Responsabilidade |
 | --- | --- |
-| Identity | usuários, provedores, sessões e autorização |
 | Vaults | configuração, acesso, políticas e estado do vault |
 | Notes | ciclo de vida do arquivo Markdown e controle de concorrência |
 | Markdown | frontmatter, links, headings, blocos e renderização segura |
@@ -156,6 +171,8 @@ O backend será um monólito modular com worker separado. Essa forma preserva li
 | Audit | eventos administrativos e ações de conteúdo configuradas |
 | Operations | health, readiness, métricas, migração e manutenção |
 
+Identidade e decisão de autorização não formam módulo de domínio do Basalt Notes. O BFF integra OIDC, o Keycloak mantém usuários e políticas, e a API apenas aplica as permissões externas antes de acessar cada recurso.
+
 Os detalhes estão em [Implementação do Backend](docs/backend.md). A experiência e arquitetura da interface estão em [Implementação do Frontend](docs/frontend.md).
 
 ## 5. Modelo conceitual de dados
@@ -163,8 +180,6 @@ Os detalhes estão em [Implementação do Backend](docs/backend.md). A experiên
 | Entidade | Finalidade |
 | --- | --- |
 | `vaults` | identifica uma raiz lógica, política e configuração |
-| `users` | identidade local ou referência federada |
-| `vault_members` | função do usuário no vault |
 | `notes` | catálogo do arquivo, hash, versão, título e estado |
 | `note_properties` | propriedades normalizadas para consulta relacional |
 | `note_links` | arestas resolvidas, não resolvidas e tipos de link |
@@ -174,7 +189,7 @@ Os detalhes estão em [Implementação do Backend](docs/backend.md). A experiên
 | `embeddings` | modelo, dimensão, hash de origem e vetor |
 | `index_jobs` | fila durável com tentativas e idempotência |
 | `revisions` | histórico configurável sem substituir backups |
-| `audit_events` | trilha append-only das ações selecionadas |
+| `audit_events` | trilha append-only das ações selecionadas, referenciando `sub` somente quando necessário |
 
 O conteúdo integral pode ser mantido temporariamente na projeção para indexação e comparação, mas nunca deve substituir o arquivo como fonte canônica.
 
@@ -218,9 +233,9 @@ O grafo é derivado de `note_links`. A primeira versão usa consultas SQL e CTEs
 
 | Perfil | Autenticação | Acesso recomendado |
 | --- | --- | --- |
-| pessoal local | usuário administrador inicial | bind em `127.0.0.1` |
-| equipe interna | OIDC/Entra ID | proxy reverso com TLS |
-| ambiente isolado | contas locais e política de senha | rede privada sem dependências externas |
+| pessoal local | realm dedicado no Keycloak configurado | bind em `127.0.0.1` e Keycloak alcançável |
+| equipe interna | Keycloak OIDC e Authorization Services | proxy reverso com TLS |
+| ambiente isolado | Keycloak operado na rede interna | rede privada sem dependência de internet pública |
 
 ## 8. Persistência, backup e recuperação
 
@@ -232,7 +247,7 @@ Bind mounts obrigatórios:
 - configuração/secrets quando fornecidos por arquivo;
 - modelos locais, apenas quando embeddings locais forem ativados.
 
-O backup consistente deve cobrir o vault e o banco. A recuperação mínima aceita é restaurar o vault e reconstruir integralmente a projeção. Backups do banco reduzem o tempo de recuperação e preservam auditoria, usuários locais e histórico.
+O backup consistente deve cobrir o vault e o banco. A recuperação mínima aceita é restaurar o vault e reconstruir integralmente a projeção. Backups do banco reduzem o tempo de recuperação e preservam auditoria e histórico. Backup, restore e disponibilidade do realm Keycloak são responsabilidades operacionais externas e devem possuir runbook próprio.
 
 Metas iniciais:
 
@@ -317,7 +332,7 @@ Cada release deve validar build reprodutível, migrações de ida, compatibilida
 As seguintes decisões exigem Architecture Decision Record antes de implementação:
 
 - formato e resolução de wiki links;
-- estratégia de identidade local e federada;
+- integração com Keycloak, BFF e autorização externa por recurso;
 - algoritmo de chunking e contrato do provedor de embeddings;
 - política de histórico e lixeira;
 - modelo de autorização por vault;
@@ -337,6 +352,7 @@ As seguintes decisões exigem Architecture Decision Record antes de implementaç
 | promessa de paridade com Obsidian | escopo indefinido | matriz de capacidades e releases incrementais |
 | permissões de bind mount no Windows/Linux | falha de operação | preflight, diagnóstico claro e documentação por plataforma |
 | migração interrompida | indisponibilidade | backup, migrações testadas e política de rollback |
+| Keycloak indisponível ou política divergente | login ou acesso protegido indisponível | falhar fechado, health, reconciliação, alertas e runbook |
 
 ## 14. Critérios para o primeiro release estável
 
@@ -346,7 +362,7 @@ O produto estará apto a receber a versão `1.0.0` quando:
 - nenhum cenário conhecido sobrescrever conteúdo silenciosamente;
 - o índice puder ser reconstruído integralmente a partir do vault;
 - busca, backlinks e grafo permanecerem consistentes após mover e renomear notas;
-- autenticação local e OIDC estiverem testadas;
+- login OIDC, logout, revogação e autorização fina pelo Keycloak estiverem testados;
 - backup e restauração tiverem sido executados em ambiente limpo;
 - controles críticos de segurança tiverem testes automatizados;
 - métricas de desempenho acordadas forem atendidas;
@@ -359,5 +375,7 @@ O produto estará apto a receber a versão `1.0.0` quando:
 - [Implementação do Backend](docs/backend.md)
 - [Evolução do Produto](docs/evolucao-produto.md)
 - [CI/CD e Segurança no GitHub](docs/ci-cd-seguranca.md)
+- [Plano do BFF com Keycloak](docs/plan/bff-keycloak.md)
+- [Tutorial de configuração do Keycloak](docs/configuracao-keycloak.md)
 
 Esses documentos detalham a execução. Em caso de divergência sobre visão, escopo, princípios ou decisões arquiteturais, este plano mestre prevalece e deve ser atualizado por decisão explícita.

@@ -1,0 +1,39 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Concept B — Hexagonal crystal / mineral facets">
+  <title>Concept B — Hexagonal Crystal</title>
+  <desc>Outer flat-top hexagon with an inner rotated (pointed-top) hexagon. Facet lines between the two rings create a mineralogical cross-section effect. The teal inner hexagon evokes a polished basalt core.</desc>
+
+  <!-- Outer hexagon (flat-top) -->
+  <polygon
+    points="91,50 70.5,85.5 29.5,85.5 9,50 29.5,14.5 70.5,14.5"
+    fill="#E5E7EB"
+    stroke="#1E1E1E"
+    stroke-width="2.5"
+    stroke-linejoin="round"
+  />
+
+  <!-- Facet lines from outer vertices to adjacent inner vertices -->
+  <!-- Inner hexagon vertices (pointed-top, r=24, center 50,50):
+       90°→(50,26), 30°→(70.8,38), 330°→(70.8,62), 270°→(50,74), 210°→(29.2,62), 150°→(29.2,38) -->
+  <line x1="91"  y1="50"   x2="70.8" y2="38"   stroke="#1E1E1E" stroke-width="1" stroke-linecap="round" opacity="0.35"/>
+  <line x1="91"  y1="50"   x2="70.8" y2="62"   stroke="#1E1E1E" stroke-width="1" stroke-linecap="round" opacity="0.35"/>
+  <line x1="70.5" y1="85.5" x2="70.8" y2="62"  stroke="#1E1E1E" stroke-width="1" stroke-linecap="round" opacity="0.35"/>
+  <line x1="70.5" y1="85.5" x2="50"   y2="74"  stroke="#1E1E1E" stroke-width="1" stroke-linecap="round" opacity="0.35"/>
+  <line x1="29.5" y1="85.5" x2="50"   y2="74"  stroke="#1E1E1E" stroke-width="1" stroke-linecap="round" opacity="0.35"/>
+  <line x1="29.5" y1="85.5" x2="29.2" y2="62"  stroke="#1E1E1E" stroke-width="1" stroke-linecap="round" opacity="0.35"/>
+  <line x1="9"    y1="50"   x2="29.2" y2="62"  stroke="#1E1E1E" stroke-width="1" stroke-linecap="round" opacity="0.35"/>
+  <line x1="9"    y1="50"   x2="29.2" y2="38"  stroke="#1E1E1E" stroke-width="1" stroke-linecap="round" opacity="0.35"/>
+  <line x1="29.5" y1="14.5" x2="29.2" y2="38"  stroke="#1E1E1E" stroke-width="1" stroke-linecap="round" opacity="0.35"/>
+  <line x1="29.5" y1="14.5" x2="50"   y2="26"  stroke="#1E1E1E" stroke-width="1" stroke-linecap="round" opacity="0.35"/>
+  <line x1="70.5" y1="14.5" x2="50"   y2="26"  stroke="#1E1E1E" stroke-width="1" stroke-linecap="round" opacity="0.35"/>
+  <line x1="70.5" y1="14.5" x2="70.8" y2="38"  stroke="#1E1E1E" stroke-width="1" stroke-linecap="round" opacity="0.35"/>
+
+  <!-- Inner hexagon (pointed-top, teal fill) -->
+  <polygon
+    points="50,26 70.8,38 70.8,62 50,74 29.2,62 29.2,38"
+    fill="#0F766E"
+    stroke="#1E1E1E"
+    stroke-width="1.5"
+    stroke-linejoin="round"
+    opacity="0.9"
+  />
+</svg>

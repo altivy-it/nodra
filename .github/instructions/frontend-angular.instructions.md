@@ -1,6 +1,6 @@
 ---
 name: "Frontend Angular"
-description: "Use ao criar ou alterar Angular 21, TypeScript, componentes, páginas, estado, rotas, editor Markdown, grafo, acessibilidade ou UX do Basalt Notes."
+description: "Use ao criar ou alterar Angular 22, TypeScript, componentes, páginas, estado, rotas, editor Markdown, grafo, acessibilidade ou UX do Basalt Notes."
 applyTo: "apps/web/**, libs/frontend/**"
 ---
 
@@ -8,7 +8,7 @@ applyTo: "apps/web/**, libs/frontend/**"
 
 ## Arquitetura
 
-- Use Angular 21, componentes standalone, TypeScript estrito e lazy loading por feature.
+- Use Angular 22, componentes standalone, TypeScript estrito e lazy loading por feature.
 - Organize `apps/web/src/app` em `core`, `shell`, `features`, `data-access` e `design-system`.
 - Coloque bibliotecas reutilizáveis e sem dependência do app em `libs/frontend`.
 - Features não importam arquivos internos de outras features; integração ocorre por rotas, contratos públicos ou fachadas pequenas.

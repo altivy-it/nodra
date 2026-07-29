@@ -22,11 +22,18 @@ applyTo: "apps/api/**, apps/worker/**, libs/backend/**"
 - Infraestrutura implementa adapters e não vaza entidades EF para contratos HTTP.
 - API e worker são composition roots pequenos.
 - Não crie repository genérico sobre EF Core. Use `DbContext` em adapters específicos ou repositórios orientados a agregados.
-- Não adicione MediatR ou framework equivalente sem ADR e benefício medido.
+- Modele commands, queries e handlers como classes explícitas. Chamada direta é adequada para fluxos simples; aplique o padrão Mediator quando dispatch desacoplado ou comportamentos de pipeline removerem complexidade comprovada.
+- Quando o padrão Mediator for necessário, use `Nuuvify.CommonPack.Mediator`, registre-o nos composition roots e centralize a versão. Não use a biblioteca MediatR por restrição de licenciamento.
+- Behaviors de pipeline não ocultam autorização contextual, fronteiras transacionais, idempotência ou efeitos externos; esses aspectos permanecem explícitos e testáveis.
+- Use somente pacotes com licença permissiva, gratuita e verificada conforme as instruções de arquitetura; licença comercial, restritiva, ambígua ou ausente bloqueia a inclusão.
 
 ## ASP.NET Core
 
 - Use endpoint groups ou controllers de modo consistente; um módulo não mistura estilos.
+- Todos os endpoints da API seguem RESTful e representam recursos ou sub-recursos; não implemente operações RPC, verbos em rotas ou sufixos de ação.
+- Em .NET 10, quando uma consulta segura e idempotente precisar de corpo estruturado e `GET` não for adequado, exponha `QUERY` com `AcceptVerbs("QUERY")` em controllers ou `MapMethods(..., ["QUERY"], ...)` em Minimal APIs; nunca use `QUERY` para alterar estado.
+- Toda controller, action e Minimal API possui documentação orientada ao usuário no OpenAPI. Controllers e actions públicas usam XML docs e metadados de resposta; Minimal APIs usam summary, description, tipos de resposta e demais metadados equivalentes.
+- A documentação explica finalidade, autenticação e autorização, entradas, respostas, erros, headers, precondições e efeitos observáveis; não descreve detalhes internos nem apenas repete nomes do código.
 - Retorne `ProblemDetails` padronizado e sem detalhes internos.
 - Valide entrada na borda e invariantes no domínio.
 - Propague correlation ID, identidade, autorização e cancelamento.

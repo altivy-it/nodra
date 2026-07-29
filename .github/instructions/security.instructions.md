@@ -31,7 +31,13 @@ applyTo: "apps/**, libs/**, contracts/**, deploy/**"
 
 ## Identidade e dados
 
-- Sem senha padrão; bootstrap usa segredo efêmero ou primeiro acesso controlado.
+- Keycloak é a autoridade externa para usuários, credenciais, MFA, federação, SSO, sessões, grupos, roles, recursos, scopes e políticas de autorização.
+- Use um realm dedicado ao Basalt Notes; nunca use o realm administrativo `master` nem conceda privilégios administrativos globais à aplicação.
+- A solução não armazena senha, conta local, membership de vault ou cópia de política de autorização. Referências técnicas ao `sub` podem existir somente onde forem necessárias para auditoria e rastreabilidade.
+- O BFF usa Authorization Code com PKCE como cliente confidencial, mantém tokens fora do browser e propaga logout e revogação conforme os recursos do Keycloak.
+- A API valida assinatura, issuer, audience, expiração e permissões do token e falha fechada quando a decisão de acesso estiver ausente, inválida, expirada ou indisponível.
+- A API é o Policy Enforcement Point; aplicar uma decisão emitida pelo Keycloak não transfere à solução a responsabilidade de cadastrar identidades ou definir políticas.
+- O registro de recursos e scopes no Keycloak usa credencial de serviço com menor privilégio, é idempotente, auditável e nunca usa conta administrativa do realm.
 - Secrets vêm de ambiente seguro ou arquivo montado e nunca entram em Git, imagem ou log.
 - Não envie conteúdo a provider externo sem configuração administrativa e aviso explícito.
 - Logs contêm IDs técnicos e resultados, nunca conteúdo integral ou credenciais.
@@ -39,7 +45,8 @@ applyTo: "apps/**, libs/**, contracts/**, deploy/**"
 
 ## Verificação
 
-- Adicione testes negativos para traversal, XSS, CSRF, upload, autorização horizontal e elevação de privilégio.
+- Adicione testes negativos para traversal, XSS, CSRF, upload, token inválido, autorização horizontal e elevação de privilégio; valide também indisponibilidade, revogação e divergência de recursos no Keycloak.
 - Faça threat model quando uma nova fronteira ou tipo de dado for introduzido.
-- Revise dependências, SBOM, vulnerabilidades e licenças antes da release.
+- Verifique necessidade, licença permissiva e gratuita, vulnerabilidades e manutenção antes de adicionar ou atualizar dependência; licença paga, restritiva, ambígua, ausente ou não verificada bloqueia a mudança.
+- Revise dependências, SBOM, vulnerabilidades e licenças novamente antes da release.
 - Uma descoberta crítica bloqueia release até correção ou aceitação formal de risco.

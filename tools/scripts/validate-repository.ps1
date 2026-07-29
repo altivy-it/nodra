@@ -1,9 +1,54 @@
-[CmdletBinding()]
+<#
+.SYNOPSIS
+Valida estrutura, Markdown, planos e referências imutáveis do Basalt Notes.
+
+.DESCRIPTION
+Verifica arquivos obrigatórios, links Markdown locais, IDs explícitos de headings,
+status geral e por etapa dos planos e referências imutáveis em GitHub Actions.
+
+.PARAMETER RepositoryRoot
+Raiz do repositório. O padrão é dois níveis acima de tools/scripts.
+
+.PARAMETER RemainingArguments
+Argumentos literais remanescentes. Aceita somente --help; outros valores retornam erro de uso.
+
+.EXAMPLE
+./tools/scripts/validate-repository.ps1
+
+.EXAMPLE
+./tools/scripts/validate-repository.ps1 -RepositoryRoot C:\src\basaltnotes
+
+.INPUTS
+Nenhum.
+
+.OUTPUTS
+Mensagem de sucesso ou erros acionáveis no stderr.
+
+.NOTES
+Requer PowerShell 7 ou superior e não usa dependências externas.
+
+.LINK
+../../.github/SCRIPTING.md
+#>
+[CmdletBinding(PositionalBinding = $false)]
 param(
-    [string] $RepositoryRoot = (Split-Path -Parent $PSScriptRoot)
+    [string] $RepositoryRoot = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)),
+
+    [Parameter(ValueFromRemainingArguments)]
+    [string[]] $RemainingArguments
 )
 
 $ErrorActionPreference = 'Stop'
+
+if ($RepositoryRoot -eq '--help' -or $RemainingArguments -contains '--help') {
+    Get-Help $PSCommandPath -Full
+    exit 0
+}
+
+if ($RemainingArguments.Count -gt 0) {
+    [Console]::Error.WriteLine("Argumento desconhecido: $($RemainingArguments -join ' '). Use --help.")
+    exit 2
+}
 
 $repositoryRoot = [IO.Path]::GetFullPath($RepositoryRoot)
 $gitDirectoryPrefix = (Join-Path $repositoryRoot '.git') + [IO.Path]::DirectorySeparatorChar
@@ -16,12 +61,16 @@ $requiredPaths = @(
     'docs/evolucao-produto.md'
     'docs/frontend.md'
     '.github/CONTRIBUTING.md'
+    '.github/ADR_TEMPLATE.md'
+    '.github/PLAN_TEMPLATE.md'
     '.github/CODEOWNERS'
     '.github/dependabot.yml'
     '.github/PULL_REQUEST_TEMPLATE.md'
     '.github/SECURITY.md'
     '.github/workflows/ci.yml'
     'docs/github-administracao.md'
+    'tools/scripts/test-validate-repository.ps1'
+    'tools/scripts/validate-repository.ps1'
 )
 
 foreach ($requiredPath in $requiredPaths) {
@@ -72,9 +121,19 @@ foreach ($markdownFile in $markdownFiles) {
     }
 
     $relativeFile = [IO.Path]::GetRelativePath($repositoryRoot, $markdownFile.FullName).Replace('\', '/')
+    $markdownContent = [regex]::Replace(
+        $content,
+        '(?ms)^(?<fence>`{3,}|~{3,})[^\r\n]*\r?\n.*?^\k<fence>\s*$',
+        ''
+    )
+    $markdownContent = [regex]::Replace(
+        $markdownContent,
+        '(?m)(?<ticks>`+)[^\r\n]*?\k<ticks>',
+        ''
+    )
     $explicitHeadingIds = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
 
-    foreach ($line in ($content -split "`r?`n")) {
+    foreach ($line in ($markdownContent -split "`r?`n")) {
         if ($line -match '^#{1,6}\s+.+?\s+\{#([^}]+)\}\s*$') {
             $headingId = $Matches[1]
             if (-not $explicitHeadingIds.Add($headingId)) {
@@ -84,19 +143,19 @@ foreach ($markdownFile in $markdownFiles) {
     }
 
     $inlineLinkPattern = '!?(?:\[[^\]]*\])\((?<target><[^>]+>|[^\s)]+)(?:\s+(?:"[^"]*"|''[^'']*''|\([^)]*\)))?\)'
-    foreach ($linkMatch in [regex]::Matches($content, $inlineLinkPattern)) {
+    foreach ($linkMatch in [regex]::Matches($markdownContent, $inlineLinkPattern)) {
         Test-LocalLink -Destination $linkMatch.Groups['target'].Value -SourceFile $markdownFile -RelativeSource $relativeFile
     }
 
     $referenceIds = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
     $referenceLinkPattern = '(?m)^\s{0,3}\[(?<id>[^\]]+)\]:\s*(?<target><[^>]+>|[^\s]+)'
-    foreach ($linkMatch in [regex]::Matches($content, $referenceLinkPattern)) {
+    foreach ($linkMatch in [regex]::Matches($markdownContent, $referenceLinkPattern)) {
         [void] $referenceIds.Add($linkMatch.Groups['id'].Value.Trim())
         Test-LocalLink -Destination $linkMatch.Groups['target'].Value -SourceFile $markdownFile -RelativeSource $relativeFile
     }
 
     $referenceUsagePattern = '!?(?:\[(?<text>[^\]]+)\])\[(?<id>[^\]]*)\]'
-    foreach ($linkMatch in [regex]::Matches($content, $referenceUsagePattern)) {
+    foreach ($linkMatch in [regex]::Matches($markdownContent, $referenceUsagePattern)) {
         $referenceId = $linkMatch.Groups['id'].Value.Trim()
         if ([string]::IsNullOrWhiteSpace($referenceId)) {
             $referenceId = $linkMatch.Groups['text'].Value.Trim()
@@ -104,6 +163,45 @@ foreach ($markdownFile in $markdownFiles) {
 
         if (-not $referenceIds.Contains($referenceId)) {
             $failures.Add("Referência Markdown sem definição em ${relativeFile}: $referenceId")
+        }
+    }
+}
+
+$planDirectory = Join-Path $repositoryRoot 'docs/plan'
+if (Test-Path -LiteralPath $planDirectory) {
+    $allowedPlanStatuses = @('draft', 'proposed', 'approved', 'in-progress', 'blocked', 'completed', 'cancelled', 'superseded')
+    $allowedStepStatuses = @('not-started', 'in-progress', 'blocked', 'completed', 'skipped')
+
+    foreach ($planFile in (Get-ChildItem -LiteralPath $planDirectory -File -Filter '*.md')) {
+        $planContent = Get-Content -Raw -LiteralPath $planFile.FullName
+        if ($null -eq $planContent) {
+            $planContent = ''
+        }
+
+        $relativePlan = [IO.Path]::GetRelativePath($repositoryRoot, $planFile.FullName).Replace('\', '/')
+        $generalStatusMatch = [regex]::Match($planContent, '(?m)^\*\*Status:\*\*\s+(?<status>\S+)')
+        if (-not $generalStatusMatch.Success -or $generalStatusMatch.Groups['status'].Value -notin $allowedPlanStatuses) {
+            $failures.Add("Status geral ausente ou inválido em ${relativePlan}")
+        }
+
+        $stepMatches = [regex]::Matches(
+            $planContent,
+            '(?ms)^###\s+.*\b(?:P|WP)-\d+\b.*?\r?\n(?<body>.*?)(?=^###\s+|\z)'
+        )
+        if ($stepMatches.Count -eq 0) {
+            $failures.Add("Plano sem etapas P-NN ou WP-NN em ${relativePlan}")
+            continue
+        }
+
+        foreach ($stepMatch in $stepMatches) {
+            $heading = ($stepMatch.Value -split "`r?`n", 2)[0].Trim()
+            $stepStatusMatch = [regex]::Match(
+                $stepMatch.Groups['body'].Value,
+                '(?m)^\*\*Status:\*\*\s+(?<status>\S+)'
+            )
+            if (-not $stepStatusMatch.Success -or $stepStatusMatch.Groups['status'].Value -notin $allowedStepStatuses) {
+                $failures.Add("Status de etapa ausente ou inválido em ${relativePlan}: $heading")
+            }
         }
     }
 }

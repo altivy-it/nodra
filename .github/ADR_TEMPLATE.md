@@ -3,6 +3,8 @@
 **Status:** proposed  
 **Data:** AAAA-MM-DD  
 **Responsáveis:** nomes ou equipe  
+**Origem:** humano ou IA assistida
+**Revisor humano:** nome, equipe ou pendente
 **Relacionado:** issue, PR ou ADR
 
 ## Contexto
@@ -51,4 +53,4 @@ Defina testes, métricas e critérios que podem confirmar ou falsificar a decis�
 
 ## Referências
 
-Quando aceito, copie para `docs/adr/NNNN-titulo.md`. Numeração é sequencial; decisões substituídas apontam para o novo ADR e recebem status `superseded`.
+Crie o ADR diretamente em `docs/adr/NNNN-titulo.md` com status `proposed`. A numeração é sequencial; IA não altera o status para `accepted`. Decisões substituídas apontam para o novo ADR e recebem status `superseded` após decisão humana registrada.

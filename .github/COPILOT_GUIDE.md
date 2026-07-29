@@ -294,7 +294,7 @@ Critérios:
 Decidir como identificar notas após rename: UUID persistido no frontmatter, identidade somente no PostgreSQL ou inferência por hash/path. Considere compatibilidade com vaults existentes, edição externa, privacidade e recuperação.
 ```
 
-O resultado deve seguir [ADR_TEMPLATE.md](ADR_TEMPLATE.md). Revise a decisão antes de aceitá-la; um ADR não vira verdade apenas porque foi gerado por IA.
+O resultado deve ser criado em `docs/adr/NNNN-titulo.md`, com status `proposed`, seguindo [ADR_TEMPLATE.md](ADR_TEMPLATE.md). Revise a decisão antes de aceitá-la; um ADR não vira verdade apenas porque foi gerado por IA.
 
 ### 7.5 Diagnosticar um bug
 
@@ -403,7 +403,13 @@ Fluxo recomendado:
 6. altere para `accepted` somente após decisão humana;
 7. referencie o ADR no PR e na implementação.
 
-### 9.3 Issues
+### 9.3 Planos
+
+Planos criados por pessoas ou IA vivem em `docs/plan/<tema>.md` e seguem [PLAN_TEMPLATE.md](PLAN_TEMPLATE.md). O arquivo registra origem, revisor humano, status geral e status individual de todas as etapas.
+
+Use `/plan-feature` para criar ou atualizar um plano. IA usa no máximo `proposed` até revisão humana e não marca etapa como `completed` ou `skipped` sem evidência explícita. Toda transição registra data, autor e referência no histórico do plano.
+
+### 9.4 Issues
 
 Use os templates em `ISSUE_TEMPLATE` para registrar o problema antes de uma mudança relevante.
 
@@ -411,7 +417,7 @@ Uma boa issue de feature descreve problema e resultado. Não imponha solução t
 
 Uma boa issue de bug inclui reprodução, esperado, observado, ambiente e impacto. Vulnerabilidades não devem virar issues públicas; siga [SECURITY.md](SECURITY.md).
 
-### 9.4 Pull request
+### 9.5 Pull request
 
 O [template de pull request](PULL_REQUEST_TEMPLATE.md) exige evidências. Não marque uma caixa se o comando não foi executado.
 
@@ -421,7 +427,7 @@ Peça ao Copilot para ajudar a preencher sem inventar resultados:
 Com base exclusivamente no diff e nos comandos executados nesta sessão, prepare o texto do template de PR. Mantenha desmarcado tudo que não foi executado e liste riscos residuais.
 ```
 
-### 9.5 Guia de contribuição e segurança
+### 9.6 Guia de contribuição e segurança
 
 - [CONTRIBUTING.md](CONTRIBUTING.md) define o fluxo humano e Definition of Done.
 - [SECURITY.md](SECURITY.md) define reporte privado de vulnerabilidades.
@@ -570,7 +576,7 @@ Revise somente a correção de concorrência. Confirme status HTTP, preservaçã
 Avaliar histórico de revisões: cópias no vault, tabela PostgreSQL ou Git interno. Considere Markdown como fonte canônica, NAS, retenção, restore e experiência de usuário.
 ```
 
-Após revisão humana, salve como `docs/adr/NNNN-historico-revisoes.md`, marque `accepted` e use-o como contexto na implementação.
+O prompt cria `docs/adr/NNNN-historico-revisoes.md` como `proposed`. Após revisão humana, registre a decisão, altere para `accepted` e use-o como contexto na implementação.
 
 ### 13.4 Antes de uma release
 

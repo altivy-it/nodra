@@ -57,8 +57,9 @@ Os nomes dos workflows são uma proposta inicial. Eles devem ser criados quando 
 O repositório possui a fundação executável para a fase documental:
 
 - `.github/workflows/ci.yml` executa a validação do repositório e publica os checks estáveis `CI / Repository Baseline` e `CI / Result`;
-- `eng/validate-repository.ps1` verifica arquivos obrigatórios, destinos locais de links e imagens Markdown, referências explícitas, IDs explícitos de headings e fixação de actions externas por SHA ou digest completo;
-- `eng/test-validate-repository.ps1` cobre cenários válidos e rejeições de link ausente, referência sem definição e action mutável;
+- `tools/scripts/validate-repository.ps1` verifica arquivos obrigatórios, destinos locais de links e imagens Markdown, referências explícitas, IDs explícitos de headings, status geral e por etapa dos planos e fixação de actions externas por SHA ou digest completo;
+- `tools/scripts/test-validate-repository.ps1` cobre o cenário válido e rejeições de link ausente, referência sem definição, action mutável, status geral inválido e etapa sem status;
+- os validadores permanecem em PowerShell 7 porque usam apenas APIs nativas, já executam em Windows e Linux e não justificam adicionar Python ou bootstrap com `uv`;
 - `.github/CODEOWNERS` registra ownership global e explícito para arquivos críticos;
 - `.github/dependabot.yml` atualiza GitHub Actions semanalmente;
 - `.github/SECURITY.md` prepara a política de reporte responsável e informa que o canal ainda não está operacional;
@@ -249,6 +250,12 @@ Ativar:
 - Dependency Review em pull requests.
 
 O `.github/dependabot.yml` deve cobrir npm, NuGet, GitHub Actions e Docker. Atualizações de segurança continuam passando pelos mesmos builds e testes das demais mudanças. Automerge só deve ser considerado para categorias de baixo risco e depois de checks completos.
+
+Toda dependência nova ou atualizada deve ter a licença da versão exata verificada na fonte oficial e registrada no pull request. O gate de Dependency Review deve bloquear licenças desconhecidas ou incompatíveis, e o inventário de release deve preservar essa informação no SBOM.
+
+Aceitar somente licenças permissivas e gratuitas para os usos previstos, como MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC e PostgreSQL. Bloquear dependências pagas, proprietárias, source-available, com licença comercial obrigatória, copyleft ou restrição incompatível com uso, modificação, distribuição e operação self-hosted. Licença ausente, ambígua, não detectada ou modificada entre versões exige bloqueio, não aprovação automática.
+
+A biblioteca MediatR é proibida no projeto por sua política de licenciamento; essa restrição não se aplica ao padrão Mediator. Quando o padrão for necessário, a implementação aprovada é `Nuuvify.CommonPack.Mediator`, cuja versão exata ainda deve passar por verificação de licença, vulnerabilidades, manutenção, lockfile, Dependency Review e SBOM. Commands, queries, handlers e behaviors permanecem explícitos e testáveis.
 
 ### 6.2 Code scanning com CodeQL
 

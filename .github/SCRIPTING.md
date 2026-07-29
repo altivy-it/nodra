@@ -19,7 +19,7 @@ apps/, libs/ ou deploy/
 
 Scripts de administração, manutenção e validação global do repositório pertencem a `tools/scripts/`. Scripts usados por workflows internos de um módulo, Dockerfile, Compose, entrypoint, health check ou runtime pertencem ao módulo correspondente, pois fazem parte do contrato desse módulo.
 
-Os scripts existentes em `eng/` são legados e não devem ser movidos incidentalmente. A migração ocorre quando o script for refatorado e deve atualizar todos os consumidores no mesmo conjunto de mudanças.
+Não mantenha automação global em `eng/`. Ao encontrar um script legado durante sua refatoração, mova-o para `tools/scripts/` e atualize todos os consumidores no mesmo conjunto de mudanças.
 
 ## Ajuda obrigatória
 

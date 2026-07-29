@@ -19,4 +19,5 @@ applyTo: ".github/workflows/**, .github/dependabot.yml"
 - Não use `latest` como única tag; publique versão SemVer e digest.
 - Falhas de segurança e incompatibilidade de migration bloqueiam release.
 - Renovação de dependências deve manter lockfiles e passar pelos mesmos gates.
+- Dependency Review bloqueia licença paga, proprietária, source-available, comercial obrigatória, copyleft, ausente, ambígua ou não verificada; novas dependências registram no pull request a licença da versão exata e sua fonte oficial.
 - Documente inputs, outputs, secrets esperados e procedimento de reexecução segura.

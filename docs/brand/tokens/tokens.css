@@ -1,0 +1,331 @@
+/*
+ * Basalt Notes — Design Tokens
+ * Etapa P-07 | Status: draft / aguardando aprovação humana
+ *
+ * Uso:
+ *   Aplique `data-theme="dark"` ou `data-theme="high-contrast"` no elemento <html>
+ *   para ativar o tema correspondente.
+ *
+ * Convenções:
+ *   --color-*          tokens primitivos (valores fixos de cor)
+ *   --surface-*        tokens semânticos de superfície de fundo
+ *   --text-*           tokens semânticos de texto
+ *   --border-*         tokens semânticos de borda
+ *   --accent-*         tokens semânticos de destaque / ação primária
+ *   --focus-*          tokens de foco e acessibilidade
+ *   --state-*          tokens de estados (erro, aviso, sucesso, info)
+ *   --brand-*          tokens específicos da identidade visual da marca
+ *   --radius-*         tokens de raio de borda
+ *   --spacing-*        tokens de espaçamento (escala de 4 px)
+ *   --font-*           tokens tipográficos
+ *   --shadow-*         tokens de sombra
+ */
+
+/* ═══════════════════════════════════════════════
+   CORES PRIMITIVAS
+   Não usar diretamente no código de componente.
+   ═══════════════════════════════════════════════ */
+:root {
+  /* Neutrals */
+  --color-gray-900:   #1A202C;
+  --color-gray-800:   #2D3748;
+  --color-gray-700:   #4A5568;
+  --color-gray-600:   #718096;
+  --color-gray-500:   #A0AEC0;
+  --color-gray-400:   #CBD5E0;
+  --color-gray-300:   #E2E8F0;
+  --color-gray-200:   #EDF2F7;
+  --color-gray-100:   #F7FAFC;
+  --color-white:      #FFFFFF;
+
+  /* Brand Palette */
+  --color-blue-100:   #EBF4FF;
+  --color-blue-200:   #C3DAFE;
+  --color-blue-300:   #A3BFFA;
+  --color-blue-400:   #7F9CF5;
+  --color-blue-500:   #667EEA;
+
+  --color-lavender-100: #F0ECFF;
+  --color-lavender-200: #E2DDFE;
+  --color-lavender-300: #DCD7FE;
+  --color-lavender-400: #BCB2FF;
+  --color-lavender-500: #9F94FF;
+  --color-lavender-800: #5A5A8C;
+
+  /* State Colors */
+  --color-error-red:      #DC2626;
+  --color-warning-amber:  #D97706;
+  --color-success-green:  #059669;
+  --color-info-blue:      #2563EB;
+
+  --color-error-light:    #FEE2E2;
+  --color-warning-light:  #FEF3C7;
+  --color-success-light:  #D1FAE5;
+  --color-info-light:     #DBEAFE;
+}
+
+/* ═══════════════════════════════════════════════
+   TOKENS SEMÂNTICOS — TEMA CLARO (padrão)
+   ═══════════════════════════════════════════════ */
+:root,
+[data-theme="light"] {
+  /* Superfície */
+  --surface-app:          var(--color-warm-white);
+  --surface-panel:        var(--color-pure-white);
+  --surface-raised:       var(--color-near-white);
+  --surface-sunken:       var(--color-light-stone);
+  --surface-overlay:      rgba(255, 255, 255, 0.92);
+
+  /* Texto */
+  --text-primary:         var(--color-basalt-black);
+  --text-secondary:       var(--color-volcanic-gray);
+  --text-muted:           var(--color-stone-gray);
+  --text-placeholder:     var(--color-pebble-gray);
+  --text-disabled:        var(--color-mist-gray);
+  --text-inverse:         var(--color-warm-white);
+  --text-link:            var(--color-deep-teal);
+  --text-link-hover:      var(--color-mid-teal);
+
+  /* Borda */
+  --border-subtle:        var(--color-light-stone);
+  --border-default:       var(--color-mist-gray);
+  --border-strong:        var(--color-stone-gray);
+  --border-focus:         var(--color-azure-blue);
+
+  /* Acento primário */
+  --accent-primary:       var(--color-deep-teal);
+  --accent-primary-hover: var(--color-mid-teal);
+  --accent-primary-text:  var(--color-pure-white);
+  --accent-secondary:     var(--color-pale-teal);
+
+  /* Foco */
+  --focus-ring:           var(--color-azure-blue);
+  --focus-ring-width:     2px;
+  --focus-ring-offset:    2px;
+
+  /* Seleção */
+  --selection-bg:         var(--color-pale-blue);
+  --selection-text:       #1E3A8A;
+
+  /* Marca */
+  --brand-icon-stroke:    var(--color-deep-teal);
+  --brand-hub-fill:       var(--color-deep-teal);
+  --brand-node-fill:      var(--color-basalt-black);
+  --brand-edge-stroke:    var(--color-volcanic-gray);
+
+  /* Estados */
+  --state-error-text:     var(--color-error-red);
+  --state-error-bg:       var(--color-error-light);
+  --state-warning-text:   var(--color-warning-amber);
+  --state-warning-bg:     var(--color-warning-light);
+  --state-success-text:   var(--color-success-green);
+  --state-success-bg:     var(--color-success-light);
+  --state-info-text:      var(--color-info-blue);
+  --state-info-bg:        var(--color-info-light);
+
+  /* Sombra */
+  --shadow-sm:   0 1px 2px 0 rgba(30, 30, 30, 0.06);
+  --shadow-md:   0 4px 6px -1px rgba(30, 30, 30, 0.08), 0 2px 4px -1px rgba(30, 30, 30, 0.06);
+  --shadow-lg:   0 10px 15px -3px rgba(30, 30, 30, 0.08), 0 4px 6px -2px rgba(30, 30, 30, 0.04);
+}
+
+/* ═══════════════════════════════════════════════
+   TOKENS SEMÂNTICOS — TEMA ESCURO
+   ═══════════════════════════════════════════════ */
+[data-theme="dark"] {
+  /* Superfície */
+  --surface-app:          #0F0F0F;
+  --surface-panel:        var(--color-basalt-black);
+  --surface-raised:       #2A2A2A;
+  --surface-sunken:       #141414;
+  --surface-overlay:      rgba(30, 30, 30, 0.95);
+
+  /* Texto */
+  --text-primary:         var(--color-warm-white);
+  --text-secondary:       var(--color-light-stone);
+  --text-muted:           var(--color-pebble-gray);
+  --text-placeholder:     var(--color-stone-gray);
+  --text-disabled:        var(--color-volcanic-gray);
+  --text-inverse:         var(--color-basalt-black);
+  --text-link:            var(--color-light-teal);
+  --text-link-hover:      var(--color-mid-teal);
+
+  /* Borda */
+  --border-subtle:        #252525;
+  --border-default:       var(--color-volcanic-gray);
+  --border-strong:        var(--color-stone-gray);
+  --border-focus:         var(--color-sky-blue);
+
+  /* Acento primário */
+  --accent-primary:       var(--color-light-teal);
+  --accent-primary-hover: var(--color-mid-teal);
+  --accent-primary-text:  #0A2A28;
+  --accent-secondary:     #134E4A;
+
+  /* Foco */
+  --focus-ring:           var(--color-sky-blue);
+
+  /* Seleção */
+  --selection-bg:         #1E3A8A;
+  --selection-text:       var(--color-pale-blue);
+
+  /* Marca */
+  --brand-icon-stroke:    var(--color-light-teal);
+  --brand-hub-fill:       var(--color-light-teal);
+  --brand-node-fill:      var(--color-light-stone);
+  --brand-edge-stroke:    var(--color-pebble-gray);
+
+  /* Estados */
+  --state-error-text:     #FCA5A5;
+  --state-error-bg:       #450A0A;
+  --state-warning-text:   #FCD34D;
+  --state-warning-bg:     #451A03;
+  --state-success-text:   #6EE7B7;
+  --state-success-bg:     #022C22;
+  --state-info-text:      #93C5FD;
+  --state-info-bg:        #1E3A8A;
+
+  /* Sombra */
+  --shadow-sm:   0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-md:   0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg:   0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.4);
+}
+
+/* ═══════════════════════════════════════════════
+   TOKENS SEMÂNTICOS — ALTO CONTRASTE
+   Contraste mínimo garantido: texto normal ≥ 7:1
+   ═══════════════════════════════════════════════ */
+[data-theme="high-contrast"] {
+  /* Superfície */
+  --surface-app:          #000000;
+  --surface-panel:        #000000;
+  --surface-raised:       #0A0A0A;
+  --surface-sunken:       #000000;
+  --surface-overlay:      rgba(0, 0, 0, 0.98);
+
+  /* Texto */
+  --text-primary:         #FFFFFF;
+  --text-secondary:       #FFFFFF;
+  --text-muted:           #D4D4D8;
+  --text-placeholder:     #A1A1AA;
+  --text-disabled:        #71717A;
+  --text-inverse:         #000000;
+  --text-link:            #67E8F9;   /* cyan claro — ≥ 7:1 sobre preto */
+  --text-link-hover:      #A5F3FC;
+
+  /* Borda */
+  --border-subtle:        #3F3F46;
+  --border-default:       #FFFFFF;
+  --border-strong:        #FFFFFF;
+  --border-focus:         #FACC15;   /* amarelo — distinguível de qualquer estado */
+
+  /* Acento primário */
+  --accent-primary:       #5EEAD4;   /* teal claro — ≥ 4.5:1 sobre preto */
+  --accent-primary-hover: #2DD4BF;
+  --accent-primary-text:  #000000;
+  --accent-secondary:     #134E4A;
+
+  /* Foco */
+  --focus-ring:           #FACC15;   /* amarelo vivo — não confunde com estados */
+  --focus-ring-width:     3px;
+  --focus-ring-offset:    2px;
+
+  /* Seleção */
+  --selection-bg:         #1D4ED8;
+  --selection-text:       #FFFFFF;
+
+  /* Marca */
+  --brand-icon-stroke:    #FFFFFF;
+  --brand-hub-fill:       #5EEAD4;
+  --brand-node-fill:      #FFFFFF;
+  --brand-edge-stroke:    #D4D4D8;
+
+  /* Estados — ícone nunca é único indicador de estado */
+  --state-error-text:     #FCA5A5;
+  --state-error-bg:       #000000;
+  --state-warning-text:   #FDE68A;
+  --state-warning-bg:     #000000;
+  --state-success-text:   #6EE7B7;
+  --state-success-bg:     #000000;
+  --state-info-text:      #93C5FD;
+  --state-info-bg:        #000000;
+
+  /* Sombra — sem sombra (contexto de alto contraste) */
+  --shadow-sm:  none;
+  --shadow-md:  none;
+  --shadow-lg:  none;
+}
+
+/* ═══════════════════════════════════════════════
+   TOKENS ESTRUTURAIS (independem de tema)
+   ═══════════════════════════════════════════════ */
+:root {
+  /* Raio de borda */
+  --radius-none:   0;
+  --radius-sm:     0.25rem;   /* 4px */
+  --radius-md:     0.5rem;    /* 8px */
+  --radius-lg:     0.75rem;   /* 12px */
+  --radius-xl:     1rem;      /* 16px */
+  --radius-full:   9999px;
+
+  /* Espaçamento (base 4 px) */
+  --spacing-1:  0.25rem;   /*  4px */
+  --spacing-2:  0.5rem;    /*  8px */
+  --spacing-3:  0.75rem;   /* 12px */
+  --spacing-4:  1rem;      /* 16px */
+  --spacing-5:  1.25rem;   /* 20px */
+  --spacing-6:  1.5rem;    /* 24px */
+  --spacing-8:  2rem;      /* 32px */
+  --spacing-10: 2.5rem;    /* 40px */
+  --spacing-12: 3rem;      /* 48px */
+  --spacing-16: 4rem;      /* 64px */
+
+  /* Tipografia — família (preencher após aprovação da fonte)
+     Fallback seguro até a aprovação: system-ui → sans-serif  */
+  --font-sans:   "Inter", "Manrope", system-ui, -apple-system, sans-serif;
+  --font-serif:  "IBM Plex Serif", "Merriweather", Georgia, serif;
+  --font-mono:   "IBM Plex Mono", "JetBrains Mono", ui-monospace, monospace;
+
+  /* Tamanhos de fonte (escala modular 1.25 — Major Third) */
+  --text-xs:    0.75rem;    /* 12px */
+  --text-sm:    0.875rem;   /* 14px */
+  --text-base:  1rem;       /* 16px */
+  --text-lg:    1.25rem;    /* 20px */
+  --text-xl:    1.5rem;     /* 24px */
+  --text-2xl:   1.875rem;   /* 30px */
+  --text-3xl:   2.25rem;    /* 36px */
+
+  /* Pesos */
+  --font-normal:    400;
+  --font-medium:    500;
+  --font-semibold:  600;
+  --font-bold:      700;
+
+  /* Altura de linha */
+  --leading-tight:  1.25;
+  --leading-snug:   1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed:1.625;
+  --leading-loose:  1.75;
+
+  /* Espaçamento de letras */
+  --tracking-tighter: -0.05em;
+  --tracking-tight:   -0.025em;
+  --tracking-normal:   0em;
+  --tracking-wide:     0.025em;
+  --tracking-wider:    0.05em;
+  --tracking-widest:   0.1em;
+
+  /* Transições */
+  --transition-fast:    100ms ease;
+  --transition-normal:  200ms ease;
+  --transition-slow:    300ms ease;
+
+  /* Z-index */
+  --z-base:    0;
+  --z-raised:  10;
+  --z-overlay: 100;
+  --z-modal:   200;
+  --z-toast:   300;
+  --z-tooltip: 400;
+}

@@ -1,0 +1,22 @@
+﻿<svg width="64" height="64" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Favicon do Basalt Notes">
+    <title>Favicon do Basalt Notes</title>
+    <desc>Favicon com o ícone de rocha contornada e 2 órbitas em X do Basalt Notes.</desc>
+    <style>
+        .rock-base { fill: #A3BFFA; stroke: #4A5568; stroke-width: 8; }
+        .orbit-path { stroke: #DCD7FE; stroke-width: 8; fill: none; }
+
+        @media (prefers-color-scheme: dark) {
+            .rock-base { fill: #4A5568; stroke: #A0AEC0; stroke-width: 8; }
+            .orbit-path { stroke: #5A5A8C; }
+        }
+    </style>
+    <!-- Órbitas -->
+    <g transform="translate(128 128)">
+        <ellipse class="orbit-path" cx="0" cy="0" rx="90" ry="35" transform="rotate(45)"/>
+        <ellipse class="orbit-path" cx="0" cy="0" rx="90" ry="35" transform="rotate(-45)"/>
+    </g>
+    <!-- Rocha -->
+    <g transform="translate(64, 64) scale(0.5)" stroke-linejoin="round">
+        <path class="rock-base" d="M45,195 C40,120 80,50 95,45 L180,40 L225,110 C215,180 150,225 135,220 L45,195Z" />
+    </g>
+</svg>

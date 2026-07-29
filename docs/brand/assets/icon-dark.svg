@@ -1,0 +1,41 @@
+﻿<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Ícone do Basalt Notes (Tema Escuro)">
+    <title>Ícone do Basalt Notes (Tema Escuro)</title>
+    <desc>Um ícone abstrato representando uma rocha de basalto facetada com contornos definidos, no centro de 2 órbitas em X, para tema escuro.</desc>
+    <style>
+        .rock-base { fill: #4A5568; stroke: #A0AEC0; stroke-width: 4; }
+        .rock-shadow { fill: #2D3748; stroke: #A0AEC0; stroke-width: 4; }
+        .rock-highlight { fill: #718096; stroke: #A0AEC0; stroke-width: 4; }
+        .orbit-path { stroke: #5A5A8C; stroke-width: 4; fill: none; }
+        .orbit-node { fill: #5A5A8C; }
+        .border { stroke: #4A5568; stroke-width: 3; }
+        .bg { fill: #1A202C; }
+    </style>
+    <defs>
+        <clipPath id="clipIconDark">
+            <rect x="0" y="0" width="256" height="256" rx="56" />
+        </clipPath>
+    </defs>
+    <g clip-path="url(#clipIconDark)">
+        <rect width="256" height="256" class="bg"/>
+        
+        <!-- Órbitas em X -->
+        <g transform="translate(128 128)">
+            <ellipse class="orbit-path" cx="0" cy="0" rx="90" ry="35" transform="rotate(45)"/>
+            <ellipse class="orbit-path" cx="0" cy="0" rx="90" ry="35" transform="rotate(-45)"/>
+        </g>
+
+        <!-- Rocha com Contorno -->
+        <g transform="translate(64, 64) scale(0.5)" stroke-linejoin="round">
+            <path class="rock-base" d="M45,195 C40,120 80,50 95,45 L180,40 L225,110 C215,180 150,225 135,220 L45,195Z" />
+            <path class="rock-shadow" d="M95,45 L80,120 L140,150 L180,40 L95,45Z" />
+            <path class="rock-highlight" d="M140,150 L225,110 L210,180 L135,220 L140,150Z" />
+        </g>
+
+        <!-- Nodos nas Órbitas -->
+        <g class="orbit-node">
+            <circle cx="198" cy="83" r="7"/>
+            <circle cx="58" cy="83" r="7"/>
+        </g>
+    </g>
+    <rect x="1.5" y="1.5" width="253" height="253" rx="54.5" class="border"/>
+</svg>

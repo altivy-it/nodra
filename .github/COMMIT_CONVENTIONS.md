@@ -127,7 +127,7 @@ Copilot, Dependabot e outras automações obedecem à mesma convenção. Antes d
 Exemplos:
 
 ```text
-build(deps): atualiza Angular para 21.2.0
+build(deps): atualiza Angular para 22.0.0
 ci(actions): atualiza checkout para v7
 chore(repo): sincroniza arquivos gerados
 ```
