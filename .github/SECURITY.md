@@ -1,5 +1,7 @@
 # Política de Segurança
 
+> **Canal ainda não operacional:** o GitHub Private Vulnerability Reporting deve ser habilitado antes da divulgação pública desta política. Até a confirmação, não há um canal oficial de reporte; não publique detalhes de vulnerabilidades em issues.
+
 ## Versões suportadas
 
 Antes da primeira versão estável, somente a linha de desenvolvimento atual recebe correções. Após `1.0.0`, a matriz de versões suportadas será publicada aqui a cada release.

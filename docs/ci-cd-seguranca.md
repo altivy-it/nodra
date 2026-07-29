@@ -52,7 +52,21 @@ O comportamento reproduzível deve ficar no Git:
 
 Os nomes dos workflows são uma proposta inicial. Eles devem ser criados quando os projetos executáveis existirem, mantendo responsabilidades pequenas e checks estáveis.
 
-### 2.2 Configuração administrativa na plataforma GitHub
+### 2.2 Estado de implementação
+
+O repositório possui a fundação executável para a fase documental:
+
+- `.github/workflows/ci.yml` executa a validação do repositório e publica os checks estáveis `CI / Repository Baseline` e `CI / Result`;
+- `eng/validate-repository.ps1` verifica arquivos obrigatórios, destinos locais de links e imagens Markdown, referências explícitas, IDs explícitos de headings e fixação de actions externas por SHA ou digest completo;
+- `eng/test-validate-repository.ps1` cobre cenários válidos e rejeições de link ausente, referência sem definição e action mutável;
+- `.github/CODEOWNERS` registra ownership global e explícito para arquivos críticos;
+- `.github/dependabot.yml` atualiza GitHub Actions semanalmente;
+- `.github/SECURITY.md` prepara a política de reporte responsável e informa que o canal ainda não está operacional;
+- [Checklist administrativo do GitHub](github-administracao.md) registra configurações que exigem acesso a **Settings** e evidência manual.
+
+Ainda não existem projetos Angular ou .NET, contracts, lockfiles, Dockerfiles ou manifests de deploy. Os jobs de frontend, backend, integração, contracts, E2E, CodeQL compilado, container, release e deploy devem ser implementados junto com seus primeiros alvos executáveis. Criá-los antes disso produziria checks sem evidência ou permanentemente ignorados.
+
+### 2.3 Configuração administrativa na plataforma GitHub
 
 Alguns controles não vivem em arquivos do repositório e devem ser configurados em **Settings**:
 
@@ -280,7 +294,7 @@ Os nomes e a organização dos menus podem mudar conforme a evolução da interf
 
 A política pública de reporte permanece no arquivo [`.github/SECURITY.md`](../.github/SECURITY.md). Esse documento orienta o pesquisador sobre versões suportadas, escopo e informações esperadas; o Private Vulnerability Reporting é o canal que recebe e gerencia o relato de forma privada.
 
-**Ação pendente:** habilitar o Private Vulnerability Reporting nas configurações do repositório antes de divulgar a política de segurança como canal oficial.
+**Ação pendente:** habilitar o Private Vulnerability Reporting nas configurações do repositório e registrar a evidência no [checklist administrativo](github-administracao.md) antes de divulgar a política de segurança como canal oficial.
 
 ## 7. Secrets, variables e identidade
 
