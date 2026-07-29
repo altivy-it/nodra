@@ -23,7 +23,7 @@ Mudanças devem começar no módulo proprietário do comportamento. Não mova re
 ## Fluxo de desenvolvimento
 
 1. Crie uma branch curta a partir de `main`.
-2. Faça commits coesos com mensagem imperativa e clara.
+2. Faça commits coesos conforme [Conventional Commits](COMMIT_CONVENTIONS.md).
 3. Implemente slices pequenos e valide cada recorte.
 4. Atualize testes, contrato, migration, documentação e telemetria junto da mudança.
 5. Execute os gates aplicáveis antes do pull request.
@@ -68,6 +68,7 @@ Testes de integração podem exigir Docker para PostgreSQL/Testcontainers. Scrip
 
 ## Commits e pull requests
 
+- Todo commit deve seguir [Conventional Commits](COMMIT_CONVENTIONS.md), incluindo os tipos e escopos aprovados pelo projeto.
 - Prefira commits pequenos que compilam e têm propósito único.
 - Referencie issue/ADR quando existir.
 - Não misture refactor amplo com mudança funcional.

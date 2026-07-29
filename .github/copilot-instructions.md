@@ -38,6 +38,13 @@ Não crie dependências circulares. `apps/*` compõem e hospedam; regras reutili
 5. Atualize contrato, migração, documentação e observabilidade quando o comportamento exigir.
 6. Não corrija nem reformate código fora do escopo.
 
+## Commits
+
+- Todo commit criado ou sugerido segue [Conventional Commits](COMMIT_CONVENTIONS.md) e usa os tipos e escopos aprovados pelo projeto.
+- Escreva a descrição em português brasileiro, no imperativo, iniciando com minúscula e sem ponto final.
+- Mudanças incompatíveis usam `!` no cabeçalho e o rodapé `BREAKING CHANGE:` com impacto e migração.
+- Não faça commit, push, publicação ou deploy sem solicitação explícita.
+
 ## Scripts e automação
 
 - Ao criar ou refatorar scripts, siga `.github/instructions/script-authoring.instructions.md` e `.github/SCRIPTING.md`.

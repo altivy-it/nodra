@@ -15,6 +15,7 @@ Se você está começando a usar IA ou GitHub Copilot, leia primeiro o [tutorial
 | `skills/*/SKILL.md` | workflows multi-etapas invocáveis por `/` |
 | `ADR_TEMPLATE.md` | estrutura canônica para decisões arquiteturais |
 | `COPILOT_GUIDE.md` | tutorial de uso com fluxos e exemplos reais |
+| `COMMIT_CONVENTIONS.md` | tipos, escopos e formato obrigatório de Conventional Commits |
 | [CI/CD e segurança](../docs/ci-cd-seguranca.md) | referência canônica de CI/CD, Sonar, segurança e supply chain |
 | `CONTRIBUTING.md` | processo de desenvolvimento e contribuição |
 | `SECURITY.md` | reporte e tratamento de vulnerabilidades |
