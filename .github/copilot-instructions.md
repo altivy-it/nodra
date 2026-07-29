@@ -38,6 +38,14 @@ Não crie dependências circulares. `apps/*` compõem e hospedam; regras reutili
 5. Atualize contrato, migração, documentação e observabilidade quando o comportamento exigir.
 6. Não corrija nem reformate código fora do escopo.
 
+## Scripts e automação
+
+- Ao criar ou refatorar scripts, siga `.github/instructions/script-authoring.instructions.md` e `.github/SCRIPTING.md`.
+- Scripts PowerShell e Bash de automação do repositório pertencem a `tools/scripts/`.
+- Ferramentas Python de automação pertencem a `tools/scripts/<nome>/`, são executadas com `uv` e compartilham o único `tools/pyproject.toml` do repositório.
+- Scripts que fazem parte do build, deploy ou runtime de um módulo permanecem na pasta específica desse módulo.
+- Todo script criado ou refatorado deve oferecer `--help` com finalidade, dependências, uso, exemplos e referência para documentação mais ampla quando ela existir.
+
 ## Regras invariáveis
 
 - Preserve conteúdo do usuário; conflitos nunca podem causar sobrescrita silenciosa.
