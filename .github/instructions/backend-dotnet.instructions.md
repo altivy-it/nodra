@@ -22,6 +22,10 @@ applyTo: "apps/api/**, apps/worker/**, libs/backend/**"
 - Infraestrutura implementa adapters e não vaza entidades EF para contratos HTTP.
 - API e worker são composition roots pequenos.
 - Não crie repository genérico sobre EF Core. Use `DbContext` em adapters específicos ou repositórios orientados a agregados.
+- O acesso a banco deve ser feito exclusivamente por EF Core; não use Dapper nem outro ORM adicional.
+- SQL ou C# puro só podem ser usados quando a tradução por EF Core não for viável e houver justificativa técnica explícita no código, documento ou PR.
+- Todo mapeamento de entidades para o banco deve usar Fluent API; nunca use annotations para configurar persistência ou relacionamento.
+- Mantenha os mapeamentos de entidades em `Configs` dentro do projeto `Infra.Data.Postgres`.
 - Modele commands, queries e handlers como classes explícitas. Chamada direta é adequada para fluxos simples; aplique o padrão Mediator quando dispatch desacoplado ou comportamentos de pipeline removerem complexidade comprovada.
 - Quando o padrão Mediator for necessário, use `Nuuvify.CommonPack.Mediator`, registre-o nos composition roots e centralize a versão. Não use a biblioteca MediatR por restrição de licenciamento.
 - Behaviors de pipeline não ocultam autorização contextual, fronteiras transacionais, idempotência ou efeitos externos; esses aspectos permanecem explícitos e testáveis.
@@ -42,6 +46,16 @@ applyTo: "apps/api/**, apps/worker/**, libs/backend/**"
 - Use rate limiting em autenticação, upload e operações caras.
 - Health checks distinguem liveness, readiness e startup.
 - SignalR transporta notificações; estado durável permanece no banco.
+- Quando o módulo usar persistência PostgreSQL, mantenha a configuração em `DataContextSetup.cs` e exponha as opções via `AddDbContextPoolSetup` ou `AddDbContextFactory` com `DbContextOptionsBuilder`.
+- Quando houver `PostgresDbContext`, explicite nele as convenções de schema, naming, extensões e mapeamentos do banco para deixar claro ao desenvolvedor como a persistência está configurada.
+- Crie uma factory de design-time para facilitar migrations a partir do projeto de dados PostgreSQL (`Infra.Data.Postgres` quando existir).
+
+## Persistência e consultas
+
+- Queries devem ser escritas com LINQ.
+- Use SQL direto apenas com justificativa técnica explícita e quando não houver tradução viável por EF Core.
+- Não use `LIKE` em consultas novas; prefira Full Text Search, trigramas ou outro índice apropriado ao caso. Quando a busca textual exigir novo recurso no banco, crie a migration correspondente para `tsvector`, índice GIN/GiST ou o objeto necessário ao contrato.
+- Siga as melhores práticas de EF Core e de acesso a dados adotadas por uma arquitetura limpa e robusta.
 
 ## Concorrência e resiliência
 

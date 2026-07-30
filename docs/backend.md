@@ -13,11 +13,16 @@ apps/
 libs/backend/
 ├── domain/                       # entidades, value objects, invariantes e eventos
 ├── application/                  # casos de uso, commands, queries e portas
-└── infrastructure/               # PostgreSQL, filesystem, Keycloak e providers
+└── infrastructure/               # adapters compartilhados por responsabilidade estável
+	├── data/                     # PostgreSQL, filesystem, projeções e repositórios
+	├── http/                     # clientes externos e integrações HTTP
+	└── bus/                      # orquestração de mediator, consumers, pipeline behaviors ou outbox/job plumbing
 contracts/                        # OpenAPI e contratos públicos versionados
 tests/
 └── backend/                      # testes unitários, integração, arquitetura e desempenho
 ```
+
+A convenção de assemblies e namespaces do backend fica documentada nas instruções do Copilot em [.github/instructions/architecture.instructions.md](../.github/instructions/architecture.instructions.md); a camada de infraestrutura usa o prefixo `Infra.<nome>` e os hosts mantêm namespaces próprios em `BasaltNotes.Api` e `BasaltNotes.Worker`, sem concentrar código reutilizável de domínio.
 
 Usar monólito modular orientado a domínio, Clean Architecture pragmática e Ports and Adapters. Regras de domínio não dependem de ASP.NET Core, EF Core ou filesystem. API e worker são composition roots e não contêm regras reutilizáveis. Não criar interfaces para classes sem fronteira ou substituição real.
 
@@ -36,7 +41,7 @@ flowchart LR
 
 - Domain contém regras, aggregates, value objects e eventos de domínio.
 - Application contém casos de uso, commands, queries, autorização contextual e portas requeridas pelo negócio.
-- Infrastructure implementa adapters de PostgreSQL, filesystem, Keycloak e providers externos.
+- Infrastructure se divide em `data`, `http` e `bus` para manter fronteiras estáveis; `data` concentra PostgreSQL, filesystem e projeções, `http` concentra clientes externos e `bus` concentra mediator, jobs duráveis e plumbing assíncrono.
 - API e worker resolvem dependências e convertem entradas e saídas, sem acessar detalhes internos de outros módulos.
 - Contracts define o contrato público; DTOs não são entidades de domínio nem modelos EF Core.
 
@@ -47,7 +52,7 @@ flowchart LR
 | DDD estratégico | módulos, linguagem ubíqua e limites de negócio explícitos |
 | Aggregate e Value Object | invariantes de `Vault`, `Note`, jobs, paths, hashes, versões e ETags |
 | Application Service / Use Case | uma classe explícita coordena cada operação pública |
-| Ports and Adapters | isola PostgreSQL, filesystem, Keycloak e embeddings |
+| Ports and Adapters | isola PostgreSQL, filesystem, integrações HTTP e jobs duráveis |
 | Dependency Inversion | domínio e aplicação dependem de portas, não de adapters concretos |
 | Repository orientado a aggregate | persiste aggregates somente quando a fronteira de domínio justificar |
 | Unit of Work | delimita a transação PostgreSQL do caso de uso, normalmente pelo `DbContext` |

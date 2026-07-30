@@ -12,7 +12,8 @@ applyTo: "apps/**, libs/**, contracts/**, deploy/**"
 - Hosts em `apps/` são composition roots; não concentre regras de negócio neles.
 - `libs/backend/domain` não depende de infraestrutura, ASP.NET Core ou EF Core.
 - `libs/backend/application` orquestra casos de uso e depende do domínio e de portas explícitas.
-- `libs/backend/infrastructure` implementa PostgreSQL, filesystem e integrações com providers externos.
+- `libs/backend/Infra` é uma família de projetos por responsabilidade estável; `data` concentra PostgreSQL, filesystem e projeções, `http` concentra integrações HTTP e `bus` concentra mediator, jobs duráveis e plumbing assíncrono.
+- A estrutura alvo do backend usa `BasaltNotes.Backend.Domain`, `BasaltNotes.Backend.Application`, `BasaltNotes.Backend.Infra.Data`, `BasaltNotes.Backend.Infra.Http` e `BasaltNotes.Backend.Infra.Bus`; hosts usam namespaces próprios e não hospedam código reutilizável de domínio.
 - Keycloak é a plataforma externa obrigatória de identidade e decisão de autorização; a solução não implementa cadastro local, senha, recuperação de conta, MFA, diretório de usuários, memberships ou políticas próprias de acesso.
 - O BFF atua somente como cliente OIDC confidencial, gerenciador da sessão técnica do browser e relay de tokens; ele não se torna um provedor de identidade ou motor de autorização.
 - A API atua como Policy Enforcement Point: valida o token e exige as permissões emitidas pelo Keycloak antes de acessar qualquer recurso, sem reproduzir localmente a decisão da política.
@@ -28,10 +29,10 @@ flowchart LR
     Web[apps/web] --> Contracts[contracts]
     Api[apps/api] --> Application[libs/backend/application]
     Worker[apps/worker] --> Application
-    Infrastructure[libs/backend/infrastructure] --> Application
+    Infra[libs/backend/Infra] --> Application
     Application --> Domain[libs/backend/domain]
-    Api --> Infrastructure
-    Worker --> Infrastructure
+    Api --> Infra
+    Worker --> Infra
 ```
 
 - Dependências apontam para dentro; domínio não referencia hosts ou adapters.
