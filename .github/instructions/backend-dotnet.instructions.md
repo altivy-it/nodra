@@ -26,6 +26,8 @@ applyTo: "apps/api/**, apps/worker/**, libs/backend/**"
 - Quando o padrão Mediator for necessário, use `Nuuvify.CommonPack.Mediator`, registre-o nos composition roots e centralize a versão. Não use a biblioteca MediatR por restrição de licenciamento.
 - Behaviors de pipeline não ocultam autorização contextual, fronteiras transacionais, idempotência ou efeitos externos; esses aspectos permanecem explícitos e testáveis.
 - Use somente pacotes com licença permissiva, gratuita e verificada conforme as instruções de arquitetura; licença comercial, restritiva, ambígua ou ausente bloqueia a inclusão.
+- Para projetos .NET do Basalt Notes, os namespaces de pacotes pré-aprovados são: `Azure.*`, `Microsoft.*`, `SonarAnalyzer.CSharp.*` e `Nuuvify.*`.
+- Pacotes fora dessa lista exigem justificativa técnica, validação de licença e avaliação de impacto antes da adoção.
 
 ## ASP.NET Core
 

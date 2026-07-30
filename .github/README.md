@@ -14,6 +14,7 @@ Se você está começando a usar IA ou GitHub Copilot, leia primeiro o [tutorial
 | `prompts/*.prompt.md` | tarefas focadas invocáveis por `/` |
 | `skills/*/SKILL.md` | workflows multi-etapas invocáveis por `/` |
 | `ADR_TEMPLATE.md` | estrutura canônica para decisões arquiteturais |
+| `PERFORMANCE_TESTING_CRITERIA.md` | baseline corporativo para testes de carga e performance |
 | `PLAN_TEMPLATE.md` | estrutura canônica para planos e status por etapa |
 | `COPILOT_GUIDE.md` | tutorial de uso com fluxos e exemplos reais |
 | `COMMIT_CONVENTIONS.md` | tipos, escopos e formato obrigatório de Conventional Commits |
@@ -46,7 +47,9 @@ Em caso de conflito, preserve integridade e segurança, interrompa alterações 
 
 ## ADRs e planos
 
-- ADRs criados por humanos ou IA vivem em `docs/adr/NNNN-titulo.md` desde o status `proposed` e seguem [ADR_TEMPLATE.md](ADR_TEMPLATE.md).
+- ADRs criados por humanos ou IA vivem em `docs/adr/AAAA-NNNN-titulo.md` desde o status `proposed` e seguem [ADR_TEMPLATE.md](ADR_TEMPLATE.md).
+- A sequência de ADR é anual e reinicia a cada ano civil: `AAAA-0001`, `AAAA-0002` e assim por diante.
+- Critérios de carga e performance corporativos ficam em [PERFORMANCE_TESTING_CRITERIA.md](PERFORMANCE_TESTING_CRITERIA.md).
 - Planos criados por humanos ou IA vivem em `docs/plan/<tema>.md` e seguem [PLAN_TEMPLATE.md](PLAN_TEMPLATE.md).
 - ADRs usam `proposed`, `accepted`, `superseded` ou `deprecated`.
 - Planos possuem status geral e status em todas as etapas; transições registram autor, data e evidência.

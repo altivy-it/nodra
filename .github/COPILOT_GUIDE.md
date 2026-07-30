@@ -294,7 +294,7 @@ Critérios:
 Decidir como identificar notas após rename: UUID persistido no frontmatter, identidade somente no PostgreSQL ou inferência por hash/path. Considere compatibilidade com vaults existentes, edição externa, privacidade e recuperação.
 ```
 
-O resultado deve ser criado em `docs/adr/NNNN-titulo.md`, com status `proposed`, seguindo [ADR_TEMPLATE.md](ADR_TEMPLATE.md). Revise a decisão antes de aceitá-la; um ADR não vira verdade apenas porque foi gerado por IA.
+O resultado deve ser criado em `docs/adr/AAAA-NNNN-titulo.md`, com status `proposed`, seguindo [ADR_TEMPLATE.md](ADR_TEMPLATE.md). Use sequência anual (por exemplo, `2026-0001`). Revise a decisão antes de aceitá-la; um ADR não vira verdade apenas porque foi gerado por IA.
 
 ### 7.5 Diagnosticar um bug
 
@@ -576,7 +576,7 @@ Revise somente a correção de concorrência. Confirme status HTTP, preservaçã
 Avaliar histórico de revisões: cópias no vault, tabela PostgreSQL ou Git interno. Considere Markdown como fonte canônica, NAS, retenção, restore e experiência de usuário.
 ```
 
-O prompt cria `docs/adr/NNNN-historico-revisoes.md` como `proposed`. Após revisão humana, registre a decisão, altere para `accepted` e use-o como contexto na implementação.
+O prompt cria `docs/adr/AAAA-NNNN-historico-revisoes.md` como `proposed`. Após revisão humana, registre a decisão, altere para `accepted` e use-o como contexto na implementação.
 
 ### 13.4 Antes de uma release
 

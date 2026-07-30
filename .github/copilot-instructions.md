@@ -40,7 +40,7 @@ Não crie dependências circulares. `apps/*` compõem e hospedam; regras reutili
 
 ## ADRs e planos
 
-- Crie ADRs em `docs/adr/NNNN-titulo.md` desde o status `proposed`, seguindo `.github/ADR_TEMPLATE.md`.
+- Crie ADRs em `docs/adr/AAAA-NNNN-titulo.md` desde o status `proposed`, seguindo `.github/ADR_TEMPLATE.md`.
 - Crie planos em `docs/plan/<tema>.md`, seguindo `.github/PLAN_TEMPLATE.md`; não use `docs/planos` nem mantenha plano apenas no chat.
 - Todo plano possui status geral e status em cada etapa. Atualize o histórico ao mudar qualquer status.
 - Registre `Origem` como humano ou IA assistida e identifique o revisor humano.

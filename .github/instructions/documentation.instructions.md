@@ -9,7 +9,7 @@ applyTo: "**/*.md, docs/**, contracts/**/*.yaml, contracts/**/*.json"
 - Escreva em português brasileiro, com termos técnicos consistentes e exemplos executáveis.
 - O README raiz é a autoridade para visão, escopo e decisões globais.
 - Documentos de frontend, backend e evolução detalham implementação sem duplicar o plano mestre.
-- ADRs vivem em `docs/adr` desde a criação, usam `NNNN-titulo.md`, numeração sequencial e status `proposed`, `accepted`, `superseded` ou `deprecated`.
+- ADRs vivem em `docs/adr` desde a criação, usam `AAAA-NNNN-titulo.md` (ano e sequência anual), e status `proposed`, `accepted`, `superseded` ou `deprecated`.
 - Planos vivem em `docs/plan`, usam `<tema>.md` em kebab-case e seguem `.github/PLAN_TEMPLATE.md`.
 - Todo plano declara status geral `draft`, `proposed`, `approved`, `in-progress`, `blocked`, `completed`, `cancelled` ou `superseded`.
 - Cada etapa usa identificador `P-NN` ou `WP-NN` no heading e declara status próprio `not-started`, `in-progress`, `blocked`, `completed` ou `skipped`; planos sem etapa ou status por etapa são inválidos.

@@ -14,4 +14,5 @@ applyTo: "libs/backend/**"
 - Não compartilhe entidades persistidas ou modelos HTTP entre módulos por conveniência.
 - Exponha APIs públicas mínimas; use `internal` por padrão dentro do assembly.
 - Adicione testes de arquitetura para regras de referência e visibilidade.
+- Para testes de arquitetura em .NET, use preferencialmente `TngTech.ArchUnitNET`.
 - Mudança em abstração compartilhada exige avaliar todos os consumidores e validar a solução inteira.

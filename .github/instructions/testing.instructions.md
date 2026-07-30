@@ -25,12 +25,22 @@ applyTo: "tests/**, apps/**/*.spec.ts, apps/**/*.test.ts, libs/**/*.spec.ts, lib
 - Testcontainers cobre PostgreSQL e integrações; filesystem usa diretório temporário real.
 - WireMock ou servidor local controlado simula providers HTTP, não mocks de baixo nível.
 - Teste concorrência, cancelamento, idempotência, retry, lease e falha entre arquivo e banco.
+- Para testes unitários .NET, as bibliotecas pré-aprovadas são: `Microsoft.*`, `xunit.*`, `coverlet.collector`, `Moq`, `AutoFixture`, `AutoMoqCore`, `Bogus`, `CountryData.Bogus`, `Shouldly` e `TngTech.ArchUnitNET`.
+- Bibliotecas de teste fora dessa lista exigem justificativa técnica e avaliação de licença antes da inclusão.
 
 ## Dados de teste
 
 - `tests/fixtures` contém apenas dados sintéticos e sem secrets.
 - Inclua Unicode, nomes longos, links quebrados, Markdown malicioso e grafos densos.
 - Benchmarks têm baseline documentado e ambiente registrado.
+
+## Carga e performance
+
+- Siga os critérios corporativos definidos em `./.github/PERFORMANCE_TESTING_CRITERIA.md`.
+- PRs devem usar ao menos smoke de carga com thresholds de latência e erro.
+- Releases devem executar carga sustentada e publicar artefatos comparáveis entre execuções.
+- Use p95 e p99 como métricas primárias de latência; média isolada não é evidência suficiente.
+- Em regressões acima dos limites definidos, bloqueie promoção até decisão explícita de risco.
 
 ## Evidência
 
