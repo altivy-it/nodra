@@ -1,6 +1,6 @@
 /*
  * Thothis — Design Tokens
- * Etapa P-07 | Status: draft / aguardando aprovação humana
+ * Etapa P-04 | Status: approved
  *
  * Uso:
  *   Aplique `data-theme="dark"` ou `data-theme="high-contrast"` no elemento <html>
@@ -37,7 +37,7 @@
   --color-gray-100:   #F7FAFC;
   --color-white:      #FFFFFF;
 
-   /* Candidate Interface Palette */
+   /* Interface Palette */
   --color-blue-100:   #EBF4FF;
   --color-blue-200:   #C3DAFE;
   --color-blue-300:   #A3BFFA;
@@ -263,9 +263,9 @@
 
   /* Tipografia — família (preencher após aprovação da fonte)
      Fallback seguro até a aprovação: system-ui → sans-serif  */
-  --font-sans:   "Inter", "Manrope", system-ui, -apple-system, sans-serif;
-  --font-serif:  "IBM Plex Serif", "Merriweather", Georgia, serif;
-  --font-mono:   "IBM Plex Mono", "JetBrains Mono", ui-monospace, monospace;
+   --font-sans:   "Inter", system-ui, -apple-system, sans-serif;
+   --font-serif:  "IBM Plex Serif", Georgia, serif;
+   --font-mono:   "IBM Plex Mono", ui-monospace, monospace;
 
   /* Tamanhos de fonte (escala modular 1.25 — Major Third) */
   --text-xs:    0.75rem;    /* 12px */

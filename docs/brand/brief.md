@@ -1,8 +1,8 @@
 # Brief de identidade visual — Thothis
 
-**Versão:** 0.2-draft
+**Versão:** 1.0
 **Data:** 2026-07-31
-**Status:** aguardando revisão humana  
+**Status:** approved 
 **Etapa do plano:** P-01  
 **Relacionado:** [Plano de branding](../plan/thothis-branding.md)
 
@@ -27,21 +27,20 @@ escrito. Os endereços previstos são **thothis.app** e **thothis.zocate.li**.
 
 ---
 
-## Plataforma estratégica candidata
+## Plataforma estratégica aprovada
 
-As formulações desta seção orientam a exploração, mas permanecem pendentes de
-aprovação humana.
+As formulações desta seção foram aprovadas por Lincoln Zocateli em 2026-07-31.
 
-### Missão candidata
+### Missão
 
 Transformar informações dispersas em conhecimento acessível, conectado e útil.
 
-### Visão candidata
+### Visão
 
 Ser uma plataforma de conhecimento confiável para pessoas e organizações que
 precisam preservar, relacionar e encontrar informação sob seu próprio controle.
 
-### Valores candidatos
+### Valores
 
 - clareza;
 - conhecimento;
@@ -51,7 +50,7 @@ precisam preservar, relacionar e encontrar informação sob seu próprio control
 - independência;
 - inovação responsável.
 
-### Arquétipo candidato
+### Arquétipo
 
 **O Sábio:** busca compreender, organizar e compartilhar conhecimento com
 clareza, rigor e credibilidade. A linguagem deve ser analítica e acessível, sem
@@ -91,12 +90,12 @@ parecer pretensiosa, mística ou distante.
 
 ---
 
-## Territórios visuais candidatos
+## Território visual aprovado
 
-1. **Escrita e registro:** gestos, marcas e estruturas abstratas que comuniquem
-	documentação, linguagem e preservação da informação.
-2. **Lua e tempo:** ciclos, fases e medição tratados como geometria abstrata para
-	comunicar continuidade, contexto e memória.
+**Síntese entre escrita, registro e conexão:** gestos e estruturas abstratas
+comunicam documentação, preservação e relações entre informações. A direção
+[G — Confluência aberta](assets/concept-g-open-confluence.svg) avança para
+verificação técnica e produção.
 
 O conhecimento conectado permanece um atributo funcional da composição: pode
 aparecer em relações entre formas, ritmo ou continuidade, mas não como um
@@ -127,7 +126,7 @@ rodada de exploração.
 
 ---
 
-## Mensagens candidatas
+## Arquitetura de mensagens
 
 - **Conhecimento conectado:** Knowledge Connected.
 - **Escrita e memória:** Knowledge, written to endure.
@@ -135,10 +134,9 @@ rodada de exploração.
 - **Transformação:** From Information to Wisdom.
 - **Contexto para inteligência:** Intelligence Built on Knowledge.
 
-Nenhuma mensagem está aprovada ou definida como principal. Em P-01, avaliar se
-uma tagline é necessária e comparar as candidatas por clareza, aderência ao
-produto self-hosted, compreensão internacional, originalidade e uso nas
-superfícies listadas.
+Nenhuma tagline será incorporada ao sistema de marca nesta etapa. As mensagens
+permanecem como referências editoriais, não como assinatura obrigatória do
+logotipo.
 
 ---
 
@@ -189,19 +187,19 @@ Listadas apenas para análise de legibilidade e aplicação. **Não imitar.**
 
 ---
 
-## Questões bloqueantes (sem decisão presumida)
+## Decisões registradas
 
-1. Slogan é necessário nas superfícies mapeadas? Em quais delas aparece?
-2. Qual conceito de símbolo avança para a fase de produção?
-3. Qual tipografia funcional é aprovada para a aplicação e para o wordmark?
-4. Quais pesos de fonte são necessários e qual o impacto no bundle?
-5. A identidade inclui animação (ex.: loading spinner, transição do header) ou permanece estática?
-6. Qual é o processo de aprovação de mudanças futuras e quem são os responsáveis?
-7. Missão, visão, valores e arquétipo candidatos representam corretamente o produto?
-8. Alguma tagline deve ser adotada? Qual delas comunica o produto sem ampliar seu escopo?
-9. Qual território visual avança: escrita e registro, lua e tempo ou uma síntese entre ambos?
+1. O sistema de marca não usa tagline obrigatória nesta etapa.
+2. A direção G — Confluência aberta avança para produção.
+3. Inter 4.1 é a tipografia funcional e base do wordmark.
+4. IBM Plex Serif 6.4.0 atende conteúdo e IBM Plex Mono 6.4.0 atende código.
+5. Os pesos aprovados são 400, 500, 600 e 700, sujeitos ao orçamento de bundle.
+6. A identidade permanece estática nesta etapa.
+7. Alterações futuras exigem aprovação de Lincoln Zocateli ou revisor humano formalmente designado.
+8. Missão, visão, valores e arquétipo desta versão representam o produto.
+9. O território aprovado sintetiza escrita, registro e conexão.
 
 ---
 
-*Documento gerado por IA assistida como entrega da etapa P-01.
-Nenhuma escolha aqui está aprovada. Revisão humana obrigatória antes de avançar para P-02.*
+*Documento gerado por IA assistida como entrega da etapa P-01 e aprovado por
+Lincoln Zocateli em 2026-07-31.*

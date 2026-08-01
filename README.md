@@ -1,3 +1,7 @@
+<p align="center">
+    <img src="docs/brand/assets/thothis-logo.svg" alt="Thothis" width="256">
+</p>
+
 # Thothis
 
 ## Plano mestre da solução

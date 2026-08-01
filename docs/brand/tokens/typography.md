@@ -1,16 +1,16 @@
 # Tipografia — Thothis
 
-**Status:** draft / aguardando aprovação humana  
+**Status:** approved  
 **Etapa do plano:** P-04  
 **Relacionado:** [tokens.json](tokens.json), [tokens.css](tokens.css), [licenses.md](../licenses.md)
 
 ---
 
-## Papéis tipográficos
+## Papéis tipográficos aprovados
 
 O Thothis usa três papéis distintos de tipografia, cada um com família própria:
 
-| Papel | Família candidata | Fallback | Uso |
+| Papel | Família aprovada | Fallback | Uso |
 |---|---|---|---|
 | **Funcional (sans)** | Inter | `system-ui, -apple-system, sans-serif` | Interface, controles, menus, wordmark |
 | **Editorial (serif)** | IBM Plex Serif | `Georgia, serif` | Conteúdo Markdown do vault (parágrafos, títulos longos) |
@@ -18,23 +18,14 @@ O Thothis usa três papéis distintos de tipografia, cada um com família própr
 
 ---
 
-## Decisões pendentes (nenhuma aprovada)
+## Decisões registradas
 
-1. **Qual fonte serif para o conteúdo?**  
-   - IBM Plex Serif: pares naturais com Plex Sans/Mono; moderna e editorial.  
-   - Merriweather: projetada especificamente para leitura em tela; muito boa em tamanhos menores.  
-   - Lora: mais expressiva; pode parecer mais "literária" para notas técnicas.
-
-2. **Qual fonte mono para código?**  
-   - IBM Plex Mono: familiar para desenvolvedores, ligaduras opcionais, par natural.  
-   - JetBrains Mono: ligaduras de programação, boa diferenciação de `0Ol1I`.  
-   - Fira Code: ligaduras ricas, muito popular na comunidade de desenvolvedores.
-
-3. **Os pesos 400, 600 e 700 são suficientes?**  
-   Avaliar se o peso 500 (medium) é necessário para estados intermediários (ex.: labels de formulário).
-
-4. **Qual o impacto no bundle de cada conjunto?**  
-   Medir com subsetting + WOFF2 antes de decidir. Meta: `< 80 KB` por família no subset latino.
+- **Funcional e wordmark:** Inter 4.1.
+- **Conteúdo Markdown:** IBM Plex Serif 6.4.0.
+- **Código:** IBM Plex Mono 6.4.0.
+- **Pesos:** Inter variável 400–700; IBM Plex Serif 400/700; IBM Plex Mono 400/600.
+- **Distribuição:** WOFF2 hospedado localmente, com subset latino e meta de `< 80 KB` por família.
+- **Decisor:** Lincoln Zocateli, em 2026-07-31.
 
 ---
 
@@ -49,6 +40,20 @@ xl:   24px  — títulos de página (H2/H3 no shell)
 2xl:  30px  — título principal da nota (H1 no editor)
 3xl:  36px  — telas de onboarding, títulos de diálogo
 ```
+
+## Pacote self-hosted
+
+| Família | Arquivos | Tamanho total | Resultado |
+|---|---:|---:|---|
+| Inter | 1 variável | 50.264 bytes | aprovado |
+| IBM Plex Serif | 2 estáticos | 45.852 bytes | aprovado |
+| IBM Plex Mono | 2 estáticos | 34.980 bytes | aprovado |
+
+O Inter usa subset `U+0020-007E,U+00A0-00FF`, features `kern`, `liga` e
+`calt`, sem hinting. Os arquivos IBM Plex são os subsets Latin1 oficiais, sem
+modificação posterior. A cobertura dos caracteres portugueses obrigatórios é
+verificada pelo pipeline e os hashes estão em
+[fonts/SHA256SUMS](../fonts/SHA256SUMS).
 
 ---
 
@@ -88,9 +93,9 @@ xl:   24px  — títulos de página (H2/H3 no shell)
 
 ---
 
-## Fallback sem fonte aprovada
+## Fallback sem fonte disponível
 
-Até a aprovação e hospedagem local das fontes, a aplicação usa exclusivamente:
+Se uma fonte local não estiver disponível, a aplicação usa:
 
 ```css
 --font-sans:  system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -102,5 +107,6 @@ Nenhuma URL de fonte externa deve aparecer em CSS de produção.
 
 ---
 
-*Documento produzido por IA assistida como entrega de P-04.
-Nenhuma fonte, peso ou escala está aprovado sem decisão humana explícita.*
+*Documento produzido por IA assistida como entrega de P-04 e aprovado por
+Lincoln Zocateli em 2026-07-31. Licenças, hashes, cobertura e orçamento foram
+verificados em 2026-08-01.*

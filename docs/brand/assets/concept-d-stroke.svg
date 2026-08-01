@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">Thothis - conceito D: Traço</title>
+  <desc id="desc">Símbolo abstrato em forma de T, construído como um percurso contínuo.</desc>
+  <path fill="#1A202C" d="M8 8h48v12H38v8l14-6v14l-14 6v14H26V46l-14 6V38l14-6V20H8z"/>
+  <path fill="#0F766E" d="M26 20h12v12l-12 5z"/>
+</svg>

@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 760" role="img" aria-labelledby="title desc">
+  <title id="title">Prancha de exploração visual do Thothis</title>
+  <desc id="desc">Comparação dos conceitos Registro, Ciclo e Trama em cor, monocromia, fundo escuro e tamanhos reduzidos.</desc>
+  <rect width="1200" height="760" fill="#F7FAFC"/>
+  <text x="64" y="72" fill="#1A202C" font-family="system-ui, sans-serif" font-size="34" font-weight="600">Thothis — exploração de símbolo</text>
+  <text x="64" y="108" fill="#4A5568" font-family="system-ui, sans-serif" font-size="18">Candidatos para revisão humana · sem fonte ou tagline propostas</text>
+
+  <g transform="translate(64 156)">
+    <rect width="320" height="520" fill="#FFFFFF" stroke="#CBD5E0"/>
+    <text x="24" y="42" fill="#1A202C" font-family="system-ui, sans-serif" font-size="22" font-weight="600">A · Registro</text>
+    <text x="24" y="70" fill="#4A5568" font-family="system-ui, sans-serif" font-size="15">escrita · estrutura · preservação</text>
+    <g transform="translate(96 104) scale(2)">
+      <path fill="#1A202C" d="M12 8h12v48H12zM24 8h28v12H24zM24 26h22v12H24zM24 44h28v12H24z"/>
+      <path fill="#0F766E" d="M24 26h10v12H24z"/>
+    </g>
+    <rect x="24" y="260" width="128" height="128" fill="#1A202C"/>
+    <g transform="translate(56 292)">
+      <path fill="#FFFFFF" d="M12 8h12v48H12zM24 8h28v12H24zM24 26h22v12H24zM24 44h28v12H24z"/>
+    </g>
+    <g transform="translate(200 278)">
+      <path fill="#1A202C" d="M6 4h6v24H6zM12 4h14v6H12zM12 13h11v6H12zM12 22h14v6H12z"/>
+    </g>
+    <g transform="translate(208 340)">
+      <path fill="#1A202C" d="M3 2h3v12H3zM6 2h7v3H6zM6 6.5h5.5v3H6zM6 11h7v3H6z"/>
+    </g>
+    <text x="24" y="438" fill="#4A5568" font-family="system-ui, sans-serif" font-size="15">Força: leitura imediata em 16 px</text>
+    <text x="24" y="466" fill="#4A5568" font-family="system-ui, sans-serif" font-size="15">Risco: lembrar lista ou letra E</text>
+  </g>
+
+  <g transform="translate(440 156)">
+    <rect width="320" height="520" fill="#FFFFFF" stroke="#CBD5E0"/>
+    <text x="24" y="42" fill="#1A202C" font-family="system-ui, sans-serif" font-size="22" font-weight="600">B · Ciclo</text>
+    <text x="24" y="70" fill="#4A5568" font-family="system-ui, sans-serif" font-size="15">fases · tempo · continuidade</text>
+    <g transform="translate(96 104) scale(2)">
+      <path fill="#1A202C" d="M8 8h12v48H8zM26 8h12v48H26zM44 8h12v48H44z"/>
+      <path fill="#2563EB" d="M8 8h12v12H8zM26 26h12v12H26zM44 44h12v12H44z"/>
+    </g>
+    <rect x="24" y="260" width="128" height="128" fill="#1A202C"/>
+    <g transform="translate(56 292)">
+      <path fill="#FFFFFF" d="M8 8h12v48H8zM26 8h12v48H26zM44 8h12v48H44z"/>
+    </g>
+    <g transform="translate(200 278)">
+      <path fill="#1A202C" d="M4 4h6v24H4zM13 4h6v24h-6zM22 4h6v24h-6z"/>
+    </g>
+    <g transform="translate(208 340)">
+      <path fill="#1A202C" d="M2 2h3v12H2zM6.5 2h3v12h-3zM11 2h3v12h-3z"/>
+    </g>
+    <text x="24" y="438" fill="#4A5568" font-family="system-ui, sans-serif" font-size="15">Força: ritmo próprio e modular</text>
+    <text x="24" y="466" fill="#4A5568" font-family="system-ui, sans-serif" font-size="15">Risco: parecer equalizador</text>
+  </g>
+
+  <g transform="translate(816 156)">
+    <rect width="320" height="520" fill="#FFFFFF" stroke="#CBD5E0"/>
+    <text x="24" y="42" fill="#1A202C" font-family="system-ui, sans-serif" font-size="22" font-weight="600">C · Trama</text>
+    <text x="24" y="70" fill="#4A5568" font-family="system-ui, sans-serif" font-size="15">registro · relação · permanência</text>
+    <g transform="translate(96 104) scale(2)">
+      <path fill="#1A202C" d="M8 8h36v12H20v24H8zM20 44h24V20h12v36H20z"/>
+      <path fill="#0F766E" d="M20 20h12v12H20zM32 32h12v12H32z"/>
+    </g>
+    <rect x="24" y="260" width="128" height="128" fill="#1A202C"/>
+    <g transform="translate(56 292)">
+      <path fill="#FFFFFF" d="M8 8h36v12H20v24H8zM20 44h24V20h12v36H20z"/>
+    </g>
+    <g transform="translate(200 278)">
+      <path fill="#1A202C" d="M4 4h18v6H10v12H4zM10 22h12V10h6v18H10z"/>
+    </g>
+    <g transform="translate(208 340)">
+      <path fill="#1A202C" d="M2 2h9v3H5v6H2zM5 11h6V5h3v9H5z"/>
+    </g>
+    <text x="24" y="438" fill="#4A5568" font-family="system-ui, sans-serif" font-size="15">Força: síntese mais distintiva</text>
+    <text x="24" y="466" fill="#4A5568" font-family="system-ui, sans-serif" font-size="15">Risco: detalhe central em 16 px</text>
+  </g>
+
+  <text x="64" y="724" fill="#718096" font-family="system-ui, sans-serif" font-size="15">Exploração P-02 · assets candidatos · nenhuma direção aprovada</text>
+</svg>

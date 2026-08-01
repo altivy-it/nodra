@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">Thothis - conceito L: Entrelinhas conectadas</title>
+  <desc id="desc">Dois percursos paralelos mudam de nível e se conectam no centro.</desc>
+  <path fill="none" stroke="#1A202C" stroke-width="10" stroke-linejoin="miter" d="M6 14h24v12h28M6 50h24V38h28"/>
+  <path fill="none" stroke="#0F766E" stroke-width="10" d="M30 26v12"/>
+</svg>

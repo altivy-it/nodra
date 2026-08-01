@@ -1,28 +1,25 @@
 # Guia de marca — Thothis
 
-**Versão:** 0.1-draft  
-**Status:** aguardando aprovação humana  
+**Versão:** 0.3  
+**Status:** approved 
 **Etapa do plano:** P-07  
 **Relacionado:** [Plano de branding](../plan/thothis-branding.md), [Brief](brief.md), [Tokens](tokens/)
 
-> **Atenção:** este guia é um rascunho produzido por IA assistida.  
-> Nenhuma escolha aqui está aprovada. Revisão e aprovação humana são obrigatórias antes de publicar qualquer asset nos produtos.
+> A direção G e o pacote técnico foram aprovados. O risco residual identificado
+> na [revisão preliminar de similaridade](similarity-review.md) foi aceito pelo
+> revisor humano; os assets estão liberados para integração.
 
 ---
 
 ## 1. O símbolo
 
-O Thothis ainda não possui símbolo, logotipo ou wordmark aprovados. O
-[brief](brief.md) define dois territórios candidatos e uma possibilidade de
-síntese para exploração em P-02:
+O símbolo selecionado é **G — Confluência aberta**. Dois registros convergem em
+uma haste central; o núcleo teal representa o encontro entre informações. A
+forma funciona em monocromia e permanece reconhecível a partir de `16x16`.
 
-1. **Escrita e registro:** gestos e estruturas abstratas ligados a documentação, linguagem e preservação da informação.
-2. **Lua e tempo:** ciclos, fases e medição tratados como geometria abstrata, sem ilustração literal.
-3. **Síntese entre registro e conexão:** continuidade, ritmo ou relações entre formas sugerem conhecimento conectado.
-
-Essas direções não estão aprovadas. Nenhuma delas autoriza copiar hieróglifos,
-representar divindades, usar iconografia religiosa ou arqueológica reconhecível
-ou recorrer a mascotes e símbolos genéricos.
+A seleção não autoriza copiar hieróglifos, representar divindades, usar
+iconografia religiosa ou arqueológica reconhecível nem recorrer a mascotes e
+símbolos genéricos.
 
 A pronúncia oficial da marca é **TÔ-TIS**. Em materiais internacionais, usar a
 orientação `TOH-tis` em inglês e `TO-tis` em espanhol quando necessário.
@@ -31,37 +28,42 @@ orientação `TOH-tis` em inglês e `TO-tis` em espanhol quando necessário.
 
 ## 2. Assets disponíveis
 
-Nenhum asset visual está aprovado ou distribuído. A pasta `assets/` permanece
-reservada para arquivos produzidos após seleção humana do conceito, verificação
-de originalidade, licença, acessibilidade e segurança.
+O catálogo em [assets/dist/SHA256SUMS](assets/dist/SHA256SUMS) registra os
+artefatos produzidos. Os SVGs incluem símbolo claro, escuro e monocromático,
+além de lockups claro e escuro. Os PNGs cobrem `16`, `32`, `48`, `64`, `192`,
+`400` e `512` pixels.
+
+Execute `./tools/scripts/build-brand-fonts.ps1` e depois
+`./tools/scripts/build-brand-assets.ps1` a partir da raiz para recriar fontes,
+wordmark, SVGs, PNGs e catálogos.
 
 ---
 
 ## 3. Paleta de cores
 
-Os tokens atuais são candidatos funcionais da interface, não uma paleta de logo
-aprovada. A paleta definitiva deve distinguir superfícies, texto, foco e estados
-nos temas claro, escuro e alto contraste, sem depender de uma única família cromática.
+O símbolo usa Archive Ink `#1A202C` e Scribe Teal `#0F766E` no tema claro. No
+tema escuro, usa branco `#FFFFFF` e teal claro `#5EEAD4`. A versão monocromática
+usa uma única cor e não depende do núcleo colorido para manter a silhueta.
 
 ---
 
-## 4. Tipografia (draft)
+## 4. Tipografia
 
-| Papel | Família candidata | Fallback |
+| Papel | Família aprovada | Fallback |
 |---|---|---|
 | Interface / Wordmark | Inter | `system-ui, sans-serif` |
 | Conteúdo Markdown | IBM Plex Serif | `Georgia, serif` |
 | Código | IBM Plex Mono | `ui-monospace, monospace` |
 
-Se aprovada, a fonte **Inter** poderá ser testada no wordmark "Thothis" nos
-pesos "Medium" e "SemiBold". Esta combinação ainda não é normativa.
+O wordmark usa **Inter SemiBold (600)** convertido em paths. As fontes locais e
+seus hashes estão em [fonts/](fonts/); nenhuma fonte ou CDN externa é usada.
 
 ---
 
 ## 5. Área de proteção e tamanho mínimo
 
 - **Área de proteção:** Manter uma margem equivalente a **10% da largura total** do asset em todos os lados.
-- **Tamanho mínimo (ícone):** será definido após testes reais em 16, 24, 32 e 48 px.
+- **Tamanho mínimo (ícone):** `16 px`; usar o símbolo isolado abaixo de `32 px`.
 - **Tamanho mínimo (logo):** O logo horizontal não deve ser exibido abaixo de **120 px de largura**.
 
 ---
@@ -94,12 +96,8 @@ Não:
 
 ## 8. Catálogo de arquivos e checksums
 
-> Preencher após aprovação e antes de publicar. Usar `sha256sum` ou equivalente.
-
-```
-# Checksums SHA-256 (preencher após aprovação)
-# Nenhum asset aprovado até o momento.
-```
+O catálogo canônico é [assets/dist/SHA256SUMS](assets/dist/SHA256SUMS) e é
+regenerado junto com os assets. Qualquer divergência bloqueia a publicação.
 
 ---
 
@@ -117,11 +115,11 @@ Não:
 
 | Responsabilidade | Titular (preencher após aprovação) |
 |---|---|
-| Aprovação de alterações no símbolo | — |
-| Aprovação de alterações de cor e tokens | — |
-| Aprovação de tipografia | — |
-| Manutenção do catálogo e checksums | — |
-| Revisão de originalidade e licença | — |
+| Aprovação de alterações no símbolo | Lincoln Zocateli |
+| Aprovação de alterações de cor e tokens | Lincoln Zocateli |
+| Aprovação de tipografia | Lincoln Zocateli |
+| Manutenção do catálogo e checksums | equipe Thothis |
+| Revisão de originalidade e licença | Lincoln Zocateli ou revisor humano designado |
 
 ---
 
@@ -134,5 +132,5 @@ de dados nem alterar conteúdo de usuário.
 
 ---
 
-*Guia produzido por IA assistida como entrega da etapa P-07.
-Nenhuma decisão aqui está aprovada. Revisão humana obrigatória antes de publicar.*
+*Guia produzido por IA assistida e aprovado por Lincoln Zocateli em 2026-08-01.
+A integração e validação nos produtos seguem em P-06.*

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">Thothis - conceito E: Meridiano</title>
+  <desc id="desc">Símbolo circular aberto atravessado por um eixo de medição.</desc>
+  <path fill="none" stroke="#1A202C" stroke-width="12" d="M49 14A24 24 0 1 0 49 50"/>
+  <path fill="#1A202C" d="M26 8h12v48H26z"/>
+  <path fill="#2563EB" d="M38 26h18v12H38z"/>
+</svg>

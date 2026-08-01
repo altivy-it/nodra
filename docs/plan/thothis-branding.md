@@ -1,8 +1,8 @@
 # Plano de identidade visual e branding do Thothis
 
-**Status:** completed  
+**Status:** blocked  
 **Data de criação:** 2026-07-29  
-**Última atualização:** 2026-07-31
+**Última atualização:** 2026-08-01  
 **Responsáveis:** equipe Thothis
 **Origem:** proposta humana normalizada por IA assistida  
 **Revisor humano:** Lincoln Zocateli  
@@ -14,6 +14,27 @@ Definir, validar e entregar uma identidade visual original e acessível para o T
 
 O resultado deve comunicar precisão, permanência, conhecimento conectado e operação self-hosted, mantendo consistência entre aplicação, documentação, repositório, PWA e imagens de container.
 
+## Estado para retomada futura
+
+A criação da marca está concluída: P-01 a P-05 foram aprovadas e entregam
+brief, direção G, licenças, tokens, tipografia, fontes, SVGs, PNGs, checksums e
+pipelines reproduzíveis. O logo também foi aplicado ao README.
+
+O plano permanece `blocked`, e não `completed`, porque ainda faltam integração
+e testes no produto. A retomada ocorre quando a aplicação Angular existir com,
+no mínimo, `apps/web`, `angular.json`, `package.json` e manifest PWA. Nesse
+momento:
+
+1. mover P-06 de `blocked` para `in-progress`;
+2. integrar assets, fontes, tokens, favicon, manifest e shell;
+3. executar lint, build, testes e Playwright nos temas e viewports definidos;
+4. concluir P-06 com as evidências geradas;
+5. revisar o guia contra a integração real e concluir P-07;
+6. marcar o plano `completed` somente após todos os critérios finais passarem.
+
+Não é necessário reabrir P-01 a P-05, salvo mudança de nome, símbolo, paleta,
+tipografia, licença ou risco de similaridade.
+
 ## Contexto e premissas
 
 - o nome Thothis associa o produto a Thoth, à escrita, ao conhecimento, à memória e ao registro da informação;
@@ -22,7 +43,7 @@ O resultado deve comunicar precisão, permanência, conhecimento conectado e ope
 - os territórios visuais candidatos são escrita e registro, lua e tempo e uma síntese abstrata entre registro e conhecimento conectado;
 - o conceito visual não deve copiar hieróglifos, representar divindades nem reproduzir símbolos religiosos ou arqueológicos;
 - um monograma `T` pode ser explorado como tratamento tipográfico, mas não constitui direção obrigatória;
-- nenhuma alternativa, cor, fonte, slogan ou arquivo gerado está aprovada neste momento;
+- a direção G, a paleta, a tipografia e o pacote de assets estão aprovados;
 - toda marca deve funcionar nos temas claro, escuro e alto contraste, em monocromia e em tamanhos reduzidos;
 - assets finais devem operar localmente e ser distribuídos com a aplicação, sem CDN, fonte remota ou chamada a serviço externo em runtime;
 - IA generativa pode apoiar a exploração, mas não é requisito do produto nem substitui revisão humana, análise de originalidade ou preparação técnica dos assets;
@@ -136,7 +157,7 @@ Nenhuma fonte entra no produto antes de:
 
 ### P-01: Consolidar brief e critérios
 
-**Status:** in-progress  
+**Status:** completed  
 **Responsável:** equipe de produto e design  
 **Dependências:** nenhuma
 
@@ -162,11 +183,11 @@ Validação:
 
 Evidências:
 
-- [docs/brand/brief.md](../brand/brief.md) — brief com público, personalidade, superfícies, critérios observáveis e questões bloqueantes. Aguarda revisão humana.
+- [docs/brand/brief.md](../brand/brief.md) — brief aprovado por Lincoln Zocateli em 2026-07-31, com plataforma estratégica, direção G, tipografia e governança registradas.
 
 ### P-02: Explorar conceitos visuais
 
-**Status:** not-started
+**Status:** completed
 **Responsável:** design ou pessoa responsável pela identidade visual  
 **Dependências:** P-01
 
@@ -191,11 +212,11 @@ Validação:
 
 Evidências:
 
-- pendente de nova exploração alinhada à origem e ao posicionamento de Thothis.
+- [docs/brand/exploration.md](../brand/exploration.md) — três rodadas de símbolos candidatos, variações de tema e escala, matrizes preliminares e proveniência; direção G selecionada por Lincoln Zocateli em 2026-07-31 para verificação em P-03.
 
 ### P-03: Verificar licenças, proveniência e originalidade
 
-**Status:** in-progress  
+**Status:** completed  
 **Responsável:** responsáveis pelo repositório e revisão jurídica quando aplicável  
 **Dependências:** P-02
 
@@ -218,11 +239,13 @@ Validação:
 
 Evidências:
 
-- [docs/brand/licenses.md](../brand/licenses.md) — inventário de fontes candidatas (Inter, Manrope, IBM Plex), ferramentas (SVGO, sharp) e assets produzidos nesta exploração. Decisão humana pendente por item.
+- [docs/brand/licenses.md](../brand/licenses.md) — inventário aprovado de fontes, ferramentas, assets, licenças e hashes.
+- [docs/brand/similarity-review.md](../brand/similarity-review.md) — busca preliminar não encontrou marca ou logo idêntico; risco residual médio foi aceito explicitamente por Lincoln Zocateli.
+- [docs/brand/exploration.md](../brand/exploration.md) — rodada 4 preservada como histórico de mitigação não adotado; G permanece selecionada.
 
 ### P-04: Definir paleta, tipografia e tokens
 
-**Status:** in-progress  
+**Status:** completed  
 **Responsável:** design e equipe frontend  
 **Dependências:** P-01, P-03
 
@@ -248,11 +271,12 @@ Evidências:
 
 - [docs/brand/tokens/tokens.css](../brand/tokens/tokens.css) — CSS custom properties para os três temas (claro, escuro, alto contraste) com tokens semânticos e primitivos.
 - [docs/brand/tokens/tokens.json](../brand/tokens/tokens.json) — tokens no formato DTCG com cores primitivas e semânticas por tema.
-- [docs/brand/tokens/typography.md](../brand/tokens/typography.md) — papéis tipográficos, escala, fallbacks e critérios de acessibilidade. Aguarda aprovação de fonte.
+- [docs/brand/tokens/typography.md](../brand/tokens/typography.md) — papéis tipográficos, escala, fallbacks, cobertura e orçamento aprovados e verificados.
+- [docs/brand/fonts/SHA256SUMS](../brand/fonts/SHA256SUMS) — cinco WOFF2 self-hosted e licenças com hashes reproduzíveis.
 
 ### P-05: Produzir o sistema de marca
 
-**Status:** not-started
+**Status:** completed
 **Responsável:** design  
 **Dependências:** P-02, P-03, P-04
 
@@ -277,11 +301,14 @@ Validação:
 
 Evidências:
 
-- pendente; nenhum asset visual está aprovado ou distribuído.
+- [docs/brand/assets/dist/](../brand/assets/dist/) — cinco SVGs otimizados, sete PNGs e catálogo SHA-256 produzidos por script reproduzível.
+- [tools/scripts/build-brand-assets.ps1](../../tools/scripts/build-brand-assets.ps1) — pipeline com imagem Node fixa, SVGO 3.3.2 e sharp 0.33.5.
+- [tools/scripts/build-brand-fonts.ps1](../../tools/scripts/build-brand-fonts.ps1) — pipeline de fontes, orçamento, cobertura, hashes e wordmark em paths.
+- pacote final aprovado por Lincoln Zocateli em 2026-08-01; risco residual registrado em P-03 foi aceito explicitamente.
 
 ### P-06: Integrar e testar nos produtos
 
-**Status:** not-started  
+**Status:** blocked  
 **Responsável:** equipe frontend e responsáveis pela documentação e containers  
 **Dependências:** P-05
 
@@ -305,11 +332,12 @@ Validação:
 
 Evidências:
 
-- pendente.
+- [README.md](../../README.md) — lockup claro integrado à superfície principal do repositório.
+- bloqueio: em 2026-08-01 o repositório ainda não possui `apps/web`, `libs/frontend`, `angular.json`, `package.json` ou manifest PWA; favicon, shell, temas, build e Playwright dependem da criação da aplicação Angular em plano próprio.
 
 ### P-07: Publicar guia e governança da marca
 
-**Status:** not-started
+**Status:** blocked
 **Responsável:** equipe Thothis
 **Dependências:** etapa de integração e testes nos produtos
 
@@ -332,7 +360,8 @@ Validação:
 
 Evidências:
 
-- [docs/brand/guide.md](../brand/guide.md) — base de governança sem asset visual aprovado.
+- [docs/brand/guide.md](../brand/guide.md) — guia aprovado, catálogo, responsáveis, processo de atualização e rollback documentados; conclusão aguarda evidências de integração de P-06.
+- condição de retomada: P-06 concluída com caminhos e superfícies reais da aplicação; então revisar o catálogo de uso e registrar a evidência final.
 
 ## Critérios de aceite finais
 
@@ -383,6 +412,29 @@ Evidências:
 | 2026-07-29 | todas as etapas | - | not-started | nenhuma etapa possui evidência de execução | IA assistida |
 | 2026-07-31 | P-02, P-05 e P-07 | in-progress | not-started | conceitos e assets sem alinhamento com a identidade definida para Thothis foram removidos; nova exploração visual permanece pendente | IA assistida |
 | 2026-07-31 | P-01 e P-02 | in-progress / not-started | in-progress / not-started | plataforma estratégica candidata e territórios de escrita/registro e lua/tempo consolidados por decisão humana, sem aprovação das propostas | IA assistida |
+| 2026-07-31 | plano | completed | approved | aprovação humana explícita para executar o plano em fases; decisões e documentos associados permanecem sujeitos às aprovações próprias | Lincoln Zocateli |
+| 2026-07-31 | P-02 | not-started | in-progress | três alternativas vetoriais originais produzidas para seleção humana, sem integração ou aprovação presumida | IA assistida |
+| 2026-07-31 | P-02 | in-progress | in-progress | segunda rodada adiciona três novas silhuetas após solicitação humana, preservando a decisão como pendente | IA assistida |
+| 2026-07-31 | P-02 | in-progress | in-progress | direção F indicada pelo revisor humano para refinamento; três variações adicionais produzidas sem aprovação final presumida | Lincoln Zocateli e IA assistida |
+| 2026-07-31 | P-02 | in-progress | completed | direção G selecionada explicitamente pelo revisor humano; exploração comparativa concluída e encaminhada para verificação em P-03 | Lincoln Zocateli |
+| 2026-07-31 | P-01 | in-progress | completed | brief, plataforma estratégica e decisões bloqueantes aprovados explicitamente pelo revisor humano | Lincoln Zocateli |
+| 2026-07-31 | P-03 e P-04 | in-progress | in-progress | tipografia, tokens e itens selecionados aprovados; arquivos oficiais, hashes, similaridade e orçamento de bundle permanecem em verificação | Lincoln Zocateli e IA assistida |
+| 2026-07-31 | P-05 | not-started | in-progress | pacote vetorial e raster inicial produzido com checksums e automação reproduzível; wordmark e verificações finais permanecem pendentes | IA assistida |
+| 2026-08-01 | P-04 | in-progress | completed | fontes aprovadas produzidas localmente; cobertura portuguesa, licenças, hashes e orçamento inferior a 80 KB por família verificados | IA assistida |
+| 2026-08-01 | P-05 | in-progress | in-progress | wordmark convertido em paths e lockups claro/escuro renderizados; aprovação final e pesquisa de similaridade permanecem pendentes | IA assistida |
+| 2026-08-01 | P-05 | in-progress | blocked | pacote visual aprovado explicitamente por Lincoln Zocateli; pesquisa encontrou semelhança conceitual não resolvida com logos de estoque `T/Y + losango` | Lincoln Zocateli e IA assistida |
+| 2026-08-01 | P-03 | in-progress | blocked | pesquisa nominal não encontrou marca de software exata, mas a busca visual encontrou motivo semelhante em marketplaces; requer refinamento ou aceitação explícita do risco residual | IA assistida |
+| 2026-08-01 | plano | approved | blocked | P-03 bloqueia publicação e integração até decisão humana sobre o risco de similaridade | IA assistida |
+| 2026-08-01 | P-03 | blocked | blocked | Lincoln Zocateli decidiu refinar o símbolo; alternativas J, K e L foram produzidas e aguardam seleção para nova pesquisa de similaridade | Lincoln Zocateli e IA assistida |
+| 2026-08-01 | P-03 | blocked | completed | pesquisa não identificou marca ou logo idêntico; Lincoln Zocateli manteve G e aceitou explicitamente o risco residual de similaridade conceitual | Lincoln Zocateli |
+| 2026-08-01 | P-05 | blocked | completed | pacote final G aprovado, validado e liberado após aceitação explícita do risco residual | Lincoln Zocateli |
+| 2026-08-01 | P-06 | not-started | in-progress | P-03 e P-05 concluídas; integração e testes nos produtos foram liberados | IA assistida |
+| 2026-08-01 | plano | blocked | in-progress | bloqueio de similaridade resolvido por decisão humana; execução avança para integração | Lincoln Zocateli e IA assistida |
+| 2026-08-01 | P-06 | in-progress | blocked | logo integrado ao README; aplicação Angular e manifest PWA ainda não existem, impedindo integração e testes de produto | IA assistida |
+| 2026-08-01 | P-07 | not-started | in-progress | guia e governança aprovados; conclusão depende das evidências de integração de P-06 | Lincoln Zocateli e IA assistida |
+| 2026-08-01 | plano | in-progress | blocked | P-06 depende da criação da aplicação Angular, ausente no estado atual do repositório | IA assistida |
+| 2026-08-01 | P-07 | in-progress | blocked | guia aprovado e pronto; conclusão aguarda a integração real de P-06 para validar caminhos, superfícies e rollback | IA assistida |
+| 2026-08-01 | plano | blocked | blocked | criação da marca concluída em P-01 a P-05; estado e roteiro de retomada futura registrados para P-06 e P-07 | IA assistida |
 
 ## Regras de atualização
 
