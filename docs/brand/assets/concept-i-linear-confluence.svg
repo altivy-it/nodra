@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
-  <title id="title">Thothis - conceito I: Confluência linear</title>
-  <desc id="desc">Dois percursos lineares convergem em uma única haste central.</desc>
-  <path fill="none" stroke="#1A202C" stroke-width="12" stroke-linejoin="miter" d="M6 14h16l10 14 10-14h16M32 28v28"/>
-  <path fill="#0F766E" d="m32 20 8 8-8 8-8-8z"/>
-</svg>

@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
-  <title id="title">Thothis - conceito C: Trama</title>
-  <desc id="desc">Símbolo abstrato de registros entrelaçados em torno de um espaço central.</desc>
-  <path fill="#1A202C" d="M8 8h36v12H20v24H8zM20 44h24V20h12v36H20z"/>
-  <path fill="#0F766E" d="M20 20h12v12H20zM32 32h12v12H32z"/>
-</svg>

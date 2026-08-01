@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
-  <title id="title">Thothis - conceito F: Confluência</title>
-  <desc id="desc">Dois registros convergem em um eixo central, formando um T abstrato.</desc>
-  <path fill="#1A202C" d="M6 8h18l8 10 8-10h18v14H46L32 40 18 22H6zM25 36h14v20H25z"/>
-  <path fill="#0F766E" d="m24 22 8-10 8 10-8 10z"/>
-</svg>
