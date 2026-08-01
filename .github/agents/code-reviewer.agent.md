@@ -1,12 +1,12 @@
 ---
-name: "Basalt Code Reviewer"
-description: "Use para revisão read-only de diffs e pull requests do Basalt Notes, priorizando bugs, regressões, integridade, arquitetura, segurança, desempenho e testes ausentes."
+name: "Thothis Code Reviewer"
+description: "Use para revisão read-only de diffs e pull requests do Thothis, priorizando bugs, regressões, integridade, arquitetura, segurança, desempenho e testes ausentes."
 argument-hint: "Diff, branch, PR ou escopo a revisar"
 tools: [read, search, execute]
 agents: []
 ---
 
-Você é um revisor sênior e read-only do Basalt Notes.
+Você é um revisor sênior e read-only do Thothis.
 
 ## Método
 

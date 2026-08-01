@@ -1,5 +1,5 @@
 /*
- * Basalt Notes — Design Tokens
+ * Thothis — Design Tokens
  * Etapa P-07 | Status: draft / aguardando aprovação humana
  *
  * Uso:
@@ -14,7 +14,6 @@
  *   --accent-*         tokens semânticos de destaque / ação primária
  *   --focus-*          tokens de foco e acessibilidade
  *   --state-*          tokens de estados (erro, aviso, sucesso, info)
- *   --brand-*          tokens específicos da identidade visual da marca
  *   --radius-*         tokens de raio de borda
  *   --spacing-*        tokens de espaçamento (escala de 4 px)
  *   --font-*           tokens tipográficos
@@ -38,7 +37,7 @@
   --color-gray-100:   #F7FAFC;
   --color-white:      #FFFFFF;
 
-  /* Brand Palette */
+   /* Candidate Interface Palette */
   --color-blue-100:   #EBF4FF;
   --color-blue-200:   #C3DAFE;
   --color-blue-300:   #A3BFFA;
@@ -70,48 +69,42 @@
 :root,
 [data-theme="light"] {
   /* Superfície */
-  --surface-app:          var(--color-warm-white);
-  --surface-panel:        var(--color-pure-white);
-  --surface-raised:       var(--color-near-white);
-  --surface-sunken:       var(--color-light-stone);
+   --surface-app:          var(--color-gray-100);
+   --surface-panel:        var(--color-white);
+   --surface-raised:       var(--color-gray-200);
+   --surface-sunken:       var(--color-gray-300);
   --surface-overlay:      rgba(255, 255, 255, 0.92);
 
   /* Texto */
-  --text-primary:         var(--color-basalt-black);
-  --text-secondary:       var(--color-volcanic-gray);
-  --text-muted:           var(--color-stone-gray);
-  --text-placeholder:     var(--color-pebble-gray);
-  --text-disabled:        var(--color-mist-gray);
-  --text-inverse:         var(--color-warm-white);
-  --text-link:            var(--color-deep-teal);
-  --text-link-hover:      var(--color-mid-teal);
+   --text-primary:         var(--color-gray-900);
+   --text-secondary:       var(--color-gray-700);
+   --text-muted:           var(--color-gray-600);
+   --text-placeholder:     var(--color-gray-500);
+   --text-disabled:        var(--color-gray-400);
+   --text-inverse:         var(--color-white);
+   --text-link:            var(--color-info-blue);
+   --text-link-hover:      var(--color-blue-500);
 
   /* Borda */
-  --border-subtle:        var(--color-light-stone);
-  --border-default:       var(--color-mist-gray);
-  --border-strong:        var(--color-stone-gray);
-  --border-focus:         var(--color-azure-blue);
+   --border-subtle:        var(--color-gray-300);
+   --border-default:       var(--color-gray-400);
+   --border-strong:        var(--color-gray-600);
+   --border-focus:         var(--color-info-blue);
 
   /* Acento primário */
-  --accent-primary:       var(--color-deep-teal);
-  --accent-primary-hover: var(--color-mid-teal);
-  --accent-primary-text:  var(--color-pure-white);
-  --accent-secondary:     var(--color-pale-teal);
+   --accent-primary:       var(--color-info-blue);
+   --accent-primary-hover: var(--color-blue-500);
+   --accent-primary-text:  var(--color-white);
+   --accent-secondary:     var(--color-blue-100);
 
   /* Foco */
-  --focus-ring:           var(--color-azure-blue);
+   --focus-ring:           var(--color-info-blue);
   --focus-ring-width:     2px;
   --focus-ring-offset:    2px;
 
   /* Seleção */
-  --selection-bg:         var(--color-pale-blue);
+   --selection-bg:         var(--color-blue-100);
   --selection-text:       #1E3A8A;
-
-  /* Marca */
-  --brand-icon-stroke:    var(--color-deep-teal);
-  --brand-hub-fill:       var(--color-deep-teal);
-  --brand-node-fill:      var(--color-basalt-black);
-  --brand-edge-stroke:    var(--color-volcanic-gray);
 
   /* Estados */
   --state-error-text:     var(--color-error-red);
@@ -135,45 +128,39 @@
 [data-theme="dark"] {
   /* Superfície */
   --surface-app:          #0F0F0F;
-  --surface-panel:        var(--color-basalt-black);
+   --surface-panel:        var(--color-gray-900);
   --surface-raised:       #2A2A2A;
   --surface-sunken:       #141414;
   --surface-overlay:      rgba(30, 30, 30, 0.95);
 
   /* Texto */
-  --text-primary:         var(--color-warm-white);
-  --text-secondary:       var(--color-light-stone);
-  --text-muted:           var(--color-pebble-gray);
-  --text-placeholder:     var(--color-stone-gray);
-  --text-disabled:        var(--color-volcanic-gray);
-  --text-inverse:         var(--color-basalt-black);
-  --text-link:            var(--color-light-teal);
-  --text-link-hover:      var(--color-mid-teal);
+   --text-primary:         var(--color-gray-100);
+   --text-secondary:       var(--color-gray-400);
+   --text-muted:           var(--color-gray-500);
+   --text-placeholder:     var(--color-gray-600);
+   --text-disabled:        var(--color-gray-700);
+   --text-inverse:         var(--color-gray-900);
+   --text-link:            var(--color-blue-300);
+   --text-link-hover:      var(--color-blue-200);
 
   /* Borda */
   --border-subtle:        #252525;
-  --border-default:       var(--color-volcanic-gray);
-  --border-strong:        var(--color-stone-gray);
-  --border-focus:         var(--color-sky-blue);
+   --border-default:       var(--color-gray-700);
+   --border-strong:        var(--color-gray-600);
+   --border-focus:         var(--color-blue-300);
 
   /* Acento primário */
-  --accent-primary:       var(--color-light-teal);
-  --accent-primary-hover: var(--color-mid-teal);
+   --accent-primary:       var(--color-blue-300);
+   --accent-primary-hover: var(--color-blue-200);
   --accent-primary-text:  #0A2A28;
   --accent-secondary:     #134E4A;
 
   /* Foco */
-  --focus-ring:           var(--color-sky-blue);
+   --focus-ring:           var(--color-blue-300);
 
   /* Seleção */
   --selection-bg:         #1E3A8A;
-  --selection-text:       var(--color-pale-blue);
-
-  /* Marca */
-  --brand-icon-stroke:    var(--color-light-teal);
-  --brand-hub-fill:       var(--color-light-teal);
-  --brand-node-fill:      var(--color-light-stone);
-  --brand-edge-stroke:    var(--color-pebble-gray);
+   --selection-text:       var(--color-blue-100);
 
   /* Estados */
   --state-error-text:     #FCA5A5;
@@ -233,12 +220,6 @@
   /* Seleção */
   --selection-bg:         #1D4ED8;
   --selection-text:       #FFFFFF;
-
-  /* Marca */
-  --brand-icon-stroke:    #FFFFFF;
-  --brand-hub-fill:       #5EEAD4;
-  --brand-node-fill:      #FFFFFF;
-  --brand-edge-stroke:    #D4D4D8;
 
   /* Estados — ícone nunca é único indicador de estado */
   --state-error-text:     #FCA5A5;
@@ -309,12 +290,12 @@
   --leading-loose:  1.75;
 
   /* Espaçamento de letras */
-  --tracking-tighter: -0.05em;
-  --tracking-tight:   -0.025em;
+   --tracking-tighter: 0;
+   --tracking-tight:   0;
   --tracking-normal:   0em;
-  --tracking-wide:     0.025em;
-  --tracking-wider:    0.05em;
-  --tracking-widest:   0.1em;
+   --tracking-wide:     0;
+   --tracking-wider:    0;
+   --tracking-widest:   0;
 
   /* Transições */
   --transition-fast:    100ms ease;

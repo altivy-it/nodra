@@ -1,8 +1,8 @@
 ---
 name: "Criar ADR"
-description: "Analisa uma decisão arquitetural do Basalt Notes e cria um ADR completo quando justificado."
+description: "Analisa uma decisão arquitetural do Thothis e cria um ADR completo quando justificado."
 argument-hint: "Decisão arquitetural, contexto e restrições"
-agent: "Basalt Solution Architect"
+agent: "Thothis Solution Architect"
 ---
 
 Analise a decisão informada à luz do [plano mestre](../../README.md), das instruções arquiteturais e do [template de ADR](../ADR_TEMPLATE.md).

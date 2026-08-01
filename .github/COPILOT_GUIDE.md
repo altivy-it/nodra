@@ -1,6 +1,6 @@
-# Tutorial de GitHub Copilot no Basalt Notes
+# Tutorial de GitHub Copilot no Thothis
 
-Este guia explica como usar as customizações do GitHub Copilot presentes em `.github` para planejar, desenvolver, testar, revisar e preparar releases do Basalt Notes.
+Este guia explica como usar as customizações do GitHub Copilot presentes em `.github` para planejar, desenvolver, testar, revisar e preparar releases do Thothis.
 
 O objetivo não é aprender a escrever frases sofisticadas. O objetivo é fornecer ao Copilot contexto, resultado esperado, limites e evidências suficientes para que ele trabalhe como parte do processo de engenharia.
 
@@ -12,7 +12,7 @@ As customizações cumprem funções diferentes:
 | --- | --- | --- | --- |
 | Instrução global | regras permanentes do repositório | carregada automaticamente | Markdown é a fonte canônica |
 | Instrução específica | regras de um domínio ou caminho | carregada quando a tarefa ou arquivo corresponde | regras Angular para `apps/web` |
-| Agente | profissional especializado com ferramentas e responsabilidades | selecionado no chat ou chamado por outro agente | `Basalt .NET Engineer` |
+| Agente | profissional especializado com ferramentas e responsabilidades | selecionado no chat ou chamado por outro agente | `Thothis .NET Engineer` |
 | Prompt | comando curto para uma tarefa focada | digitado com `/` no chat | `/generate-tests` |
 | Skill | workflow completo com várias etapas e gates | digitado com `/` ou descoberto automaticamente | `/feature-delivery` |
 | Documento | fonte humana de arquitetura, processo ou política | lido pelo Copilot quando referenciado | plano mestre, ADR, segurança |
@@ -38,7 +38,7 @@ Ainda assim, escreva explicitamente o resultado desejado. Instruções definem p
 
 ## 3. Preparação no VS Code
 
-1. Abra a raiz `basaltnotes` no workspace.
+1. Abra a raiz `thothis` no workspace.
 2. Confirme que a extensão GitHub Copilot Chat está habilitada e autenticada.
 3. Abra o painel de Chat do Copilot.
 4. Use o seletor de agentes no topo do chat para escolher um agente especializado.
@@ -156,13 +156,13 @@ Agentes são especialistas. Selecione o agente no topo do chat antes de enviar o
 
 | Situação | Agente recomendado |
 | --- | --- |
-| feature envolvendo várias camadas | `Basalt Delivery Lead` |
-| decisão arquitetural ou novo componente | `Basalt Solution Architect` |
-| componente, estado ou UX Angular | `Basalt Angular Engineer` |
-| API, domínio, worker ou PostgreSQL | `Basalt .NET Engineer` |
-| criação e execução de testes | `Basalt Quality Engineer` |
-| threat model ou revisão de segurança | `Basalt Security Reviewer` |
-| revisão de diff ou pull request | `Basalt Code Reviewer` |
+| feature envolvendo várias camadas | `Thothis Delivery Lead` |
+| decisão arquitetural ou novo componente | `Thothis Solution Architect` |
+| componente, estado ou UX Angular | `Thothis Angular Engineer` |
+| API, domínio, worker ou PostgreSQL | `Thothis .NET Engineer` |
+| criação e execução de testes | `Thothis Quality Engineer` |
+| threat model ou revisão de segurança | `Thothis Security Reviewer` |
+| revisão de diff ou pull request | `Thothis Code Reviewer` |
 
 ### 6.2 Delivery Lead
 
@@ -454,7 +454,7 @@ O teste NotePathTests falha para nomes Unicode no Windows. Corrija a causa sem a
 Você pode mencionar caminhos diretamente:
 
 ```text
-Considere README.md, docs/backend.md e contracts/openapi/basalt-notes.yaml.
+Considere README.md, docs/backend.md e contracts/openapi/thothis.yaml.
 ```
 
 No VS Code, também pode adicionar arquivos pelo recurso de contexto do chat. Evite anexar o repositório inteiro sem necessidade; excesso de contexto pode esconder o que importa.
@@ -564,7 +564,7 @@ Ao salvar duas abas da mesma nota, a segunda sobrescreve a primeira sem aviso. R
 Depois peça revisão especializada:
 
 ```text
-Selecione Basalt Code Reviewer:
+Selecione Thothis Code Reviewer:
 Revise somente a correção de concorrência. Confirme status HTTP, preservação das versões e cobertura do cenário simultâneo.
 ```
 

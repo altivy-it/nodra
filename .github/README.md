@@ -1,6 +1,6 @@
 # Engenharia assistida por GitHub Copilot
 
-Este diretório define como pessoas e GitHub Copilot devem arquitetar, implementar, testar, revisar e preparar releases do Basalt Notes.
+Este diretório define como pessoas e GitHub Copilot devem arquitetar, implementar, testar, revisar e preparar releases do Thothis.
 
 Se você está começando a usar IA ou GitHub Copilot, leia primeiro o [tutorial prático](COPILOT_GUIDE.md).
 
@@ -26,10 +26,10 @@ Se você está começando a usar IA ou GitHub Copilot, leia primeiro o [tutorial
 
 ## Como escolher
 
-- Use **Basalt Delivery Lead** ou `/implement-feature` para entrega ponta a ponta.
-- Use **Basalt Angular Engineer** para trabalho isolado em Angular.
-- Use **Basalt .NET Engineer** para trabalho isolado em backend.
-- Use **Basalt Solution Architect** ou `/create-adr` para decisões de arquitetura.
+- Use **Thothis Delivery Lead** ou `/implement-feature` para entrega ponta a ponta.
+- Use **Thothis Angular Engineer** para trabalho isolado em Angular.
+- Use **Thothis .NET Engineer** para trabalho isolado em backend.
+- Use **Thothis Solution Architect** ou `/create-adr` para decisões de arquitetura.
 - Use `/plan-feature` para criar ou atualizar um plano em `docs/plan`.
 - Use `/generate-tests` para aumentar evidência de um comportamento.
 - Use `/review-change` ou `/pull-request-review` para revisão.

@@ -1,6 +1,6 @@
 ---
-name: "Arquitetura Basalt Notes"
-description: "Use ao planejar arquitetura, criar módulos, mover responsabilidades, adicionar dependências, integrar serviços ou escrever ADRs no monorepo Basalt Notes."
+name: "Arquitetura Thothis"
+description: "Use ao planejar arquitetura, criar módulos, mover responsabilidades, adicionar dependências, integrar serviços ou escrever ADRs no monorepo Thothis."
 applyTo: "apps/**, libs/**, contracts/**, deploy/**"
 ---
 
@@ -13,7 +13,7 @@ applyTo: "apps/**, libs/**, contracts/**, deploy/**"
 - `libs/backend/domain` não depende de infraestrutura, ASP.NET Core ou EF Core.
 - `libs/backend/application` orquestra casos de uso e depende do domínio e de portas explícitas.
 - `libs/backend/Infra` é uma família de projetos por responsabilidade estável; `data` concentra PostgreSQL, filesystem e projeções, `http` concentra integrações HTTP e `bus` concentra mediator, jobs duráveis e plumbing assíncrono.
-- A estrutura alvo do backend usa `BasaltNotes.Backend.Domain`, `BasaltNotes.Backend.Application`, `BasaltNotes.Backend.Infra.Data`, `BasaltNotes.Backend.Infra.Http` e `BasaltNotes.Backend.Infra.Bus`; hosts usam namespaces próprios e não hospedam código reutilizável de domínio.
+- A estrutura alvo do backend usa `Thothis.Backend.Domain`, `Thothis.Backend.Application`, `Thothis.Backend.Infra.Data`, `Thothis.Backend.Infra.Http` e `Thothis.Backend.Infra.Bus`; hosts usam namespaces próprios e não hospedam código reutilizável de domínio.
 - Keycloak é a plataforma externa obrigatória de identidade e decisão de autorização; a solução não implementa cadastro local, senha, recuperação de conta, MFA, diretório de usuários, memberships ou políticas próprias de acesso.
 - O BFF atua somente como cliente OIDC confidencial, gerenciador da sessão técnica do browser e relay de tokens; ele não se torna um provedor de identidade ou motor de autorização.
 - A API atua como Policy Enforcement Point: valida o token e exige as permissões emitidas pelo Keycloak antes de acessar qualquer recurso, sem reproduzir localmente a decisão da política.

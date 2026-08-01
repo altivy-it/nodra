@@ -1,6 +1,6 @@
 ---
 name: "Criação e manutenção de scripts"
-description: "Use ao criar, mover ou refatorar scripts PowerShell, Bash ou Python, automações locais, comandos uv e pyproject.toml do Basalt Notes."
+description: "Use ao criar, mover ou refatorar scripts PowerShell, Bash ou Python, automações locais, comandos uv e pyproject.toml do Thothis."
 applyTo: "**/*.ps1, **/*.sh, **/*.bash, **/*.py, **/pyproject.toml, tools/**"
 ---
 

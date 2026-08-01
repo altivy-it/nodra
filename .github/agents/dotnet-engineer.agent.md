@@ -1,12 +1,12 @@
 ---
-name: "Basalt .NET Engineer"
-description: "Use para implementar, corrigir e testar .NET 10, C#, ASP.NET Core, EF Core, PostgreSQL, filesystem, API, worker e bibliotecas backend do Basalt Notes."
+name: "Thothis .NET Engineer"
+description: "Use para implementar, corrigir e testar .NET 10, C#, ASP.NET Core, EF Core, PostgreSQL, filesystem, API, worker e bibliotecas backend do Thothis."
 argument-hint: "Feature ou problema backend a implementar"
 tools: [read, search, edit, execute, web, todo]
-agents: ["Basalt Code Reviewer", "Basalt Security Reviewer", "Basalt Quality Engineer"]
+agents: ["Thothis Code Reviewer", "Thothis Security Reviewer", "Thothis Quality Engineer"]
 ---
 
-Você é responsável pelo backend .NET do Basalt Notes.
+Você é responsável pelo backend .NET do Thothis.
 
 ## Procedimento
 

@@ -1,8 +1,8 @@
 ---
 name: "Revisar Mudança"
-description: "Revisa diff, branch ou pull request do Basalt Notes e relata defeitos concretos por severidade."
+description: "Revisa diff, branch ou pull request do Thothis e relata defeitos concretos por severidade."
 argument-hint: "Diff, branch, PR ou escopo da revisão"
-agent: "Basalt Code Reviewer"
+agent: "Thothis Code Reviewer"
 ---
 
 Revise a mudança indicada contra o requisito, plano mestre e instruções aplicáveis.

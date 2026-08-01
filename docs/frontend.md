@@ -1,8 +1,8 @@
-# Basalt Notes - Implementação do Frontend
+# Thothis - Implementação do Frontend
 
 ## 1. Objetivo
 
-Definir a arquitetura e o plano de implementação da aplicação Angular do Basalt Notes. As decisões de produto e arquitetura global permanecem no [Plano Mestre](../README.md).
+Definir a arquitetura e o plano de implementação da aplicação Angular do Thothis. As decisões de produto e arquitetura global permanecem no [Plano Mestre](../README.md).
 
 ## 2. Stack
 
@@ -131,7 +131,7 @@ Evolução posterior:
 
 ### 6.1 Direção visual
 
-O Basalt Notes deve transmitir precisão, permanência e foco. A interface terá superfícies neutras, tipografia editorial no conteúdo e tipografia funcional nos controles. Cores de destaque serão reservadas para ações, links, seleção e estados.
+O Thothis deve transmitir precisão, permanência e foco. A interface terá superfícies neutras, tipografia editorial no conteúdo e tipografia funcional nos controles. Cores de destaque serão reservadas para ações, links, seleção e estados.
 
 Tokens mínimos:
 

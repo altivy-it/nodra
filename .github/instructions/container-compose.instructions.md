@@ -1,6 +1,6 @@
 ---
 name: "Docker Compose"
-description: "Use ao criar ou alterar Docker Compose do Basalt Notes. Cobre serviços, redes, health dependencies, bind mounts, secrets, restart e perfis."
+description: "Use ao criar ou alterar Docker Compose do Thothis. Cobre serviços, redes, health dependencies, bind mounts, secrets, restart e perfis."
 applyTo: "**/compose*.yml, **/compose*.yaml"
 ---
 

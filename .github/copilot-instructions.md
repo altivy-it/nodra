@@ -1,8 +1,8 @@
-# Basalt Notes - Instruções globais
+# Thothis - Instruções globais
 
 ## Contexto obrigatório
 
-- O Basalt Notes é uma aplicação web self-hosted de gestão de conhecimento em Markdown.
+- O Thothis é uma aplicação web self-hosted de gestão de conhecimento em Markdown.
 - Leia o [plano mestre](../README.md) antes de alterar arquitetura, contratos, persistência ou segurança.
 - Consulte [frontend](../docs/frontend.md), [backend](../docs/backend.md) e [evolução do produto](../docs/evolucao-produto.md) conforme o escopo.
 - Arquivos Markdown no vault são a fonte canônica; PostgreSQL é uma projeção reconstruível.
@@ -67,7 +67,7 @@ Não crie dependências circulares. `apps/*` compõem e hospedam; regras reutili
 - Normalize e autorize paths antes de qualquer acesso ao filesystem.
 - Nunca registre conteúdo integral de notas, tokens, senhas ou secrets.
 - Conteúdo, persistência, busca e edição não podem depender de embeddings, nuvem ou internet; acesso autenticado depende somente do Keycloak configurado, que pode operar na rede local.
-- Keycloak é a plataforma externa obrigatória de identidade e decisão de autorização. Não implemente cadastro, senha, recuperação de conta, diretório de usuários, memberships ou políticas de autorização no Basalt Notes.
+- Keycloak é a plataforma externa obrigatória de identidade e decisão de autorização. Não implemente cadastro, senha, recuperação de conta, diretório de usuários, memberships ou políticas de autorização no Thothis.
 - O BFF atua somente como cliente OIDC e proteção de tokens; a API atua como PEP e falha fechada ao aplicar as permissões emitidas pelo Keycloak.
 - Não adicione Redis, object storage, banco de grafos ou microsserviço sem ADR e evidência operacional.
 - Use somente dependências externas com licença permissiva, gratuita para todos os usos previstos e previamente verificada, como MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC ou PostgreSQL.

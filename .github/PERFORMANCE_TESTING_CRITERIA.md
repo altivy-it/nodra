@@ -1,6 +1,6 @@
 # Criterios corporativos de testes de carga e performance
 
-Este documento padroniza criterios minimos para testes de carga e performance no Basalt Notes. Os valores abaixo seguem praticas de mercado para APIs web e devem ser ajustados por dominio quando houver justificativa tecnica documentada.
+Este documento padroniza criterios minimos para testes de carga e performance no Thothis. Os valores abaixo seguem praticas de mercado para APIs web e devem ser ajustados por dominio quando houver justificativa tecnica documentada.
 
 ## Objetivo
 

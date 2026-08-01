@@ -1,4 +1,4 @@
-# Contribuindo com o Basalt Notes
+# Contribuindo com o Thothis
 
 ## Antes de começar
 
@@ -45,10 +45,10 @@ npm run build
 npm run e2e
 
 # Backend
-dotnet restore BasaltNotes.slnx --locked-mode
-dotnet format BasaltNotes.slnx --verify-no-changes
-dotnet build BasaltNotes.slnx --no-restore
-dotnet test BasaltNotes.slnx --no-build
+dotnet restore Thothis.slnx --locked-mode
+dotnet format Thothis.slnx --verify-no-changes
+dotnet build Thothis.slnx --no-restore
+dotnet test Thothis.slnx --no-build
 ```
 
 Testes de integração podem exigir Docker para PostgreSQL/Testcontainers. Scripts adicionais devem compor esses comandos, não substituí-los silenciosamente.

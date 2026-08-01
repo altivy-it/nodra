@@ -1,6 +1,6 @@
 # Convenção de commits
 
-Todo commit do Basalt Notes deve seguir a especificação [Conventional Commits 1.0.0](https://www.conventionalcommits.org/pt-br/v1.0.0/). A convenção torna o histórico legível, permite gerar changelogs e comunica o impacto semântico de cada mudança.
+Todo commit do Thothis deve seguir a especificação [Conventional Commits 1.0.0](https://www.conventionalcommits.org/pt-br/v1.0.0/). A convenção torna o histórico legível, permite gerar changelogs e comunica o impacto semântico de cada mudança.
 
 ## Formato
 

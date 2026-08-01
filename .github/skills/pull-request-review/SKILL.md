@@ -1,6 +1,6 @@
 ---
 name: pull-request-review
-description: "Executa revisão rigorosa de branch, diff ou pull request do Basalt Notes. Use para code review, security review, revisão arquitetural, contratos, migrations, testes e risco de release."
+description: "Executa revisão rigorosa de branch, diff ou pull request do Thothis. Use para code review, security review, revisão arquitetural, contratos, migrations, testes e risco de release."
 argument-hint: "PR, branch, diff e requisito relacionado"
 ---
 

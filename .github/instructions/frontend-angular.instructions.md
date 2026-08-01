@@ -1,6 +1,6 @@
 ---
 name: "Frontend Angular"
-description: "Use ao criar ou alterar Angular 22, TypeScript, componentes, páginas, estado, rotas, editor Markdown, grafo, acessibilidade ou UX do Basalt Notes."
+description: "Use ao criar ou alterar Angular 22, TypeScript, componentes, páginas, estado, rotas, editor Markdown, grafo, acessibilidade ou UX do Thothis."
 applyTo: "apps/web/**, libs/frontend/**"
 ---
 

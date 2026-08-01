@@ -1,25 +1,27 @@
-# Plano de identidade visual e branding do Basalt Notes
+# Plano de identidade visual e branding do Thothis
 
-**Status:** draft  
+**Status:** completed  
 **Data de criação:** 2026-07-29  
-**Última atualização:** 2026-07-29  
-**Responsáveis:** equipe Basalt Notes  
+**Última atualização:** 2026-07-31
+**Responsáveis:** equipe Thothis
 **Origem:** proposta humana normalizada por IA assistida  
-**Revisor humano:** pendente  
+**Revisor humano:** Lincoln Zocateli  
 **Relacionado:** [Plano mestre](../../README.md), [Implementação do frontend](../frontend.md) e ADR de design system a avaliar
 
 ## Objetivo
 
-Definir, validar e entregar uma identidade visual original e acessível para o Basalt Notes, composta por conceito de marca, logotipo, ícone, paleta, tipografia, tokens e arquivos de distribuição, sem criar dependência operacional de serviço proprietário ou internet.
+Definir, validar e entregar uma identidade visual original e acessível para o Thothis, composta por conceito de marca, logotipo, ícone, paleta, tipografia, tokens e arquivos de distribuição, sem criar dependência operacional de serviço proprietário ou internet.
 
 O resultado deve comunicar precisão, permanência, conhecimento conectado e operação self-hosted, mantendo consistência entre aplicação, documentação, repositório, PWA e imagens de container.
 
 ## Contexto e premissas
 
-- o nome Basalt Notes associa notas e gestão de conhecimento à solidez e durabilidade do basalto;
+- o nome Thothis associa o produto a Thoth, à escrita, ao conhecimento, à memória e ao registro da informação;
+- a plataforma estratégica candidata adota o arquétipo do Sábio e prioriza clareza, conhecimento, organização, confiabilidade, simplicidade, independência e inovação responsável;
 - a direção visual normativa do frontend exige precisão, permanência, foco, superfícies neutras, tipografia editorial no conteúdo e tipografia funcional nos controles;
-- o conceito inicial preferido combina uma forma mineral de basalto com nós e conexões de um grafo de conhecimento;
-- as alternativas iniciais são pedra hexagonal, letra `B` conectada e colunas basálticas;
+- os territórios visuais candidatos são escrita e registro, lua e tempo e uma síntese abstrata entre registro e conhecimento conectado;
+- o conceito visual não deve copiar hieróglifos, representar divindades nem reproduzir símbolos religiosos ou arqueológicos;
+- um monograma `T` pode ser explorado como tratamento tipográfico, mas não constitui direção obrigatória;
 - nenhuma alternativa, cor, fonte, slogan ou arquivo gerado está aprovada neste momento;
 - toda marca deve funcionar nos temas claro, escuro e alto contraste, em monocromia e em tamanhos reduzidos;
 - assets finais devem operar localmente e ser distribuídos com a aplicação, sem CDN, fonte remota ou chamada a serviço externo em runtime;
@@ -27,35 +29,59 @@ O resultado deve comunicar precisão, permanência, conhecimento conectado e ope
 - referências de mercado servem apenas para comparação de legibilidade e aplicação; o resultado não deve imitar identidade, ícone ou composição de terceiros;
 - qualquer fonte, ferramenta ou asset externo exige licença da versão exata verificada e compatível com a política do repositório antes da adoção.
 
-## Hipóteses visuais iniciais
+## Plataforma e hipóteses visuais iniciais
+
+#### Plataforma estratégica candidata
+
+O [brief de identidade visual](../brand/brief.md) é a fonte da formulação
+completa. Para orientar as etapas deste plano, a marca parte destas hipóteses:
+
+- **missão:** transformar informações dispersas em conhecimento acessível, conectado e útil;
+- **visão:** ser uma plataforma de conhecimento confiável para pessoas e organizações que precisam preservar, relacionar e encontrar informação sob seu próprio controle;
+- **arquétipo:** O Sábio, com linguagem clara, rigorosa e acessível, sem tom pretensioso, místico ou distante;
+- **valores:** clareza, conhecimento, organização, confiabilidade, simplicidade, independência e inovação responsável.
+
+Todas essas formulações permanecem candidatas e dependem de aprovação humana em P-01.
 
 #### Conceito de marca
 
-**Basalto + grafo de conhecimento** é a hipótese principal. A forma mineral comunica solidez e durabilidade; nós e arestas comunicam links, backlinks e relações entre notas.
+**Escrita, memória e tempo** formam o núcleo conceitual. Um gesto abstrato de
+registro comunica escrita e preservação; ciclos e fases comunicam continuidade
+e medição do tempo; relações discretas comunicam links, backlinks e contexto
+entre notas sem se tornarem um grafo genérico.
 
 Valores a testar com usuários e responsáveis pelo produto:
 
-- robustez;
-- durabilidade;
+- clareza;
+- conhecimento;
 - organização;
 - confiabilidade;
 - independência self-hosted;
-- conexão entre informações;
 - simplicidade.
+- inovação responsável;
+- conexão entre informações;
 
 Mensagens candidatas, ainda não aprovadas:
 
-> Knowledge built on solid foundations.
+- `Knowledge Connected.`
+- `Knowledge, written to endure.`
+- `Write. Connect. Remember.`
+- `From Information to Wisdom.`
+- `Intelligence Built on Knowledge.`
 
-> Your knowledge. Organized. Connected. Durable.
+Nenhuma mensagem está definida como tagline principal.
 
 #### Alternativas de símbolo
 
-1. **Pedra hexagonal:** forma mineral geométrica contendo uma rede de nós.
-2. **Letra B conectada:** monograma construído por nós e linhas, associado a Basalt e backlinks.
-3. **Colunas basálticas:** módulos hexagonais inspirados em formações naturais, adequados a ícones pequenos.
+1. **Escrita e registro:** gesto ou estrutura abstrata que comunique documentação, linguagem e preservação da informação.
+2. **Lua e tempo:** ciclos, fases ou medição tratados geometricamente, sem ilustração literal ou iconografia religiosa.
+3. **Síntese entre registro e conexão:** composição abstrata em que continuidade, ritmo ou relações entre formas comuniquem conhecimento conectado.
 
-Evitar ícones genéricos de bloco de notas, reprodução de marcas concorrentes, detalhes frágeis em tamanho reduzido e dependência de cor para reconhecimento.
+Um monograma `T` pode ser avaliado como tratamento tipográfico dentro das três
+direções. Evitar íbis, constelações, redes neurais, livros, bibliotecas e grafos
+literais, além de ícones genéricos de bloco de notas, reprodução de marcas
+concorrentes, detalhes frágeis em tamanho reduzido e dependência de cor para
+reconhecimento.
 
 #### Paleta candidata
 
@@ -63,13 +89,13 @@ Os valores abaixo são pontos de partida, não tokens aprovados:
 
 | Papel candidato | Cor |
 | --- | --- |
-| Basalt Black | `#1E1E1E` |
-| Volcanic Gray | `#3D3D3D` |
-| Stone Gray | `#707070` |
-| Deep Teal | `#0F766E` |
-| Azure Blue | `#2563EB` |
-| Light Stone | `#E5E7EB` |
-| Warm White | `#F8FAFC` |
+| Archive Ink | `#1E1E1E` |
+| Interface Gray | `#4A5568` |
+| Muted Gray | `#718096` |
+| Scribe Teal | `#0F766E` |
+| Signal Blue | `#2563EB` |
+| Light Border | `#E2E8F0` |
+| Paper White | `#F8FAFC` |
 
 A validação deve transformar cores aprovadas em tokens semânticos de superfície, texto, borda, foco, seleção e estado. A interface não deve ser dominada por uma única família cromática.
 
@@ -119,7 +145,9 @@ Nenhuma fonte entra no produto antes de:
 Entregas:
 
 - brief com público, personalidade, usos, restrições e atributos prioritários;
-- lista de mensagens candidatas e decisão sobre necessidade de slogan;
+- missão, visão, valores e arquétipo candidatos com decisão humana registrada;
+- arquitetura de mensagens candidatas e decisão sobre necessidade de tagline;
+- territórios visuais candidatos e limites para referências culturais;
 - inventário de superfícies que receberão marca e ícone;
 - critérios de legibilidade, acessibilidade, originalidade e operação offline;
 - referências de mercado descritas por característica, sem instrução de imitação.
@@ -127,6 +155,8 @@ Entregas:
 Validação:
 
 - revisão humana confirma alinhamento com o plano mestre e o frontend;
+- revisão humana confirma ou ajusta missão, visão, valores e arquétipo;
+- teste de compreensão elimina mensagens que ampliem o escopo ou prometam capacidades inexistentes;
 - cada critério possui forma de avaliação e responsável;
 - questões bloqueantes permanecem explícitas e sem decisão presumida.
 
@@ -136,7 +166,7 @@ Evidências:
 
 ### P-02: Explorar conceitos visuais
 
-**Status:** in-progress  
+**Status:** not-started
 **Responsável:** design ou pessoa responsável pela identidade visual  
 **Dependências:** P-01
 
@@ -144,7 +174,7 @@ Evidências:
 
 Entregas:
 
-- pelo menos três alternativas baseadas nas hipóteses de símbolo;
+- pelo menos três alternativas, uma por direção visual candidata;
 - variações com e sem wordmark, monocromáticas e para temas claro e escuro;
 - testes preliminares em favicon, ícone PWA, cabeçalho e documentação;
 - registro do processo, ferramentas e fontes de referência;
@@ -154,15 +184,14 @@ Validação:
 
 - alternativas permanecem reconhecíveis em `16x16`, `32x32` e `48x48` pixels;
 - versões monocromáticas não dependem de cor para comunicar o símbolo;
+- referências a escrita, lua ou tempo permanecem abstratas e não reproduzem hieróglifos, divindades ou símbolos religiosos e arqueológicos;
+- o resultado comunica o arquétipo do Sábio sem parecer pretensioso, místico ou distante;
 - revisão humana seleciona uma direção ou solicita nova exploração;
 - nenhum conceito selecionado apresenta semelhança material não resolvida com marca conhecida.
 
 Evidências:
 
-- [docs/brand/exploration/concept-a-basalt-graph.svg](../brand/exploration/concept-a-basalt-graph.svg) — hexágono flat-top + grafo de nós (hipótese principal).
-- [docs/brand/exploration/concept-b-hexagonal-crystal.svg](../brand/exploration/concept-b-hexagonal-crystal.svg) — hexágono cristalino com facetas minerais.
-- [docs/brand/exploration/concept-c-letter-b.svg](../brand/exploration/concept-c-letter-b.svg) — monograma B construído por nós e arestas.
-- [docs/brand/exploration/comparison.md](../brand/exploration/comparison.md) — matriz comparativa com recomendação do Concept A. Aguarda seleção humana.
+- pendente de nova exploração alinhada à origem e ao posicionamento de Thothis.
 
 ### P-03: Verificar licenças, proveniência e originalidade
 
@@ -223,7 +252,7 @@ Evidências:
 
 ### P-05: Produzir o sistema de marca
 
-**Status:** in-progress  
+**Status:** not-started
 **Responsável:** design  
 **Dependências:** P-02, P-03, P-04
 
@@ -248,14 +277,7 @@ Validação:
 
 Evidências:
 
-- [docs/brand/assets/icon.svg](../brand/assets/icon.svg) — ícone isolado, tema claro.
-- [docs/brand/assets/icon-dark.svg](../brand/assets/icon-dark.svg) — ícone, tema escuro.
-- [docs/brand/assets/icon-mono.svg](../brand/assets/icon-mono.svg) — ícone monocromático.
-- [docs/brand/assets/logo-horizontal.svg](../brand/assets/logo-horizontal.svg) — logo horizontal, tema claro.
-- [docs/brand/assets/logo-horizontal-dark.svg](../brand/assets/logo-horizontal-dark.svg) — logo horizontal, tema escuro.
-- [docs/brand/assets/logo-compact.svg](../brand/assets/logo-compact.svg) — logo empilhado.
-- [docs/brand/assets/logo-mono.svg](../brand/assets/logo-mono.svg) — logo monochrome.
-- [docs/brand/assets/favicon.svg](../brand/assets/favicon.svg) — variante simplificada para favicon. Todos aguardam aprovação humana; checksums e testes de contraste pendentes.
+- pendente; nenhum asset visual está aprovado ou distribuído.
 
 ### P-06: Integrar e testar nos produtos
 
@@ -287,8 +309,8 @@ Evidências:
 
 ### P-07: Publicar guia e governança da marca
 
-**Status:** in-progress  
-**Responsável:** equipe Basalt Notes  
+**Status:** not-started
+**Responsável:** equipe Thothis
 **Dependências:** etapa de integração e testes nos produtos
 
 **Objetivo:** tornar a identidade sustentável e evitar deriva ou uso inconsistente.
@@ -310,12 +332,14 @@ Validação:
 
 Evidências:
 
-- [docs/brand/guide.md](../brand/guide.md) — guia de marca com assets disponíveis, usos corretos, usos incorretos, área de proteção, contraste mínimo, catálogo e processo de aprovação. Checksums e responsáveis pendentes de preenchimento.
+- [docs/brand/guide.md](../brand/guide.md) — base de governança sem asset visual aprovado.
 
 ## Critérios de aceite finais
 
 - conceito, símbolo, wordmark, paleta e tipografia possuem aprovação humana referenciada;
+- missão, visão, valores, arquétipo e eventual tagline possuem decisão humana referenciada;
 - o sistema comunica precisão, permanência e conhecimento conectado sem imitar terceiros;
+- referências a escrita, lua e tempo permanecem abstratas e culturalmente responsáveis;
 - todos os assets possuem proveniência e direito de distribuição verificados;
 - logotipo e ícone funcionam em temas claro, escuro, alto contraste e monocromático;
 - favicon e ícones pequenos permanecem reconhecíveis nos tamanhos definidos;
@@ -335,9 +359,10 @@ Evidências:
 | símbolo perde legibilidade em tamanho pequeno | favicon e PWA irreconhecíveis | testar matriz de tamanhos desde a exploração e criar variante simplificada |
 | contraste insuficiente | barreira de acessibilidade | medir combinações por token nos três temas e bloquear integração quando falhar |
 | identidade domina a interface operacional | redução de densidade e foco | reservar marca a superfícies adequadas e preservar a direção utilitária do frontend |
+| referência cultural literal ou estereotipada | perda de originalidade e risco reputacional | trabalhar com abstrações formais, pesquisar contexto e bloquear hieróglifos, divindades e símbolos religiosos reconhecíveis |
 | uso de CDN ou fonte remota | falha em ambiente isolado e risco de privacidade | hospedar assets aprovados localmente e testar sem internet |
 | SVG não sanitizado | execução ou carregamento externo indesejado | otimizar, inspecionar e testar CSP antes da integração |
-| mudança ampla sem rollback | regressão difícil de reverter | integrar em change set isolado, preservar assets anteriores e manter catálogo versionado |
+| mudança visual ampla | regressão difícil de corrigir | integrar em change set isolado e manter catálogo versionado dos assets aprovados |
 
 ## Rollout e rollback
 
@@ -346,7 +371,7 @@ Evidências:
 - promover para ambiente representativo somente após licença, acessibilidade, segurança e build passarem;
 - substituir superfícies públicas em um change set rastreável e sem misturar refatorações não relacionadas;
 - interromper a publicação diante de conflito de marca, licença incerta, contraste insuficiente, SVG inseguro ou dependência externa em runtime;
-- no rollback, restaurar os assets e tokens anteriores, limpar caches versionados quando necessário e validar que manifest, favicon e documentação voltaram ao conjunto compatível;
+- em uma substituição, remover referências aos assets não aprovados, limpar caches versionados quando necessário e validar manifest, favicon e documentação;
 - a reversão visual não deve exigir migração de dados nem alterar conteúdo de usuário.
 
 ## Histórico de status
@@ -356,7 +381,8 @@ Evidências:
 | 2026-07-29 | plano | - | draft | conteúdo inicial incluído manualmente para orientar a identidade visual | responsável pelo projeto |
 | 2026-07-29 | plano | draft | draft | normalização ao template sem aprovação das escolhas visuais | IA assistida |
 | 2026-07-29 | todas as etapas | - | not-started | nenhuma etapa possui evidência de execução | IA assistida |
-| 2026-07-29 | P-01 a P-05, P-07 | not-started | in-progress | entregáveis produzidos por IA assistida: brief, 3 SVGs de exploração, matriz comparativa, inventário de licenças, tokens CSS/JSON, tipografia, 8 SVGs de assets e guia de marca; todos aguardam revisão e aprovação humana | IA assistida |
+| 2026-07-31 | P-02, P-05 e P-07 | in-progress | not-started | conceitos e assets sem alinhamento com a identidade definida para Thothis foram removidos; nova exploração visual permanece pendente | IA assistida |
+| 2026-07-31 | P-01 e P-02 | in-progress / not-started | in-progress / not-started | plataforma estratégica candidata e territórios de escrita/registro e lua/tempo consolidados por decisão humana, sem aprovação das propostas | IA assistida |
 
 ## Regras de atualização
 
@@ -380,21 +406,21 @@ do sistema de marca.
 #### Logotipo com símbolo e wordmark
 
 ```text
-Create an original visual identity concept for a self-hosted knowledge management product named "Basalt Notes".
+Create an original visual identity concept for a self-hosted knowledge management product named "Thothis".
 
-Combine an abstract basalt-inspired geometric form with a small knowledge graph made of connected nodes. Prioritize a distinctive silhouette, simple geometry, legibility at small sizes, and clear separation from existing software brands.
+Explore an abstract synthesis of writing, preserved records, lunar cycles, and measured time. Connected knowledge may appear through continuity, rhythm, or relationships between forms, never as a generic network diagram. Prioritize a distinctive silhouette, simple geometry, legibility at small sizes, and clear separation from existing software brands.
 
-Explore a neutral mineral palette with a restrained teal accent. Include an original "Basalt Notes" wordmark using a generic sans-serif placeholder; do not reproduce a proprietary typeface or third-party logo.
+Explore neutral interface colors with restrained teal and blue accents. Include an original "Thothis" wordmark using a generic sans-serif placeholder; do not reproduce a proprietary typeface or third-party logo.
 
-Flat vector concept. White background. No shadows, gradients, mockups, mascots, stock symbols, or references to existing brand styles.
+Flat vector concept. White background. No shadows, gradients, mockups, mascots, copied hieroglyphs, literal deities, religious symbols, stock symbols, or references to existing brand styles.
 ```
 
 #### Ícone
 
 ```text
-Design an original square icon concept for "Basalt Notes", a self-hosted Markdown knowledge platform.
+Design an original square icon concept for "Thothis", a self-hosted Markdown knowledge platform.
 
-Use an abstract basalt-inspired polygon containing a minimal network of connected nodes. The icon must remain recognizable at 16x16, 32x32, and 48x48 pixels and must also work in monochrome.
+Use an abstract mark that suggests writing, preserved records, cycles, and measured time without reproducing a known hieroglyph, deity, moon illustration, or religious symbol. The icon must remain recognizable at 16x16, 32x32, and 48x48 pixels and must also work in monochrome.
 
 Use charcoal, neutral gray, and one restrained teal accent. No text, gradients, shadows, mockups, stock note symbols, or imitation of existing product icons.
 ```
@@ -402,9 +428,9 @@ Use charcoal, neutral gray, and one restrained teal accent. No text, gradients, 
 #### Prancha de exploração
 
 ```text
-Create an exploratory branding board for "Basalt Notes", a self-hosted Markdown knowledge management product.
+Create an exploratory branding board for "Thothis", a self-hosted Markdown knowledge management product.
 
-Show three clearly different original directions based on basalt geometry and connected knowledge: a mineral polygon, an abstract connected letter B, and simplified basalt columns. For each direction, show symbol, temporary wordmark, monochrome version, light and dark backgrounds, favicon-size preview, candidate palette, and compact application-header usage.
+Show three clearly different original directions: an abstract writing and record gesture; a geometric study of lunar cycles and measured time; and a synthesis in which continuity or relationships between forms suggest connected knowledge. An original letter T may appear as a typographic treatment, but not as a required direction. For each direction, show symbol, temporary wordmark, monochrome version, light and dark backgrounds, favicon-size preview, candidate palette, and compact application-header usage.
 
-Focus on precision, permanence, accessibility, and operational software. Do not imitate existing brands, generate marketing-page layouts, or present the concepts as legally cleared final assets.
+Focus on wisdom, clarity, precision, permanence, accessibility, and operational software. Do not use ibis mascots, constellations, neural networks, literal books or libraries, copied hieroglyphs, deities, religious iconography, or generic graph symbols. Do not imitate existing brands, generate marketing-page layouts, or present the concepts as legally cleared final assets.
 ```

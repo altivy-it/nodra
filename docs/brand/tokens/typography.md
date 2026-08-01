@@ -1,4 +1,4 @@
-# Tipografia — Basalt Notes
+# Tipografia — Thothis
 
 **Status:** draft / aguardando aprovação humana  
 **Etapa do plano:** P-04  
@@ -8,7 +8,7 @@
 
 ## Papéis tipográficos
 
-O Basalt Notes usa três papéis distintos de tipografia, cada um com família própria:
+O Thothis usa três papéis distintos de tipografia, cada um com família própria:
 
 | Papel | Família candidata | Fallback | Uso |
 |---|---|---|---|
@@ -57,8 +57,9 @@ xl:   24px  — títulos de página (H2/H3 no shell)
 ### Wordmark
 
 - Usar a família funcional (sans) aprovada.
-- Peso: **semibold (600)** para "Basalt", **regular (400)** para "Notes".
-- Tracking: `--tracking-wide` (0.025 em) para "NOTES" em caixa-alta.
+- Texto: **Thothis**.
+- Peso: **semibold (600)**.
+- Tracking: `--tracking-normal` (`0`).
 - Não usar fonte incorporada no SVG; converter para path após aprovação da fonte.
 
 ### Interface

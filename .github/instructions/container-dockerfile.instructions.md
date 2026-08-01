@@ -1,6 +1,6 @@
 ---
 name: "Dockerfiles da Aplicação"
-description: "Use ao criar, alterar ou revisar Dockerfiles e arquivos dockerignore do Basalt Notes. Cobre multi-stage, cache, usuário, imagem runtime, secrets, labels e health check."
+description: "Use ao criar, alterar ou revisar Dockerfiles e arquivos dockerignore do Thothis. Cobre multi-stage, cache, usuário, imagem runtime, secrets, labels e health check."
 applyTo: "**/Dockerfile*, **/.dockerignore"
 ---
 

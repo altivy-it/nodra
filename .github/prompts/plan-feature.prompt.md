@@ -2,7 +2,7 @@
 name: "Planejar Feature"
 description: "Converte uma necessidade de produto em plano vertical executável para frontend, backend, contratos, dados, testes e operação."
 argument-hint: "Necessidade, usuário e resultado esperado"
-agent: "Basalt Delivery Lead"
+agent: "Thothis Delivery Lead"
 ---
 
 Transforme a necessidade em um plano de entrega e crie ou atualize `docs/plan/<tema>.md` conforme [PLAN_TEMPLATE.md](../PLAN_TEMPLATE.md).

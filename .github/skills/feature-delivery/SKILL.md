@@ -1,6 +1,6 @@
 ---
 name: feature-delivery
-description: "Entrega uma feature vertical do Basalt Notes do requisito à validação. Use para implementar funcionalidades que envolvem arquitetura, OpenAPI, Angular, .NET, PostgreSQL, testes, segurança e documentação."
+description: "Entrega uma feature vertical do Thothis do requisito à validação. Use para implementar funcionalidades que envolvem arquitetura, OpenAPI, Angular, .NET, PostgreSQL, testes, segurança e documentação."
 argument-hint: "Feature, problema do usuário e critérios de aceite"
 ---
 

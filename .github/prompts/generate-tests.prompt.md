@@ -1,8 +1,8 @@
 ---
 name: "Gerar Testes"
-description: "Cria testes de regressão e comportamento para uma mudança do Basalt Notes no nível adequado."
+description: "Cria testes de regressão e comportamento para uma mudança do Thothis no nível adequado."
 argument-hint: "Comportamento, bug, diff ou arquivo a testar"
-agent: "Basalt Quality Engineer"
+agent: "Thothis Quality Engineer"
 ---
 
 Crie testes para o comportamento informado.

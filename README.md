@@ -1,22 +1,26 @@
-# Basalt Notes
+# Thothis
 
 ## Plano mestre da solução
 
 **Status:** proposta arquitetural inicial  
 **Data de referência:** 28 de julho de 2026  
-**Objetivo:** orientar produto, arquitetura, implementação, implantação e evolução do Basalt Notes.
+**Objetivo:** orientar produto, arquitetura, implementação, implantação e evolução do Thothis.
 
 ## 1. Visão do produto
 
-O Basalt Notes será uma plataforma web self-hosted de gestão de conhecimento baseada em Markdown. A experiência deve oferecer edição, organização, links entre notas, backlinks, propriedades, pesquisa e visualização em grafo, sem exigir instalação de software no computador do usuário além de um navegador.
+O Thothis será uma plataforma web self-hosted de gestão de conhecimento baseada em Markdown. A experiência deve oferecer edição, organização, links entre notas, backlinks, propriedades, pesquisa e visualização em grafo, sem exigir instalação de software no computador do usuário além de um navegador.
 
 A solução será distribuída por containers e deverá funcionar tanto em uma máquina com Docker Desktop quanto em um servidor atrás de proxy reverso. Os documentos e demais dados persistentes ficarão em bind mounts configuráveis, incluindo pastas locais, compartilhamentos de rede e NAS compatíveis com o host dos containers.
 
 ### 1.1 Origem do nome
 
-O nome **Basalt Notes** nasceu da combinação entre identidade, propósito e arquitetura. **Notes** cria uma associação imediata: quem lê entende que o produto é voltado a notas e gestão de conhecimento. **Basalt**, referência ao basalto, preserva a força e a estética mineral associadas a algo sólido, durável e robusto, ao mesmo tempo que deixa claro que esta é uma solução própria, com identidade independente.
+O nome **Thothis** é fortemente associado a **Thoth**, divindade egípcia da escrita, do conhecimento, da sabedoria, da ciência e do registro da informação. Essa origem estabelece uma relação direta com o propósito do produto: organizar conhecimento, preservar memória e tornar informação conectada acessível e pesquisável.
 
-Essa ideia de robustez também representa a motivação técnica do produto: oferecer uma aplicação completa executada em containers, acessível pelo navegador e sem exigir a instalação local de editor, runtime ou banco de dados. Assim, o nome comunica tanto o que a solução faz quanto a forma confiável e portátil com que ela pretende fazê-lo.
+**Thothis** possui associação conceitual forte com conhecimento, escrita, documentação, memória, inteligência artificial e gestão de conhecimento. O nome é adequado para uma plataforma de notas, wiki corporativa, documentação, pesquisa e recursos de RAG ou LLM, mantendo uma identidade curta, memorável e premium.
+
+A pronúncia oficial é **TÔ-TIS**. Essa forma é simples para falantes de português, espanhol e inglês, preserva uma sonoridade forte e facilita o uso internacional consistente da marca.
+
+Os endereços oficiais previstos são **thothis.app** e **thothis.zocate.li**.
 
 ### 1.2 Proposta de valor
 
@@ -116,16 +120,16 @@ Como filesystem e PostgreSQL não compartilham uma transação, inconsistências
 ```mermaid
 flowchart LR
     U[Browser] -->|HTTPS| P[Proxy reverso opcional]
-    P --> W[basalt-web]
+    P --> W[thothis-web]
     U -->|HTTP local| W
-    W -->|/bff, /api e /hubs| B[basalt-bff]
+    W -->|/bff, /api e /hubs| B[thothis-bff]
     B -->|OIDC Authorization Code + PKCE| KC[Keycloak]
-    B -->|Bearer ou RPT| A[basalt-api]
+    B -->|Bearer ou RPT| A[thothis-api]
     A -->|decisão de autorização e Protection API| KC
     A --> V[(Bind mount do vault)]
     A --> D[(PostgreSQL + pgvector)]
     A --> Q[(Fila no PostgreSQL)]
-    R[basalt-worker] --> Q
+    R[thothis-worker] --> Q
     R --> V
     R --> D
     R -. opcional .-> E[Provedor de embeddings]
@@ -135,19 +139,19 @@ flowchart LR
 
 | Serviço | Responsabilidade | Exposição | Persistência |
 | --- | --- | --- | --- |
-| `basalt-web` | arquivos estáticos, headers e roteamento para o BFF | única porta pública | nenhuma |
-| `basalt-bff` | cliente OIDC, sessão técnica, antiforgery e relay para API/SignalR | somente rede interna | key ring e estado técnico conforme ADR |
-| `basalt-api` | PEP, regras de negócio, arquivos, consultas e SignalR | somente rede interna | vault em leitura e escrita |
-| `basalt-worker` | reconciliação, parsing, indexação e embeddings | nenhuma | mesmo vault, conforme estratégia de escrita |
-| `basalt-postgres` | catálogo, busca, relações, jobs e vetores | somente rede interna | dados e backups em bind mounts |
+| `thothis-web` | arquivos estáticos, headers e roteamento para o BFF | única porta pública | nenhuma |
+| `thothis-bff` | cliente OIDC, sessão técnica, antiforgery e relay para API/SignalR | somente rede interna | key ring e estado técnico conforme ADR |
+| `thothis-api` | PEP, regras de negócio, arquivos, consultas e SignalR | somente rede interna | vault em leitura e escrita |
+| `thothis-worker` | reconciliação, parsing, indexação e embeddings | nenhuma | mesmo vault, conforme estratégia de escrita |
+| `thothis-postgres` | catálogo, busca, relações, jobs e vetores | somente rede interna | dados e backups em bind mounts |
 | `embedding-provider` | embeddings locais opcionais | somente rede interna | cache/modelos, se necessário |
-| Keycloak externo | identidade, sessões de SSO e decisão de autorização | HTTPS configurado pelo operador | fora do ciclo de vida do Basalt Notes |
+| Keycloak externo | identidade, sessões de SSO e decisão de autorização | HTTPS configurado pelo operador | fora do ciclo de vida do Thothis |
 
-A imagem de banco obrigatória é `lzocateli/postgresql:18.4-pgvector0.8.5-bookworm`, mantida separadamente em `containers-lzo/postgres`. O Basalt Notes não deve duplicar seu Dockerfile.
+A imagem de banco obrigatória é `lzocateli/postgresql:18.4-pgvector0.8.5-bookworm`, mantida separadamente em `containers-lzo/postgres`. O Thothis não deve duplicar seu Dockerfile.
 
 ### 3.5 Estilo arquitetural e padrões
 
-O Basalt Notes adota **monólito modular orientado a domínio**, com hosts separados para BFF, API e worker, **Clean Architecture pragmática** e **Ports and Adapters** nas integrações. Os módulos seguem limites de negócio explícitos; dependências apontam para o domínio, e os hosts apenas compõem e expõem casos de uso. A convenção de namespaces e assemblies do backend é detalhada nas instruções do Copilot em [.github/instructions/architecture.instructions.md](.github/instructions/architecture.instructions.md) e usa o prefixo `Infra.<nome>` para a camada de infraestrutura.
+O Thothis adota **monólito modular orientado a domínio**, com hosts separados para BFF, API e worker, **Clean Architecture pragmática** e **Ports and Adapters** nas integrações. Os módulos seguem limites de negócio explícitos; dependências apontam para o domínio, e os hosts apenas compõem e expõem casos de uso. A convenção de namespaces e assemblies do backend é detalhada nas instruções do Copilot em [.github/instructions/architecture.instructions.md](.github/instructions/architecture.instructions.md) e usa o prefixo `Infra.<nome>` para a camada de infraestrutura.
 
 O backend usa **DDD** para linguagem, invariantes, aggregates e value objects; **CQRS pragmático** para separar commands de consultas sobre projeções; **optimistic concurrency** com ETag; e processamento assíncrono por **Outbox/jobs duráveis**, consumers idempotentes, lease, retry com backoff e dead letter. Como filesystem e PostgreSQL não compartilham transação, gravação segura, detecção por hash e reconciliação periódica fazem parte da consistência do sistema.
 
@@ -171,7 +175,7 @@ O backend será um monólito modular com worker separado. Essa forma preserva li
 | Audit | eventos administrativos e ações de conteúdo configuradas |
 | Operations | health, readiness, métricas, migração e manutenção |
 
-Identidade e decisão de autorização não formam módulo de domínio do Basalt Notes. O BFF integra OIDC, o Keycloak mantém usuários e políticas, e a API apenas aplica as permissões externas antes de acessar cada recurso.
+Identidade e decisão de autorização não formam módulo de domínio do Thothis. O BFF integra OIDC, o Keycloak mantém usuários e políticas, e a API apenas aplica as permissões externas antes de acessar cada recurso.
 
 Os detalhes estão em [Implementação do Backend](docs/backend.md). A experiência e arquitetura da interface estão em [Implementação do Frontend](docs/frontend.md).
 

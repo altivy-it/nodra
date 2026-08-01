@@ -1,6 +1,6 @@
 ---
 name: release-readiness
-description: "Avalia prontidão de release do Basalt Notes. Use antes de versionar, publicar imagens ou promover ambiente para validar qualidade, segurança, migrations, containers, backup, compatibilidade e operação."
+description: "Avalia prontidão de release do Thothis. Use antes de versionar, publicar imagens ou promover ambiente para validar qualidade, segurança, migrations, containers, backup, compatibilidade e operação."
 argument-hint: "Versão candidata, base anterior e ambiente-alvo"
 ---
 

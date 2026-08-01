@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Propor uma capacidade ou melhoria para o Basalt Notes
+about: Propor uma capacidade ou melhoria para o Thothis
 title: "[Feature] "
 labels: enhancement
 assignees: ""

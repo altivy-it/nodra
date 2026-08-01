@@ -2,7 +2,7 @@
 
 **Status:** aguardando decisão humana por item  
 **Etapa do plano:** P-03  
-**Relacionado:** [Plano de branding](../../plan/basalt-notes-branding.md)
+**Relacionado:** [Plano de branding](../plan/thothis-branding.md)
 
 > Nenhum item abaixo está aprovado para uso até que a decisão humana seja registrada na coluna correspondente.
 > Versão exata deve ser verificada no repositório oficial antes da adoção.
@@ -39,7 +39,7 @@
 
 ## Notas sobre a SIL Open Font License 1.1
 
-A SIL OFL 1.1 é compatível com a política de dependências do Basalt Notes:
+A SIL OFL 1.1 é compatível com a política de dependências do Thothis:
 
 - Permite uso, cópia, incorporação em software e distribuição livre (inclusive self-hosted).
 - Permite modificação, desde que o resultado use outro nome e mantenha a licença SIL OFL.
@@ -67,17 +67,11 @@ A SIL OFL 1.1 é compatível com a política de dependências do Basalt Notes:
 
 ---
 
-## Assets visuais produzidos nesta exploração
+## Assets visuais
 
-| Arquivo | Origem | Processo de criação | Referências externas | Decisão |
-|---|---|---|---|---|
-| `exploration/concept-a-basalt-graph.svg` | IA assistida (código SVG manual) | geometria hexagonal + grafo desenhado manualmente em SVG | nenhuma | pendente |
-| `exploration/concept-b-hexagonal-crystal.svg` | IA assistida (código SVG manual) | polígonos aninhados desenhados manualmente em SVG | nenhuma | pendente |
-| `exploration/concept-c-letter-b.svg` | IA assistida (código SVG manual) | nós e arestas desenhados manualmente em SVG | nenhuma | pendente |
-| `assets/icon.svg` | IA assistida (código SVG manual) | refinamento do Concept A | nenhuma | pendente |
-| `assets/favicon.svg` | IA assistida (código SVG manual) | variante simplificada do icon.svg | nenhuma | pendente |
-
-**Todos os SVGs foram gerados como código vetorial puro**, sem uso de imagem raster embutida, fonte embutida, script ou referência a URL externa. Inspecionar com SVGO e revisar manualmente antes de publicar.
+Nenhum asset visual está aprovado ou distribuído. Todo arquivo futuro deve
+registrar origem, processo de criação, referências externas, licença, hash e
+decisão humana antes de ser publicado.
 
 ---
 

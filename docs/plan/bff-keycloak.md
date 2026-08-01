@@ -3,27 +3,27 @@
 **Status:** proposed  
 **Data de criação:** 2026-07-29  
 **Última atualização:** 2026-07-29  
-**Responsáveis:** equipe Basalt Notes  
+**Responsáveis:** equipe Thothis
 **Origem:** decisão humana assistida por IA  
 **Revisor humano:** pendente  
 **Relacionado:** ADR de BFF, Keycloak e autorização externa a criar
 
 ## Objetivo
 
-Integrar o Basalt Notes ao Keycloak como plataforma externa de identidade e decisão de autorização, mantendo tokens fora do Angular e removendo da solução cadastro local, senhas, diretório de usuários, memberships e políticas próprias de acesso.
+Integrar o Thothis ao Keycloak como plataforma externa de identidade e decisão de autorização, mantendo tokens fora do Angular e removendo da solução cadastro local, senhas, diretório de usuários, memberships e políticas próprias de acesso.
 
 O BFF será apenas um cliente OIDC confidencial e a fachada HTTP do browser. A API será um Policy Enforcement Point (PEP): ela validará o token, consultará ou consumirá a decisão emitida pelo Keycloak e bloqueará o acesso antes de tocar no PostgreSQL ou no filesystem.
 
 ## Contexto e premissas
 
 - A instância indicada pelo responsável está disponível em `https://credential.zocate.li` e responde como Keycloak.
-- O console público usa o realm administrativo `master`; o Basalt Notes nunca usará esse realm nem credenciais administrativas globais.
-- O realm proposto para a aplicação é `basalt-notes`, sujeito à criação e aprovação operacional.
+- O console público usa o realm administrativo `master`; o Thothis nunca usará esse realm nem credenciais administrativas globais.
+- O realm proposto para a aplicação é `thothis`, sujeito à criação e aprovação operacional.
 - Keycloak será a autoridade para usuários, credenciais, MFA, federação, SSO, sessões, grupos, roles, recursos, scopes e políticas.
-- O Basalt Notes não terá módulo `Identity`, tabela `users`, tabela `vault_members`, login local ou bootstrap de usuário administrador.
+- O Thothis não terá módulo `Identity`, tabela `users`, tabela `vault_members`, login local ou bootstrap de usuário administrador.
 - Referências ao claim estável `sub` podem ser persistidas somente em auditoria e metadados técnicos que exijam rastreabilidade; elas não constituem cadastro local.
 - Cada instalação precisa alcançar um Keycloak compatível. Ambiente isolado exige uma instância Keycloak acessível na própria rede.
-- O browser acessará somente `basalt-web`; API e BFF permanecerão internos no deployment padrão.
+- O browser acessará somente `thothis-web`; API e BFF permanecerão internos no deployment padrão.
 - Tokens de acesso e refresh tokens não serão expostos ao Angular nem persistidos em Web Storage.
 - A versão exata do Keycloak e a licença correspondente devem ser verificadas antes da implementação. Nenhum secret, client secret ou export real de realm entra no Git.
 
@@ -33,7 +33,7 @@ O BFF será apenas um cliente OIDC confidencial e a fachada HTTP do browser. A A
 
 - autenticar usuários e federar provedores externos;
 - administrar credenciais, recuperação de conta, MFA, SSO e sessões;
-- administrar grupos e roles do Basalt Notes;
+- administrar grupos e roles do Thothis;
 - registrar recursos e scopes no Authorization Services;
 - avaliar políticas e emitir a decisão de acesso;
 - revogar sessões, tokens e permissões de forma auditável.
@@ -61,12 +61,12 @@ Aplicar uma decisão externa é responsabilidade inevitável da API como PEP. Is
 
 ## Modelo inicial de autorização
 
-- cliente confidencial `basalt-bff` para o fluxo do browser;
-- cliente de recurso `basalt-api` com audience própria e Authorization Services habilitado;
-- recursos de vault nomeados por identificador opaco, por exemplo `urn:basalt-notes:vault:{vaultId}`;
+- cliente confidencial `thothis-bff` para o fluxo do browser;
+- cliente de recurso `thothis-api` com audience própria e Authorization Services habilitado;
+- recursos de vault nomeados por identificador opaco, por exemplo `urn:thothis:vault:{vaultId}`;
 - scopes iniciais `vault:read`, `vault:write`, `vault:manage` e `vault:delete`;
 - roles `Owner`, `Editor` e `Reader` administradas no Keycloak e associadas a políticas, sem cópia em PostgreSQL;
-- credencial de Protection API restrita ao registro e à reconciliação dos recursos pertencentes ao `basalt-api`;
+- credencial de Protection API restrita ao registro e à reconciliação dos recursos pertencentes ao `thothis-api`;
 - nenhuma chamada à API confia somente em role genérica quando a operação exigir permissão para um vault específico.
 
 A implementação deve provar em um spike se a decisão será transportada em RPT/UMA ou obtida por avaliação remota no Keycloak. A escolha deve considerar revogação, latência, tamanho do token, granularidade por vault, SignalR e comportamento quando o Keycloak estiver indisponível. Não criar um avaliador de política local como fallback.
@@ -75,20 +75,20 @@ A implementação deve provar em um spike se a decisão será transportada em RP
 
 ```mermaid
 flowchart LR
-    Browser[Browser Angular] -->|HTTPS| Web[basalt-web]
-    Web -->|/bff, /api/v1 e /hubs| Bff[basalt-bff]
+    Browser[Browser Angular] -->|HTTPS| Web[thothis-web]
+    Web -->|/bff, /api/v1 e /hubs| Bff[thothis-bff]
     Bff -->|OIDC Authorization Code + PKCE| Keycloak[Keycloak credential.zocate.li]
-    Bff -->|Bearer ou RPT| Api[basalt-api]
+    Bff -->|Bearer ou RPT| Api[thothis-api]
     Api -->|decisão de autorização e Protection API| Keycloak
     Api --> Postgres[(PostgreSQL)]
     Api --> Vault[(Vault)]
-    Worker[basalt-worker] --> Postgres
+    Worker[thothis-worker] --> Postgres
     Worker --> Vault
 ```
 
 ## Não escopo
 
-- implementar cadastro, senha, recuperação de conta, MFA ou diretório de usuários no Basalt Notes;
+- implementar cadastro, senha, recuperação de conta, MFA ou diretório de usuários no Thothis;
 - persistir memberships ou políticas de autorização no PostgreSQL;
 - usar Microsoft Entra External ID, OAuth On-Behalf-Of ou claims específicas do Entra;
 - usar o realm `master` para a aplicação;
@@ -112,7 +112,7 @@ flowchart LR
 ### P-01: ADR e contrato de confiança
 
 **Status:** not-started  
-**Responsável:** equipe Basalt Notes  
+**Responsável:** equipe Thothis
 **Dependências:** nenhuma
 
 **Objetivo:** aprovar fronteiras, dependência operacional e modelo de ameaça antes do código.
@@ -145,8 +145,8 @@ Evidências:
 
 Entregas:
 
-- criar realm dedicado `basalt-notes` ou nome aprovado;
-- criar `basalt-bff` e `basalt-api` com menor privilégio;
+- criar realm dedicado `thothis` ou nome aprovado;
+- criar `thothis-bff` e `thothis-api` com menor privilégio;
 - configurar callbacks, post-logout redirects, PKCE, audience e tempos de token;
 - configurar roles, recursos, scopes e políticas de teste;
 - criar credencial de serviço limitada à Protection API;
@@ -298,7 +298,7 @@ Evidências:
 
 - Keycloak autentica usuários e decide permissões por recurso e scope;
 - o realm dedicado não depende de credenciais administrativas globais;
-- Basalt Notes não armazena conta, senha, membership ou política de autorização;
+- Thothis não armazena conta, senha, membership ou política de autorização;
 - browser não recebe access token nem refresh token;
 - API aplica cada decisão antes de acessar PostgreSQL ou filesystem;
 - revogação e remoção de permissão possuem comportamento e latência documentados;

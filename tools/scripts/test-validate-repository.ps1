@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Executa os testes funcionais do validador do Basalt Notes.
+Executa os testes funcionais do validador do Thothis.
 
 .DESCRIPTION
 Cria fixtures temporárias para verificar cenários válidos e falhas de links,
@@ -63,7 +63,7 @@ $requiredPaths = @(
 )
 
 function New-ValidationFixture {
-    $fixtureRoot = Join-Path ([IO.Path]::GetTempPath()) "basaltnotes-validation-$([Guid]::NewGuid())"
+    $fixtureRoot = Join-Path ([IO.Path]::GetTempPath()) "thothis-validation-$([Guid]::NewGuid())"
 
     foreach ($requiredPath in $requiredPaths) {
         $absolutePath = Join-Path $fixtureRoot $requiredPath
@@ -177,6 +177,16 @@ try {
         '**Situação:** not-started'
     ) | Set-Content -LiteralPath (Join-Path $missingStepStatusFixture 'docs/plan/fixture.md')
     Invoke-FixtureValidation -FixtureRoot $missingStepStatusFixture -ShouldPass $false
+
+    $invalidSecondStepFixture = New-ValidationFixture
+    $fixtures.Add($invalidSecondStepFixture)
+    Add-Content -LiteralPath (Join-Path $invalidSecondStepFixture 'docs/plan/fixture.md') -Value @'
+
+### P-02: Segunda etapa inválida
+
+**Status:** unknown
+'@
+    Invoke-FixtureValidation -FixtureRoot $invalidSecondStepFixture -ShouldPass $false
 }
 finally {
     foreach ($fixture in $fixtures) {
@@ -184,5 +194,5 @@ finally {
     }
 }
 
-Write-Output 'Testes do validador concluídos: 6 cenários aprovados.'
+Write-Output 'Testes do validador concluídos: 7 cenários aprovados.'
 exit 0

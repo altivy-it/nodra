@@ -1,8 +1,8 @@
-# Basalt Notes - Evolução do Produto
+# Thothis - Evolução do Produto
 
 ## 1. Objetivo
 
-Organizar a evolução do Basalt Notes em resultados verificáveis, evitando que a busca por paridade total com ferramentas existentes impeça entregas utilizáveis. A visão e as restrições arquiteturais estão no [Plano Mestre](../README.md).
+Organizar a evolução do Thothis em resultados verificáveis, evitando que a busca por paridade total com ferramentas existentes impeça entregas utilizáveis. A visão e as restrições arquiteturais estão no [Plano Mestre](../README.md).
 
 ## 2. Método de planejamento
 
@@ -61,7 +61,7 @@ Arquitetura validada e riscos técnicos mais relevantes testados antes da constr
 
 ### Hipótese
 
-Um profissional consegue usar o Basalt Notes diariamente para criar e encontrar conhecimento sem instalar aplicativo nativo.
+Um profissional consegue usar o Thothis diariamente para criar e encontrar conhecimento sem instalar aplicativo nativo.
 
 ### Entregas
 
@@ -80,8 +80,8 @@ Um profissional consegue usar o Basalt Notes diariamente para criar e encontrar 
 
 ### Não inclui
 
-- cadastro, senha ou recuperação de conta dentro do Basalt Notes;
-- administração de usuários ou políticas na interface do Basalt Notes;
+- cadastro, senha ou recuperação de conta dentro do Thothis;
+- administração de usuários ou políticas na interface do Thothis;
 - colaboração;
 - embeddings;
 - grafo global avançado;
@@ -267,7 +267,7 @@ Não coletar conteúdo de notas, consultas integrais ou dados pessoais desnecess
 
 ## 12. Política de compatibilidade
 
-- Markdown e anexos permanecem acessíveis sem o Basalt Notes;
+- Markdown e anexos permanecem acessíveis sem o Thothis;
 - extensões próprias de sintaxe devem degradar para texto legível;
 - mudanças de resolução de links exigem migração ou modo compatível;
 - importadores não alteram a origem sem confirmação;

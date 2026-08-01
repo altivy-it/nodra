@@ -7,7 +7,7 @@ applyTo: "libs/backend/**/*DbContext*.cs, libs/backend/**/Migrations/**, libs/ba
 # PostgreSQL, EF Core e pgvector
 
 - Use PostgreSQL 18 e a imagem imutável definida no plano mestre.
-- Schema da aplicação: `basalt_notes`; nomes SQL em `snake_case`; timestamps em `timestamptz` UTC.
+- Schema da aplicação: `thothis`; nomes SQL em `snake_case`; timestamps em `timestamptz` UTC.
 - Migrações EF Core são explícitas, revisadas e nunca executadas pelos scripts de bootstrap da imagem.
 - A role de runtime não cria databases, roles ou extensões.
 - Alterações destrutivas seguem expand-contract: adicionar, migrar, observar, remover em release posterior.

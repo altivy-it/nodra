@@ -1,6 +1,6 @@
 ---
 name: "Conventional Commits"
-description: "Use ao criar, sugerir, revisar, corrigir ou explicar commits e mensagens de commit no Basalt Notes. Exige Conventional Commits e os tipos e escopos aprovados pelo projeto."
+description: "Use ao criar, sugerir, revisar, corrigir ou explicar commits e mensagens de commit no Thothis. Exige Conventional Commits e os tipos e escopos aprovados pelo projeto."
 ---
 
 # Commits

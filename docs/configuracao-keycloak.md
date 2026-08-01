@@ -1,8 +1,8 @@
-# Tutorial de configuração do Keycloak para o Basalt Notes
+# Tutorial de configuração do Keycloak para o Thothis
 
 ## 1. Objetivo e estado atual
 
-Este tutorial ensina, passo a passo, como preparar o Keycloak necessário ao Basalt Notes, mesmo para quem nunca administrou um realm. Ele cobre laboratório local, realm, clients, usuários, autorização, produção, backup e diagnóstico.
+Este tutorial ensina, passo a passo, como preparar o Keycloak necessário ao Thothis, mesmo para quem nunca administrou um realm. Ele cobre laboratório local, realm, clients, usuários, autorização, produção, backup e diagnóstico.
 
 O [plano do BFF com Keycloak](plan/bff-keycloak.md) está com status `proposed`. Este tutorial documenta a configuração inicial recomendada e não aprova o plano nem substitui o ADR pendente. Em especial:
 
@@ -12,29 +12,29 @@ O [plano do BFF com Keycloak](plan/bff-keycloak.md) está com status `proposed`.
 - callbacks e tempos marcados como exemplos devem ser confirmados no ADR;
 - a integração final depende de P-04, P-05 e P-06.
 
-> **Regra de segurança:** nunca use o realm `master` como realm da aplicação. Um administrador humano pode entrar no `master` para administrar o servidor, mas BFF, API, usuários e credenciais pertencem ao realm `basalt-notes`.
+> **Regra de segurança:** nunca use o realm `master` como realm da aplicação. Um administrador humano pode entrar no `master` para administrar o servidor, mas BFF, API, usuários e credenciais pertencem ao realm `thothis`.
 
 ## 2. O que cada componente faz
 
 ```mermaid
 flowchart LR
-    Browser[Browser] -->|HTTPS e cookie HttpOnly| Web[basalt-web]
-    Web -->|/bff, /api/v1 e /hubs| BFF[basalt-bff]
+    Browser[Browser] -->|HTTPS e cookie HttpOnly| Web[thothis-web]
+    Web -->|/bff, /api/v1 e /hubs| BFF[thothis-bff]
     BFF -->|Authorization Code + PKCE| KC[Keycloak]
-    BFF -->|Bearer ou RPT| API[basalt-api]
+    BFF -->|Bearer ou RPT| API[thothis-api]
     API -->|decisão e Protection API| KC
     KC --> KCDB[(PostgreSQL do Keycloak)]
-    API --> APPDB[(PostgreSQL do Basalt Notes)]
+    API --> APPDB[(PostgreSQL do Thothis)]
 ```
 
 | Componente | Responsabilidade |
 | --- | --- |
 | Keycloak | Usuários, credenciais, MFA, sessões, roles, grupos, recursos, scopes e políticas. |
-| `basalt-bff` | Login OIDC, callback, logout, cookie técnico e tokens no servidor. |
-| `basalt-api` | Validação do token e aplicação da decisão antes do domínio. |
+| `thothis-bff` | Login OIDC, callback, logout, cookie técnico e tokens no servidor. |
+| `thothis-api` | Validação do token e aplicação da decisão antes do domínio. |
 | Angular | Interface; nunca recebe access token ou refresh token. |
 | PostgreSQL do Keycloak | Estado operacional do Keycloak; exige backup próprio. |
-| PostgreSQL do Basalt Notes | Projeções; não armazena usuários, memberships ou políticas. |
+| PostgreSQL do Thothis | Projeções; não armazena usuários, memberships ou políticas. |
 
 Os bancos devem usar bancos, roles, senhas, backups e ciclos de vida distintos. Recomenda-se separá-los também por instância em produção.
 
@@ -42,19 +42,22 @@ Os bancos devem usar bancos, roles, senhas, backups e ciclos de vida distintos. 
 
 | Item | Valor do plano ou exemplo |
 | --- | --- |
-| Realm | `basalt-notes` |
-| Client confidencial do BFF | `basalt-bff` |
-| Client de recurso da API | `basalt-api` |
-| Audience da API | `basalt-api` |
+| Realm | `thothis` |
+| Client confidencial do BFF | `thothis-bff` |
+| Client de recurso da API | `thothis-api` |
+| Audience da API | `thothis-api` |
 | Roles iniciais | `Owner`, `Editor`, `Reader` |
 | Scopes de vault | `vault:read`, `vault:write`, `vault:manage`, `vault:delete` |
-| Recurso sintético | `urn:basalt-notes:vault:00000000-0000-0000-0000-000000000001` |
+| Recurso sintético | `urn:thothis:vault:00000000-0000-0000-0000-000000000001` |
 | Keycloak real indicado | `https://credential.zocate.li` |
 | Keycloak do laboratório | `http://localhost:8080` |
 | BFF local de exemplo | `https://localhost:7443` |
-| Origem pública de exemplo | `https://notes.example.com` |
+| Origem pública principal | `https://thothis.app` |
+| Origem pública alternativa | `https://thothis.zocate.li` |
 
-Substitua `notes.example.com` pela origem pública aprovada. Não copie o recurso sintético para produção: a API registrará vaults por identificador opaco.
+Escolha uma única origem canônica por instalação e cadastre somente a que estiver
+implantada. Não copie o recurso sintético para produção: a API registrará vaults
+por identificador opaco.
 
 ## 4. Pré-requisitos
 
@@ -81,10 +84,10 @@ Diretório: fora do repositório. Impacto: variáveis somente na sessão atual.
 ```powershell
 $KeycloakImage = 'quay.io/keycloak/keycloak:26.7.0'
 $PostgresImage = 'postgres:18.4-bookworm'
-$NetworkName = 'basalt-keycloak-lab'
-$DatabaseContainer = 'basalt-keycloak-db'
-$KeycloakContainer = 'basalt-keycloak'
-$DatabaseVolume = 'basalt-keycloak-db-data'
+$NetworkName = 'thothis-keycloak-lab'
+$DatabaseContainer = 'thothis-keycloak-db'
+$KeycloakContainer = 'thothis-keycloak'
+$DatabaseVolume = 'thothis-keycloak-db-data'
 
 $env:POSTGRES_PASSWORD = Read-Host 'Senha temporária do PostgreSQL' -MaskInput
 $env:KC_DB_PASSWORD = $env:POSTGRES_PASSWORD
@@ -135,7 +138,7 @@ docker run --detach `
   --env KC_BOOTSTRAP_ADMIN_USERNAME=admin `
   --env KC_BOOTSTRAP_ADMIN_PASSWORD `
   --env KC_DB=postgres `
-  --env KC_DB_URL=jdbc:postgresql://basalt-keycloak-db:5432/keycloak `
+  --env KC_DB_URL=jdbc:postgresql://thothis-keycloak-db:5432/keycloak `
   --env KC_DB_USERNAME=keycloak `
   --env KC_DB_PASSWORD `
   --env KC_HOSTNAME=http://localhost:8080 `
@@ -165,25 +168,25 @@ Você está administrando o servidor, não configurando a aplicação. O próxim
 
 Os nomes dos menus correspondem ao Admin Console 26.7.0.
 
-### 6.1 Criar o realm `basalt-notes`
+### 6.1 Criar o realm `thothis`
 
 1. No seletor de realm, clique em **Create realm**.
-2. Em **Realm name**, informe `basalt-notes`.
+2. Em **Realm name**, informe `thothis`.
 3. Deixe **Enabled** ligado e clique em **Create**.
-4. Confirme que o realm ativo é `basalt-notes`.
+4. Confirme que o realm ativo é `thothis`.
 
 Valide o discovery:
 
 ```powershell
 $Discovery = Invoke-RestMethod `
-  http://localhost:8080/realms/basalt-notes/.well-known/openid-configuration
+  http://localhost:8080/realms/thothis/.well-known/openid-configuration
 $Discovery.issuer
 $Discovery.authorization_endpoint
 $Discovery.token_endpoint
 $Discovery.jwks_uri
 ```
 
-O issuer local deve ser `http://localhost:8080/realms/basalt-notes`. Em produção, deve ser exatamente `https://credential.zocate.li/realms/basalt-notes`.
+O issuer local deve ser `http://localhost:8080/realms/thothis`. Em produção, deve ser exatamente `https://credential.zocate.li/realms/thothis`.
 
 ### 6.2 Aplicar política inicial de sessão
 
@@ -206,49 +209,49 @@ Esses valores não são contrato aprovado. Access tokens curtos reduzem a janela
 4. Em **Authentication > Required actions**, habilite **Configure OTP**.
 5. Exija OTP ao menos para administradores e `Owner` em produção.
 
-MFA, cadastro e recuperação pertencem ao Keycloak ou IdP federado, nunca ao Basalt Notes.
+MFA, cadastro e recuperação pertencem ao Keycloak ou IdP federado, nunca ao Thothis.
 
 ## 7. Parte C: criar o resource server, roles e usuários
 
-### 7.1 Criar `basalt-api`
+### 7.1 Criar `thothis-api`
 
 1. Abra **Clients > Create client**.
-2. Selecione `OpenID Connect` e use Client ID `basalt-api`.
+2. Selecione `OpenID Connect` e use Client ID `thothis-api`.
 3. Ligue **Client authentication**, **Authorization** e **Service account roles**.
 4. Desligue **Standard flow**, **Direct access grants**, **Implicit flow** e grants não necessários.
 5. Salve. Esse client não precisa de redirect URI.
 
 ### 7.2 Criar client roles e grupos
 
-Em **Clients > basalt-api > Roles**, crie `Owner`, `Editor` e `Reader`.
+Em **Clients > thothis-api > Roles**, crie `Owner`, `Editor` e `Reader`.
 
 Em **Groups**, crie:
 
 ```text
-/basalt-notes
+/thothis
   /owners
   /editors
   /readers
 ```
 
-Em cada subgrupo, abra **Role mapping > Assign role**, filtre por clients e associe a role correspondente do `basalt-api`.
+Em cada subgrupo, abra **Role mapping > Assign role**, filtre por clients e associe a role correspondente do `thothis-api`.
 
 ### 7.3 Criar usuários sintéticos
 
 | Username | Grupo | Uso esperado |
 | --- | --- | --- |
-| `owner-lab` | `/basalt-notes/owners` | todos os scopes |
-| `editor-lab` | `/basalt-notes/editors` | leitura e escrita |
-| `reader-lab` | `/basalt-notes/readers` | somente leitura |
+| `owner-lab` | `/thothis/owners` | todos os scopes |
+| `editor-lab` | `/thothis/editors` | leitura e escrita |
+| `reader-lab` | `/thothis/readers` | somente leitura |
 
 Para cada usuário, defina senha fictícia temporária, associe o grupo e confirme a role efetiva. Adicione **Configure OTP** a `owner-lab` para validar MFA. Nunca use esses usuários em produção.
 
-## 8. Parte D: configurar o client `basalt-bff`
+## 8. Parte D: configurar o client `thothis-bff`
 
 ### 8.1 Criar o client confidencial
 
 1. Em **Clients > Create client**, selecione `OpenID Connect`.
-2. Use Client ID `basalt-bff`.
+2. Use Client ID `thothis-bff`.
 3. Ligue **Client authentication** e apenas **Standard flow**.
 4. Desligue direct grants, implicit, service account, device flow e grants não usados.
 5. Em **Advanced settings**, configure PKCE como `S256`.
@@ -266,18 +269,26 @@ Enquanto o BFF local usar `https://localhost:7443`, configure:
 | Valid post logout redirect URIs | `https://localhost:7443/signout-callback-oidc` |
 | Web origins | deixe vazio |
 
-Para produção, substitua somente a origem:
+Para produção, use somente o par correspondente à origem implantada:
 
 ```text
-https://notes.example.com/signin-oidc
-https://notes.example.com/signout-callback-oidc
+https://thothis.app/signin-oidc
+https://thothis.app/signout-callback-oidc
+
+ou
+
+https://thothis.zocate.li/signin-oidc
+https://thothis.zocate.li/signout-callback-oidc
 ```
 
-Não use `*`, subdomínio curinga ou callback genérico. Como o Angular não chama o token endpoint, Web Origins normalmente fica vazio. Os paths são defaults planejados do middleware .NET; confirme-os em P-04.
+Não cadastre as duas origens sem uma implantação ativa em ambas. Não use `*`,
+subdomínio curinga ou callback genérico. Como o Angular não chama o token
+endpoint, Web Origins normalmente fica vazio. Os paths são defaults planejados
+do middleware .NET; confirme-os em P-04.
 
 ### 8.3 Guardar o client secret
 
-1. Abra **Clients > basalt-bff > Credentials**.
+1. Abra **Clients > thothis-bff > Credentials**.
 2. Copie o secret diretamente para o cofre de secrets.
 3. Não o cole em issue, documentação, `.env`, imagem, log ou Git.
 4. Restrinja a leitura ao deployment do BFF e aos operadores responsáveis.
@@ -286,7 +297,7 @@ Não use `*`, subdomínio curinga ou callback genérico. Como o Angular não cha
 No laboratório, mantenha-o apenas na sessão:
 
 ```powershell
-$env:BASALT_BFF_CLIENT_SECRET = Read-Host 'Client secret do BFF' -MaskInput
+$env:THOTHIS_BFF_CLIENT_SECRET = Read-Host 'Client secret do BFF' -MaskInput
 ```
 
 ## 9. Parte E: configurar audience e claims mínimos
@@ -294,16 +305,16 @@ $env:BASALT_BFF_CLIENT_SECRET = Read-Host 'Client secret do BFF' -MaskInput
 ### 9.1 Criar o client scope de audience
 
 1. Abra **Client scopes > Create client scope**.
-2. Use `basalt-api-audience` e protocolo `OpenID Connect`.
+2. Use `thothis-api-audience` e protocolo `OpenID Connect`.
 3. Em **Mappers**, crie um mapper do tipo **Audience**.
-4. Em **Included Client Audience**, escolha `basalt-api`.
+4. Em **Included Client Audience**, escolha `thothis-api`.
 5. Inclua no access token, não no ID token sem necessidade.
-6. Em **Clients > basalt-bff > Client scopes**, adicione o scope como **Default**.
+6. Em **Clients > thothis-bff > Client scopes**, adicione o scope como **Default**.
 
 Depois da implementação do BFF, confirme localmente que:
 
 - `iss` é exatamente o issuer configurado;
-- `aud` contém `basalt-api`;
+- `aud` contém `thothis-api`;
 - `sub` existe e é tratado como identificador opaco;
 - `exp` e `nbf` são coerentes;
 - roles aparecem somente quando necessárias.
@@ -312,7 +323,7 @@ Nunca envie tokens reais a sites externos de decodificação nem registre seu pa
 
 ### 9.2 O que a API validará
 
-A API deverá validar assinatura e algoritmo permitido, issuer, audience `basalt-api`, expiração, not-before, client, claims exigidos e permissão para o recurso e scope específicos.
+A API deverá validar assinatura e algoritmo permitido, issuer, audience `thothis-api`, expiração, not-before, client, claims exigidos e permissão para o recurso e scope específicos.
 
 Ter role `Owner`, `Editor` ou `Reader` não basta para acessar um vault. A API deve falhar fechada antes de consultar dados quando a decisão estiver ausente, expirada, negada ou indisponível.
 
@@ -332,9 +343,9 @@ recurso, uma política e uma permissão padrão. Antes de continuar:
 4. mantenha somente os itens explícitos criados neste laboratório.
 
 Sem essa limpeza, a avaliação pode permitir acesso por causa da configuração
-padrão e mascarar erros nas políticas do Basalt Notes.
+padrão e mascarar erros nas políticas do Thothis.
 
-Em **Clients > basalt-api > Authorization > Authorization scopes**, crie:
+Em **Clients > thothis-api > Authorization > Authorization scopes**, crie:
 
 ```text
 vault:read
@@ -348,7 +359,7 @@ Em **Resources > Create resource**, configure:
 | Campo | Valor |
 | --- | --- |
 | Name | `vault-lab-0001` |
-| URI | `urn:basalt-notes:vault:00000000-0000-0000-0000-000000000001` |
+| URI | `urn:thothis:vault:00000000-0000-0000-0000-000000000001` |
 | Scopes | os quatro scopes `vault:*` |
 
 Não use nome, path ou título de nota. Recursos reais usarão IDs opacos e serão reconciliados pela API via Protection API.
@@ -359,9 +370,9 @@ Em **Policies > Create policy > Role**, crie:
 
 | Política | Client role exigida |
 | --- | --- |
-| `policy-owner` | `basalt-api / Owner` |
-| `policy-editor` | `basalt-api / Editor` |
-| `policy-reader` | `basalt-api / Reader` |
+| `policy-owner` | `thothis-api / Owner` |
+| `policy-editor` | `thothis-api / Editor` |
+| `policy-reader` | `thothis-api / Reader` |
 
 Cada política representa um perfil alternativo. Não marque as três roles como obrigatórias dentro da mesma política.
 
@@ -395,19 +406,19 @@ Faça também testes negativos: usuário sem grupo, recurso inexistente, scope d
 
 ## 11. Parte G: credencial da Protection API
 
-A API precisará de uma credencial de serviço para reconciliar somente os recursos do `basalt-api`.
+A API precisará de uma credencial de serviço para reconciliar somente os recursos do `thothis-api`.
 
-1. Em **Clients > basalt-api > Credentials**, envie o secret ao cofre da API.
+1. Em **Clients > thothis-api > Credentials**, envie o secret ao cofre da API.
 2. Em **Service account roles**, confirme somente as roles necessárias ao resource server, incluindo `uma_protection` quando aplicável à versão.
 3. Não atribua `realm-management`, `admin`, `manage-realm` ou `manage-users`.
-4. Teste que a credencial registra recurso do `basalt-api`.
+4. Teste que a credencial registra recurso do `thothis-api`.
 5. Teste que ela não administra usuários, outro client ou outro realm.
 
 O endpoint e o fluxo exatos serão implementados em P-03/P-05. Não adicione scripts com o secret ao repositório.
 
 ### 11.1 Atribuir o primeiro Owner real
 
-O Basalt Notes não possui bootstrap de usuário. Para a primeira implantação:
+O Thothis não possui bootstrap de usuário. Para a primeira implantação:
 
 1. um administrador autorizado cria ou localiza o usuário no Keycloak;
 2. exige MFA e confirma que a identidade não é uma conta compartilhada;
@@ -417,7 +428,7 @@ O Basalt Notes não possui bootstrap de usuário. Para a primeira implantação:
 6. remove qualquer concessão temporária usada durante a implantação.
 
 Não crie tabela local de usuários ou um endpoint de “primeiro administrador” no
-Basalt Notes. Se não houver Owner válido, o acesso administrativo deve falhar
+Thothis. Se não houver Owner válido, o acesso administrativo deve falhar
 fechado e exigir intervenção do operador do Keycloak.
 
 ## 12. Parte H: configurar o ambiente real
@@ -472,9 +483,9 @@ Desenvolvimento, homologação e produção não compartilham usuários, secrets
 
 | Consumidor | Configuração |
 | --- | --- |
-| BFF | Authority `https://credential.zocate.li/realms/basalt-notes` |
-| BFF | Client ID `basalt-bff`, secret do cofre, Code + PKCE `S256` |
-| API | Mesmo issuer e audience obrigatória `basalt-api` |
+| BFF | Authority `https://credential.zocate.li/realms/thothis` |
+| BFF | Client ID `thothis-bff`, secret do cofre, Code + PKCE `S256` |
+| API | Mesmo issuer e audience obrigatória `thothis-api` |
 | API | Credencial de resource server para Protection API |
 | API | Mapeamento endpoint -> recurso opaco + scope `vault:*` |
 
@@ -489,7 +500,7 @@ O backup primário é o backup consistente do PostgreSQL do Keycloak. Export JSO
 Diretório: local seguro fora do Git.
 
 ```powershell
-$BackupDirectory = Join-Path $HOME 'basalt-keycloak-backup'
+$BackupDirectory = Join-Path $HOME 'thothis-keycloak-backup'
 New-Item -ItemType Directory -Force $BackupDirectory | Out-Null
 
 docker exec $DatabaseContainer `
@@ -508,8 +519,8 @@ Crie rede e volume com nomes diferentes dos originais e inicie um PostgreSQL
 isolado. Depois copie e restaure o dump:
 
 ```powershell
-$RestoreContainer = 'basalt-keycloak-db-restore'
-$RestoreVolume = 'basalt-keycloak-db-restore-data'
+$RestoreContainer = 'thothis-keycloak-db-restore'
+$RestoreVolume = 'thothis-keycloak-db-restore-data'
 
 docker volume create $RestoreVolume
 docker run --detach `
@@ -559,7 +570,7 @@ Teste logout atual, todas as sessões, remoção de grupo/role/permissão, desab
 
 ### 16.1 Realm e OIDC
 
-- [ ] Discovery responde pelo realm `basalt-notes`.
+- [ ] Discovery responde pelo realm `thothis`.
 - [ ] Issuer usa HTTPS e hostname canônico em produção.
 - [ ] Nenhuma aplicação usa o realm `master`.
 - [ ] Login, callback, renovação, logout e revogação foram testados.
@@ -569,7 +580,7 @@ Teste logout atual, todas as sessões, remoção de grupo/role/permissão, desab
 
 ### 16.2 Autorização
 
-- [ ] Audience `basalt-api` aparece no access token correto.
+- [ ] Audience `thothis-api` aparece no access token correto.
 - [ ] `Reader` lê e não escreve.
 - [ ] `Editor` lê/escreve e não gerencia/exclui.
 - [ ] `Owner` recebe os quatro scopes no recurso permitido.
@@ -597,7 +608,7 @@ Teste logout atual, todas as sessões, remoção de grupo/role/permissão, desab
 | `invalid_redirect_uri` | Callback diferente | Compare esquema, host, porta, path e barra final; não use `*`. |
 | Loop entre app e login | Hostname/proxy/cookie | Confira `KC_HOSTNAME`, headers, HTTPS e cookie. |
 | Issuer inválido | URL interna ou proxy | Compare `iss` com a Authority exatamente. |
-| Token sem `basalt-api` em `aud` | Mapper ausente | Confirme mapper e scope default do `basalt-bff`. |
+| Token sem `thothis-api` em `aud` | Mapper ausente | Confirme mapper e scope default do `thothis-bff`. |
 | `403` inesperado | Recurso/scope/policy/role | Use **Evaluate** e confira role herdada. |
 | Reader escreve | Permissão excessiva | Revise scope-based permission e políticas. |
 | Health retorna `404` | Health ou porta | Habilite health e consulte a porta `9000`. |
@@ -619,7 +630,7 @@ docker volume rm $DatabaseVolume
 Remove-Item Env:POSTGRES_PASSWORD -ErrorAction SilentlyContinue
 Remove-Item Env:KC_DB_PASSWORD -ErrorAction SilentlyContinue
 Remove-Item Env:KC_BOOTSTRAP_ADMIN_PASSWORD -ErrorAction SilentlyContinue
-Remove-Item Env:BASALT_BFF_CLIENT_SECRET -ErrorAction SilentlyContinue
+Remove-Item Env:THOTHIS_BFF_CLIENT_SECRET -ErrorAction SilentlyContinue
 ```
 
 Não execute esses comandos contra o ambiente real.
@@ -647,7 +658,7 @@ Fontes consultadas em 29 de julho de 2026:
 - [Authorization Services Guide](https://www.keycloak.org/docs/latest/authorization_services/)
 - [Server Administration Guide](https://www.keycloak.org/docs/latest/server_admin/)
 
-Referências do Basalt Notes:
+Referências do Thothis:
 
 - [Plano mestre](../README.md)
 - [Plano do BFF com Keycloak](plan/bff-keycloak.md)

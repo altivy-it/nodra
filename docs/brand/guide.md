@@ -1,9 +1,9 @@
-# Guia de marca — Basalt Notes
+# Guia de marca — Thothis
 
 **Versão:** 0.1-draft  
 **Status:** aguardando aprovação humana  
 **Etapa do plano:** P-07  
-**Relacionado:** [Plano de branding](../../plan/basalt-notes-branding.md), [Brief](../brief.md), [Tokens](../tokens/)
+**Relacionado:** [Plano de branding](../plan/thothis-branding.md), [Brief](brief.md), [Tokens](tokens/)
 
 > **Atenção:** este guia é um rascunho produzido por IA assistida.  
 > Nenhuma escolha aqui está aprovada. Revisão e aprovação humana são obrigatórias antes de publicar qualquer asset nos produtos.
@@ -12,56 +12,36 @@
 
 ## 1. O símbolo
 
-O ícone do Basalt Notes combina dois elementos:
+O Thothis ainda não possui símbolo, logotipo ou wordmark aprovados. O
+[brief](brief.md) define dois territórios candidatos e uma possibilidade de
+síntese para exploração em P-02:
 
-1.  **A Rocha Abstrata:** Uma forma facetada e assimétrica no centro, com um contorno definido, representa a solidez, durabilidade e permanência do conhecimento. As diferentes faces (base, sombra, destaque) dão profundidade e um toque de modernidade.
-2.  **As Órbitas Conectadas:** Duas elipses em "X" que cruzam o fundo simbolizam a estrutura de links, o grafo de conhecimento e a conexão entre as notas. Os pequenos nodos reforçam a ideia de pontos de informação interligados.
+1. **Escrita e registro:** gestos e estruturas abstratas ligados a documentação, linguagem e preservação da informação.
+2. **Lua e tempo:** ciclos, fases e medição tratados como geometria abstrata, sem ilustração literal.
+3. **Síntese entre registro e conexão:** continuidade, ritmo ou relações entre formas sugerem conhecimento conectado.
 
-A paleta de cores pastel (azul, lavanda) sobre fundos neutros cria uma identidade visual que é ao mesmo tempo sólida e tecnológica, profissional e convidativa.
+Essas direções não estão aprovadas. Nenhuma delas autoriza copiar hieróglifos,
+representar divindades, usar iconografia religiosa ou arqueológica reconhecível
+ou recorrer a mascotes e símbolos genéricos.
+
+A pronúncia oficial da marca é **TÔ-TIS**. Em materiais internacionais, usar a
+orientação `TOH-tis` em inglês e `TO-tis` em espanhol quando necessário.
 
 ---
 
 ## 2. Assets disponíveis
 
-| Arquivo | Uso | Fundo |
-|---|---|---|
-| [assets/icon.svg](assets/icon.svg) | Ícone isolado — interface, PWA, documentação | Claro / branco |
-| [assets/icon-dark.svg](assets/icon-dark.svg) | Ícone isolado | Escuro |
-| [assets/icon-mono.svg](assets/icon-mono.svg) | Ícone isolado | Qualquer (monocromia) |
-| [assets/logo-horizontal.svg](assets/logo-horizontal.svg) | Logo com wordmark — header, README | Claro / branco |
-| [assets/logo-horizontal-dark.svg](assets/logo-horizontal-dark.svg) | Logo com wordmark | Escuro |
-| [assets/logo-compact.svg](assets/logo-compact.svg) | Logo empilhado — espaços quadrados | Claro / branco |
-| [assets/logo-mono.svg](assets/logo-mono.svg) | Logo com wordmark | Qualquer (monocromia) |
-| [assets/favicon.svg](assets/favicon.svg) | Favicon — variante simplificada para ≤ 48 px | Qualquer |
-
-### Tamanhos de exportação recomendados (após aprovação)
-
-| Superfície | Arquivo-fonte | Tamanho de saída |
-|---|---|---|
-| Favicon ICO | `favicon.svg` | 16, 32, 48 px |
-| Ícone PWA pequeno | `icon.svg` | 192 × 192 px |
-| Ícone PWA grande | `icon.svg` | 512 × 512 px |
-| Avatar GitHub | `logo-compact.svg` | 400 × 400 px |
-| og:image | `logo-horizontal.svg` + fundo | 1200 × 630 px |
-| Header da aplicação | `icon.svg` ou `logo-horizontal.svg` | 40 px de altura |
+Nenhum asset visual está aprovado ou distribuído. A pasta `assets/` permanece
+reservada para arquivos produzidos após seleção humana do conceito, verificação
+de originalidade, licença, acessibilidade e segurança.
 
 ---
 
 ## 3. Paleta de cores
 
-A paleta principal usa tons pastel de azul e lavanda para criar uma atmosfera calma e tecnológica.
-
-| Token (CSS) | Valor (HEX) | Papel no Logo (Tema Claro) |
-|---|---|---|
-| `---rock-highlight` | `#C3DAFE` | Destaque da rocha |
-| `---rock-base` | `#A3BFFA` | Base da rocha |
-| `---rock-shadow` | `#7F9CF5` | Sombra da rocha |
-| `---orbit-path` | `#DCD7FE` | Órbitas e nodos |
-| `---rock-stroke` | `#4A5568` | Contorno da rocha |
-| `---border` | `#E2E8F0` | Borda do ícone |
-| `---bg` | `#FFFFFF` | Fundo do ícone |
-
-Para o tema escuro, os valores são ajustados para manter a identidade visual, usando tons mais escuros para a rocha e um lavanda mais sutil para as órbitas. Consulte os SVGs `icon-dark.svg` e `logo-horizontal-dark.svg` para os valores exatos.
+Os tokens atuais são candidatos funcionais da interface, não uma paleta de logo
+aprovada. A paleta definitiva deve distinguir superfícies, texto, foco e estados
+nos temas claro, escuro e alto contraste, sem depender de uma única família cromática.
 
 ---
 
@@ -73,14 +53,15 @@ Para o tema escuro, os valores são ajustados para manter a identidade visual, u
 | Conteúdo Markdown | IBM Plex Serif | `Georgia, serif` |
 | Código | IBM Plex Mono | `ui-monospace, monospace` |
 
-O wordmark "Basalt Notes" usa a fonte **Inter**, em peso "Medium" ou "SemiBold".
+Se aprovada, a fonte **Inter** poderá ser testada no wordmark "Thothis" nos
+pesos "Medium" e "SemiBold". Esta combinação ainda não é normativa.
 
 ---
 
 ## 5. Área de proteção e tamanho mínimo
 
 - **Área de proteção:** Manter uma margem equivalente a **10% da largura total** do asset em todos os lados.
-- **Tamanho mínimo (ícone):** O ícone completo não deve ser exibido abaixo de **24 × 24 px**. Para 16 × 16 px, usar `favicon.svg`, que contém apenas a rocha central.
+- **Tamanho mínimo (ícone):** será definido após testes reais em 16, 24, 32 e 48 px.
 - **Tamanho mínimo (logo):** O logo horizontal não deve ser exibido abaixo de **120 px de largura**.
 
 ---
@@ -92,7 +73,7 @@ Não:
 - Rotacionar o ícone ou o wordmark.
 - Adicionar efeitos como sombra, brilho ou gradientes.
 - Alterar as cores fora da paleta definida.
-- Usar o ícone completo em tamanhos onde as órbitas se tornam indistinguíveis (abaixo de 24px).
+- Publicar um símbolo antes de testar legibilidade, monocromia e contraste nos tamanhos-alvo.
 - Usar as versões de tema claro sobre fundos escuros e vice-versa.
 - Carregar os assets de uma URL externa em runtime.
 
@@ -117,14 +98,7 @@ Não:
 
 ```
 # Checksums SHA-256 (preencher após aprovação)
-# icon.svg                     = (pendente)
-# icon-dark.svg                = (pendente)
-# icon-mono.svg                = (pendente)
-# logo-horizontal.svg          = (pendente)
-# logo-horizontal-dark.svg     = (pendente)
-# logo-compact.svg             = (pendente)
-# logo-mono.svg                = (pendente)
-# favicon.svg                  = (pendente)
+# Nenhum asset aprovado até o momento.
 ```
 
 ---
@@ -135,7 +109,7 @@ Não:
 2. A proposta de alteração é submetida como PR com referência a este guia e ao plano de branding.
 3. Aprovação humana explícita é registrada no PR antes do merge.
 4. O catálogo de checksums é atualizado antes de promover assets para produção.
-5. A versão anterior dos assets é preservada em `assets/archive/` com data até que todas as superfícies sejam migradas.
+5. Assets substituídos deixam de ser referenciados e distribuídos após a validação do novo conjunto.
 
 ---
 
@@ -151,15 +125,12 @@ Não:
 
 ---
 
-## 11. Rollback
+## 11. Substituição de assets
 
-Caso um asset publicado precise ser revertido:
-
-1. Restaurar a versão anterior de `assets/archive/`.
-2. Substituir nos pontos de integração (manifest PWA, Angular, documentação, Docker Hub).
-3. Limpar caches versionados de service worker se necessário.
-4. Verificar que `manifest.webmanifest`, favicon e documentação voltaram ao conjunto compatível.
-5. O rollback não deve exigir migração de dados de usuário.
+Uma substituição futura deve atualizar no mesmo change set o manifest PWA, a
+aplicação, a documentação, os checksums e os metadados de licença. Assets sem
+aprovação deixam de ser distribuídos; a mudança visual não pode exigir migração
+de dados nem alterar conteúdo de usuário.
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: "Design System Frontend"
-description: "Use ao criar ou alterar design system, tokens, temas, ícones e componentes base Angular do Basalt Notes."
+description: "Use ao criar ou alterar design system, tokens, temas, ícones e componentes base Angular do Thothis."
 applyTo: "libs/frontend/design-system/**, apps/web/src/app/design-system/**"
 ---
 

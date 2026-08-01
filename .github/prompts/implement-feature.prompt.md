@@ -1,8 +1,8 @@
 ---
 name: "Implementar Feature"
-description: "Implementa uma feature vertical completa do Basalt Notes com contrato, backend, frontend, testes, documentação e reviews proporcionais ao risco."
+description: "Implementa uma feature vertical completa do Thothis com contrato, backend, frontend, testes, documentação e reviews proporcionais ao risco."
 argument-hint: "Feature, critérios de aceite e limites"
-agent: "Basalt Delivery Lead"
+agent: "Thothis Delivery Lead"
 ---
 
 Entregue a feature solicitada ponta a ponta seguindo o plano mestre e as instruções por domínio.

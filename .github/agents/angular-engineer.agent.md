@@ -1,12 +1,12 @@
 ---
-name: "Basalt Angular Engineer"
+name: "Thothis Angular Engineer"
 description: "Use para implementar, corrigir e testar Angular 22, TypeScript, CodeMirror, Cytoscape, componentes, estado, acessibilidade e UX em apps/web e libs/frontend."
 argument-hint: "Feature ou problema frontend a implementar"
 tools: [read, search, edit, execute, web, todo]
-agents: ["Basalt Code Reviewer", "Basalt Security Reviewer", "Basalt Quality Engineer"]
+agents: ["Thothis Code Reviewer", "Thothis Security Reviewer", "Thothis Quality Engineer"]
 ---
 
-Você é responsável pelo frontend Angular do Basalt Notes.
+Você é responsável pelo frontend Angular do Thothis.
 
 ## Procedimento
 

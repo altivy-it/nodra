@@ -2,11 +2,11 @@
 
 **Status:** referência arquitetural inicial  
 **Data de referência:** 28 de julho de 2026  
-**Escopo:** recursos do repositório e da plataforma GitHub para integração contínua, entrega, segurança e cadeia de fornecimento do Basalt Notes.
+**Escopo:** recursos do repositório e da plataforma GitHub para integração contínua, entrega, segurança e cadeia de fornecimento do Thothis.
 
 ## 1. Objetivo
 
-Este documento descreve como utilizar o GitHub para proteger mudanças, executar validações, publicar imagens de container e promover releases do Basalt Notes. O Sonar faz parte dessa estratégia como gate de qualidade e segurança do código, mas não substitui os controles nativos do GitHub.
+Este documento descreve como utilizar o GitHub para proteger mudanças, executar validações, publicar imagens de container e promover releases do Thothis. O Sonar faz parte dessa estratégia como gate de qualidade e segurança do código, mas não substitui os controles nativos do GitHub.
 
 A solução deve combinar quatro camadas:
 
@@ -87,7 +87,7 @@ Essas configurações devem ser inventariadas em checklist ou evidência adminis
 
 ## 3. GitHub Actions como motor de CI/CD
 
-GitHub Actions executa workflows YAML em resposta a eventos como `pull_request`, `push`, tags, agenda e acionamento manual. Para o monorepo do Basalt Notes, a divisão recomendada é:
+GitHub Actions executa workflows YAML em resposta a eventos como `pull_request`, `push`, tags, agenda e acionamento manual. Para o monorepo do Thothis, a divisão recomendada é:
 
 | Job | Validação principal |
 | --- | --- |
@@ -259,7 +259,7 @@ A biblioteca MediatR é proibida no projeto por sua política de licenciamento; 
 
 ### 6.2 Code scanning com CodeQL
 
-CodeQL suporta as linguagens principais do Basalt Notes:
+CodeQL suporta as linguagens principais do Thothis:
 
 - C# para API, worker e bibliotecas backend;
 - JavaScript/TypeScript para Angular e bibliotecas frontend;
@@ -336,9 +336,9 @@ O job de deploy recebe `id-token: write`; os jobs de build não recebem essa per
 As imagens podem ser publicadas no GitHub Container Registry:
 
 ```text
-ghcr.io/lzocateli/basaltnotes-web:1.0.0
-ghcr.io/lzocateli/basaltnotes-api:1.0.0
-ghcr.io/lzocateli/basaltnotes-worker:1.0.0
+ghcr.io/lzocateli/thothis-web:1.0.0
+ghcr.io/lzocateli/thothis-api:1.0.0
+ghcr.io/lzocateli/thothis-worker:1.0.0
 ```
 
 Cada release deve:

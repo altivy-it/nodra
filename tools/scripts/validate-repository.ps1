@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Valida estrutura, Markdown, planos e referências imutáveis do Basalt Notes.
+Valida estrutura, Markdown, planos e referências imutáveis do Thothis.
 
 .DESCRIPTION
 Verifica arquivos obrigatórios, links Markdown locais, IDs explícitos de headings,
@@ -16,7 +16,7 @@ Argumentos literais remanescentes. Aceita somente --help; outros valores retorna
 ./tools/scripts/validate-repository.ps1
 
 .EXAMPLE
-./tools/scripts/validate-repository.ps1 -RepositoryRoot C:\src\basaltnotes
+./tools/scripts/validate-repository.ps1 -RepositoryRoot C:\src\thothis
 
 .INPUTS
 Nenhum.
@@ -186,7 +186,7 @@ if (Test-Path -LiteralPath $planDirectory) {
 
         $stepMatches = [regex]::Matches(
             $planContent,
-            '(?ms)^###\s+.*\b(?:P|WP)-\d+\b.*?\r?\n(?<body>.*?)(?=^###\s+|\z)'
+            '(?ms)^###\s+[^\r\n]*\b(?:P|WP)-\d+\b[^\r\n]*\r?\n(?<body>.*?)(?=^###\s+|\z)'
         )
         if ($stepMatches.Count -eq 0) {
             $failures.Add("Plano sem etapas P-NN ou WP-NN em ${relativePlan}")

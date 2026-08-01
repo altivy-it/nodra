@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Relatar comportamento incorreto ou regressão no Basalt Notes
+about: Relatar comportamento incorreto ou regressão no Thothis
 title: "[Bug] "
 labels: bug
 assignees: ""
@@ -18,7 +18,7 @@ assignees: ""
 
 ## Ambiente
 
-- versão/tag do Basalt Notes:
+- versão/tag do Thothis:
 - navegador e versão:
 - Docker Desktop/Engine e sistema operacional:
 - armazenamento do vault: local, SMB, NFS ou outro:

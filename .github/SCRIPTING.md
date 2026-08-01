@@ -1,6 +1,6 @@
 # Scripts e automação
 
-Este documento define onde criar scripts e o contrato mínimo de linha de comando no monorepo Basalt Notes.
+Este documento define onde criar scripts e o contrato mínimo de linha de comando no monorepo Thothis.
 
 ## Estrutura
 

@@ -1,6 +1,6 @@
 ---
 name: "Containers e Deploy"
-description: "Use ao criar ou alterar Dockerfile, Compose, proxy reverso, entrypoint, health check, bind mount, configuração de runtime ou arquivos de deploy do Basalt Notes."
+description: "Use ao criar ou alterar Dockerfile, Compose, proxy reverso, entrypoint, health check, bind mount, configuração de runtime ou arquivos de deploy do Thothis."
 applyTo: "deploy/**, **/Dockerfile*, **/compose*.yml, **/compose*.yaml, **/.dockerignore"
 ---
 

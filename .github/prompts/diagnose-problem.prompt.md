@@ -1,6 +1,6 @@
 ---
 name: "Diagnosticar Problema"
-description: "Investiga falha, regressão, teste quebrado ou comportamento inesperado do Basalt Notes com evidência antes de corrigir."
+description: "Investiga falha, regressão, teste quebrado ou comportamento inesperado do Thothis com evidência antes de corrigir."
 argument-hint: "Erro, comando, log, teste ou comportamento observado"
 agent: "agent"
 ---
