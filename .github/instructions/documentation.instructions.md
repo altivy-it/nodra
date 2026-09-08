@@ -7,7 +7,7 @@ applyTo: "**/*.md, docs/**, contracts/**/*.yaml, contracts/**/*.json"
 # Documentação
 
 - Escreva em português brasileiro, com termos técnicos consistentes e exemplos executáveis.
-- O README raiz é a autoridade para visão, escopo e decisões globais.
+- O plano mestre em `docs/plano-mestre.md` é a autoridade para visão, escopo e decisões globais; o README raiz é a entrada pública do projeto.
 - Documentos de frontend, backend e evolução detalham implementação sem duplicar o plano mestre.
 - ADRs vivem em `docs/adr` desde a criação, usam `AAAA-NNNN-titulo.md` (ano e sequência anual), e status `proposed`, `accepted`, `superseded` ou `deprecated`.
 - Planos vivem em `docs/plan`, usam `<tema>.md` em kebab-case e seguem `.github/PLAN_TEMPLATE.md`.

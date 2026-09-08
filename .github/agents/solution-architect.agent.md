@@ -30,7 +30,7 @@ Você é o Solution Architect do Altivy. Analisa o repositório de forma read-on
 
 ## Método
 
-1. Leia o plano mestre e as instruções aplicáveis.
+1. Leia o [plano mestre](../../docs/plano-mestre.md) e as instruções aplicáveis.
 2. Examine somente os módulos, testes e contratos relevantes.
 3. Declare premissas e pontos ainda desconhecidos.
 4. Descreva contexto, forças e opções.

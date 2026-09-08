@@ -198,7 +198,7 @@ exclusão definitiva e compartilhamento exigem decisões próprias.
 
 ## Referências
 
-- [Plano mestre](../../README.md)
+- [Plano mestre](../plano-mestre.md)
 - [Plano de alternância segura entre vaults](../plan/alternancia-vaults.md)
 - [ADR de catálogo autorizado de vaults](2026-0004-catalogo-autorizado-de-vaults.md)
 - [Implementação do backend](../backend.md)

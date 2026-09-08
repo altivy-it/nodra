@@ -3,7 +3,7 @@
 ## Contexto obrigatório
 
 - O Altivy é uma aplicação web self-hosted de gestão de conhecimento em Markdown.
-- Leia o [plano mestre](../README.md) antes de alterar arquitetura, contratos, persistência ou segurança.
+- Leia o [plano mestre](../docs/plano-mestre.md) antes de alterar arquitetura, contratos, persistência ou segurança.
 - Consulte [frontend](../docs/frontend.md), [backend](../docs/backend.md) e [evolução do produto](../docs/evolucao-produto.md) conforme o escopo.
 - Arquivos Markdown no vault são a fonte canônica; PostgreSQL é uma projeção reconstruível.
 - A solução deve operar em containers, sem exigir runtimes instalados na máquina do usuário final.

@@ -2,7 +2,7 @@
 
 ## Antes de começar
 
-1. Leia o [plano mestre](../README.md) e o documento da área afetada.
+1. Leia o [plano mestre](../docs/plano-mestre.md) e o documento da área afetada.
 2. Procure issue, ADR e implementação relacionada.
 3. Para mudanças relevantes, registre critérios de aceite e riscos antes do código.
 4. Não inclua conteúdo real de vault, dados pessoais, tokens ou secrets em issues, fixtures ou logs.
@@ -11,6 +11,14 @@
    `.env.*`, `secrets.json` ou arquivo equivalente dentro do repositório, nem
    use `dotnet user-secrets`; em CI e produção, use o mecanismo de secrets da
    plataforma.
+6. Instale o hook obrigatório de detecção de secrets em cada clone:
+
+   ```powershell
+   ./tools/scripts/install-gitleaks-hook.ps1
+   git hook run pre-commit
+   ```
+
+   Consulte a [política de detecção de secrets](SECRET-SCANNING.md).
 
 ## Estrutura e ownership
 
@@ -69,6 +77,7 @@ Testes de integração podem exigir Docker para PostgreSQL/Testcontainers. Scrip
 - logs/métricas adequados sem conteúdo sensível;
 - documentação e release notes atualizadas;
 - rollback ou recuperação definido para mudanças operacionais;
+- hook Gitleaks instalado e `Gitleaks / Full History` aprovado;
 - nenhum achado crítico/alto aberto sem aceitação formal.
 
 ## Commits e pull requests

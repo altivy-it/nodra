@@ -147,7 +147,7 @@ sintéticos do laboratório são reconciliados de forma idempotente.
 
 ## Referências
 
-- [Plano mestre](../../README.md)
+- [Plano mestre](../plano-mestre.md)
 - [Plano de alternância segura entre vaults](../plan/alternancia-vaults.md)
 - [ADR de BFF e autorização externa](2026-0002-bff-keycloak-autorizacao-externa.md)
 - [Implementação do backend](../backend.md)

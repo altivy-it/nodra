@@ -2,7 +2,7 @@
 
 ## 1. Objetivo
 
-Definir a arquitetura e o plano de implementação da aplicação Angular do Altivy. As decisões de produto e arquitetura global permanecem no [Plano Mestre](../README.md).
+Definir a arquitetura e o plano de implementação da aplicação Angular do Altivy. As decisões de produto e arquitetura global permanecem no [Plano Mestre](plano-mestre.md).
 
 ## 2. Stack
 

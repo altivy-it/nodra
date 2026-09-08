@@ -5,7 +5,7 @@ argument-hint: "Diff, branch, PR ou escopo da revisão"
 agent: "Altivy Code Reviewer"
 ---
 
-Revise a mudança indicada contra o requisito, plano mestre e instruções aplicáveis.
+Revise a mudança indicada contra o requisito, [plano mestre](../../docs/plano-mestre.md) e instruções aplicáveis.
 
 - leia o diff completo e os call sites relevantes;
 - priorize perda/exposição de conteúdo, concorrência, autorização, contratos, migrations, desempenho e operação;

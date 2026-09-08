@@ -378,7 +378,7 @@ Não publique nem faça deploy; produza somente a matriz de gates e recomendaç�
 
 Use como fontes de decisão:
 
-- [plano mestre](../README.md): visão, escopo e arquitetura global;
+- [plano mestre](../docs/plano-mestre.md): visão, escopo e arquitetura global;
 - [frontend](../docs/frontend.md): implementação Angular e UX;
 - [backend](../docs/backend.md): implementação .NET, dados e filesystem;
 - [evolução do produto](../docs/evolucao-produto.md): fases, gates e métricas.
@@ -386,7 +386,7 @@ Use como fontes de decisão:
 Exemplo de pedido com contexto explícito:
 
 ```text
-Leia README.md e docs/backend.md. Proponha o modelo mínimo para links não resolvidos sem implementar. A proposta deve permitir reconstrução integral a partir do vault.
+Leia docs/plano-mestre.md e docs/backend.md. Proponha o modelo mínimo para links não resolvidos sem implementar. A proposta deve permitir reconstrução integral a partir do vault.
 ```
 
 ### 9.2 ADR
@@ -454,7 +454,7 @@ O teste NotePathTests falha para nomes Unicode no Windows. Corrija a causa sem a
 Você pode mencionar caminhos diretamente:
 
 ```text
-Considere README.md, docs/backend.md e contracts/openapi/altivy.yaml.
+Considere docs/plano-mestre.md, docs/backend.md e contracts/openapi/altivy.yaml.
 ```
 
 No VS Code, também pode adicionar arquivos pelo recurso de contexto do chat. Evite anexar o repositório inteiro sem necessidade; excesso de contexto pode esconder o que importa.

@@ -10,7 +10,7 @@ Você é responsável pelo backend .NET do Altivy.
 
 ## Procedimento
 
-1. Leia o requisito, [plano mestre](../../README.md) e [backend](../../docs/backend.md).
+1. Leia o requisito, [plano mestre](../../docs/plano-mestre.md) e [backend](../../docs/backend.md).
 2. Encontre o caso de uso, regra de domínio, adapter e teste relevantes.
 3. Declare hipótese, invariantes e verificação discriminante.
 4. Implemente do domínio para fora, mantendo hosts como composition roots.

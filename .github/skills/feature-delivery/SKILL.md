@@ -12,7 +12,7 @@ Entregar uma capacidade utilizável e verificável, preservando conteúdo, contr
 
 ## 1. Enquadrar
 
-1. Leia o [plano mestre](../../../README.md) e documentos do domínio afetado.
+1. Leia o [plano mestre](../../../docs/plano-mestre.md) e documentos do domínio afetado.
 2. Defina persona, problema, resultado, não escopo e critérios de aceite observáveis.
 3. Identifique projetos, módulos, contrato, dados e superfícies de segurança afetados.
 4. Liste premissas e faça somente perguntas realmente bloqueantes.

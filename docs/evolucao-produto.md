@@ -2,7 +2,7 @@
 
 ## 1. Objetivo
 
-Organizar a evolução do Altivy em resultados verificáveis, evitando que a busca por paridade total com ferramentas existentes impeça entregas utilizáveis. A visão e as restrições arquiteturais estão no [Plano Mestre](../README.md).
+Organizar a evolução do Altivy em resultados verificáveis, evitando que a busca por paridade total com ferramentas existentes impeça entregas utilizáveis. A visão e as restrições arquiteturais estão no [Plano Mestre](plano-mestre.md).
 
 ## 2. Método de planejamento
 

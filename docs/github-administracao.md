@@ -17,6 +17,7 @@ Não registre tokens, secrets, connection strings ou conteúdo de notas como evi
 - [ ] Exigir revisão de Code Owner quando houver equipe suficiente para revisão independente.
 - [ ] Exigir histórico linear e restringir bypass a responsáveis auditáveis.
 - [ ] Adicionar `CI / Result` aos checks obrigatórios depois de sua primeira execução bem-sucedida.
+- [ ] Adicionar `Gitleaks / Full History` aos checks obrigatórios depois de sua primeira execução.
 - [ ] Proteger tags `v*` antes da primeira release.
 - [ ] Avaliar merge queue quando houver concorrência de contribuições.
 
@@ -37,6 +38,8 @@ Não registre tokens, secrets, connection strings ou conteúdo de notas como evi
 - [ ] Habilitar Dependency Review quando o plano e os manifests permitirem.
 - [ ] Habilitar CodeQL para C# e TypeScript depois da criação dos projetos executáveis.
 - [ ] Habilitar secret scanning e push protection quando disponíveis.
+- [ ] Confirmar que o hook local foi instalado com `core.hooksPath=.githooks` nos clones administrativos.
+- [ ] Confirmar que exceções do Gitleaks são mínimas, documentadas e aprovadas em revisão; não criar allowlists automáticas.
 - [ ] Habilitar Private Vulnerability Reporting e confirmar o botão **Report a vulnerability** na aba **Security**.
 - [ ] Definir responsáveis, severidades e prazos para triagem de alertas.
 
@@ -66,6 +69,7 @@ Não registre tokens, secrets, connection strings ou conteúdo de notas como evi
 | --- | --- | --- | --- | --- |
 | Ruleset de `main` | pendente | pendente | pendente | pendente |
 | Segurança do código | pendente | pendente | pendente | pendente |
+| Gitleaks e hook local | pendente | pendente | pendente | pendente |
 | Private Vulnerability Reporting | pendente | pendente | pendente | pendente |
 | Sonar Quality Gate | pendente | pendente | pendente | pendente |
 | Environments e OIDC | pendente | pendente | pendente | pendente |

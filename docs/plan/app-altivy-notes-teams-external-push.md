@@ -984,7 +984,7 @@ preservados conforme retenção. Nenhum rollback exclui arquivo automaticamente.
 
 ## Referências
 
-- [Plano mestre](../../README.md)
+- [Plano mestre](../plano-mestre.md)
 - [Integração de notas de reunião do Microsoft Teams](integracao-teams-notas-reuniao.md)
 - [Evolução do produto](../evolucao-produto.md)
 - [Implementação do backend](../backend.md)

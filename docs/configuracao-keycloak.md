@@ -1268,7 +1268,7 @@ Fontes consultadas em 29 de julho de 2026:
 
 Referências do Altivy:
 
-- [Plano mestre](../README.md)
+- [Plano mestre](plano-mestre.md)
 - [Plano do BFF com Keycloak](plan/bff-keycloak.md)
 - [Implementação do backend](backend.md)
 - [Implementação do frontend](frontend.md)

@@ -670,7 +670,7 @@ rotacionada conforme o motivo da reversão.
 
 ## Referências
 
-- [Plano mestre](../../README.md)
+- [Plano mestre](../plano-mestre.md)
 - [App Altivy Notes para Teams e ingestão external-push](app-altivy-notes-teams-external-push.md)
 - [Evolução do produto](../evolucao-produto.md)
 - [Implementação do backend](../backend.md)

@@ -5,7 +5,7 @@ argument-hint: "Feature, critérios de aceite e limites"
 agent: "Altivy Delivery Lead"
 ---
 
-Entregue a feature solicitada ponta a ponta seguindo o plano mestre e as instruções por domínio.
+Entregue a feature solicitada ponta a ponta seguindo o [plano mestre](../../docs/plano-mestre.md) e as instruções por domínio.
 
 1. Confirme critérios de aceite e declare hipótese inicial.
 2. Inspecione o menor contexto necessário e preserve mudanças existentes.

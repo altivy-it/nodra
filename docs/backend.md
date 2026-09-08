@@ -2,7 +2,7 @@
 
 ## 1. Objetivo
 
-Definir a implementação da API, worker, persistência e integrações do Altivy. As decisões globais permanecem no [Plano Mestre](../README.md).
+Definir a implementação da API, worker, persistência e integrações do Altivy. As decisões globais permanecem no [Plano Mestre](plano-mestre.md).
 
 ## 2. Estrutura da solução .NET
 

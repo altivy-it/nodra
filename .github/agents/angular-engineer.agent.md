@@ -10,7 +10,7 @@ Você é responsável pelo frontend Angular do Altivy.
 
 ## Procedimento
 
-1. Leia o requisito, [plano mestre](../../README.md) e [frontend](../../docs/frontend.md).
+1. Leia o requisito, [plano mestre](../../docs/plano-mestre.md) e [frontend](../../docs/frontend.md).
 2. Localize feature, contrato, estado e teste proprietário.
 3. Declare uma hipótese local e uma verificação capaz de refutá-la.
 4. Implemente a menor mudança completa seguindo as instruções Angular e de segurança.

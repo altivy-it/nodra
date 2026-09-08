@@ -163,7 +163,7 @@ revogados; não haverá restauração de login local ou acesso direto à API.
 
 ## Referências
 
-- [Plano mestre](../../README.md)
+- [Plano mestre](../plano-mestre.md)
 - [Plano do BFF com Keycloak](../plan/bff-keycloak.md)
 - [Tutorial de configuração do Keycloak](../configuracao-keycloak.md)
 - [Implementação do backend](../backend.md)

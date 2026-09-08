@@ -5,7 +5,7 @@ argument-hint: "Decisão arquitetural, contexto e restrições"
 agent: "Altivy Solution Architect"
 ---
 
-Analise a decisão informada à luz do [plano mestre](../../README.md), das instruções arquiteturais e do [template de ADR](../ADR_TEMPLATE.md).
+Analise a decisão informada à luz do [plano mestre](../../docs/plano-mestre.md), das instruções arquiteturais e do [template de ADR](../ADR_TEMPLATE.md).
 
 1. Confirme se a decisão exige ADR e localize decisões relacionadas.
 2. Compare opções plausíveis por integridade, segurança, desempenho, operação, custo e reversibilidade.

@@ -6,7 +6,7 @@
 **Responsáveis:** Lincoln Zocateli  
 **Origem:** IA assistida a partir da solicitação do produto  
 **Revisor humano:** Lincoln Zocateli  
-**Relacionado:** [plano mestre](../../README.md), [implementação do frontend](../frontend.md), [evolução do produto](../evolucao-produto.md) e [plataforma de plugins](app-altivy-notes-teams-external-push.md)
+**Relacionado:** [plano mestre](../plano-mestre.md), [implementação do frontend](../frontend.md), [evolução do produto](../evolucao-produto.md) e [plataforma de plugins](app-altivy-notes-teams-external-push.md)
 
 ## Objetivo
 
