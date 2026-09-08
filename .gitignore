@@ -1,0 +1,12 @@
+.coverage-run.lock
+.env
+.env.*
+secrets.json
+**/bin/
+**/obj/
+**/TestResults/
+**/.data-protection-keys/
+deploy/e2e/certs/
+deploy/e2e/keys/
+# Defesa em profundidade; arquivos .env são proibidos dentro do repositório.
+deploy/e2e/.env

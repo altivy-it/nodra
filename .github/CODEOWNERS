@@ -1,0 +1,12 @@
+* @lzocateli
+
+/.github/ @lzocateli
+/.github/CODEOWNERS @lzocateli
+/.github/workflows/ @lzocateli
+/apps/ @lzocateli
+/contracts/ @lzocateli
+/deploy/ @lzocateli
+/docs/ @lzocateli
+/libs/ @lzocateli
+/tests/ @lzocateli
+/tools/ @lzocateli

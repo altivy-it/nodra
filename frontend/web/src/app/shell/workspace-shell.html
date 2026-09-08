@@ -1,0 +1,88 @@
+<div class="workspace" [attr.data-theme]="workspace.theme()" [attr.data-density]="workspace.density()">
+  <header class="topbar">
+    <div class="context"><span class="brand-mark" aria-hidden="true">A/</span><app-vault-selector [vaults]="vaults"
+        [currentVaultId]="currentVaultId" [loading]="vaultsLoading" (vaultSelected)="vaultSelected.emit($event)" />
+    </div>
+    <div class="topbar-actions"><button type="button" class="icon-button" aria-label="Recolher explorador"
+        (click)="workspace.togglePrimaryPanel()">☰</button><button type="button" class="icon-button"
+        aria-label="Alternar tema" (click)="workspace.cycleTheme()">◐</button><button type="button" class="icon-button"
+        aria-label="Notificações">!</button><span class="connection" aria-label="Conexão ativa"><span
+          aria-hidden="true"></span> online</span><button type="button" class="account"
+        aria-label="Abrir menu da conta">{{ userName || 'Conta' }}</button></div>
+  </header>
+  <nav class="activity-bar" aria-label="Módulos" role="toolbar">@for (item of activities.availableItems(); track
+    item.id) { <button type="button" class="activity" [class.active]="workspace.activeModule() === item.id"
+      [attr.aria-label]="item.label" [attr.data-activity]="item.id"
+      [attr.tabindex]="workspace.activeModule() === item.id ? 0 : -1" (click)="selectModule(item.id)"
+      (keydown)="moveActivity($event, item.id)">{{ item.symbol }}<span>{{ item.label }}</span></button> }</nav>
+  @if (workspace.primaryPanelOpen()) { <aside class="primary-panel" [style.width.px]="workspace.primaryPanelWidth()"
+    aria-label="Explorador de arquivos">
+    <div class="panel-heading"><span>EXPLORADOR</span><button type="button" class="small-button"
+        (click)="noteCreated.emit()" aria-label="Criar nota">+</button></div>
+    <div class="panel-actions"><button type="button" (click)="noteCreated.emit()">Nova nota</button><button
+        type="button" (click)="notesReloaded.emit()" aria-label="Atualizar arquivos">↻</button></div><button
+      type="button" class="resize-handle resize-primary" aria-label="Ajustar largura do explorador"
+      (click)="workspace.resizePrimaryPanel(20)">⋮</button>@if (loading) { <p class="muted">Carregando arquivos...</p> }
+    @for (note of notes; track note.path) { <button type="button" class="file-row"
+      [class.selected]="selected?.path === note.path" (click)="noteOpened.emit(note.path)"><span
+        aria-hidden="true">·</span>{{ note.path }}</button> } @if (!loading && notes.length === 0) { <p class="muted">
+      Nenhuma nota neste vault.</p> }
+  </aside> }
+  <main class="content" aria-label="Área de trabalho">
+    <div class="document-tabs"><span class="tab active">{{ selected?.path || 'Workspace' }}</span><button type="button"
+        aria-label="Fechar documento">×</button></div>@if (error) { <p class="error" role="alert">{{ error }}</p> } @if
+    (isModule('files')) { @if (selected; as note) { <section class="editor" aria-label="Editor Markdown"><label>Caminho
+        <input #path [value]="note.path" aria-label="Caminho da nota"></label><textarea #content [value]="note.content"
+        aria-label="Conteúdo Markdown"></textarea>
+      <div class="editor-actions"><span class="muted">Markdown · fonte canônica</span><button type="button"
+          (click)="save(path.value, content.value)">Salvar</button><button type="button"
+          (click)="noteRemoved.emit()">Excluir</button></div>
+    </section> } @else { <section class="empty"><span class="empty-code">A/</span>
+      <h1>Abra uma nota para começar.</h1>
+      <p>Seu vault permanece organizado ao redor do documento atual.</p>
+    </section> } } @else if (isModule('settings')) { <section class="module-page"><span class="empty-code">06 /
+        CONFIGURAÇÕES</span>
+      <h1>Preferências do workspace</h1><label>Tema <select [value]="workspace.theme()"
+          (change)="workspace.setTheme($any($event.target).value)">
+          <option value="system">Sistema</option>
+          <option value="light">Claro</option>
+          <option value="dark">Escuro</option>
+          <option value="high-contrast">Alto contraste</option>
+        </select></label><label>Densidade <select [value]="workspace.density()"
+          (change)="workspace.setDensity($any($event.target).value)">
+          <option value="comfortable">Confortável</option>
+          <option value="compact">Compacta</option>
+        </select></label><button type="button" class="reset-button" (click)="workspace.reset()">Restaurar preferências
+        locais</button>
+    </section> } @else if (isModule('help')) { <article class="module-page help-page"><span class="empty-code">05 /
+        AJUDA</span>
+      <h1>Como trabalhar no Altivy Notes</h1>
+      <h2>Abrir e organizar notas</h2>
+      <p>Use Arquivos para abrir uma nota ou criar um documento rápido. O Markdown continua sendo a fonte canônica do
+        seu vault.</p>
+      <h2>Preservar seu contexto</h2>
+      <p>O shell mantém o documento atual enquanto você consulta os módulos. Preferências locais não contêm conteúdo de
+        notas nem credenciais.</p>
+      <h2>Conta e segurança</h2>
+      <p>Autenticação, perfil, sessões e MFA pertencem ao provedor de identidade configurado pelo operador.</p>
+    </article> } @else { <section class="module-page"><span class="empty-code">WORKSPACE / {{ workspace.activeModule()
+        }}</span>
+      <h1>Módulo em preparação.</h1>
+      <p>Esta superfície está reservada para uma feature nativa autorizada.</p>
+    </section> }
+  </main>
+  @if (workspace.contextPanelOpen()) { <aside class="context-panel" [style.width.px]="workspace.contextPanelWidth()"
+    aria-label="Painel contextual">
+    <div class="panel-heading"><span>CONTEXTO</span><button type="button" class="small-button"
+        (click)="workspace.toggleContextPanel()" aria-label="Recolher painel contextual">×</button></div><button
+      type="button" class="resize-handle resize-context" aria-label="Ajustar largura do painel contextual"
+      (click)="workspace.resizeContextPanel(20)">⋮</button>
+    <div class="context-placeholder"><strong>{{ selected ? 'Propriedades' : 'Sem contexto' }}</strong>
+      <p>{{ selected ? 'Outline, tags e propriedades aparecerão aqui.' : 'Selecione um documento para ver seus
+        detalhes.' }}</p>
+    </div>
+  </aside> }
+  <footer class="statusbar"><span>● sessão ativa</span><span>vault: {{ currentVaultId }}</span><span
+      class="status-spacer"></span><span>Altivy Notes Workspace</span><button type="button" class="logout"
+      (click)="loggedOut.emit()">Sair</button></footer>
+</div>

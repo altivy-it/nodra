@@ -1,0 +1,529 @@
+# Keycloak Admin REST API - Altivy
+# Requer a extensão VS Code REST Client (humao.rest-client).
+# Execute primeiro "Obter token administrativo". As demais requisições usam
+# automaticamente o access_token retornado por ela.
+#
+# Fonte canônica: %APPDATA%\Microsoft\UserSecrets\Altivy.Notes\.env.
+# Sem outra instância aberta, importe as variáveis e inicie o VS Code pelo mesmo processo.
+#
+# Segurança:
+# - use este login por senha somente no laboratório local;
+# - em produção, use HTTPS e uma identidade de automação de menor privilégio;
+# - nenhum secret é persistido neste arquivo versionado;
+# - revise cuidadosamente qualquer requisição POST, PUT ou DELETE antes de enviar.
+
+@baseUrl = {{$processEnv ALTIVY_KEYCLOAK_BASE_URL}}
+@managementUrl = {{$processEnv ALTIVY_KEYCLOAK_MANAGEMENT_URL}}
+@issuerUrl = {{$processEnv ALTIVY_KEYCLOAK_ISSUER_URL}}
+@realm = {{$processEnv ALTIVY_KEYCLOAK_REALM}}
+@adminUsername = {{$processEnv ALTIVY_KEYCLOAK_ADMIN_USERNAME}}
+@adminPassword = {{$processEnv ALTIVY_KEYCLOAK_ADMIN_PASSWORD}}
+@bffBaseUrl = {{$processEnv ALTIVY_BFF_BASE_URL}}
+@bffClientSecret = {{$processEnv ALTIVY_BFF_CLIENT_SECRET}}
+@fulanoEmail = {{$processEnv ALTIVY_FULANO_EMAIL}}
+@fulanoTemporaryPassword = {{$processEnv ALTIVY_FULANO_TEMPORARY_PASSWORD}}
+@googleClientId = {{$processEnv ALTIVY_IDP_GOOGLE_CLIENT_ID}}
+@googleClientSecret = {{$processEnv ALTIVY_IDP_GOOGLE_CLIENT_SECRET}}
+
+@apiClientUuid = {{$processEnv ALTIVY_KEYCLOAK_API_CLIENT_UUID}}
+@bffClientUuid = {{$processEnv ALTIVY_KEYCLOAK_BFF_CLIENT_UUID}}
+@audienceScopeId = {{$processEnv ALTIVY_KEYCLOAK_AUDIENCE_SCOPE_ID}}
+@audienceMapperId = {{$processEnv ALTIVY_KEYCLOAK_AUDIENCE_MAPPER_ID}}
+@altivyGroupId = {{$processEnv ALTIVY_KEYCLOAK_GROUP_ID}}
+@readersGroupId = {{$processEnv ALTIVY_KEYCLOAK_READERS_GROUP_ID}}
+@fulanoId = {{$processEnv ALTIVY_KEYCLOAK_FULANO_ID}}
+@roleId = {{$processEnv ALTIVY_KEYCLOAK_READER_ROLE_ID}}
+@idpAlias = {{$processEnv ALTIVY_KEYCLOAK_IDP_ALIAS}}
+
+### Health readiness
+GET {{managementUrl}}/health/ready
+Accept: application/json
+
+### Discovery OIDC do realm Altivy
+# @name discovery
+GET {{baseUrl}}/realms/{{realm}}/.well-known/openid-configuration
+Accept: application/json
+
+### Chaves públicas do realm
+GET {{baseUrl}}/realms/{{realm}}/protocol/openid-connect/certs
+Accept: application/json
+
+### Obter token administrativo
+# @name adminToken
+POST {{baseUrl}}/realms/master/protocol/openid-connect/token
+Content-Type: application/x-www-form-urlencoded
+Accept: application/json
+
+client_id=admin-cli&grant_type=password&username={{adminUsername}}&password={{adminPassword}}
+
+### Informações da sessão administrativa
+GET {{baseUrl}}/realms/master/protocol/openid-connect/userinfo
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Accept: application/json
+
+### Consultar configuração do realm
+GET {{baseUrl}}/admin/realms/{{realm}}
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Accept: application/json
+
+### Criar realm Altivy, somente se ele ainda não existir
+POST {{baseUrl}}/admin/realms
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "realm": "{{realm}}",
+  "displayName": "Altivy",
+  "enabled": true
+}
+
+### Atualizar baseline do realm
+PUT {{baseUrl}}/admin/realms/{{realm}}
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "realm": "{{realm}}",
+  "displayName": "Altivy",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "rememberMe": false,
+  "verifyEmail": true,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": false,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "permanentLockout": false,
+  "failureFactor": 5,
+  "waitIncrementSeconds": 60,
+  "quickLoginCheckMilliSeconds": 1000,
+  "minimumQuickLoginWaitSeconds": 60,
+  "maxFailureWaitSeconds": 900,
+  "maxDeltaTimeSeconds": 43200,
+  "passwordPolicy": "length(14) and notUsername(undefined) and notEmail(undefined) and passwordHistory(5)",
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "clientSessionIdleTimeout": 900,
+  "clientSessionMaxLifespan": 28800,
+  "accessTokenLifespan": 300,
+  "accessCodeLifespan": 60,
+  "accessCodeLifespanLogin": 300,
+  "accessCodeLifespanUserAction": 300,
+  "actionTokenGeneratedByAdminLifespan": 43200,
+  "revokeRefreshToken": false,
+  "eventsEnabled": true,
+  "eventsExpiration": 2592000,
+  "eventsListeners": ["jboss-logging"],
+  "adminEventsEnabled": true,
+  "adminEventsDetailsEnabled": false,
+  "loginTheme": "altivy"
+}
+
+### Listar clients do realm
+GET {{baseUrl}}/admin/realms/{{realm}}/clients
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Accept: application/json
+
+### Localizar altivy-api e obter seu UUID
+# @name findApiClient
+GET {{baseUrl}}/admin/realms/{{realm}}/clients?clientId=altivy-api
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Accept: application/json
+
+### Localizar altivy-bff e obter seu UUID
+# @name findBffClient
+GET {{baseUrl}}/admin/realms/{{realm}}/clients?clientId=altivy-bff
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Accept: application/json
+
+### Consultar altivy-api pelo UUID
+GET {{baseUrl}}/admin/realms/{{realm}}/clients/{{apiClientUuid}}
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Accept: application/json
+
+### Criar altivy-api
+POST {{baseUrl}}/admin/realms/{{realm}}/clients
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "clientId": "altivy-api",
+  "name": "Altivy API",
+  "enabled": true,
+  "publicClient": false,
+  "standardFlowEnabled": false,
+  "implicitFlowEnabled": false,
+  "directAccessGrantsEnabled": false,
+  "serviceAccountsEnabled": true,
+  "authorizationServicesEnabled": true,
+  "protocol": "openid-connect"
+}
+
+### Atualizar altivy-api
+PUT {{baseUrl}}/admin/realms/{{realm}}/clients/{{apiClientUuid}}
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "id": "{{apiClientUuid}}",
+  "clientId": "altivy-api",
+  "name": "Altivy API",
+  "enabled": true,
+  "publicClient": false,
+  "standardFlowEnabled": false,
+  "implicitFlowEnabled": false,
+  "directAccessGrantsEnabled": false,
+  "serviceAccountsEnabled": true,
+  "authorizationServicesEnabled": true,
+  "protocol": "openid-connect"
+}
+
+### Criar altivy-bff com secret solicitado em tempo de execução
+POST {{baseUrl}}/admin/realms/{{realm}}/clients
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "clientId": "altivy-bff",
+  "name": "Altivy BFF",
+  "enabled": true,
+  "publicClient": false,
+  "secret": "{{bffClientSecret}}",
+  "standardFlowEnabled": true,
+  "implicitFlowEnabled": false,
+  "directAccessGrantsEnabled": false,
+  "serviceAccountsEnabled": false,
+  "rootUrl": "{{bffBaseUrl}}",
+  "baseUrl": "{{bffBaseUrl}}/",
+  "redirectUris": ["{{bffBaseUrl}}/signin-oidc"],
+  "webOrigins": [],
+  "attributes": {
+    "pkce.code.challenge.method": "S256",
+    "post.logout.redirect.uris": "{{bffBaseUrl}}/signout-callback-oidc"
+  },
+  "protocol": "openid-connect"
+}
+
+### Consultar credencial do altivy-bff
+# Resposta sensível: não salve, compartilhe ou registre o resultado.
+GET {{baseUrl}}/admin/realms/{{realm}}/clients/{{bffClientUuid}}/client-secret
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Accept: application/json
+
+### Gerar nova credencial do altivy-bff
+# Impacto: invalida o secret anterior assim que a rotação for aplicada.
+POST {{baseUrl}}/admin/realms/{{realm}}/clients/{{bffClientUuid}}/client-secret
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Accept: application/json
+
+### Listar client scopes
+GET {{baseUrl}}/admin/realms/{{realm}}/client-scopes
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Accept: application/json
+
+### Criar client scope de audience
+POST {{baseUrl}}/admin/realms/{{realm}}/client-scopes
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "name": "altivy-api-audience",
+  "description": "Inclui altivy-api como audience do access token emitido para o BFF.",
+  "protocol": "openid-connect",
+  "attributes": {
+    "display.on.consent.screen": "false",
+    "include.in.token.scope": "false"
+  }
+}
+
+### Listar mappers do client scope de audience
+GET {{baseUrl}}/admin/realms/{{realm}}/client-scopes/{{audienceScopeId}}/protocol-mappers/models
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Accept: application/json
+
+### Criar mapper de audience
+POST {{baseUrl}}/admin/realms/{{realm}}/client-scopes/{{audienceScopeId}}/protocol-mappers/models
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "name": "altivy-api-audience",
+  "protocol": "openid-connect",
+  "protocolMapper": "oidc-audience-mapper",
+  "consentRequired": false,
+  "config": {
+    "included.client.audience": "altivy-api",
+    "id.token.claim": "false",
+    "access.token.claim": "true",
+    "lightweight.claim": "false",
+    "introspection.token.claim": "true"
+  }
+}
+
+### Associar audience como default client scope do BFF
+PUT {{baseUrl}}/admin/realms/{{realm}}/clients/{{bffClientUuid}}/default-client-scopes/{{audienceScopeId}}
+Authorization: Bearer {{adminToken.response.body.access_token}}
+
+### Listar default client scopes do BFF
+GET {{baseUrl}}/admin/realms/{{realm}}/clients/{{bffClientUuid}}/default-client-scopes
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Accept: application/json
+
+### Listar roles do altivy-api
+GET {{baseUrl}}/admin/realms/{{realm}}/clients/{{apiClientUuid}}/roles
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Accept: application/json
+
+### Consultar role Reader
+GET {{baseUrl}}/admin/realms/{{realm}}/clients/{{apiClientUuid}}/roles/Reader
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Accept: application/json
+
+### Criar role Reader
+POST {{baseUrl}}/admin/realms/{{realm}}/clients/{{apiClientUuid}}/roles
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "name": "Reader",
+  "description": "Lê os recursos Altivy explicitamente autorizados."
+}
+
+### Criar role Editor
+POST {{baseUrl}}/admin/realms/{{realm}}/clients/{{apiClientUuid}}/roles
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "name": "Editor",
+  "description": "Lê e altera os recursos Altivy explicitamente autorizados."
+}
+
+### Criar role Owner
+POST {{baseUrl}}/admin/realms/{{realm}}/clients/{{apiClientUuid}}/roles
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "name": "Owner",
+  "description": "Administra os recursos Altivy explicitamente autorizados."
+}
+
+### Listar grupos raiz
+GET {{baseUrl}}/admin/realms/{{realm}}/groups
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Accept: application/json
+
+### Pesquisar grupo raiz altivy
+GET {{baseUrl}}/admin/realms/{{realm}}/groups?search=altivy&exact=true
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Accept: application/json
+
+### Criar grupo raiz altivy
+POST {{baseUrl}}/admin/realms/{{realm}}/groups
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "name": "altivy"
+}
+
+### Listar subgrupos de altivy
+GET {{baseUrl}}/admin/realms/{{realm}}/groups/{{altivyGroupId}}/children
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Accept: application/json
+
+### Criar subgrupo readers
+POST {{baseUrl}}/admin/realms/{{realm}}/groups/{{altivyGroupId}}/children
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "name": "readers"
+}
+
+### Mapear role Reader para o grupo readers
+# Antes, copie id/name/description da resposta "Consultar role Reader".
+POST {{baseUrl}}/admin/realms/{{realm}}/groups/{{readersGroupId}}/role-mappings/clients/{{apiClientUuid}}
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Content-Type: application/json
+
+[
+  {
+    "id": "{{roleId}}",
+    "name": "Reader",
+    "description": "Lê os recursos Altivy explicitamente autorizados.",
+    "clientRole": true,
+    "containerId": "{{apiClientUuid}}"
+  }
+]
+
+### Listar roles efetivas do grupo readers para altivy-api
+GET {{baseUrl}}/admin/realms/{{realm}}/groups/{{readersGroupId}}/role-mappings/clients/{{apiClientUuid}}
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Accept: application/json
+
+### Pesquisar usuário lzocateli
+# @name findLzocateli
+GET {{baseUrl}}/admin/realms/{{realm}}/users?username=lzocateli&exact=true
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Accept: application/json
+
+### Criar usuário lzocateli
+POST {{baseUrl}}/admin/realms/{{realm}}/users
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "username": "lzocateli",
+  "email": "{{fulanoEmail}}",
+  "firstName": "Lzocateli",
+  "lastName": "Altivy",
+  "enabled": true,
+  "emailVerified": false,
+  "requiredActions": [
+    "UPDATE_PASSWORD",
+    "CONFIGURE_TOTP"
+  ]
+}
+
+### Consultar usuário lzocateli pelo ID
+GET {{baseUrl}}/admin/realms/{{realm}}/users/{{fulanoId}}
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Accept: application/json
+
+### Atualizar usuário lzocateli
+PUT {{baseUrl}}/admin/realms/{{realm}}/users/{{fulanoId}}
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "id": "{{fulanoId}}",
+  "username": "lzocateli",
+  "email": "{{fulanoEmail}}",
+  "firstName": "Lzocateli",
+  "lastName": "Altivy",
+  "enabled": true,
+  "emailVerified": false,
+  "requiredActions": [
+    "UPDATE_PASSWORD",
+    "CONFIGURE_TOTP"
+  ]
+}
+
+### Definir senha temporária de lzocateli
+PUT {{baseUrl}}/admin/realms/{{realm}}/users/{{fulanoId}}/reset-password
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "type": "password",
+  "value": "{{fulanoTemporaryPassword}}",
+  "temporary": true
+}
+
+### Adicionar lzocateli ao grupo readers
+PUT {{baseUrl}}/admin/realms/{{realm}}/users/{{fulanoId}}/groups/{{readersGroupId}}
+Authorization: Bearer {{adminToken.response.body.access_token}}
+
+### Listar grupos de lzocateli
+GET {{baseUrl}}/admin/realms/{{realm}}/users/{{fulanoId}}/groups
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Accept: application/json
+
+### Encerrar todas as sessões de lzocateli
+POST {{baseUrl}}/admin/realms/{{realm}}/users/{{fulanoId}}/logout
+Authorization: Bearer {{adminToken.response.body.access_token}}
+
+### Remover lzocateli do grupo readers
+DELETE {{baseUrl}}/admin/realms/{{realm}}/users/{{fulanoId}}/groups/{{readersGroupId}}
+Authorization: Bearer {{adminToken.response.body.access_token}}
+
+### Excluir lzocateli
+# Impacto destrutivo: remove usuário, credenciais, vínculos e sessões.
+DELETE {{baseUrl}}/admin/realms/{{realm}}/users/{{fulanoId}}
+Authorization: Bearer {{adminToken.response.body.access_token}}
+
+### Listar provedores de identidade
+GET {{baseUrl}}/admin/realms/{{realm}}/identity-provider/instances
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Accept: application/json
+
+### Consultar provedor pelo alias
+GET {{baseUrl}}/admin/realms/{{realm}}/identity-provider/instances/{{idpAlias}}
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Accept: application/json
+
+### Criar provedor Google
+POST {{baseUrl}}/admin/realms/{{realm}}/identity-provider/instances
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "alias": "google",
+  "providerId": "google",
+  "enabled": true,
+  "trustEmail": false,
+  "storeToken": false,
+  "addReadTokenRoleOnCreate": false,
+  "authenticateByDefault": false,
+  "linkOnly": false,
+  "firstBrokerLoginFlowAlias": "first broker login",
+  "config": {
+    "clientId": "{{googleClientId}}",
+    "clientSecret": "{{googleClientSecret}}",
+    "defaultScope": "openid profile email",
+    "syncMode": "IMPORT",
+    "hideOnLoginPage": "false"
+  }
+}
+
+### Atualizar provedor Google usando variáveis de ambiente
+PUT {{baseUrl}}/admin/realms/{{realm}}/identity-provider/instances/google
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Content-Type: application/json
+
+{
+  "alias": "google",
+  "providerId": "google",
+  "enabled": true,
+  "trustEmail": false,
+  "storeToken": false,
+  "addReadTokenRoleOnCreate": false,
+  "authenticateByDefault": false,
+  "linkOnly": false,
+  "firstBrokerLoginFlowAlias": "first broker login",
+  "config": {
+    "clientId": "{{googleClientId}}",
+    "clientSecret": "{{googleClientSecret}}",
+    "defaultScope": "openid profile email",
+    "syncMode": "IMPORT",
+    "hideOnLoginPage": "false"
+  }
+}
+
+### Excluir provedor configurado em idpAlias
+DELETE {{baseUrl}}/admin/realms/{{realm}}/identity-provider/instances/{{idpAlias}}
+Authorization: Bearer {{adminToken.response.body.access_token}}
+
+### Listar eventos de login recentes
+GET {{baseUrl}}/admin/realms/{{realm}}/events?max=20
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Accept: application/json
+
+### Listar eventos administrativos recentes
+GET {{baseUrl}}/admin/realms/{{realm}}/admin-events?max=20
+Authorization: Bearer {{adminToken.response.body.access_token}}
+Accept: application/json
+
+### Revogar token administrativo ao terminar
+POST {{baseUrl}}/realms/master/protocol/openid-connect/revoke
+Content-Type: application/x-www-form-urlencoded
+
+client_id=admin-cli&token={{adminToken.response.body.refresh_token}}&token_type_hint=refresh_token
+
+### Logout OIDC do usuário final
+# id_token_hint deve ser um ID token real emitido ao client correspondente.
+GET {{issuerUrl}}/realms/{{realm}}/protocol/openid-connect/logout?id_token_hint={{$prompt idTokenHint "ID token do usuário"}}&post_logout_redirect_uri={{bffBaseUrl}}/signout-callback-oidc

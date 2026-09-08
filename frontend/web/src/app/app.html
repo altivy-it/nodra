@@ -1,0 +1,30 @@
+@if (session.loading()) {
+<section class="state" aria-live="polite">Consultando sua sessão...</section>
+} @else if (session.error()) {
+<section class="state state-error" aria-live="assertive">Não foi possível consultar o BFF. <button type="button"
+    (click)="session.load()">Tentar novamente</button></section>
+} @else if (session.session()?.authenticated && vaults.loading()) {
+<section class="state" aria-live="polite">Carregando vaults autorizados...</section>
+} @else if (session.session()?.authenticated && vaults.error()) {
+<section class="state state-error" role="alert">{{ vaults.error() }} <button type="button"
+    (click)="reloadVaults()">Tentar novamente</button></section>
+} @else if (session.session()?.authenticated && vaults.vaults().length === 0) {
+<main class="welcome" aria-labelledby="no-vault-title">
+  <p class="eyebrow">ALTIVY NOTES / ACESSO</p>
+  <h1 id="no-vault-title">Nenhum vault disponível.</h1>
+  <p>Solicite acesso a um vault para abrir seu workspace.</p>
+</main>
+} @else if (session.session()?.authenticated) {
+<app-workspace-shell [userName]="session.session()?.name ?? null" [notes]="notes.notes()" [selected]="notes.selected()"
+  [loading]="notes.loading()" [error]="notes.error()" (noteOpened)="open($event)" (noteCreated)="create()"
+  (notesReloaded)="notes.load()" (noteChanged)="save($event.path, $event.content)" (noteRemoved)="remove()"
+  [vaults]="vaults.vaults()" [currentVaultId]="vaults.current()?.id ?? null" [vaultsLoading]="vaults.loading()"
+  [realtimeStatus]="realtime.status()" (vaultSelected)="selectVault($event)" (loggedOut)="session.logout()" />
+} @else {
+<main class="welcome" aria-labelledby="page-title">
+  <p class="eyebrow">ALTIVY NOTES / KNOWLEDGE WORKSPACE</p>
+  <h1 id="page-title">Seu conhecimento, em um só lugar.</h1>
+  <p>Entre para abrir seu workspace.</p><a class="action" href="/bff/login">Entrar no Altivy Notes <span
+      aria-hidden="true">↗</span></a>
+</main>
+}

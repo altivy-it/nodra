@@ -1,0 +1,133 @@
+import pytest
+from playwright.sync_api import Page, expect
+
+
+@pytest.mark.e2e
+def test_anonymous_browser_does_not_receive_tokens(page: Page, base_url: str) -> None:
+    page.goto(base_url, wait_until="networkidle")
+
+    expect(page.get_by_role("heading", name="Entre para abrir seu workspace.")).to_be_visible()
+    expect(page.get_by_role("link", name="Entrar no Altivy Notes")).to_have_attribute("href", "/bff/login")
+    assert page.evaluate("Object.keys(localStorage).length") == 0
+    assert page.evaluate("Object.keys(sessionStorage).length") == 0
+
+
+@pytest.mark.e2e
+def test_anonymous_cannot_negotiate_signalr_hub(page: Page, base_url: str) -> None:
+    page.goto(base_url, wait_until="networkidle")
+    result = page.evaluate("""async (url) => {
+        const response = await fetch(url, { method: 'POST' });
+        return { status: response.status, redirected: response.redirected };
+    }""", f"{base_url}/hubs/vaults/negotiate?negotiateVersion=1")
+
+    assert result["status"] == 401 or result["redirected"]
+
+
+@pytest.mark.e2e
+@pytest.mark.authenticated
+def test_authenticated_can_access_authorized_vault(authenticated_page: Page, base_url: str) -> None:
+    response = authenticated_page.goto(f"{base_url}/api/v1/vaults/lab-0001")
+
+    assert response is not None
+    assert response.status == 200
+    data = response.json()
+    assert data["id"] == "lab-0001"
+    assert data["scope"] == "vault:read"
+
+
+@pytest.mark.e2e
+@pytest.mark.authenticated
+def test_authenticated_can_negotiate_signalr_hub(authenticated_page: Page, base_url: str) -> None:
+    result = authenticated_page.evaluate("""async (url) => {
+        const response = await fetch(url, { method: 'POST', credentials: 'include' });
+        return { status: response.status, body: await response.json() };
+    }""", f"{base_url}/hubs/vaults/negotiate?negotiateVersion=1")
+
+    assert result["status"] == 200
+    data = result["body"]
+    assert "connectionId" in data or "connectionToken" in data
+    assert "availableTransports" in data
+
+
+@pytest.mark.e2e
+@pytest.mark.authenticated
+def test_authenticated_browser_can_log_out(authenticated_page: Page) -> None:
+    authenticated_page.get_by_role("button", name="Encerrar sessão").click()
+
+    expect(authenticated_page.get_by_role("heading", name="Entre para abrir seu workspace.")).to_be_visible()
+    expect(authenticated_page.get_by_role("link", name="Entrar no Altivy Notes")).to_have_attribute("href", "/bff/login")
+    assert authenticated_page.evaluate("Object.keys(localStorage).length") == 0
+    assert authenticated_page.evaluate("Object.keys(sessionStorage).length") == 0
+
+
+@pytest.mark.e2e
+@pytest.mark.authenticated
+def test_denied_vault_is_not_exposed_through_bff_proxy(
+    authenticated_page: Page,
+    base_url: str,
+    pytestconfig: pytest.Config,
+) -> None:
+    vault_id = pytestconfig.getoption("denied_vault_id")
+    if not vault_id:
+        pytest.skip("Defina --denied-vault-id ou ALTIVY_E2E_DENIED_VAULT_ID.")
+
+    response = authenticated_page.goto(f"{base_url}/api/v1/vaults/{vault_id}")
+
+    assert response is not None
+    assert response.status == 403
+    assert response.headers["content-type"].startswith("application/problem+json")
+
+
+@pytest.mark.e2e
+@pytest.mark.authenticated
+def test_authenticated_catalog_contains_only_authorized_vaults(
+    authenticated_page: Page,
+    base_url: str,
+) -> None:
+    response = authenticated_page.request.get(f"{base_url}/api/v1/vaults")
+
+    assert response.status == 200
+    data = response.json()
+    assert all(item["id"] in {"lab-0001", "lab-0002"} for item in data["items"])
+    assert all(set(item) == {"id", "name"} for item in data["items"])
+
+
+@pytest.mark.e2e
+@pytest.mark.authenticated
+def test_authenticated_can_switch_vault_without_full_reload(
+    authenticated_page: Page,
+    base_url: str,
+) -> None:
+    response = authenticated_page.request.get(f"{base_url}/api/v1/vaults")
+    assert response.status == 200
+    vaults = response.json()["items"]
+    if len(vaults) < 2:
+        pytest.skip("O usuário de laboratório precisa de acesso a dois vaults.")
+
+    selector = authenticated_page.get_by_role("combobox", name="Vault ativo")
+    expect(selector).to_be_visible()
+    module = authenticated_page.url.rsplit("/", 1)[-1]
+    target_id = next(vault["id"] for vault in vaults if vault["id"] != selector.input_value())
+    before_url = authenticated_page.url
+
+    selector.select_option(target_id)
+
+    expect(authenticated_page).to_have_url(f"{base_url}/workspace/{target_id}/{module}")
+    assert authenticated_page.url != before_url
+    expect(authenticated_page.get_by_role("combobox", name="Vault ativo")).to_have_value(target_id)
+
+
+@pytest.mark.e2e
+@pytest.mark.authenticated
+def test_authenticated_reload_keeps_authorized_vault_and_module(
+    authenticated_page: Page,
+    base_url: str,
+) -> None:
+    selector = authenticated_page.get_by_role("combobox", name="Vault ativo")
+    vault_id = selector.input_value()
+    module = authenticated_page.url.rsplit("/", 1)[-1]
+
+    authenticated_page.reload(wait_until="networkidle")
+
+    expect(authenticated_page).to_have_url(f"{base_url}/workspace/{vault_id}/{module}")
+    expect(authenticated_page.get_by_role("combobox", name="Vault ativo")).to_have_value(vault_id)

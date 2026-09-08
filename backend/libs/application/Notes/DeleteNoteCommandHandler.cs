@@ -1,0 +1,24 @@
+using Altivy.Backend.Domain.Notes;
+
+namespace Altivy.Backend.Application.Notes;
+
+/// <summary>
+/// Coordena a exclusão condicional de uma nota existente.
+/// </summary>
+public sealed class DeleteNoteCommandHandler(INoteStore noteStore)
+{
+    /// <summary>
+    /// Exclui a nota mediante a versão previamente obtida.
+    /// </summary>
+    /// <param name="vaultId">Identificador estável do vault.</param>
+    /// <param name="path">Caminho relativo da nota.</param>
+    /// <param name="expectedETag">Versão esperada.</param>
+    /// <param name="cancellationToken">Token de cancelamento da operação.</param>
+    /// <returns>O resultado da exclusão condicional.</returns>
+    public Task<NoteWriteResult> HandleAsync(
+        string vaultId,
+        string path,
+        string expectedETag,
+        CancellationToken cancellationToken) =>
+        noteStore.DeleteAsync(vaultId, NotePath.Create(path), expectedETag, cancellationToken);
+}

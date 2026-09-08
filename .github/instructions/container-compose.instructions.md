@@ -1,0 +1,22 @@
+---
+name: "Docker Compose"
+description: "Use ao criar ou alterar Docker Compose do Altivy. Cobre serviços, redes, health dependencies, bind mounts, secrets, restart e perfis."
+applyTo: "**/compose*.yml, **/compose*.yaml"
+---
+
+# Docker Compose
+
+- Separe `web`, `api`, `worker` e `postgres`; embeddings são perfil opcional.
+- Publique somente web/proxy por padrão; demais serviços ficam em rede interna.
+- Use tags imutáveis e a imagem PostgreSQL definida no plano mestre.
+- Toda persistência usa bind mount documentado; não use volume nomeado para vault ou PostgreSQL.
+- No desenvolvimento local em Windows, passe
+	`$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env` explicitamente por
+	`--env-file`; nunca crie `.env` dentro do repositório, mesmo ignorado pelo Git.
+- Em CI e produção, use secrets da plataforma e monte-os como arquivos quando
+	suportado; não versione valores em Compose, imagens ou configuração.
+- Use `depends_on` com condição de health somente para ordenar dependências reais; a aplicação também deve tolerar reconexão.
+- Defina health checks, restart policy e `stop_grace_period` coerentes com cada processo.
+- Aplique limites/configurações de recurso por perfil quando não prejudicar portabilidade.
+- Não monte Docker socket nem execute containers privilegiados.
+- Valide bootstrap limpo, readiness, restart, recriação com persistência e shutdown gracioso.

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 120" role="img" aria-labelledby="title desc">
+    <title id="title">Altivy logo concept with open A and inverted pyramid</title>
+    <desc id="desc">Open letter A with two wide legs and an inverted pyramid as the crossbar, aligned with the Altivy wordmark.</desc>
+
+    <defs>
+        <style>
+            .ink { fill: #1A202C; }
+            .blue { fill: #2563EB; }
+            .word { font-family: 'Segoe UI', Arial, sans-serif; font-size: 40px; font-weight: 700; letter-spacing: 0.04em; }
+        </style>
+    </defs>
+
+    <g transform="translate(18 8)">
+        <path class="ink" d="M12 88 L32 18 H45 L29 88 Z"/>
+        <path class="ink" d="M87 88 L67 18 H54 L70 88 Z"/>
+        <path class="blue" d="M33 52 L49 76 L65 52 Z M40 52 H58 L49 66 Z" fill-rule="evenodd"/>
+        <path class="ink" d="M28 88 H70 L66 96 H32 Z"/>
+    </g>
+
+    <text x="122" y="72" class="word ink">Altivy</text>
+</svg>

@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <RootNamespace>Altivy.Backend.Application</RootNamespace>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="../domain/Altivy.Backend.Domain.csproj" />
+    </ItemGroup>
+</Project>

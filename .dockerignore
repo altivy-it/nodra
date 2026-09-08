@@ -1,0 +1,18 @@
+.git
+# Defesa em profundidade; arquivos .env são proibidos dentro do repositório.
+.env
+.env.*
+**/.env
+**/.env.*
+secrets.json
+**/secrets.json
+**/bin
+**/obj
+**/node_modules
+**/dist
+**/TestResults
+**/artifacts
+**/.tmp
+**/.data-protection-keys
+deploy/e2e/certs
+deploy/e2e/keys

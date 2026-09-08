@@ -1,0 +1,305 @@
+@font-face {
+    font-family: "Manrope";
+    src: url("../fonts/Manrope-Regular-Latin.woff2") format("woff2");
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Manrope";
+    src: url("../fonts/Manrope-Medium-Latin.woff2") format("woff2");
+    font-style: normal;
+    font-weight: 500;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: "Manrope";
+    src: url("../fonts/Manrope-SemiBold-Latin.woff2") format("woff2");
+    font-style: normal;
+    font-weight: 600;
+    font-display: swap;
+}
+
+:root {
+    --altivy-font-body: "Manrope", system-ui, -apple-system, sans-serif;
+    --altivy-ink: #1a202c;
+    --altivy-panel: #ffffff;
+    --altivy-surface: #f7fafc;
+    --altivy-border: #cbd5e0;
+    --altivy-muted: #4a5568;
+    --altivy-accent: #2563eb;
+    --altivy-accent-hover: #1d4ed8;
+    --altivy-error: #dc2626;
+    --altivy-focus: #1d4ed8;
+    --altivy-shadow: 0 4px 0 rgba(26, 32, 44, 0.16);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    min-height: 100%;
+}
+
+body {
+    background: var(--altivy-surface);
+    color: var(--altivy-ink);
+    font-family: var(--altivy-font-body);
+}
+
+.login-pf-page,
+.pf-v5-c-login {
+    min-height: 100vh;
+    background: var(--altivy-surface);
+}
+
+.pf-v5-c-login__container {
+    display: grid;
+    grid-template-areas:
+        "header"
+        "main";
+    grid-template-columns: minmax(0, 31.25rem);
+    align-items: center;
+    align-content: center;
+    justify-content: center;
+    gap: 1.5rem;
+    width: min(100%, 33.25rem);
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+#kc-header {
+    grid-area: header;
+    width: 14rem;
+    margin: 0 auto;
+}
+
+#kc-header-wrapper {
+    width: 100%;
+    min-height: 3rem;
+    margin: 0;
+    padding: 3.5rem 0 0;
+    color: transparent;
+    background: url("../img/logo.svg") center top / contain no-repeat;
+}
+
+.pf-v5-c-login__main,
+.card-pf,
+#kc-content {
+    grid-area: main;
+    align-self: center;
+    width: 100%;
+    max-width: 31.25rem;
+    margin: 0 auto;
+}
+
+.pf-v5-c-login__main,
+.card-pf {
+    padding: 2rem;
+    border: 1px solid var(--altivy-border);
+    border-radius: 4px;
+    background: var(--altivy-panel);
+    box-shadow: var(--altivy-shadow);
+}
+
+#kc-page-title {
+    color: var(--altivy-ink);
+    font-family: var(--altivy-font-body);
+    font-size: 1.75rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.pf-c-form-control,
+input[type="text"],
+input[type="password"],
+input[type="email"] {
+    min-height: 2.75rem;
+    border: 1px solid var(--altivy-border);
+    border-radius: 2px;
+    color: var(--altivy-ink);
+    background: var(--altivy-panel);
+    font: inherit;
+}
+
+.pf-c-form-control:focus,
+input[type="text"]:focus,
+input[type="password"]:focus,
+input[type="email"]:focus,
+a:focus,
+button:focus {
+    border-color: var(--altivy-focus);
+    outline: 2px solid var(--altivy-focus);
+    outline-offset: 2px;
+}
+
+.pf-c-button.pf-m-primary,
+input[type="submit"] {
+    min-height: 2.75rem;
+    border: 1px solid var(--altivy-accent);
+    border-radius: 2px;
+    background: var(--altivy-accent);
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.pf-c-button.pf-m-primary:hover,
+input[type="submit"]:hover {
+    border-color: var(--altivy-accent-hover);
+    background: var(--altivy-accent-hover);
+}
+
+a {
+    color: var(--altivy-accent-hover);
+    font-weight: 600;
+}
+
+.alert-error,
+.pf-m-danger {
+    border-left: 4px solid var(--altivy-error);
+}
+
+@media (max-width: 48rem) {
+    .login-pf-page {
+        padding: 1rem 0.75rem;
+    }
+
+    .pf-v5-c-login__container {
+        padding: 1rem 0.75rem;
+    }
+
+    #kc-header {
+        width: 14rem;
+        margin: 0 auto;
+    }
+
+    .pf-v5-c-login__main,
+    .card-pf {
+        padding: 1.25rem;
+    }
+
+    #kc-header-wrapper {
+        width: 100%;
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --altivy-ink: #f7fafc;
+        --altivy-panel: #1a202c;
+        --altivy-surface: #0f0f0f;
+        --altivy-border: #4a5568;
+        --altivy-muted: #cbd5e0;
+        --altivy-accent: #93c5fd;
+        --altivy-accent-hover: #bfdbfe;
+        --altivy-focus: #bfdbfe;
+        --altivy-shadow: 0 4px 0 rgba(0, 0, 0, 1);
+    }
+
+    #kc-header-wrapper {
+        background-image: url("../img/logo-dark.svg");
+    }
+
+    .pf-c-form-control,
+    input[type="text"],
+    input[type="password"],
+    input[type="email"] {
+        color: var(--altivy-ink);
+        background: #2d3748;
+    }
+
+    .pf-c-button.pf-m-primary,
+    input[type="submit"] {
+        color: #1a202c;
+    }
+}
+
+/* Preferência explícita do usuário (alternador), sobrepõe prefers-color-scheme */
+html[data-altivy-theme="dark"] {
+    --altivy-ink: #f7fafc;
+    --altivy-panel: #1a202c;
+    --altivy-surface: #0f0f0f;
+    --altivy-border: #4a5568;
+    --altivy-muted: #cbd5e0;
+    --altivy-accent: #93c5fd;
+    --altivy-accent-hover: #bfdbfe;
+    --altivy-focus: #bfdbfe;
+    --altivy-shadow: 0 4px 0 rgba(0, 0, 0, 1);
+}
+
+html[data-altivy-theme="dark"] #kc-header-wrapper {
+    background-image: url("../img/logo-dark.svg");
+}
+
+html[data-altivy-theme="dark"] .pf-c-form-control,
+html[data-altivy-theme="dark"] input[type="text"],
+html[data-altivy-theme="dark"] input[type="password"],
+html[data-altivy-theme="dark"] input[type="email"] {
+    color: var(--altivy-ink);
+    background: #2d3748;
+}
+
+html[data-altivy-theme="dark"] .pf-c-button.pf-m-primary,
+html[data-altivy-theme="dark"] input[type="submit"] {
+    color: #1a202c;
+}
+
+html[data-altivy-theme="light"] {
+    --altivy-ink: #1a202c;
+    --altivy-panel: #ffffff;
+    --altivy-surface: #f7fafc;
+    --altivy-border: #cbd5e0;
+    --altivy-muted: #4a5568;
+    --altivy-accent: #2563eb;
+    --altivy-accent-hover: #1d4ed8;
+    --altivy-focus: #1d4ed8;
+    --altivy-shadow: 0 4px 0 rgba(26, 32, 44, 0.16);
+}
+
+html[data-altivy-theme="light"] #kc-header-wrapper {
+    background-image: url("../img/logo.svg");
+}
+
+html[data-altivy-theme="light"] .pf-c-form-control,
+html[data-altivy-theme="light"] input[type="text"],
+html[data-altivy-theme="light"] input[type="password"],
+html[data-altivy-theme="light"] input[type="email"] {
+    color: var(--altivy-ink);
+    background: var(--altivy-panel);
+}
+
+html[data-altivy-theme="light"] .pf-c-button.pf-m-primary,
+html[data-altivy-theme="light"] input[type="submit"] {
+    color: #ffffff;
+}
+
+.altivy-theme-toggle {
+    display: block;
+    min-height: 2.25rem;
+    margin: 0 auto 1rem;
+    padding: 0 0.875rem;
+    border: 1px solid var(--altivy-border);
+    border-radius: 2px;
+    background: var(--altivy-panel);
+    color: var(--altivy-ink);
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.altivy-theme-toggle:focus {
+    border-color: var(--altivy-focus);
+    outline: 2px solid var(--altivy-focus);
+    outline-offset: 2px;
+}

@@ -1,0 +1,371 @@
+openapi: 3.0.3
+info:
+  title: Altivy Notes API
+  version: 1.0.0
+  description: API versionada do Altivy Notes com autorização contextual delegada ao Keycloak.
+servers:
+  - url: http://localhost:8081
+    description: Laboratório local
+security:
+  - bearerAuth: []
+paths:
+  /health/live:
+    get:
+      summary: Verifica se a API está em execução
+      description: Retorna liveness sem autenticação ou consulta a serviços externos.
+      security: []
+      responses:
+        "200":
+          description: API em execução
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status]
+                properties:
+                  status:
+                    type: string
+                    example: ok
+  /api/v1/session:
+    get:
+      summary: Retorna a identidade técnica da sessão
+      description: Exige um access token válido emitido pelo realm Altivy.
+      responses:
+        "200":
+          description: Sessão autenticada
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /api/v1/vaults:
+    get:
+      summary: Lista os vaults autorizados
+      description: >-
+        Retorna somente vaults com decisão positiva para `vault:read`. Os candidatos negados não são expostos e a requisição falha integralmente quando o serviço de autorização fica indisponível.
+      parameters:
+        - $ref: "#/components/parameters/VaultCursor"
+        - $ref: "#/components/parameters/VaultLimit"
+      responses:
+        "200":
+          description: Página de vaults autorizados ordenada pelo identificador opaco
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VaultPage"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+  /api/v1/vaults/{vaultId}:
+    get:
+      summary: Obtém um vault autorizado
+      description: Consulta o Keycloak Authorization Services antes de revelar os metadados do vault.
+      parameters:
+        - $ref: "#/components/parameters/VaultId"
+      responses:
+        "200":
+          description: Vault autorizado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VaultAccessResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "503":
+          $ref: "#/components/responses/Unavailable"
+  /api/v1/vaults/{vaultId}/notes:
+    get:
+      summary: Lista as notas autorizadas do vault
+      description: Exige `vault:read` e retorna o catálogo ordenado de notas Markdown acessíveis ao sujeito.
+      parameters:
+        - $ref: "#/components/parameters/VaultId"
+      responses:
+        "200":
+          description: Catálogo de notas autorizado
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/NoteSummary"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+  /api/v1/vaults/{vaultId}/notes/{path}:
+    parameters:
+      - $ref: "#/components/parameters/VaultId"
+      - $ref: "#/components/parameters/NotePath"
+    get:
+      summary: Obtém uma nota autorizada
+      description: Exige `vault:read`; devolve conteúdo Markdown canônico e seu ETag para alterações posteriores.
+      responses:
+        "200":
+          description: Nota encontrada
+          headers:
+            ETag:
+              $ref: "#/components/headers/ETag"
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Note" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+    post:
+      summary: Cria uma nota Markdown
+      description: Exige `vault:write`; falha quando já houver uma nota no mesmo caminho relativo.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NoteRequest" }
+      responses:
+        "201":
+          description: Nota criada
+          headers:
+            Location:
+              description: URL da nota criada
+              schema: { type: string, format: uri-reference }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+    put:
+      summary: Substitui uma nota Markdown
+      description: Exige `vault:write` e o header `If-Match` com o ETag recebido pela leitura mais recente.
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NoteRequest" }
+      responses:
+        "204": { description: Nota atualizada }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+    delete:
+      summary: Exclui uma nota Markdown
+      description: Exige `vault:delete` e o header `If-Match` com o ETag atual da nota.
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      responses:
+        "204": { description: Nota excluída }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    VaultCursor:
+      name: cursor
+      in: query
+      required: false
+      description: Cursor opaco retornado pela página anterior.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 512
+        example: djE6bGFiLTAwMDE
+    VaultLimit:
+      name: limit
+      in: query
+      required: false
+      description: Quantidade máxima de vaults autorizados na página.
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 100
+        default: 20
+        example: 20
+    VaultId:
+      name: vaultId
+      in: path
+      required: true
+      description: Identificador opaco do vault, formado por letras minúsculas, números e hífen.
+      schema:
+        type: string
+        pattern: "^[a-z0-9-]+$"
+        maxLength: 64
+        example: lab-0001
+    NotePath:
+      name: path
+      in: path
+      required: true
+      allowReserved: true
+      description: Caminho relativo normalizado de uma nota Markdown, sem traversal ou path absoluto.
+      schema:
+        type: string
+        example: projetos/plano.md
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      description: ETag da versão lida, incluindo aspas quando retornadas pela API.
+      schema: { type: string }
+  headers:
+    ETag:
+      description: Versão opaca do conteúdo da nota.
+      schema: { type: string }
+  schemas:
+    SessionResponse:
+      type: object
+      required: [subject, authenticated]
+      properties:
+        subject:
+          type: string
+          nullable: true
+          description: Identificador técnico do sujeito autenticado.
+        authenticated:
+          type: boolean
+          example: true
+    VaultAccessResponse:
+      type: object
+      required: [id, scope]
+      properties:
+        id:
+          type: string
+          description: Identificador opaco do vault.
+          example: lab-0001
+        scope:
+          type: string
+          enum: [vault:read]
+          example: vault:read
+    VaultSummary:
+      type: object
+      additionalProperties: false
+      required: [id, name]
+      properties:
+        id:
+          type: string
+          description: Identificador técnico e opaco do vault autorizado.
+          pattern: "^[a-z0-9-]+$"
+          maxLength: 64
+          example: lab-0001
+        name:
+          type: string
+          description: Nome de exibição do vault autorizado.
+          maxLength: 200
+          example: Laboratório de produto
+    VaultPage:
+      type: object
+      additionalProperties: false
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          maxItems: 100
+          items:
+            $ref: "#/components/schemas/VaultSummary"
+        nextCursor:
+          type: string
+          nullable: true
+          description: Cursor opaco para continuar a listagem ou `null` ao final.
+          maxLength: 512
+          example: djE6bGFiLTAwMDE
+    NoteSummary:
+      type: object
+      required: [path, eTag]
+      properties:
+        path: { type: string, example: projetos/plano.md }
+        eTag: { type: string, example: 8E5D0B7C }
+    Note:
+      type: object
+      required: [path, content]
+      properties:
+        path: { type: string, example: projetos/plano.md }
+        content: { type: string, example: "# Plano\n" }
+    NoteRequest:
+      type: object
+      required: [content]
+      properties:
+        content:
+          type: string
+          maxLength: 1048576
+    ProblemDetails:
+      type: object
+      required: [title, status]
+      properties:
+        type:
+          type: string
+          format: uri-reference
+        title:
+          type: string
+        status:
+          type: integer
+        detail:
+          type: string
+        instance:
+          type: string
+        traceId:
+          type: string
+        code:
+          type: string
+  responses:
+    BadRequest:
+      description: Entrada inválida
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    Unauthorized:
+      description: Token ausente ou inválido
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    Forbidden:
+      description: Permissão vault:read negada pelo Keycloak
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    Unavailable:
+      description: Serviço de autorização indisponível
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    NotFound:
+      description: Vault autorizado não encontrado
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+    Conflict:
+      description: Caminho já utilizado ou versão desatualizada
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
+    PreconditionRequired:
+      description: Header If-Match ausente
+      content:
+        application/problem+json:
+          schema: { $ref: "#/components/schemas/ProblemDetails" }
