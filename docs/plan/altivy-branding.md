@@ -30,3 +30,8 @@ A documentação e os artefatos oficiais de marca foram centralizados no reposit
 
 Este arquivo permanece apenas para trilha histórica e redirecionamento.
 Qualquer evolução de branding deve ser feita exclusivamente no `Altivy`.
+
+### WP-01 - Encerrar plano histórico
+
+**Status:** skipped  
+**Motivo:** o plano foi superseded e sua execução foi substituída pela fonte canônica de branding no repositório `Altivy`.
