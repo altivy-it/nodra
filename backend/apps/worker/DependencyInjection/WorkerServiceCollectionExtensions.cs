@@ -1,6 +1,8 @@
 using Altivy.Backend.Application.Vaults;
+using Altivy.Backend.Application.Notes;
 using Altivy.Backend.Infra.Data.Postgres;
 using Altivy.Notes.Worker.Notifications;
+using Altivy.Notes.Worker.Notes;
 using Altivy.Notes.Worker.Observability;
 using Altivy.Notes.Worker.Vaults;
 using Microsoft.Extensions.Configuration;
@@ -46,6 +48,8 @@ public static class WorkerServiceCollectionExtensions
         _ = services.AddScoped<IVaultResidueAlertStore, PostgresVaultProvisioningStore>();
         _ = services.AddSingleton<TimeProvider>(TimeProvider.System);
         _ = services.AddSingleton<IVaultFileSystemProvisioner>(new FileSystemVaultProvisioner(vaultRoot));
+        _ = services.AddSingleton<INoteStore>(new FileSystemNoteStore(vaultRoot));
+        _ = services.AddScoped<NoteIndexJobProcessor>();
         _ = services.AddOptions<AdministrativeSmtpOptions>()
             .Bind(configuration.GetSection(AdministrativeSmtpOptions.SectionName))
             .ValidateOnStart();
@@ -56,6 +60,7 @@ public static class WorkerServiceCollectionExtensions
         _ = services.AddScoped<VaultOrphanDirectoryReconciler>();
         _ = services.AddScoped<VaultResidueAlertProcessor>();
         _ = services.AddHostedService<VaultProvisioningBackgroundService>();
+        _ = services.AddHostedService<NoteIndexBackgroundService>();
         return services;
     }
 }

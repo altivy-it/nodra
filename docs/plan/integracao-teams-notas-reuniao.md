@@ -91,7 +91,7 @@ notas e as tarefas de acompanhamento registradas na reunião devem aparecer em u
 ### P-01: Registrar a decisão arquitetural
 
 **Status:** not-started  
-**Responsável:** não atribuído  
+**Responsável:** Lincoln Zocateli  
 **Dependências:** nenhuma
 
 **Objetivo:** estabelecer os limites arquiteturais, de segurança e operacionais
@@ -120,7 +120,7 @@ Evidências:
 ### P-02: Provar descoberta e leitura do Loop
 
 **Status:** not-started  
-**Responsável:** não atribuído  
+**Responsável:** Lincoln Zocateli  
 **Dependências:** P-01
 
 **Objetivo:** confirmar, com Microsoft Graph v1.0, que o arquivo Loop das notas
@@ -184,7 +184,7 @@ Evidências:
 ### P-04: Definir contratos administrativos
 
 **Status:** not-started  
-**Responsável:** não atribuído  
+**Responsável:** Lincoln Zocateli  
 **Dependências:** P-03
 
 **Objetivo:** definir os recursos HTTP usados para configurar e observar a
@@ -214,7 +214,7 @@ Evidências:
 ### P-05: Modelar domínio e persistência
 
 **Status:** not-started  
-**Responsável:** não atribuído  
+**Responsável:** Lincoln Zocateli  
 **Dependências:** P-04
 
 **Objetivo:** representar mappings, subscriptions, cursores e execuções de forma
@@ -252,7 +252,7 @@ Evidências:
 ### P-06: Definir o contrato Markdown gerenciado
 
 **Status:** not-started  
-**Responsável:** não atribuído  
+**Responsável:** Lincoln Zocateli  
 **Dependências:** P-04
 
 **Objetivo:** produzir documentos portáveis e previsíveis sem permitir que a
@@ -285,7 +285,7 @@ Evidências:
 ### P-07: Implementar autenticação e cliente Graph
 
 **Status:** not-started  
-**Responsável:** não atribuído  
+**Responsável:** Lincoln Zocateli  
 **Dependências:** P-03, P-05
 
 **Objetivo:** acessar somente o tenant e os recursos autorizados, com menor
@@ -320,7 +320,7 @@ Evidências:
 ### P-08: Converter Loop para Markdown seguro
 
 **Status:** not-started  
-**Responsável:** não atribuído  
+**Responsável:** Lincoln Zocateli  
 **Dependências:** P-06, P-07
 
 **Objetivo:** transformar o HTML exportado pelo Graph em Markdown determinístico
@@ -351,7 +351,7 @@ Evidências:
 ### P-09: Implementar pipeline durável de espelhamento
 
 **Status:** not-started  
-**Responsável:** não atribuído  
+**Responsável:** Lincoln Zocateli  
 **Dependências:** P-05, P-08
 
 **Objetivo:** transformar notificações ou polling em atualizações idempotentes
@@ -385,7 +385,7 @@ Evidências:
 ### P-10: Provar detecção por webhook opcional
 
 **Status:** not-started  
-**Responsável:** não atribuído  
+**Responsável:** Lincoln Zocateli  
 **Dependências:** P-05, P-09
 
 **Objetivo:** comprovar, sem torná-la requisito da integração, a detecção por
@@ -421,7 +421,7 @@ Evidências:
 ### P-11: Implementar detecção por delta polling
 
 **Status:** not-started  
-**Responsável:** não atribuído  
+**Responsável:** Lincoln Zocateli  
 **Dependências:** P-05, P-09
 
 **Objetivo:** oferecer sincronização funcional em instalações privadas sem
@@ -479,7 +479,7 @@ Evidências:
 ### P-13: Implementar administração e experiência de conflito
 
 **Status:** not-started  
-**Responsável:** não atribuído  
+**Responsável:** Lincoln Zocateli  
 **Dependências:** P-04, P-05, P-12
 
 **Objetivo:** permitir configuração e diagnóstico sem expor credenciais,
@@ -510,7 +510,7 @@ Evidências:
 ### P-14: Preparar observabilidade e operação
 
 **Status:** not-started  
-**Responsável:** não atribuído  
+**Responsável:** Lincoln Zocateli  
 **Dependências:** P-09, P-12
 
 **Objetivo:** tornar atraso, falha e recuperação observáveis sem registrar
@@ -541,7 +541,7 @@ Evidências:
 ### P-15: Automatizar a qualidade da integração
 
 **Status:** not-started  
-**Responsável:** não atribuído  
+**Responsável:** Lincoln Zocateli  
 **Dependências:** P-08, P-09, P-11, P-13, P-14; P-10 quando webhook for
 selecionado em P-12
 
@@ -576,7 +576,7 @@ Evidências:
 ### P-16: Executar rollout incremental e rollback
 
 **Status:** not-started  
-**Responsável:** não atribuído  
+**Responsável:** Lincoln Zocateli  
 **Dependências:** P-15
 
 **Objetivo:** liberar a integração de forma reversível e baseada em evidências.

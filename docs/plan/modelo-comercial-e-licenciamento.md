@@ -5,7 +5,7 @@
 **Última atualização:** 2026-09-08  
 **Responsáveis:** mantenedores do Altivy e produto  
 **Origem:** IA assistida  
-**Revisor humano:** pendente  
+**Revisor humano:** Lincoln Zocateli  
 **Relacionado:** [plano mestre](../plano-mestre.md), [governança](../../.github/GOVERNANCE.md) e [licença MIT](../../LICENSE)
 
 ## Objetivo
@@ -268,7 +268,7 @@ Evidências:
 ### P-06: Implementar controle de licenças posteriormente
 
 **Status:** not-started  
-**Responsável:** não atribuído  
+**Responsável:** Lincoln Zocateli  
 **Dependências:** P-05 e aprovação humana explícita para iniciar implementação
 
 **Objetivo:** implementar o desenho aprovado em entrega futura, isolada e

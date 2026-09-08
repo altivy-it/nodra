@@ -388,7 +388,7 @@ Evidências:
 ### P-02: Provar a experiência no tenant de teste
 
 **Status:** not-started  
-**Responsável:** não atribuído  
+**Responsável:** Lincoln Zocateli  
 **Dependências:** P-01
 
 **Objetivo:** confirmar que o Teams entrega o conteúdo necessário e que o fluxo
@@ -448,7 +448,7 @@ Evidências:
 ### P-04: Definir o contrato external-push
 
 **Status:** not-started  
-**Responsável:** não atribuído  
+**Responsável:** Lincoln Zocateli  
 **Dependências:** P-01, P-03
 
 **Objetivo:** especificar uma API de entregas independente do Teams, segura e
@@ -480,7 +480,7 @@ Evidências:
 ### P-05: Implementar a fundação de plugins e conexões
 
 **Status:** not-started  
-**Responsável:** não atribuído  
+**Responsável:** Lincoln Zocateli  
 **Dependências:** P-04
 
 **Objetivo:** implementar contratos e lifecycle da plataforma e representar
@@ -533,7 +533,7 @@ Evidências:
 ### P-06: Implementar autenticação e vinculação de identidade
 
 **Status:** not-started  
-**Responsável:** não atribuído  
+**Responsável:** Lincoln Zocateli  
 **Dependências:** P-03, P-05
 
 **Objetivo:** associar uma interação válida do Teams a uma identidade e a um
@@ -565,7 +565,7 @@ Evidências:
 ### P-07: Implementar o ingress external-push
 
 **Status:** not-started  
-**Responsável:** não atribuído  
+**Responsável:** Lincoln Zocateli  
 **Dependências:** P-04, P-05, P-06
 
 **Objetivo:** receber conteúdo de produtores autorizados, persistir rapidamente
@@ -596,7 +596,7 @@ Evidências:
 ### P-08: Criar o primeiro pacote de plugin e o app do Teams
 
 **Status:** not-started  
-**Responsável:** não atribuído  
+**Responsável:** Lincoln Zocateli  
 **Dependências:** P-03, P-06
 
 **Objetivo:** produzir um app instalável, versionado e configurável sem incluir
@@ -633,7 +633,7 @@ Evidências:
 ### P-09: Implementar o adapter no plugin Teams
 
 **Status:** not-started  
-**Responsável:** não atribuído  
+**Responsável:** Lincoln Zocateli  
 **Dependências:** P-06, P-07, P-08
 
 **Objetivo:** traduzir atividades do Teams para o caso de uso comum de entrega
@@ -667,7 +667,7 @@ Evidências:
 ### P-10: Implementar a experiência Salvar no Altivy Notes
 
 **Status:** not-started  
-**Responsável:** não atribuído  
+**Responsável:** Lincoln Zocateli  
 **Dependências:** P-09
 
 **Objetivo:** oferecer uma interação curta, acessível e explícita para revisar o
@@ -700,7 +700,7 @@ Evidências:
 ### P-11: Processar entrega e gravar Markdown
 
 **Status:** not-started  
-**Responsável:** não atribuído  
+**Responsável:** Lincoln Zocateli  
 **Dependências:** P-05, P-07
 
 **Objetivo:** converter uma entrega aceita em documento Markdown seguro,
@@ -733,7 +733,7 @@ Evidências:
 ### P-12: Implementar fallback por Outgoing Webhook
 
 **Status:** not-started  
-**Responsável:** não atribuído  
+**Responsável:** Lincoln Zocateli  
 **Dependências:** P-07, P-11
 
 **Objetivo:** oferecer uma integração manual mínima para equipes que não possam
@@ -765,7 +765,7 @@ Evidências:
 ### P-13: Implementar administração no Altivy
 
 **Status:** not-started  
-**Responsável:** não atribuído  
+**Responsável:** Lincoln Zocateli  
 **Dependências:** P-05, P-06, P-07
 
 **Objetivo:** permitir configuração e diagnóstico sem expor credenciais,
@@ -799,7 +799,7 @@ Evidências:
 ### P-14: Preparar observabilidade e operação
 
 **Status:** not-started  
-**Responsável:** não atribuído  
+**Responsável:** Lincoln Zocateli  
 **Dependências:** P-07, P-09, P-11, P-12
 
 **Objetivo:** detectar atraso, rejeição, abuso e falhas operacionais sem
@@ -832,7 +832,7 @@ Evidências:
 ### P-15: Automatizar qualidade e segurança
 
 **Status:** not-started  
-**Responsável:** não atribuído  
+**Responsável:** Lincoln Zocateli  
 **Dependências:** P-08, P-09, P-10, P-11, P-12, P-13, P-14
 
 **Objetivo:** demonstrar o comportamento ponta a ponta e os controles da nova
@@ -867,7 +867,7 @@ Evidências:
 ### P-16: Executar rollout e rollback
 
 **Status:** not-started  
-**Responsável:** não atribuído  
+**Responsável:** Lincoln Zocateli  
 **Dependências:** P-15
 
 **Objetivo:** disponibilizar o app e o `external-push` de forma incremental,

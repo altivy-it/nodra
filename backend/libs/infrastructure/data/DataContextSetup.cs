@@ -1,3 +1,4 @@
+using Altivy.Backend.Application.Notes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -24,6 +25,8 @@ public static class DataContextSetup
                 npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "altivy"));
         });
 
+        services.AddScoped<INoteProjectionStore, PostgresNoteProjectionStore>();
+        services.AddScoped<INoteIndexJobStore, PostgresNoteIndexJobStore>();
         services.AddScoped<PostgresVaultReader>();
         return services;
     }

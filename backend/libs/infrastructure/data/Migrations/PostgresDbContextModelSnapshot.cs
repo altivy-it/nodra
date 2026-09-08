@@ -23,80 +23,118 @@ namespace Altivy.Backend.Infra.Data.Postgres.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Altivy.Backend.Infra.Data.Postgres.VaultResidueOccurrenceRecord", b =>
+            modelBuilder.Entity("Altivy.Backend.Infra.Data.Postgres.NoteIndexJobRecord", b =>
                 {
-                    b.Property<Guid>("OccurrenceId")
-                        .ValueGeneratedOnAdd()
+                    b.Property<Guid>("JobId")
                         .HasColumnType("uuid")
-                        .HasColumnName("occurrence_id");
+                        .HasColumnName("job_id");
 
-                    b.Property<bool>("AlertPending")
-                        .HasColumnType("boolean")
-                        .HasColumnName("alert_pending");
-
-                    b.Property<int>("AlertAttemptCount")
+                    b.Property<int>("AttemptCount")
                         .HasColumnType("integer")
-                        .HasColumnName("alert_attempt_count");
+                        .HasColumnName("attempt_count");
 
-                    b.Property<string>("AlertLastError")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)")
-                        .HasColumnName("alert_last_error");
-
-                    b.Property<string>("AlertActionRequired")
+                    b.Property<string>("IdempotencyKey")
                         .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("alert_action_required");
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("idempotency_key");
 
-                    b.Property<DateTimeOffset?>("AlertLeaseExpiresAt")
+                    b.Property<string>("LastError")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)")
+                        .HasColumnName("last_error");
+
+                    b.Property<DateTimeOffset?>("LeaseExpiresAt")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("alert_lease_expires_at");
+                        .HasColumnName("lease_expires_at");
 
-                    b.Property<Guid?>("AlertLeaseId")
+                    b.Property<Guid?>("LeaseId")
                         .HasColumnType("uuid")
-                        .HasColumnName("alert_lease_id");
+                        .HasColumnName("lease_id");
 
-                    b.Property<DateTimeOffset>("FirstDetectedAt")
+                    b.Property<DateTimeOffset?>("NextAttemptAt")
                         .HasColumnType("timestamp with time zone")
-                        .HasColumnName("first_detected_at");
+                        .HasColumnName("next_attempt_at");
 
-                    b.Property<DateTimeOffset>("LastDetectedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("last_detected_at");
+                    b.Property<string>("Path")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)")
+                        .HasColumnName("path");
 
-                    b.Property<DateTimeOffset?>("NextAlertAttemptAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("next_alert_attempt_at");
-
-                    b.Property<DateTimeOffset?>("RetentionWarningScheduledAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("retention_warning_scheduled_at");
-
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
-                        .HasColumnName("type");
+                    b.Property<int>("State")
+                        .HasColumnType("integer")
+                        .HasColumnName("state");
 
                     b.Property<string>("VaultId")
                         .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("character varying(64)")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
                         .HasColumnName("vault_id");
 
-                    b.HasKey("OccurrenceId");
+                    b.HasKey("JobId");
+                    b.HasIndex("IdempotencyKey").IsUnique();
+                    b.HasIndex("State", "LeaseExpiresAt");
+                    b.HasIndex("State", "NextAttemptAt");
+                    b.ToTable("note_index_jobs", "altivy");
+                });
 
-                    b.HasIndex("AlertPending", "AlertLeaseExpiresAt");
+            modelBuilder.Entity("Altivy.Backend.Infra.Data.Postgres.NoteProjectionRecord", b =>
+                {
+                    b.Property<string>("VaultId")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)")
+                        .HasColumnName("vault_id");
 
-                    b.HasIndex("AlertPending", "NextAlertAttemptAt");
+                    b.Property<string>("Path")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)")
+                        .HasColumnName("path");
 
-                    b.HasIndex("RetentionWarningScheduledAt", "LastDetectedAt");
+                    b.Property<string>("ContentHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("content_hash");
 
-                    b.HasIndex("VaultId", "Type")
-                        .IsUnique();
+                    b.Property<string>("HeadingsJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("headings");
 
-                    b.ToTable("vault_residue_occurrences", "altivy");
+                    b.Property<DateTimeOffset>("IndexedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("indexed_at");
+
+                    b.Property<string>("MarkdownLinksJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("markdown_links");
+
+                    b.Property<string>("PropertiesJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("properties");
+
+                    b.Property<string>("TagsJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("tags");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)")
+                        .HasColumnName("title");
+
+                    b.Property<string>("WikiLinksJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("wiki_links");
+
+                    b.HasKey("VaultId", "Path");
+
+                    b.HasIndex("VaultId", "Title");
+
+                    b.ToTable("note_projections", "altivy");
                 });
 
             modelBuilder.Entity("Altivy.Backend.Infra.Data.Postgres.VaultProvisioningOperationRecord", b =>
@@ -159,9 +197,9 @@ namespace Altivy.Backend.Infra.Data.Postgres.Migrations
 
                     b.HasIndex("VaultId");
 
-                    b.HasIndex("State", "NextAttemptAt");
-
                     b.HasIndex("State", "LeaseExpiresAt");
+
+                    b.HasIndex("State", "NextAttemptAt");
 
                     b.HasIndex("Subject", "IdempotencyKey")
                         .IsUnique();
@@ -187,6 +225,82 @@ namespace Altivy.Backend.Infra.Data.Postgres.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("vaults", "altivy");
+                });
+
+            modelBuilder.Entity("Altivy.Backend.Infra.Data.Postgres.VaultResidueOccurrenceRecord", b =>
+                {
+                    b.Property<Guid>("OccurrenceId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("occurrence_id");
+
+                    b.Property<string>("AlertActionRequired")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("alert_action_required");
+
+                    b.Property<int>("AlertAttemptCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("alert_attempt_count");
+
+                    b.Property<string>("AlertLastError")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("alert_last_error");
+
+                    b.Property<DateTimeOffset?>("AlertLeaseExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("alert_lease_expires_at");
+
+                    b.Property<Guid?>("AlertLeaseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("alert_lease_id");
+
+                    b.Property<bool>("AlertPending")
+                        .HasColumnType("boolean")
+                        .HasColumnName("alert_pending");
+
+                    b.Property<DateTimeOffset>("FirstDetectedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("first_detected_at");
+
+                    b.Property<DateTimeOffset>("LastDetectedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_detected_at");
+
+                    b.Property<DateTimeOffset?>("NextAlertAttemptAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("next_alert_attempt_at");
+
+                    b.Property<DateTimeOffset?>("RetentionWarningScheduledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("retention_warning_scheduled_at");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("type");
+
+                    b.Property<string>("VaultId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("vault_id");
+
+                    b.HasKey("OccurrenceId");
+
+                    b.HasIndex("AlertPending", "AlertLeaseExpiresAt");
+
+                    b.HasIndex("AlertPending", "NextAlertAttemptAt");
+
+                    b.HasIndex("RetentionWarningScheduledAt", "LastDetectedAt");
+
+                    b.HasIndex("VaultId", "Type")
+                        .IsUnique();
+
+                    b.ToTable("vault_residue_occurrences", "altivy");
                 });
 #pragma warning restore 612, 618
         }

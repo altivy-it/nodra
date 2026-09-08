@@ -5,7 +5,7 @@
 **Última atualização:** 2026-09-01
 **Responsáveis:** não atribuídos
 **Origem:** IA assistida
-**Revisor humano:** pendente
+**Revisor humano:** Lincoln Zocateli
 **Relacionado:** [Plano do tema de login do Keycloak](tema-login-keycloak.md) (bloqueio do P-04), [CI/CD e Segurança no GitHub](../ci-cd-seguranca.md), [Tutorial de configuração do Keycloak](../configuracao-keycloak.md)
 
 ## Objetivo
@@ -102,7 +102,7 @@ de verificação pós-deploy dentro do pipeline (já previsto em
 ### P-01: Decidir a opção de ambiente
 
 **Status:** not-started
-**Responsável:** não atribuído
+**Responsável:** Lincoln Zocateli
 **Dependências:** nenhuma
 
 **Objetivo:** obter decisão humana explícita sobre qual opção (A, B ou C, ou
@@ -124,7 +124,7 @@ Evidências:
 ### P-02: Provisionar host, DNS e TLS
 
 **Status:** not-started
-**Responsável:** não atribuído
+**Responsável:** Lincoln Zocateli
 **Dependências:** P-01
 
 **Objetivo:** disponibilizar o host escolhido com DNS e TLS reais.
@@ -146,7 +146,7 @@ Evidências:
 ### P-03: Criar a stack de homologação
 
 **Status:** not-started
-**Responsável:** não atribuído
+**Responsável:** Lincoln Zocateli
 **Dependências:** P-02
 
 **Objetivo:** criar `deploy/staging/` (ou nome equivalente) como variante de
@@ -172,7 +172,7 @@ Evidências:
 ### P-04: Fechar lacuna de observabilidade do tema
 
 **Status:** not-started
-**Responsável:** não atribuído
+**Responsável:** Lincoln Zocateli
 **Dependências:** nenhuma (pode ocorrer em paralelo)
 
 **Objetivo:** criar métrica ou alerta específico para falha de carregamento do
@@ -195,7 +195,7 @@ Evidências:
 ### P-05: Promover e validar o tema de login em homologação
 
 **Status:** not-started
-**Responsável:** não atribuído
+**Responsável:** Lincoln Zocateli
 **Dependências:** P-03, P-04
 
 **Objetivo:** executar de fato o P-04 do plano `tema-login-keycloak.md` no

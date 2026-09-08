@@ -1,0 +1,59 @@
+name: Executar slice do plano
+description: Delegue ao Copilot um slice aprovado e desbloqueado do Altivy
+title: "[Plano]: "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Esta Issue autoriza a implementação e validação do slice descrito.
+        Commit, push, merge, publicação e deploy continuam dependentes de
+        solicitação e aprovação explícitas.
+
+        Secrets locais existem somente em
+        `$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env`. O agente não
+        pode ler, listar, copiar, editar, sobrescrever nem exibir esse arquivo.
+        Ele usa apenas variáveis já injetadas por processo autorizado e falha
+        fechado se alguma variável obrigatória estiver ausente.
+  - type: input
+    id: plan
+    attributes:
+      label: Plano e slice
+      description: Informe o plano e o identificador da etapa, por exemplo P-03 ou WP-02.
+      placeholder: docs/plan/nome-do-plano.md / P-XX
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Resultado observável
+      description: Descreva o comportamento que demonstra a conclusão do slice.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Critérios de aceite e validação
+      description: Liste cenários, plataformas e gates que devem passar.
+    validations:
+      required: true
+  - type: textarea
+    id: boundaries
+    attributes:
+      label: Limites e não escopo
+      description: Registre o que não deve ser alterado ou entregue nesta Issue.
+    validations:
+      required: true
+  - type: checkboxes
+    id: authorization
+    attributes:
+      label: Autorizações e decisões humanas
+      options:
+        - label: O slice está aprovado e suas dependências estão atendidas.
+          required: true
+        - label: O Copilot pode editar arquivos e executar as validações deste slice.
+          required: true
+        - label: Commit, push, merge, publicação e deploy exigem autorização separada.
+          required: true
+        - label: Avaliei se o slice exige ADR ou outra decisão humana prévia.
+          required: true

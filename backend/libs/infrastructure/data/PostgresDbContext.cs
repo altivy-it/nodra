@@ -22,6 +22,16 @@ public sealed class PostgresDbContext(DbContextOptions<PostgresDbContext> option
     /// </summary>
     public DbSet<VaultResidueOccurrenceRecord> VaultResidueOccurrences => Set<VaultResidueOccurrenceRecord>();
 
+    /// <summary>
+    /// Obtém a projeção reconstruível dos metadados das notas.
+    /// </summary>
+    public DbSet<NoteProjectionRecord> NoteProjections => Set<NoteProjectionRecord>();
+
+    /// <summary>
+    /// Obtém os jobs duráveis de indexação de notas.
+    /// </summary>
+    public DbSet<NoteIndexJobRecord> NoteIndexJobs => Set<NoteIndexJobRecord>();
+
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -29,5 +39,7 @@ public sealed class PostgresDbContext(DbContextOptions<PostgresDbContext> option
         modelBuilder.ApplyConfiguration(new VaultRecordConfiguration());
         modelBuilder.ApplyConfiguration(new VaultProvisioningOperationRecordConfiguration());
         modelBuilder.ApplyConfiguration(new VaultResidueOccurrenceRecordConfiguration());
+        modelBuilder.ApplyConfiguration(new NoteProjectionRecordConfiguration());
+        modelBuilder.ApplyConfiguration(new NoteIndexJobRecordConfiguration());
     }
 }

@@ -259,8 +259,28 @@ Prompts são comandos focados. No chat, digite `/` e selecione o prompt. Depois 
 | `/generate-tests` | criar testes para um comportamento ou diff |
 | `/diagnose-problem` | reproduzir, encontrar causa e corrigir um problema |
 | `/review-change` | revisar diff, branch ou pull request |
+| `/continuar-plano` | executar o próximo slice aprovado e desbloqueado do plano |
 
-### 7.2 Planejar sem implementar
+### 7.2 Executar o próximo slice
+
+Use `/continuar-plano` em um chat novo para aplicar a autorização operacional
+versionada sem redigitar seus limites. O prompt seleciona o `Altivy Delivery
+Lead`, trabalha em um único slice aprovado e executa as validações proporcionais
+ao risco.
+
+O fluxo não libera commit, push, merge, publicação ou deploy automaticamente,
+porque essas operações exigem solicitação explícita pelas regras do repositório.
+No GitHub, use o formulário `Executar slice do plano` para registrar critérios,
+dependências, limites e a autorização humana antes de atribuir a Issue ao
+Copilot.
+
+Secrets locais permanecem exclusivamente em
+`$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env`, conforme a
+[configuração do Keycloak](../docs/configuracao-keycloak.md#5-parte-a-laboratorio-local-descartavel).
+O agente não lê esse arquivo; um processo autorizado injeta somente as
+variáveis necessárias e falha fechado quando alguma estiver ausente.
+
+### 7.3 Planejar sem implementar
 
 ```text
 /plan-feature
@@ -270,7 +290,7 @@ Adicionar lixeira por vault. Uma nota excluída deve poder ser restaurada por 30
 
 Use esse prompt quando ainda quer discutir escopo e desenho. O agente não deve editar arquivos.
 
-### 7.3 Implementar uma feature
+### 7.4 Implementar uma feature
 
 ```text
 /implement-feature
@@ -286,7 +306,7 @@ Critérios:
 - inclua testes de parser, PostgreSQL, API e jornada no browser.
 ```
 
-### 7.4 Criar um ADR
+### 7.5 Criar um ADR
 
 ```text
 /create-adr
@@ -296,7 +316,7 @@ Decidir como identificar notas após rename: UUID persistido no frontmatter, ide
 
 O resultado deve ser criado em `docs/adr/AAAA-NNNN-titulo.md`, com status `proposed`, seguindo [ADR_TEMPLATE.md](ADR_TEMPLATE.md). Use sequência anual (por exemplo, `2026-0001`). Revise a decisão antes de aceitá-la; um ADR não vira verdade apenas porque foi gerado por IA.
 
-### 7.5 Diagnosticar um bug
+### 7.6 Diagnosticar um bug
 
 ```text
 /diagnose-problem
@@ -306,7 +326,7 @@ Ao renomear uma nota para um nome com acento no Windows, o catálogo cria uma se
 
 Forneça mensagens de erro, comando que falhou e ambiente quando disponíveis. Não cole tokens, connection strings ou conteúdo real de notas.
 
-### 7.6 Gerar testes
+### 7.7 Gerar testes
 
 ```text
 /generate-tests
@@ -314,7 +334,7 @@ Forneça mensagens de erro, comando que falhou e ambiente quando disponíveis. N
 Comportamento: PUT de nota exige If-Match e deve preservar as duas versões em conflito. Crie testes de API e integração com duas atualizações concorrentes usando filesystem e PostgreSQL reais.
 ```
 
-### 7.7 Revisar uma mudança
+### 7.8 Revisar uma mudança
 
 ```text
 /review-change
