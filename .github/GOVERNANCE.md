@@ -65,8 +65,9 @@ válida em componente separado.
 
 Funcionalidades comerciais futuras devem permanecer separadas do núcleo MIT.
 Nenhum plano, contrato ou mecanismo técnico pode revogar direitos já concedidos
-sobre versões publicadas sob MIT. O modelo proposto está no
-[plano comercial](../docs/plan/modelo-comercial-e-licenciamento.md).
+sobre versões publicadas sob MIT. O modelo comercial ainda é uma estratégia
+especulativa (`proposed`) e é mantido fora deste repositório público até virar
+uma decisão registrada em ADR.
 
 ## Releases e segurança operacional
 
@@ -75,8 +76,8 @@ de build, testes, migrações, segurança, SBOM, proveniência e recuperação a
 Publicação e deploy exigem solicitação explícita e não são realizados
 automaticamente por agentes de IA.
 
-Configurações administrativas que não vivem no Git estão no
-[checklist administrativo do GitHub](../docs/github-administracao.md).
+Configurações administrativas que não vivem no Git são acompanhadas fora deste
+repositório público em um checklist administrativo do mantenedor.
 
 ## Alteração desta governança
 

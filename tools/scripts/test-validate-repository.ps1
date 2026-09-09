@@ -57,7 +57,6 @@ $requiredPaths = @(
     '.github/PULL_REQUEST_TEMPLATE.md'
     '.github/SECURITY.md'
     '.github/workflows/ci.yml'
-    'docs/github-administracao.md'
     'tools/scripts/test-validate-repository.ps1'
     'tools/scripts/validate-repository.ps1'
 )

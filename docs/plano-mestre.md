@@ -403,7 +403,6 @@ O produto estará apto a receber a versão `1.0.0` quando:
 - [Implementação do Backend](backend.md)
 - [Evolução do Produto](evolucao-produto.md)
 - [CI/CD e Segurança no GitHub](ci-cd-seguranca.md)
-- [Modelo comercial e funcionalidades pagas](plan/modelo-comercial-e-licenciamento.md)
 - [Plano do BFF com Keycloak](plan/bff-keycloak.md)
 - [Tutorial de configuração do Keycloak](configuracao-keycloak.md)
 - [Tutorial do tenant Microsoft 365 de teste para Teams](tutorial-tenant-microsoft-365-teams.md)
@@ -422,7 +421,6 @@ planos e não substitui as dependências `P-NN` declaradas dentro de cada um.
 | Ordem | Plano | Papel | Pré-condições externas ao plano | Regra de execução |
 | ---: | --- | --- | --- | --- |
 | 0 | [Identidade visual e branding](plan/altivy-branding.md) | redirecionamento histórico | nenhuma | não executar; está `superseded` e aponta para a fonte canônica no repositório `Altivy` |
-| — | [Modelo comercial e licenciamento](plan/modelo-comercial-e-licenciamento.md) | iniciativa transversal de produto e sustentabilidade | decisão humana sobre MIT registrada; validação jurídica e comercial pendente | não implementar controle de licença antes dos gates definidos no plano |
 | 1 | [BFF com Keycloak](plan/bff-keycloak.md) | fundação de identidade, sessão e autorização | decisões da Fase 0 aplicáveis | executar antes de qualquer plano que exponha integração autenticada ou selecione vaults |
 | 2 | [Plataforma de plugins e plugin Teams](plan/app-altivy-notes-teams-external-push.md) | fundação plugável, importação explícita e API de ingestão | plano do BFF concluído; núcleo de Notes, jobs, filesystem e indexação disponível; gate da Fase 3 atendido; início da Fase 5 aprovado por humano | entregar o Plugin Host e a primeira integração sem leitura do Microsoft Graph |
 | 3 | [Notas de reunião do Teams via Graph](plan/integracao-teams-notas-reuniao.md) | espelhamento automático Loop → Altivy | mesmas pré-condições da ordem 2; gates G1 e G2 próprios; contratos do Plugin Host reconciliados | executar depois de `external-push` na ordem padrão ou em paralelo somente com coordenação explícita |

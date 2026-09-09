@@ -61,7 +61,6 @@ tools/         automação do repositório
 - [Arquitetura do backend](docs/backend.md)
 - [CI/CD e segurança](docs/ci-cd-seguranca.md)
 - [Configuração do Keycloak](docs/configuracao-keycloak.md)
-- [Modelo comercial e funcionalidades pagas](docs/plan/modelo-comercial-e-licenciamento.md)
 - [Governança do repositório](.github/GOVERNANCE.md)
 - [Guia de contribuição](.github/CONTRIBUTING.md)
 - [Política de segurança](.github/SECURITY.md)

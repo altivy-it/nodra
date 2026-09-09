@@ -179,14 +179,16 @@ A decisao sera considerada validada quando:
 
 ## Complementos operacionais
 
-- [Licenciamento e compliance](../performance/licenciamento-compliance-k6.md)
 - [Tutorial para time junior: k6 com Docker](../performance/tutorial-k6-docker.md)
 - [Execucao em pipelines](../performance/execucao-pipelines-k6.md)
 - [Armazenamento de evidencias](../performance/armazenamento-evidencias-k6.md)
 - [Integracao Grafana e Prometheus](../performance/integracao-grafana-prometheus-k6.md)
-- [SLO/SLA corporativos](../performance/slo-sla-corporativos-k6.md)
-- [RACI de testes de performance](../performance/raci-testes-performance-k6.md)
-- [Riscos e mitigacoes](../performance/riscos-mitigacoes-k6.md)
+
+Licenciamento e compliance, SLO/SLA corporativos, RACI de testes de performance
+e riscos e mitigacoes foram movidos para o registro privado de bastidor do
+projeto (`architecture-knowledge-base/projects/AltivyNotes/k6-performance/`)
+por estarem redigidos em tom corporativo genérico que não reflete a realidade
+de um projeto self-hosted de mantenedor único.
 
 ## Referencias
 

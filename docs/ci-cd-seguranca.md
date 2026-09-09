@@ -63,7 +63,7 @@ O repositório possui a fundação executável para a fase documental:
 - `.github/CODEOWNERS` registra ownership global e explícito para arquivos críticos;
 - `.github/dependabot.yml` atualiza GitHub Actions semanalmente;
 - `.github/SECURITY.md` prepara a política de reporte responsável e informa que o canal ainda não está operacional;
-- [Checklist administrativo do GitHub](github-administracao.md) registra configurações que exigem acesso a **Settings** e evidência manual.
+- Um checklist administrativo do mantenedor, mantido fora deste repositório público, registra configurações que exigem acesso a **Settings** e evidência manual.
 
 Ainda não existem projetos Angular ou .NET, contracts, lockfiles, Dockerfiles ou manifests de deploy. Os jobs de frontend, backend, integração, contracts, E2E, CodeQL compilado, container, release e deploy devem ser implementados junto com seus primeiros alvos executáveis. Criá-los antes disso produziria checks sem evidência ou permanentemente ignorados.
 
@@ -301,7 +301,7 @@ Os nomes e a organização dos menus podem mudar conforme a evolução da interf
 
 A política pública de reporte permanece no arquivo [`.github/SECURITY.md`](../.github/SECURITY.md). Esse documento orienta o pesquisador sobre versões suportadas, escopo e informações esperadas; o Private Vulnerability Reporting é o canal que recebe e gerencia o relato de forma privada.
 
-**Ação pendente:** habilitar o Private Vulnerability Reporting nas configurações do repositório e registrar a evidência no [checklist administrativo](github-administracao.md) antes de divulgar a política de segurança como canal oficial.
+**Ação pendente:** habilitar o Private Vulnerability Reporting nas configurações do repositório e registrar a evidência no checklist administrativo do mantenedor antes de divulgar a política de segurança como canal oficial.
 
 ## 7. Secrets, variables e identidade
 
