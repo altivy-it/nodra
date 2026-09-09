@@ -1,7 +1,7 @@
 name: Executar slice do plano
-description: Registre um slice aprovado e desbloqueado para execução
+description: Delegue ao Copilot um slice aprovado e desbloqueado do Altivy
 title: "[Plano]: "
-labels: ["type:plan-slice", "status:triage"]
+labels: ["enhancement", "triage"]
 body:
   - type: markdown
     attributes:
@@ -21,58 +21,6 @@ body:
       label: Plano e slice
       description: Informe o plano e o identificador da etapa, por exemplo P-03 ou WP-02.
       placeholder: docs/plan/nome-do-plano.md / P-XX
-    validations:
-      required: true
-  - type: dropdown
-    id: priority
-    attributes:
-      label: Prioridade
-      options:
-        - P0 - bloqueador
-        - P1 - alta
-        - P2 - normal
-        - P3 - baixa
-    validations:
-      required: true
-  - type: dropdown
-    id: area
-    attributes:
-      label: Área responsável
-      multiple: true
-      options:
-        - Arquitetura
-        - Backend
-        - Frontend
-        - Banco de dados
-        - Segurança
-        - DevOps
-        - Documentação
-        - Testes
-    validations:
-      required: true
-  - type: dropdown
-    id: risk
-    attributes:
-      label: Risco da mudança
-      options:
-        - baixo
-        - médio
-        - alto
-    validations:
-      required: true
-  - type: input
-    id: target
-    attributes:
-      label: Release ou marco alvo
-      placeholder: MVP, Fase 3, Fase 5 ou não definido
-    validations:
-      required: true
-  - type: textarea
-    id: dependencies
-    attributes:
-      label: Dependências e bloqueios
-      description: Liste IDs de Issues, etapas P-NN/WP-NN, ADRs ou decisões humanas necessárias.
-      placeholder: "Nenhuma ou #123, P-02 e ADR 2026-0001"
     validations:
       required: true
   - type: textarea

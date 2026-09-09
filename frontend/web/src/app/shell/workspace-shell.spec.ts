@@ -57,4 +57,41 @@ describe('WorkspaceShell', () => {
 
         expect(component.workspace.activeModule()).toBe('settings');
     });
+
+    it('abre a ajuda pelo atalho e devolve o foco para a área central', async () => {
+        await TestBed.configureTestingModule({
+            imports: [WorkspaceShell],
+            providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter(routes)]
+        }).compileComponents();
+        const fixture = TestBed.createComponent(WorkspaceShell);
+        fixture.componentInstance.userName = 'Pessoa';
+        fixture.detectChanges();
+
+        const component = fixture.componentInstance;
+        const event = new KeyboardEvent('keydown', { cancelable: true, ctrlKey: true, shiftKey: true, key: '?' });
+        component.handleShortcut(event);
+
+        expect(event.defaultPrevented).toBe(true);
+        expect(component.workspace.activeModule()).toBe('help');
+        expect(document.activeElement).toBe(fixture.nativeElement.querySelector('.content'));
+    });
+
+    it('move o foco roving da barra de atividades por Home e End', async () => {
+        await TestBed.configureTestingModule({
+            imports: [WorkspaceShell],
+            providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter(routes)]
+        }).compileComponents();
+        const fixture = TestBed.createComponent(WorkspaceShell);
+        fixture.componentInstance.userName = 'Pessoa';
+        fixture.detectChanges();
+
+        const component = fixture.componentInstance;
+        component.moveActivity(new KeyboardEvent('keydown', { key: 'End' }), 'files');
+        expect(component.workspace.activeModule()).toBe('settings');
+        expect(document.activeElement?.getAttribute('data-activity')).toBe('settings');
+
+        component.moveActivity(new KeyboardEvent('keydown', { key: 'Home' }), 'settings');
+        expect(component.workspace.activeModule()).toBe('files');
+        expect(document.activeElement?.getAttribute('data-activity')).toBe('files');
+    });
 });

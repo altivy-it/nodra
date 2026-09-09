@@ -57,6 +57,11 @@ Não crie dependências circulares. `apps/*` compõem e hospedam; regras reutili
 	profile do PowerShell, executando-o a partir de `frontend/web`. O alias inicia
 	o container padronizado do projeto; não invoque `node`, `npm`, `npx` ou uma
 	instalação local do Angular CLI diretamente no host.
+- O profile também define o alias `npx`, que executa a ferramenta na mesma
+	imagem containerizada de `node` e `npm`; use-o no PowerShell interativo quando
+	for necessário executar um pacote diretamente. Em scripts, tarefas e CI que
+	não carregam o profile, use explicitamente `npm exec -- <comando>` dentro do
+	container apropriado; não invoque `npx` instalado no host.
 - Antes de enviar `ng`, confirme que o diretório atual é `frontend/web`; se o
 	terminal estiver na raiz do monorepo, envie primeiro
 	`Set-Location $env:USERPROFILE\projetos\AltivyNotes\frontend\web`. Executar

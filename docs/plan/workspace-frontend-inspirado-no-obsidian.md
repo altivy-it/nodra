@@ -445,9 +445,13 @@ Evidências:
   área central; campos de edição não são interceptados.
 - A atividade selecionada expõe `aria-current="page"`, complementando o foco
   roving e o label acessível da barra.
+- O spec do `WorkspaceShell` cobre o atalho de ajuda, a devolução de foco à área
+  central e a navegação `Home`/`End` da barra de atividades.
 - Diagnóstico TypeScript limpo nos arquivos do registro e do shell.
-- Pendente: execução confirmada do spec do registro e teste Playwright de ajuda
-  por atalho/menu com preservação de foco.
+- Pendente: execução confirmada dos specs Angular/Vitest e teste Playwright de
+  ajuda por atalho/menu com preservação de foco; o executor de testes e o
+  terminal interativo disponíveis nesta sessão não conseguiram iniciar o runner
+  Angular.
 
 ### P-04: Evoluir o explorador de pastas e arquivos
 
