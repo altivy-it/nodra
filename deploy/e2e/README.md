@@ -39,11 +39,13 @@ na máquina de laboratório:
 ```powershell
 winget install FiloSottile.mkcert
 mkcert -install
-New-Item -ItemType Directory -Force .\deploy\e2e\certs | Out-Null
-mkcert -cert-file .\deploy\e2e\certs\tls.crt `
-  -key-file .\deploy\e2e\certs\tls.key `
+$AltivySecretsDirectory = Join-Path $env:APPDATA 'Microsoft\UserSecrets\Altivy.Notes'
+$AltivyCertsDirectory = Join-Path $AltivySecretsDirectory 'certs'
+New-Item -ItemType Directory -Force $AltivyCertsDirectory | Out-Null
+mkcert -cert-file (Join-Path $AltivyCertsDirectory 'tls.crt') `
+  -key-file (Join-Path $AltivyCertsDirectory 'tls.key') `
   localhost 127.0.0.1 ::1
-Copy-Item "$(mkcert -CAROOT)\rootCA.pem" .\deploy\e2e\certs\rootCA.pem
+Copy-Item "$(mkcert -CAROOT)\rootCA.pem" (Join-Path $AltivyCertsDirectory 'rootCA.pem')
 New-Item -ItemType Directory -Force .\deploy\e2e\keys | Out-Null
 ```
 
@@ -85,9 +87,10 @@ O JSON deve conter `"issuer":"https://localhost:7443/realms/altivy"` quando a
 borda estiver ativa.
 
 ```powershell
-$env:ALTIVY_E2E_TLS_CERTIFICATE_PATH = "$PWD\deploy\e2e\certs\tls.crt"
-$env:ALTIVY_E2E_TLS_KEY_PATH = "$PWD\deploy\e2e\certs\tls.key"
-$env:ALTIVY_E2E_TLS_CA_PATH = "$PWD\deploy\e2e\certs\rootCA.pem"
+$AltivyCertsDirectory = Join-Path $env:APPDATA 'Microsoft\UserSecrets\Altivy.Notes\certs'
+$env:ALTIVY_E2E_TLS_CERTIFICATE_PATH = Join-Path $AltivyCertsDirectory 'tls.crt'
+$env:ALTIVY_E2E_TLS_KEY_PATH = Join-Path $AltivyCertsDirectory 'tls.key'
+$env:ALTIVY_E2E_TLS_CA_PATH = Join-Path $AltivyCertsDirectory 'rootCA.pem'
 $env:ALTIVY_E2E_DATA_PROTECTION_KEYS_PATH = "$PWD\deploy\e2e\keys"
 docker compose -f deploy/e2e/docker-compose-altivynotes.yaml config --quiet
 docker compose --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" `

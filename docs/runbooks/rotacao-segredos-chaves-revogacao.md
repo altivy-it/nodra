@@ -75,9 +75,12 @@ BFF e Web.
 ```powershell
 # 1. Gerar ou obter novos certificados válidos
 # Em desenvolvimento com mkcert:
-mkcert -cert-file .\deploy\e2e\certs\tls.crt `
-  -key-file .\deploy\e2e\certs\tls.key `
+$AltivyCertsDirectory = Join-Path $env:APPDATA 'Microsoft\UserSecrets\Altivy.Notes\certs'
+New-Item -ItemType Directory -Force $AltivyCertsDirectory | Out-Null
+mkcert -cert-file (Join-Path $AltivyCertsDirectory 'tls.crt') `
+  -key-file (Join-Path $AltivyCertsDirectory 'tls.key') `
   localhost 127.0.0.1 ::1
+Copy-Item "$(mkcert -CAROOT)\rootCA.pem" (Join-Path $AltivyCertsDirectory 'rootCA.pem')
 
 # 2. Recarregar o NGINX compartilhado sem interromper conexões
 docker exec altivy-nginx-proxy nginx -s reload
