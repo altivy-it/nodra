@@ -1,7 +1,9 @@
 # Laboratório Keycloak do Altivy
 
-Este diretório inicia um laboratório local com Keycloak, PostgreSQL, o realm
-`altivy` e o tema de login personalizado da marca Altivy.
+Este diretório inicia a stack compartilhada local com NGINX reverse proxy,
+Keycloak, PostgreSQL, o realm `altivy` e o tema de login personalizado da marca
+Altivy. O proxy é compartilhado por produtos e aplicações que entram na rede
+`altivy-edge`.
 
 O ambiente usa as imagens fixadas:
 
@@ -17,6 +19,9 @@ HTTP e usa credenciais locais no arquivo externo
 - PowerShell 7;
 - Docker Desktop com containers Linux;
 - portas locais `8080` e `9000` livres;
+- porta local `7443` livre para o `nginx-proxy` compartilhado;
+- diretórios `$env:APPDATA\keycloak\postgres-data` e `$env:APPDATA\keycloak\backup` criados;
+- certificado e chave TLS locais informados em `ALTIVY_E2E_TLS_CERTIFICATE_PATH` e `ALTIVY_E2E_TLS_KEY_PATH`;
 - pelo menos 2 GiB de memória disponível.
 
 Execute os comandos abaixo a partir de `deploy/keycloak`:
@@ -35,12 +40,36 @@ New-Item -ItemType Directory -Force $SecretsDirectory | Out-Null
 notepad (Join-Path $SecretsDirectory '.env')
 ```
 
-Defina, no mínimo, as variáveis:
+Variáveis compartilhadas da stack Keycloak/PostgreSQL:
 
-- `ALTIVY_LAB_POSTGRES_PASSWORD`;
-- `ALTIVY_KEYCLOAK_ADMIN_PASSWORD`.
+- `ALTIVY_LAB_POSTGRES_PASSWORD`, obrigatória, senha do usuário `keycloak` no PostgreSQL compartilhado;
+- `ALTIVY_KEYCLOAK_ADMIN_USERNAME`, opcional, usuário administrativo de bootstrap; padrão `admin`;
+- `ALTIVY_KEYCLOAK_ADMIN_PASSWORD`, obrigatória, senha administrativa de bootstrap da instância compartilhada;
+- `ALTIVY_KEYCLOAK_BASE_URL`, recomendada para scripts e clientes administrativos locais; padrão esperado `http://127.0.0.1:8080`;
+- `ALTIVY_KEYCLOAK_MANAGEMENT_URL`, recomendada para health e métricas locais; padrão esperado `http://127.0.0.1:9000`;
+- `ALTIVY_KEYCLOAK_ISSUER_URL`, recomendada para formar o issuer interno sem a borda TLS; padrão esperado `http://localhost:8080`;
+- `ALTIVY_KEYCLOAK_HOSTNAME`, opcional, hostname público anunciado pelo Keycloak;
+- `ALTIVY_KEYCLOAK_ADMIN_HOSTNAME`, opcional, hostname público do Admin Console;
+- `ALTIVY_KEYCLOAK_REALM`, obrigatória para consumidores do produto; use `altivy` neste projeto.
+
+Variáveis específicas do AltivyNotes:
+
+- `ALTIVY_BFF_BASE_URL`, origem externa do BFF; padrão local `https://localhost:7443`;
+- `ALTIVY_BFF_CLIENT_SECRET`, opcional para fixar o secret do client confidencial; vazio mantém o secret atual;
+- `ALTIVY_FULANO_EMAIL`, opcional para criar o usuário de laboratório;
+- `ALTIVY_FULANO_TEMPORARY_PASSWORD`, opcional e com mínimo de 14 caracteres;
+- `ALTIVY_SMTP_*` e `ALTIVY_IDP_*`, opcionais para SMTP e provedores sociais;
+- `ALTIVY_E2E_*`, opcionais para o ambiente E2E;
+- `ALTIVY_INTEGRATION_*_CONNECTION_STRING`, opcionais para testes de integração locais.
 
 Não versione o arquivo e não reutilize credenciais de outros ambientes.
+
+Os dados e backups locais da stack compartilhada ficam fora do repositório:
+
+```powershell
+New-Item -ItemType Directory -Force "$env:APPDATA\keycloak\postgres-data" | Out-Null
+New-Item -ItemType Directory -Force "$env:APPDATA\keycloak\backup" | Out-Null
+```
 
 ## Gerar a customização
 
@@ -93,8 +122,9 @@ if (-not (docker network ls --filter name=^altivy-edge$ --format '{{.Name}}')) {
 docker compose --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" -f ./docker-compose-keycloak.yaml up -d --wait
 ```
 
-O Compose inicia o PostgreSQL, aguarda seu health check e somente então inicia
-o Keycloak. No primeiro boot, o Keycloak importa
+O Compose inicia o NGINX reverse proxy compartilhado, PostgreSQL e Keycloak. O
+Keycloak aguarda o health check do PostgreSQL antes de iniciar. No primeiro boot,
+o Keycloak importa
 `realm/altivy-realm.json`, criando:
 
 - realm `altivy`;
@@ -104,6 +134,11 @@ o Keycloak. No primeiro boot, o Keycloak importa
   `altivy-authorization-spike`;
 - roles e grupos iniciais do Altivy.
 
+O serviço `nginx-proxy` publica `https://localhost:7443` e encaminha `/admin`,
+`/realms` e `/resources` para o Keycloak. Quando aplicações como o E2E do
+AltivyNotes estiverem na rede `altivy-edge`, o mesmo proxy também encaminha
+rotas de aplicação como `/bff`, `/api/v1`, `/hubs` e `/` para seus aliases.
+
 O laboratório usa `pg_isready` no health check do PostgreSQL. Essa verificação
 barata confirma que o banco aceita conexões sem executar consultas SQL durante
 o ciclo de saúde; o readiness do Keycloak continua validando a conexão real com
@@ -112,16 +147,17 @@ o banco.
 Por padrão, `KC_HOSTNAME` é `http://localhost:8080` e o console fica em
 `http://localhost:8080/admin/`, publicado diretamente pelo container.
 
-Para o laboratório E2E completo (Web, BFF, API e borda NGINX em
+Para o laboratório E2E completo (Web, BFF e API em
 `https://localhost:7443`), defina `ALTIVY_KEYCLOAK_HOSTNAME` e
 `ALTIVY_KEYCLOAK_ADMIN_HOSTNAME` como `https://localhost:7443` e siga
-[deploy/e2e/README.md](../e2e/README.md). Nesse modo, a borda NGINX encaminha
+[deploy/e2e/README.md](../e2e/README.md). Nesse modo, o `nginx-proxy` encaminha
 `/admin`, `/realms` e `/resources` para este container pela rede `altivy-edge`,
 e o console passa a ficar em `https://localhost:7443/admin/master/console/`.
 Não acesse `http://localhost:8080/admin/` nesse modo: o hostname anunciado
 divergiria da origem usada pelo navegador e quebraria assets e redirects do
 console. A abordagem antiga com hosts file e `keycloak.altivy.test` foi
-substituída pela borda `altivy-edge` e não deve mais ser usada.
+substituída pelo `nginx-proxy` compartilhado na rede `altivy-edge` e não deve
+mais ser usada.
 
 Sem hosts ou DNS local, mantenha o Keycloak em execução e use a Admin REST pelo
 loopback para reconciliar o client. Execute o script a partir da raiz do
@@ -203,15 +239,14 @@ docker compose --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env"
 ## Exportar e restaurar o realm
 
 O export offline deve ser feito com o Keycloak parado, para manter consistência
-com o PostgreSQL. O backup local atual foi gerado em:
+com o PostgreSQL. Backups locais devem ficar fora do repositório, em:
 
 ```text
-deploy/keycloak/.tmp/backups/altivy-realm.json
-deploy/keycloak/.tmp/backups/altivy-users-0.json
+$env:APPDATA/keycloak/backup/altivy-realm.json
+$env:APPDATA/keycloak/backup/altivy-users-0.json
 ```
 
-Esses arquivos ficam em `.tmp/`, são ignorados pelo Git e não devem ser
-publicados. O export atual inclui o client `altivy-authorization-spike`, o
+Esses arquivos não devem ser publicados. O export atual inclui o client `altivy-authorization-spike`, o
 grupo `/altivy/readers`, o recurso `vault-lab-0001`, a policy e a permission
 UMA do spike.
 
@@ -219,7 +254,8 @@ Para gerar um novo export:
 
 ```powershell
 Set-Location ./deploy/keycloak
-New-Item -ItemType Directory -Force ./.tmp/backups | Out-Null
+$BackupRoot = Join-Path $env:APPDATA 'keycloak/backup'
+New-Item -ItemType Directory -Force $BackupRoot | Out-Null
 docker compose --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" -f ./docker-compose-keycloak.yaml stop keycloak
 docker run --rm `
   --network altivy-keycloak-lab_keycloak-internal `
@@ -227,7 +263,7 @@ docker run --rm `
   -e KC_DB_URL=jdbc:postgresql://postgres:5432/keycloak `
   -e KC_DB_USERNAME=keycloak `
   -e KC_DB_PASSWORD=$env:ALTIVY_LAB_POSTGRES_PASSWORD `
-  -v "${PWD}/.tmp/backups:/tmp/export" `
+  -v "${BackupRoot}:/tmp/export" `
   lzocateli/keycloak:26.7.0 export --dir /tmp/export --realm altivy --users same_file
 docker compose --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" -f ./docker-compose-keycloak.yaml up -d --wait keycloak
 ```
@@ -243,7 +279,8 @@ realm; valide o backup em ambiente limpo antes de qualquer uso operacional.
 docker compose --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" -f ./docker-compose-keycloak.yaml down
 ```
 
-Esse comando preserva os dados do PostgreSQL em `.tmp/postgres-data`.
+Esse comando preserva os dados do PostgreSQL em
+`$env:APPDATA\keycloak\postgres-data`.
 
 ## Recriar o realm do zero
 
@@ -253,7 +290,7 @@ Para apagar todos os dados locais e executar novamente o import:
 
 ```powershell
 docker compose --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" -f ./docker-compose-keycloak.yaml down
-Remove-Item ./.tmp/postgres-data -Recurse -Force
+Remove-Item "$env:APPDATA\keycloak\postgres-data" -Recurse -Force
 ./build-theme.ps1
 docker compose --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" -f ./docker-compose-keycloak.yaml up -d --wait
 ```

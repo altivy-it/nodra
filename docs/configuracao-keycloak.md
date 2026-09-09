@@ -151,15 +151,16 @@ docker compose `
   down
 ```
 
-O comando preserva `.tmp/postgres-data`. Para recriar todo o laboratório,
-primeiro pare os serviços e depois remova explicitamente os dados locais:
+O comando preserva `$env:APPDATA\keycloak\postgres-data`. Para recriar todo o
+laboratório, primeiro pare os serviços e depois remova explicitamente os dados
+locais:
 
 ```powershell
 docker compose `
   --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" `
   --file ./deploy/keycloak/docker-compose-keycloak.yaml `
   down
-Remove-Item ./deploy/keycloak/.tmp/postgres-data -Recurse -Force
+Remove-Item "$env:APPDATA\keycloak\postgres-data" -Recurse -Force
 ```
 
 ### 5.5 Entrar no console
@@ -279,7 +280,7 @@ http://localhost:8080/realms/altivy/protocol/openid-connect/auth?client_id=altiv
 
 O Compose usa `lzocateli/keycloak:26.7.0` e
 `lzocateli/postgresql:18.4-pgvector0.8.6-bookworm`, publica somente em
-`127.0.0.1` e mantém o banco em `.tmp/postgres-data` por bind mount.
+`127.0.0.1` e mantém o banco em `$env:APPDATA\keycloak\postgres-data` por bind mount.
 
 O empacotador lê a fonte canônica no repositório irmão `Altivy`, copia os
 arquivos para um artefato descartável e não altera a fonte de branding:
@@ -1230,7 +1231,7 @@ docker compose `
   --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" `
   --file ./deploy/keycloak/docker-compose-keycloak.yaml `
   down
-Remove-Item ./deploy/keycloak/.tmp/postgres-data -Recurse -Force
+Remove-Item "$env:APPDATA\keycloak\postgres-data" -Recurse -Force
 Remove-Item ./deploy/keycloak/.build/keycloak-theme -Recurse -Force
 ```
 

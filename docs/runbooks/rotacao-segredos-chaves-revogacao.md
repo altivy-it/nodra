@@ -79,8 +79,8 @@ mkcert -cert-file .\deploy\e2e\certs\tls.crt `
   -key-file .\deploy\e2e\certs\tls.key `
   localhost 127.0.0.1 ::1
 
-# 2. Recarregar o NGINX de borda sem interromper conexões
-docker exec altivy-notes-edge-1 nginx -s reload
+# 2. Recarregar o NGINX compartilhado sem interromper conexões
+docker exec altivy-nginx-proxy nginx -s reload
 
 # 3. Validar handshake TLS pela porta de borda
 curl.exe --noproxy "*" --insecure --head https://localhost:7443/

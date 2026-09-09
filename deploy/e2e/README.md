@@ -2,21 +2,22 @@
 
 O arquivo canônico desta stack é
 `deploy/e2e/docker-compose-altivynotes.yaml`. Ele cria um ambiente local para
-os E2E do BFF. Apenas `web` publica
-`https://localhost:7443`; Keycloak, BFF, API e Web não possuem portas
-publicadas. O NGINX de borda também encaminha as rotas OIDC do Keycloak, de modo
-que browser e serviços usam uma única origem pública.
+os E2E do BFF. O reverse proxy `nginx-proxy` não pertence mais a este Compose:
+ele roda na stack compartilhada de Keycloak/PostgreSQL e publica
+`https://localhost:7443`. BFF, API e Web não possuem portas publicadas neste
+Compose; entram na rede `altivy-edge` para que o proxy compartilhado encaminhe
+as rotas de aplicação e OIDC em uma única origem pública.
 
 ## Pré-requisitos
 
 - Docker Desktop com containers Linux;
-- o laboratório Keycloak em execução, acessível pela Authority configurada;
+- a stack compartilhada Keycloak/PostgreSQL/NGINX em execução, acessível pela Authority configurada;
 - certificado e chave TLS locais confiados pelo navegador;
 - client secret de `altivy-bff` fornecido somente pela sessão do terminal.
 
-Este Compose e o [laboratório Keycloak](../keycloak/README.md#criar-a-rede-compartilhada-altivy-edge)
-declaram `altivy-edge` como rede externa; nenhum dos dois a cria. Crie-a uma
-única vez antes do primeiro `up` (o comando não falha se a rede já existir):
+Este Compose e a [stack compartilhada Keycloak](../keycloak/README.md#criar-a-rede-compartilhada-altivy-edge)
+declaram `altivy-edge` como rede externa. Crie-a uma única vez antes do primeiro
+`up` (o comando não falha se a rede já existir):
 
 ```powershell
 if (-not (docker network ls --filter name=^altivy-edge$ --format '{{.Name}}')) {
@@ -24,9 +25,10 @@ if (-not (docker network ls --filter name=^altivy-edge$ --format '{{.Name}}')) {
 }
 ```
 
-O certificado e a chave montados devem ser legíveis pelo usuário `nginx` da
-imagem. Mantenha-os fora do repositório e restrinja a leitura no host ao mínimo
-necessário para a execução do Docker Desktop.
+O certificado e a chave montados pelo `nginx-proxy` compartilhado devem ser
+legíveis pelo usuário `nginx` da imagem. Mantenha-os fora do repositório e
+restrinja a leitura no host ao mínimo necessário para a execução do Docker
+Desktop.
 
 ## Preparar TLS e segredo
 
@@ -62,14 +64,14 @@ $env:ALTIVY_E2E_BFF_CLIENT_SECRET = Read-Host 'Client secret do BFF' -MaskInput
 Na raiz do repositório, defina paths absolutos locais e secretos. Não versione
 os valores nem os arquivos montados.
 
-O NGINX de borda é a única origem pública. Configure o Keycloak para anunciar
-`https://localhost:7443`, sem publicar sua porta HTTP no host:
+O `nginx-proxy` compartilhado é a única origem pública. Configure o Keycloak
+para anunciar `https://localhost:7443`:
 
 ```powershell
 $env:ALTIVY_KEYCLOAK_HOSTNAME = 'https://localhost:7443'
 $env:ALTIVY_KEYCLOAK_ADMIN_HOSTNAME = 'https://localhost:7443'
 docker compose --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" `
-  -f deploy/keycloak/docker-compose-keycloak.yaml up -d --force-recreate keycloak
+  -f deploy/keycloak/docker-compose-keycloak.yaml up -d --force-recreate --wait
 ```
 
 Confirme que o issuer retornado é o esperado:
@@ -93,7 +95,7 @@ docker compose --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env"
 ```
 
 Neste laboratório, BFF e API usam sempre
-`https://localhost:7443/realms/altivy` pela borda NGINX. Não defina
+`https://localhost:7443/realms/altivy` pelo `nginx-proxy`. Não defina
 `ALTIVY_E2E_KEYCLOAK_AUTHORITY`; ela pertence à topologia anterior.
 
 O Keycloak deve permitir `https://localhost:7443` como redirect URI e web
@@ -134,7 +136,7 @@ Para um realm já existente, reconcilie-os pela borda:
 .\tools\scripts\configure-keycloak.ps1 -BaseUrl https://localhost:7443 -SkipUser
 ```
 
-O proxy fixa `X-Forwarded-Proto=https` e encaminha o host com a porta pública
+O `nginx-proxy` fixa `X-Forwarded-Proto=https` e encaminha o host com a porta pública
 `:7443`, pois `8443` é apenas a porta interna do container. Assim, o BFF gera
 o redirect URI OIDC igual ao callback público registrado no Keycloak.
 
@@ -154,7 +156,8 @@ O resultado esperado é `{"authenticated":false,"subject":null,"name":null}`.
 ## Acessar o Admin Console pela borda
 
 Com `ALTIVY_KEYCLOAK_HOSTNAME`/`ALTIVY_KEYCLOAK_ADMIN_HOSTNAME` apontando para
-`https://localhost:7443` e os dois Composes saudáveis, o NGINX de borda
+`https://localhost:7443`, a stack compartilhada saudável e este Compose ativo, o
+`nginx-proxy`
 encaminha `/admin`, `/realms` e `/resources` para o Keycloak pela rede
 `altivy-edge`. Acesse o console em:
 
@@ -166,8 +169,8 @@ Não use `http://localhost:8080/admin/` enquanto os hostnames apontarem para
 quebrando assets e redirects do console.
 
 Se uma execução anterior tiver falhado antes de o Web iniciar, remova somente
-os recursos deste laboratório para recriar os aliases `web`, `bff` e `api` e
-seus IPs estáticos. Não remova o Compose do Keycloak:
+os recursos deste laboratório para recriar os aliases `web`, `bff` e `api`.
+Não remova a stack compartilhada do Keycloak/PostgreSQL/NGINX:
 
 ```powershell
 docker compose -f deploy/e2e/docker-compose-altivynotes.yaml down

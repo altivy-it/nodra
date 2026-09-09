@@ -1,21 +1,6 @@
 name: altivy-notes
 
 services:
-  edge:
-    image: lzocateli/nginx:1.28.0-bookworm
-    ports:
-      - "127.0.0.1:7443:7443"
-    volumes:
-      - ../nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ../nginx/conf.d:/etc/nginx/conf.d:ro
-      - ${ALTIVY_E2E_TLS_CERTIFICATE_PATH:?Defina o caminho absoluto do certificado TLS}:/etc/nginx/certs/tls.crt:ro
-      - ${ALTIVY_E2E_TLS_KEY_PATH:?Defina o caminho absoluto da chave TLS}:/etc/nginx/certs/tls.key:ro
-    networks:
-      altivy:
-        ipv4_address: 172.30.0.40
-        aliases: [edge]
-      altivy-edge:
-        ipv4_address: 172.31.0.10
 
   web:
     build:
@@ -27,6 +12,9 @@ services:
     networks:
       altivy:
         ipv4_address: 172.30.0.10
+        aliases:
+          - web
+      altivy-edge:
         aliases:
           - web
 
@@ -45,7 +33,7 @@ services:
       Downstream__Api__BaseUrl: http://api:8080
       Security__AllowedOrigins__0: https://localhost:7443
       Security__AllowedOrigins__1: https://host.containers.internal:7443
-      Security__TrustedProxies__0: 172.30.0.40
+      Security__TrustedProxies__0: 172.31.0.10
       Security__TrustedNetworks__0: 172.30.0.0/24
       Security__TrustedNetworks__1: 172.31.0.0/24
       Security__TrustedNetworks__2: 127.0.0.0/8
@@ -53,7 +41,7 @@ services:
       AllowedHosts: "*"
       SSL_CERT_FILE: /certs/rootCA.pem
     extra_hosts:
-      - localhost:172.30.0.40
+      - localhost:172.31.0.10
     volumes:
       - ${ALTIVY_E2E_DATA_PROTECTION_KEYS_PATH:?Defina o diretório absoluto para chaves de Data Protection}:/keys
       - ${ALTIVY_E2E_TLS_CA_PATH:?Defina o caminho absoluto da CA local do mkcert}:/certs/rootCA.pem:ro
@@ -65,6 +53,9 @@ services:
     networks:
       altivy:
         ipv4_address: 172.30.0.20
+        aliases:
+          - bff
+      altivy-edge:
         aliases:
           - bff
 
@@ -92,7 +83,7 @@ services:
       VaultStorage__Root: /vaults
       SSL_CERT_FILE: /certs/rootCA.pem
     extra_hosts:
-      - localhost:172.30.0.40
+      - localhost:172.31.0.10
     volumes:
       - ${ALTIVY_E2E_TLS_CA_PATH:?Defina o caminho absoluto da CA local do mkcert}:/certs/rootCA.pem:ro
       - altivy-e2e-vaults:/vaults
