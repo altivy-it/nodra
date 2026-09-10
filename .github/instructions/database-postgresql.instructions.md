@@ -25,5 +25,7 @@ applyTo: "backend/libs/**/*DbContext*.cs, backend/libs/**/Migrations/**, backend
 - Comece pgvector com busca exata. Adicione HNSW apenas após medir recall, latência e memória.
 - Registre modelo, dimensão, versão do chunker e hash de origem em embeddings.
 - Consumidores da fila usam lease e `FOR UPDATE SKIP LOCKED`; jobs têm chave de idempotência.
+- Tabelas com potencial de crescimento elevado ou retenção temporal usam Declarative Partitioning/Table Partitioning por faixa de data; para auditoria e jobs, prefira partições mensais, defina criação antecipada, rollover, partição de segurança, índices locais e retenção antes de produção.
+- Testes de integração cobrem criação de partições, roteamento de linhas, consultas com pruning, rollover, partição de segurança e comportamento quando a partição esperada não existe.
 - Testes de integração usam PostgreSQL real com `vector`, `pg_trgm`, `pgcrypto` e `citext` habilitados.
 - Nunca use banco em memória como prova de comportamento PostgreSQL.

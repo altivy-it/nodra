@@ -38,6 +38,7 @@ flowchart LR
 - Dependências apontam para dentro; domínio não referencia hosts ou adapters.
 - Comunicação API-worker ocorre por estado durável no PostgreSQL, não por memória compartilhada.
 - Não introduza mensageria externa sem ADR, métricas e plano operacional.
+- Tabelas ou coleções com potencial de crescimento elevado devem usar Table Partitioning/Declarative Partitioning por faixa temporal ou outra estratégia equivalente do banco adotado; a decisão deve cobrir granularidade, criação antecipada, rollover, retenção, índices, pruning, backup/restore e comportamento quando faltar uma partição.
 
 ## Decisões que exigem ADR
 
