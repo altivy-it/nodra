@@ -78,14 +78,14 @@ foreach ($line in Get-Content -LiteralPath $environmentPath) {
     }
 }
 
-if (-not $env:ALTIVY_KEYCLOAK_ADMIN_PASSWORD) {
-    throw "ALTIVY_KEYCLOAK_ADMIN_PASSWORD não está definido em $environmentPath."
+if (-not $env:ALTIVY_PROVISIONER_CLIENT_SECRET) {
+    throw "ALTIVY_PROVISIONER_CLIENT_SECRET não está definido em $environmentPath."
 }
 
 $tokenResponse = Invoke-RestMethod -Method Post `
-    -Uri "$BaseUrl/realms/master/protocol/openid-connect/token" `
+    -Uri "$BaseUrl/realms/$Realm/protocol/openid-connect/token" `
     -ContentType 'application/x-www-form-urlencoded' `
-    -Body @{ grant_type = 'password'; client_id = 'admin-cli'; username = $env:ALTIVY_KEYCLOAK_ADMIN_USERNAME; password = $env:ALTIVY_KEYCLOAK_ADMIN_PASSWORD } `
+    -Body @{ grant_type = 'client_credentials'; client_id = 'altivy-provisioner'; client_secret = $env:ALTIVY_PROVISIONER_CLIENT_SECRET } `
     -NoProxy
 $headers = @{ Authorization = "Bearer $($tokenResponse.access_token)" }
 $encodedUsername = [Uri]::EscapeDataString($Username)
@@ -154,9 +154,9 @@ try {
 finally {
     if ($wasMember) {
         $restoreToken = Invoke-RestMethod -Method Post `
-            -Uri "$BaseUrl/realms/master/protocol/openid-connect/token" `
+            -Uri "$BaseUrl/realms/$Realm/protocol/openid-connect/token" `
             -ContentType 'application/x-www-form-urlencoded' `
-            -Body @{ grant_type = 'password'; client_id = 'admin-cli'; username = $env:ALTIVY_KEYCLOAK_ADMIN_USERNAME; password = $env:ALTIVY_KEYCLOAK_ADMIN_PASSWORD } `
+            -Body @{ grant_type = 'client_credentials'; client_id = 'altivy-provisioner'; client_secret = $env:ALTIVY_PROVISIONER_CLIENT_SECRET } `
             -NoProxy
         $restoreHeaders = @{ Authorization = "Bearer $($restoreToken.access_token)" }
         Invoke-RestMethod -Method Put -Uri $membershipPath -Headers $restoreHeaders -NoProxy

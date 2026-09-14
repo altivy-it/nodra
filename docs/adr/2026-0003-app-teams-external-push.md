@@ -1,6 +1,6 @@
 # ADR 2026-0003: Plataforma de plugins e primeiro plugin Microsoft Teams
 
-**Status:** proposed
+**Status:** approved
 **Data:** 2026-08-31
 **Responsáveis:** equipe Altivy
 **Origem:** IA assistida

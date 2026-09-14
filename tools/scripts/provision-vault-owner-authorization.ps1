@@ -46,7 +46,7 @@ Resumo sanitizado dos recursos criados ou reutilizados.
 
 .NOTES
 Requer PowerShell 7.4 ou superior e Keycloak 26.7.0. O fluxo funcional requer
-uma conta administrativa do realm e ALTIVY_KEYCLOAK_ADMIN_PASSWORD no ambiente
+o client restrito do realm e ALTIVY_PROVISIONER_CLIENT_SECRET no ambiente
 ou em %APPDATA%\Microsoft\UserSecrets\Altivy.Notes\.env. Não use este script
 para conceder acesso a usuários não autorizados; eventos administrativos do
 Keycloak são a trilha de auditoria.
@@ -124,17 +124,16 @@ function Find-One {
 }
 
 Import-LocalEnvironment
-$adminUsername = $env:ALTIVY_KEYCLOAK_ADMIN_USERNAME ?? 'admin'
-$adminPassword = $env:ALTIVY_KEYCLOAK_ADMIN_PASSWORD
-if ([string]::IsNullOrWhiteSpace($adminPassword)) {
-    throw 'Defina ALTIVY_KEYCLOAK_ADMIN_PASSWORD em ambiente seguro. Use --help para detalhes.'
+$provisionerSecret = $env:ALTIVY_PROVISIONER_CLIENT_SECRET
+if ([string]::IsNullOrWhiteSpace($provisionerSecret)) {
+    throw 'Defina ALTIVY_PROVISIONER_CLIENT_SECRET em ambiente seguro. Use --help para detalhes.'
 }
 
 try {
     $tokenResponse = Invoke-RestMethod -NoProxy:$useNoProxy -Method Post `
-        -Uri "$BaseUrl/realms/master/protocol/openid-connect/token" `
+        -Uri "$BaseUrl/realms/altivy/protocol/openid-connect/token" `
         -ContentType 'application/x-www-form-urlencoded' -Body @{
-        grant_type = 'password'; client_id = 'admin-cli'; username = $adminUsername; password = $adminPassword
+        grant_type = 'client_credentials'; client_id = 'altivy-provisioner'; client_secret = $provisionerSecret
     }
     if (-not $tokenResponse.access_token) { throw 'Não foi possível obter token administrativo.' }
     $headers = @{ Authorization = "Bearer $($tokenResponse.access_token)" }
@@ -206,7 +205,7 @@ try {
 }
 catch {
     if ($_.Exception.Message -match 'HTTP 401') {
-        throw 'Falha de autenticação. Verifique ALTIVY_KEYCLOAK_ADMIN_PASSWORD.'
+        throw 'Falha de autenticação. Verifique ALTIVY_PROVISIONER_CLIENT_SECRET.'
     }
     throw
 }

@@ -14,9 +14,9 @@ services:
         ipv4_address: 172.30.0.10
         aliases:
           - web
-      altivy-edge:
+      identity-global:
         aliases:
-          - web
+          - notes-web
 
   bff:
     build:
@@ -27,12 +27,11 @@ services:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
       Bff__AllowInsecureHttpForDevelopment: "true"
-      Authentication__Keycloak__Authority: https://localhost:7443/realms/altivy
+      Authentication__Keycloak__Authority: ${KEYCLOAK_PUBLIC_URL:-https://localhost:7443}/realms/altivy
       Authentication__Keycloak__ClientId: altivy-bff
       Authentication__Keycloak__ClientSecret: ${ALTIVY_E2E_BFF_CLIENT_SECRET:?Defina o secret local do client BFF}
       Downstream__Api__BaseUrl: http://api:8080
       Security__AllowedOrigins__0: https://localhost:7443
-      Security__AllowedOrigins__1: https://host.containers.internal:7443
       Security__TrustedProxies__0: 172.31.0.10
       Security__TrustedNetworks__0: 172.30.0.0/24
       Security__TrustedNetworks__1: 172.31.0.0/24
@@ -55,9 +54,9 @@ services:
         ipv4_address: 172.30.0.20
         aliases:
           - bff
-      altivy-edge:
+      identity-global:
         aliases:
-          - bff
+          - notes-bff
 
   vaults-init:
     image: lzocateli/dotnet-aspnet:10.0.11-noble
@@ -78,7 +77,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://+:8080
-      Keycloak__Authority: https://localhost:7443/realms/altivy
+      Keycloak__Authority: ${KEYCLOAK_PUBLIC_URL:-https://localhost:7443}/realms/altivy
       Keycloak__Audience: altivy-api
       VaultStorage__Root: /vaults
       SSL_CERT_FILE: /certs/rootCA.pem
@@ -103,9 +102,9 @@ networks:
     ipam:
       config:
         - subnet: 172.30.0.0/24
-  altivy-edge:
+  identity-global:
     external: true
-    name: altivy-edge
+    name: identity-global
 
 volumes:
   altivy-e2e-vaults:

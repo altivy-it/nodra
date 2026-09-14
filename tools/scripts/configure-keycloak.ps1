@@ -3,7 +3,7 @@
 Reconcilia a configuração profissional do realm Altivy pela Keycloak Admin REST API.
 
 .DESCRIPTION
-Obtém um token administrativo no realm master e cria ou atualiza o realm Altivy,
+Obtém um token restrito do realm Altivy e cria ou atualiza o realm Altivy,
 clientes, roles, grupos, usuário inicial, SMTP e provedores sociais habilitados
 por variáveis de ambiente. Secrets são lidos apenas do ambiente e nunca exibidos.
 
@@ -14,10 +14,14 @@ URL externa do Keycloak, sem barra final. Padrão: http://localhost:8080.
 Realm administrado. Padrão: altivy.
 
 .PARAMETER AdminUsername
-Usuário administrativo. Padrão: ALTIVY_KEYCLOAK_ADMIN_USERNAME ou admin.
+Usuário bootstrap do realm master. Usado somente com -Bootstrap.
 
 .PARAMETER AdminPassword
-SecureString administrativo. Quando omitido, lê ALTIVY_KEYCLOAK_ADMIN_PASSWORD.
+SecureString de bootstrap. Usado somente com -Bootstrap.
+
+.PARAMETER Bootstrap
+Usa temporariamente a credencial do realm master para criar o realm. O uso
+cotidiano deve usar ALTIVY_PROVISIONER_CLIENT_SECRET.
 
 .PARAMETER FulanoEmail
 E-mail real do usuário de exemplo lzocateli. Quando omitido, não cria o usuário.
@@ -39,7 +43,7 @@ Argumentos literais remanescentes. Aceita somente --help.
 ./tools/scripts/configure-keycloak.ps1 --help
 
 .EXAMPLE
-$env:ALTIVY_KEYCLOAK_ADMIN_PASSWORD = '<senha-no-cofre>'
+$env:ALTIVY_PROVISIONER_CLIENT_SECRET = '<secret-no-cofre>'
 ./tools/scripts/configure-keycloak.ps1 `
   -FulanoEmail lzocateli@outlook.com
 
@@ -57,8 +61,8 @@ Resumo das operações aplicadas, sem credenciais ou tokens.
 
 .NOTES
 Requer PowerShell 7.4 ou superior e Keycloak 26.7.0. O fluxo funcional requer
-acesso HTTPS ao Keycloak e uma conta com permissão para administrar o realm.
-Use um cofre para injetar ALTIVY_KEYCLOAK_ADMIN_PASSWORD, ALTIVY_BFF_CLIENT_SECRET,
+acesso HTTPS ao Keycloak e um client com permissão restrita no realm Altivy.
+Use um cofre para injetar ALTIVY_PROVISIONER_CLIENT_SECRET, ALTIVY_BFF_CLIENT_SECRET,
 ALTIVY_SMTP_PASSWORD e ALTIVY_IDP_<PROVEDOR>_CLIENT_SECRET.
 
 .LINK
@@ -72,17 +76,17 @@ param(
     [ValidatePattern('^[a-z0-9-]+$')]
     [string] $Realm = 'altivy',
 
-    [string] $AdminUsername = $(
-        if ($env:ALTIVY_KEYCLOAK_ADMIN_USERNAME) { $env:ALTIVY_KEYCLOAK_ADMIN_USERNAME } else { 'admin' }
-    ),
+    [string] $AdminUsername,
 
     [SecureString] $AdminPassword,
+
+    [switch] $Bootstrap,
 
     [ValidatePattern('^[^@\s]+@[^@\s]+\.[^@\s]+$')]
     [string] $FulanoEmail,
 
     [ValidatePattern('^https?://')]
-    [string] $BffBaseUrl = 'https://localhost:7443',
+    [string] $BffBaseUrl = 'https://localhost:7443/notes',
 
     [switch] $SkipUser,
 
@@ -144,7 +148,7 @@ function Import-LocalEnvironment {
 }
 
 Import-LocalEnvironment
-if (-not $PSBoundParameters.ContainsKey('AdminUsername') -and $env:ALTIVY_KEYCLOAK_ADMIN_USERNAME) {
+if ($Bootstrap -and -not $PSBoundParameters.ContainsKey('AdminUsername') -and $env:ALTIVY_KEYCLOAK_ADMIN_USERNAME) {
     $AdminUsername = $env:ALTIVY_KEYCLOAK_ADMIN_USERNAME
 }
 if (-not $SkipUser -and -not $PSBoundParameters.ContainsKey('FulanoEmail') -and $env:ALTIVY_FULANO_EMAIL) {
@@ -170,11 +174,17 @@ if ($DryRun) {
     exit 0
 }
 
-if (-not $AdminPassword) {
+if ($Bootstrap -and -not $AdminPassword) {
     if (-not $env:ALTIVY_KEYCLOAK_ADMIN_PASSWORD) {
         throw 'Defina ALTIVY_KEYCLOAK_ADMIN_PASSWORD ou informe -AdminPassword. Use --help para detalhes.'
     }
     $AdminPassword = ConvertTo-SecureString $env:ALTIVY_KEYCLOAK_ADMIN_PASSWORD -AsPlainText -Force
+}
+if (-not $Bootstrap -and ($PSBoundParameters.ContainsKey('AdminUsername') -or $PSBoundParameters.ContainsKey('AdminPassword'))) {
+    throw 'AdminUsername/AdminPassword só podem ser usados com -Bootstrap.'
+}
+if (-not $Bootstrap -and [string]::IsNullOrWhiteSpace($env:ALTIVY_PROVISIONER_CLIENT_SECRET)) {
+    throw 'Defina ALTIVY_PROVISIONER_CLIENT_SECRET para a reconciliação cotidiana ou use -Bootstrap explicitamente.'
 }
 
 function ConvertFrom-SecureValue {
@@ -215,8 +225,8 @@ function Invoke-KeycloakApi {
         }
         catch {
             $statusCode = $_.Exception.Response.StatusCode.value__
-            if ($statusCode -eq 401 -and $attempt -eq 0 -and $script:adminPasswordPlain) {
-                Request-MasterAccessToken
+            if ($statusCode -eq 401 -and $attempt -eq 0 -and ($script:adminPasswordPlain -or $script:provisionerSecret)) {
+                Request-AccessToken
                 $parameters.Headers.Authorization = "Bearer $script:accessToken"
                 continue
             }
@@ -258,17 +268,18 @@ function Assert-TemporaryPasswordPolicy {
     }
 }
 
-function Request-MasterAccessToken {
+function Request-AccessToken {
+    $tokenBody = if ($Bootstrap) {
+        @{ grant_type = 'password'; client_id = 'admin-cli'; username = $AdminUsername; password = $script:adminPasswordPlain }
+    }
+    else {
+        @{ grant_type = 'client_credentials'; client_id = 'altivy-provisioner'; client_secret = $script:provisionerSecret }
+    }
     $tokenParameters = @{
         Method      = 'POST'
-        Uri         = "$BaseUrl/realms/master/protocol/openid-connect/token"
+        Uri         = "$BaseUrl/realms/$(if ($Bootstrap) { 'master' } else { $Realm })/protocol/openid-connect/token"
         ContentType = 'application/x-www-form-urlencoded'
-        Body        = @{
-            grant_type = 'password'
-            client_id  = 'admin-cli'
-            username   = $AdminUsername
-            password   = $script:adminPasswordPlain
-        }
+        Body        = $tokenBody
         ErrorAction = 'Stop'
     }
     if ($useNoProxy) { $tokenParameters.NoProxy = $true }
@@ -435,9 +446,11 @@ function Ensure-IdentityProvider {
     }
 }
 
-$script:adminPasswordPlain = ConvertFrom-SecureValue $AdminPassword
+$script:adminPasswordPlain = $null
+$script:provisionerSecret = $env:ALTIVY_PROVISIONER_CLIENT_SECRET
+if ($Bootstrap) { $script:adminPasswordPlain = ConvertFrom-SecureValue $AdminPassword }
 try {
-    Request-MasterAccessToken
+    Request-AccessToken
 }
 finally {
     $script:adminPasswordPlain = $script:adminPasswordPlain
@@ -571,9 +584,9 @@ if ($FulanoEmail -and -not $SkipUser) {
     catch {
         if ($_.Exception.Message -notmatch '401') { throw }
         if (-not $script:adminPasswordPlain) {
-            throw 'A senha administrativa ficou vazia durante a renovação do token; reinicie o script com ALTIVY_KEYCLOAK_ADMIN_PASSWORD ou -AdminPassword.'
+            throw 'A credencial de provisionamento ficou vazia durante a renovação do token; injete ALTIVY_PROVISIONER_CLIENT_SECRET novamente.'
         }
-        Request-MasterAccessToken
+        Request-AccessToken
         $users = @(Invoke-KeycloakApi GET "/admin/realms/$Realm/users?username=lzocateli&exact=true")
         $fulano = $users | Where-Object username -eq 'lzocateli' | Select-Object -First 1
         $requiredActions = @('UPDATE_PASSWORD', 'CONFIGURE_TOTP')

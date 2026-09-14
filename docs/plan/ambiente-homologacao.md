@@ -1,6 +1,6 @@
 # Plano: Ambiente real de homologação
 
-**Status:** proposed
+**Status:** approved
 **Data de criação:** 2026-09-01
 **Última atualização:** 2026-09-01
 **Responsáveis:** não atribuídos

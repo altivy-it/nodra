@@ -88,11 +88,7 @@ function Import-LocalEnvironment {
 
 Import-LocalEnvironment
 
-$adminUsername = $env:ALTIVY_KEYCLOAK_ADMIN_USERNAME ?? 'admin'
-$adminPassword = $env:ALTIVY_KEYCLOAK_ADMIN_PASSWORD
-if (-not $adminPassword) {
-    throw 'Defina ALTIVY_KEYCLOAK_ADMIN_PASSWORD. Use --help para detalhes.'
-}
+$provisionerSecret = $env:ALTIVY_PROVISIONER_CLIENT_SECRET
 
 if ($DryRun) {
     $plan = @(
@@ -104,27 +100,20 @@ if ($DryRun) {
     $plan | ForEach-Object { Write-Output "- $_" }
     exit 0
 }
+if (-not $provisionerSecret) {
+    throw 'Defina ALTIVY_PROVISIONER_CLIENT_SECRET. Use --help para detalhes.'
+}
 
 try {
-    $adminPasswordPlain = if ($adminPassword -is [SecureString]) {
-        [Runtime.InteropServices.Marshal]::PtrToStringBSTR(
-            [Runtime.InteropServices.Marshal]::SecureStringToBSTR($adminPassword)
-        )
-    }
-    else {
-        [string]$adminPassword
-    }
-    
     $tokenResponse = Invoke-RestMethod `
         -NoProxy:$useNoProxy `
         -Method Post `
-        -Uri "$BaseUrl/realms/master/protocol/openid-connect/token" `
+        -Uri "$BaseUrl/realms/altivy/protocol/openid-connect/token" `
         -ContentType 'application/x-www-form-urlencoded' `
         -Body @{
-            grant_type = 'password'
-            client_id  = 'admin-cli'
-            username   = $adminUsername
-            password   = $adminPasswordPlain
+            grant_type    = 'client_credentials'
+            client_id     = 'altivy-provisioner'
+            client_secret = $provisionerSecret
         }
     
     if (-not $tokenResponse.access_token) {
@@ -224,7 +213,7 @@ try {
 }
 catch {
     if ($_.Exception.Message -match 'HTTP 401') {
-        throw 'Falha de autenticação. Verifique ALTIVY_KEYCLOAK_ADMIN_PASSWORD.'
+        throw 'Falha de autenticação. Verifique ALTIVY_PROVISIONER_CLIENT_SECRET.'
     }
     throw $_
 }
