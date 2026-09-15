@@ -104,75 +104,56 @@ O arquivo externo de secrets não pertence ao repositório. O banco em `.tmp/`
 e o artefato em `.build/` são ignorados pelo Git. O build copia os assets
 canônicos de `Altivy/docs/brand` sem alterar essa fonte.
 
-### 5.2 Validar e iniciar
+### 5.2 Publicar tema e iniciar a plataforma central
 
-O Compose cria uma rede interna, inicia o PostgreSQL e aguarda seu health check
-antes de iniciar o Keycloak. O PostgreSQL não publica porta no host.
+O Keycloak, PostgreSQL e gateway são operados exclusivamente pela plataforma
+central `architecture-knowledge-base/platforms/identity`. Gere o tema no
+AltivyNotes e publique-o no bind mount central antes de iniciar a plataforma:
 
 ```powershell
-docker compose `
-  --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" `
-  --file ./deploy/keycloak/docker-compose-keycloak.yaml `
-  config --quiet
-
-docker compose `
-  --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" `
-  --file ./deploy/keycloak/docker-compose-keycloak.yaml `
-  up --detach --wait
+./deploy/keycloak/build-theme.ps1
+Set-Location ../architecture-knowledge-base/platforms/identity
+./scripts/publish-product-theme.ps1 `
+  -Product altivynotes `
+  -SourcePath ../../AltivyNotes/deploy/keycloak/.build/keycloak-theme/altivy
+./scripts/initialize-local-platform.ps1
+./scripts/start-platform.ps1
+./scripts/test-platform.ps1
 ```
 
-O primeiro boot pode demorar enquanto a imagem otimiza a configuração. O realm
-`altivy`, o tema `altivy` e o client público `altivy-lab` são importados de
-`deploy/keycloak/realm/altivy-realm.json`.
+O bind mount PostgreSQL permanece em
+`$env:APPDATA\keycloak\postgres-data`; a plataforma não o remove. Os realms e
+clients do AltivyNotes devem ser reconciliados por credenciais restritas ao
+realm `altivy`.
 
 ### 5.3 Validar o laboratório
 
 ```powershell
-docker compose `
-  --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" `
-  --file ./deploy/keycloak/docker-compose-keycloak.yaml `
-  ps
-
-Invoke-RestMethod http://localhost:9000/health/ready
 $Discovery = Invoke-RestMethod `
-  http://localhost:8080/realms/altivy/.well-known/openid-configuration
+  https://localhost:7443/realms/altivy/.well-known/openid-configuration
 $Discovery.issuer
 ```
 
-Os dois serviços devem estar `healthy`, o health deve retornar `UP` e o issuer
-deve ser `http://localhost:8080/realms/altivy`.
+O script `test-platform.ps1` deve concluir com sucesso e o issuer deve ser
+`https://localhost:7443/realms/altivy`.
 
 ### 5.4 Parar ou recriar
 
-```powershell
-docker compose `
-  --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" `
-  --file ./deploy/keycloak/docker-compose-keycloak.yaml `
-  down
-```
-
-O comando preserva `$env:APPDATA\keycloak\postgres-data`. Para recriar todo o
-laboratório, primeiro pare os serviços e depois remova explicitamente os dados
-locais:
-
-```powershell
-docker compose `
-  --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" `
-  --file ./deploy/keycloak/docker-compose-keycloak.yaml `
-  down
-Remove-Item "$env:APPDATA\keycloak\postgres-data" -Recurse -Force
-```
+O ciclo de vida da infraestrutura é responsabilidade da plataforma central.
+Use seus scripts de operação; nunca remova
+`$env:APPDATA\keycloak\postgres-data` a partir do AltivyNotes, pois o bind
+mount é compartilhado com outros realms.
 
 ### 5.5 Entrar no console
 
-1. Abra `http://localhost:8080/admin/`.
+1. Abra `https://localhost:7443/admin/`.
 2. Entre com `admin` e a senha informada no terminal.
 3. Confirme que o seletor **Current realm** mostra `master`.
 4. Clique em **Current realm** para abrir o seletor de realms e escolha
   `altivy`.
 5. Se `altivy` não aparecer no seletor, abra **Manage realms** e confirme se o
   realm foi criado ou importado. Também é possível abrir diretamente
-  `http://localhost:8080/admin/altivy/console/`.
+  `https://localhost:7443/admin/altivy/console/`.
 
 Você está administrando o servidor, não configurando a aplicação. Selecione o
 realm importado `altivy` antes de alterar configurações da aplicação.
@@ -1071,69 +1052,19 @@ O cookie do BFF deve ser host-only, `Secure`, `HttpOnly` e ter `SameSite` explí
 
 O backup primário é o backup consistente do PostgreSQL do Keycloak. Export JSON é útil para configuração sanitizada e migração, mas não substitui backup transacional. Ambos podem conter dados e secrets e devem ser protegidos.
 
-### 14.1 Backup do laboratório
+### 14.1 Backup e restauração da plataforma
 
-Diretório: local seguro fora do Git.
+Backup, restauração e administração do PostgreSQL do Keycloak são operados
+pela plataforma central. Execute esses procedimentos a partir de
+`architecture-knowledge-base/platforms/identity` com o arquivo externo
+`$env:APPDATA\Microsoft\UserSecrets\Altivy.Identity\.env`; nunca leia nem
+copie esse arquivo para o AltivyNotes.
 
-```powershell
-$BackupDirectory = Join-Path $HOME 'altivy-keycloak-backup'
-New-Item -ItemType Directory -Force $BackupDirectory | Out-Null
-
-docker compose `
-  --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" `
-  --file ./deploy/keycloak/docker-compose-keycloak.yaml `
-  exec -T postgres pg_dump --username keycloak --format custom `
-  --file /tmp/keycloak.dump keycloak
-docker compose `
-  --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" `
-  --file ./deploy/keycloak/docker-compose-keycloak.yaml `
-  cp postgres:/tmp/keycloak.dump `
-  (Join-Path $BackupDirectory 'keycloak.dump')
-docker compose `
-  --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" `
-  --file ./deploy/keycloak/docker-compose-keycloak.yaml `
-  exec -T postgres rm /tmp/keycloak.dump
-```
-
-Criptografe o dump antes de armazenar ou transportar.
-
-### 14.2 Testar restauração
-
-Crie um bind mount com nome diferente do original e inicie um PostgreSQL
-isolado. Depois copie e restaure o dump:
-
-```powershell
-$RestoreContainer = 'altivy-keycloak-db-restore'
-$RestoreDataPath = Join-Path $PWD 'deploy/keycloak/.tmp/postgres-restore'
-$LabEnvironment = Get-Content -Raw "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" | ConvertFrom-StringData
-$RestorePassword = $LabEnvironment.ALTIVY_LAB_POSTGRES_PASSWORD
-
-New-Item -ItemType Directory -Force $RestoreDataPath | Out-Null
-docker run --detach `
-  --name $RestoreContainer `
-  --env POSTGRES_PASSWORD=$RestorePassword `
-  --env POSTGRES_USER=keycloak `
-  --env POSTGRES_DB=keycloak `
-  --volume "${RestoreDataPath}:/var/lib/postgresql" `
-  lzocateli/postgresql:18.4-pgvector0.8.6-bookworm
-
-docker cp (Join-Path $BackupDirectory 'keycloak.dump') `
-  "${RestoreContainer}:/tmp/keycloak.dump"
-docker exec $RestoreContainer `
-  pg_restore --username keycloak --dbname keycloak `
-  --clean --if-exists /tmp/keycloak.dump
-Remove-Variable RestorePassword, LabEnvironment
-```
-
-Em seguida:
-
-1. inicie a mesma versão do Keycloak contra o banco restaurado, usando outro
-   nome e outras portas;
-2. valide discovery, login, clients, roles, políticas e chaves;
-3. registre duração, responsável, falhas e data;
-4. remova o container e o bind mount de restauração após preservar a evidência.
-
-Nunca teste restore sobrescrevendo produção. Execute backup e restauração representativa antes de atualizar Keycloak ou PostgreSQL.
+O bind mount persistente é `$env:APPDATA\keycloak\postgres-data`. Preserve-o
+durante a transição e siga `docs/operations.md` da plataforma para backup e
+restore ensaiado. Um restore é responsabilidade compartilhada: valide a
+integridade de todos os realms hospedados antes de voltar a disponibilizar o
+gateway.
 
 Para export sanitizado, use o comando oficial `kc.sh export` com o servidor parado ou em container separado. Remova usuários, secrets e dados reais antes de versionar. O provisioning declarativo ainda será definido no ADR; não adicione export real ao Git.
 
@@ -1224,18 +1155,15 @@ Teste logout atual, todas as sessões, remoção de grupo/role/permissão, desab
 
 ## 18. Limpar o laboratório
 
-Impacto: remove todos os dados do laboratório. Confirme os nomes antes.
+O AltivyNotes não possui mais laboratório de infraestrutura próprio. Para
+limpar somente o artefato local do tema, execute:
 
 ```powershell
-docker compose `
-  --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" `
-  --file ./deploy/keycloak/docker-compose-keycloak.yaml `
-  down
-Remove-Item "$env:APPDATA\keycloak\postgres-data" -Recurse -Force
 Remove-Item ./deploy/keycloak/.build/keycloak-theme -Recurse -Force
 ```
 
-Não execute esses comandos contra o ambiente real.
+Não remova o bind mount `$env:APPDATA\keycloak\postgres-data`: ele pertence à
+plataforma central e pode conter realms de outros produtos.
 
 ## 19. Próximos passos do plano
 

@@ -20,8 +20,11 @@ Usuário bootstrap do realm master. Usado somente com -Bootstrap.
 SecureString de bootstrap. Usado somente com -Bootstrap.
 
 .PARAMETER Bootstrap
-Usa temporariamente a credencial do realm master para criar o realm. O uso
-cotidiano deve usar ALTIVY_PROVISIONER_CLIENT_SECRET.
+Usa temporariamente a credencial do realm master para criar/atualizar o realm,
+política de segurança, SMTP e provedores sociais (exigem manage-realm e
+manage-identity-providers). O uso cotidiano usa ALTIVY_PROVISIONER_CLIENT_SECRET
+e reconcilia somente clients, roles, grupos e usuários (manage-clients,
+manage-users e manage-authorization).
 
 .PARAMETER FulanoEmail
 E-mail real do usuário de exemplo lzocateli. Quando omitido, não cria o usuário.
@@ -63,7 +66,11 @@ Resumo das operações aplicadas, sem credenciais ou tokens.
 Requer PowerShell 7.4 ou superior e Keycloak 26.7.0. O fluxo funcional requer
 acesso HTTPS ao Keycloak e um client com permissão restrita no realm Altivy.
 Use um cofre para injetar ALTIVY_PROVISIONER_CLIENT_SECRET, ALTIVY_BFF_CLIENT_SECRET,
-ALTIVY_SMTP_PASSWORD e ALTIVY_IDP_<PROVEDOR>_CLIENT_SECRET.
+ALTIVY_SMTP_PASSWORD e ALTIVY_IDP_<PROVEDOR>_CLIENT_SECRET. A service account de
+ALTIVY_PROVISIONER_CLIENT_SECRET tem somente manage-clients, manage-users e
+manage-authorization no realm-management do realm Altivy; política de realm,
+SMTP e IdPs sociais exigem -Bootstrap com a credencial master. Consulte
+../../../architecture-knowledge-base/platforms/identity/docs/access-management.md.
 
 .LINK
 ../../docs/configuracao-keycloak.md
@@ -156,14 +163,17 @@ if (-not $SkipUser -and -not $PSBoundParameters.ContainsKey('FulanoEmail') -and 
 }
 
 $plannedResources = @(
-    "realm $Realm e políticas de segurança",
-    'clients altivy-api, altivy-bff e altivy-authorization-spike',
+    'clients altivy-api, altivy-provisioner, altivy-bff e altivy-authorization-spike',
     'client scope e mapper de audience altivy-api',
     'roles Owner, Editor e Reader',
-    'grupos /altivy/owners, /altivy/editors e /altivy/readers',
-    'SMTP, quando ALTIVY_SMTP_HOST estiver definido',
-    'provedores sociais com client ID e secret definidos'
+    'grupos /altivy/owners, /altivy/editors e /altivy/readers'
 )
+if ($Bootstrap) {
+    $plannedResources = @("realm $Realm e políticas de segurança") + $plannedResources + @(
+        'SMTP, quando ALTIVY_SMTP_HOST estiver definido',
+        'provedores sociais com client ID e secret definidos'
+    )
+}
 if ($FulanoEmail -and -not $SkipUser) {
     $plannedResources += "usuário lzocateli ($FulanoEmail) no grupo readers"
 }
@@ -456,53 +466,62 @@ finally {
     $script:adminPasswordPlain = $script:adminPasswordPlain
 }
 
-try {
-    $realmRepresentation = Invoke-KeycloakApi GET "/admin/realms/$Realm"
-}
-catch {
-    if ($_.Exception.Response.StatusCode.value__ -ne 404) { throw }
-    Invoke-KeycloakApi POST '/admin/realms' @{ realm = $Realm; enabled = $true; displayName = 'Altivy' } | Out-Null
-    $realmRepresentation = Invoke-KeycloakApi GET "/admin/realms/$Realm"
-    Write-Output "Criado realm $Realm."
-}
-
 $smtpHost = Get-EnvironmentSecret 'ALTIVY_SMTP_HOST'
-$realmSettings = @{
-    displayName = 'Altivy'; enabled = $true; sslRequired = 'external'; loginTheme = 'altivy'
-    registrationAllowed = $false; rememberMe = $false; verifyEmail = $true
-    loginWithEmailAllowed = $true; duplicateEmailsAllowed = $false; resetPasswordAllowed = [bool]$smtpHost
-    editUsernameAllowed = $false; bruteForceProtected = $true; permanentLockout = $false
-    failureFactor = 5; waitIncrementSeconds = 60; quickLoginCheckMilliSeconds = 1000
-    minimumQuickLoginWaitSeconds = 60; maxFailureWaitSeconds = 900; maxDeltaTimeSeconds = 43200
-    passwordPolicy = 'length(14) and notUsername(undefined) and notEmail(undefined) and passwordHistory(5)'
-    ssoSessionIdleTimeout = 1800; ssoSessionMaxLifespan = 36000
-    clientSessionIdleTimeout = 900; clientSessionMaxLifespan = 28800
-    accessTokenLifespan = 300; accessCodeLifespan = 60; accessCodeLifespanLogin = 300
-    accessCodeLifespanUserAction = 300; actionTokenGeneratedByAdminLifespan = 43200
-    revokeRefreshToken = $false; eventsEnabled = $true; eventsExpiration = 2592000
-    eventsListeners = @('jboss-logging'); adminEventsEnabled = $true; adminEventsDetailsEnabled = $false
-}
-foreach ($key in $realmSettings.Keys) { $realmRepresentation | Add-Member -NotePropertyName $key -NotePropertyValue $realmSettings[$key] -Force }
 
-if ($smtpHost) {
-    $smtpPassword = Get-EnvironmentSecret 'ALTIVY_SMTP_PASSWORD'
-    $smtpUser = Get-EnvironmentSecret 'ALTIVY_SMTP_USERNAME'
-    $smtpFrom = Get-EnvironmentSecret 'ALTIVY_SMTP_FROM'
-    if (-not $smtpFrom) { throw 'Defina ALTIVY_SMTP_FROM quando ALTIVY_SMTP_HOST estiver configurado.' }
-    $realmRepresentation | Add-Member -NotePropertyName smtpServer -NotePropertyValue @{
-        host            = $smtpHost
-        port            = $(if ($env:ALTIVY_SMTP_PORT) { $env:ALTIVY_SMTP_PORT } else { '587' })
-        from            = $smtpFrom
-        fromDisplayName = 'Altivy'
-        auth            = [string][bool]$smtpUser
-        user            = $smtpUser
-        password        = $smtpPassword
-        starttls        = 'true'
-        ssl             = 'false'
-    } -Force
+# A service account do provisioner só tem manage-clients/manage-users/manage-authorization;
+# política do realm e SMTP exigem manage-realm e só são aplicadas com -Bootstrap.
+if ($Bootstrap) {
+    try {
+        $realmRepresentation = Invoke-KeycloakApi GET "/admin/realms/$Realm"
+    }
+    catch {
+        if ($_.Exception.Response.StatusCode.value__ -ne 404) { throw }
+        Invoke-KeycloakApi POST '/admin/realms' @{ realm = $Realm; enabled = $true; displayName = 'Altivy' } | Out-Null
+        $realmRepresentation = Invoke-KeycloakApi GET "/admin/realms/$Realm"
+        Write-Output "Criado realm $Realm."
+    }
+
+    $realmSettings = @{
+        displayName = 'Altivy'; enabled = $true; sslRequired = 'external'; loginTheme = 'altivy'
+        registrationAllowed = $false; rememberMe = $false; verifyEmail = $true
+        loginWithEmailAllowed = $true; duplicateEmailsAllowed = $false; resetPasswordAllowed = [bool]$smtpHost
+        editUsernameAllowed = $false; bruteForceProtected = $true; permanentLockout = $false
+        failureFactor = 5; waitIncrementSeconds = 60; quickLoginCheckMilliSeconds = 1000
+        minimumQuickLoginWaitSeconds = 60; maxFailureWaitSeconds = 900; maxDeltaTimeSeconds = 43200
+        passwordPolicy = 'length(14) and notUsername(undefined) and notEmail(undefined) and passwordHistory(5)'
+        ssoSessionIdleTimeout = 1800; ssoSessionMaxLifespan = 36000
+        clientSessionIdleTimeout = 900; clientSessionMaxLifespan = 28800
+        accessTokenLifespan = 300; accessCodeLifespan = 60; accessCodeLifespanLogin = 300
+        accessCodeLifespanUserAction = 300; actionTokenGeneratedByAdminLifespan = 43200
+        revokeRefreshToken = $false; eventsEnabled = $true; eventsExpiration = 2592000
+        eventsListeners = @('jboss-logging'); adminEventsEnabled = $true; adminEventsDetailsEnabled = $false
+    }
+    foreach ($key in $realmSettings.Keys) { $realmRepresentation | Add-Member -NotePropertyName $key -NotePropertyValue $realmSettings[$key] -Force }
+
+    if ($smtpHost) {
+        $smtpPassword = Get-EnvironmentSecret 'ALTIVY_SMTP_PASSWORD'
+        $smtpUser = Get-EnvironmentSecret 'ALTIVY_SMTP_USERNAME'
+        $smtpFrom = Get-EnvironmentSecret 'ALTIVY_SMTP_FROM'
+        if (-not $smtpFrom) { throw 'Defina ALTIVY_SMTP_FROM quando ALTIVY_SMTP_HOST estiver configurado.' }
+        $realmRepresentation | Add-Member -NotePropertyName smtpServer -NotePropertyValue @{
+            host            = $smtpHost
+            port            = $(if ($env:ALTIVY_SMTP_PORT) { $env:ALTIVY_SMTP_PORT } else { '587' })
+            from            = $smtpFrom
+            fromDisplayName = 'Altivy'
+            auth            = [string][bool]$smtpUser
+            user            = $smtpUser
+            password        = $smtpPassword
+            starttls        = 'true'
+            ssl             = 'false'
+        } -Force
+    }
+    Invoke-KeycloakApi PUT "/admin/realms/$Realm" $realmRepresentation | Out-Null
+    Write-Output "Atualizado baseline do realm $Realm."
 }
-Invoke-KeycloakApi PUT "/admin/realms/$Realm" $realmRepresentation | Out-Null
-Write-Output "Atualizado baseline do realm $Realm."
+else {
+    if ($smtpHost) { Write-Warning 'ALTIVY_SMTP_HOST definido, mas SMTP exige manage-realm; rode com -Bootstrap para aplicar.' }
+    Write-Output "Política do realm $Realm preservada; use -Bootstrap para alterá-la."
+}
 
 $apiClient = @{
     clientId = 'altivy-api'; name = 'Altivy API'; enabled = $true; publicClient = $false
@@ -510,6 +529,14 @@ $apiClient = @{
     serviceAccountsEnabled = $true; authorizationServicesEnabled = $true; protocol = 'openid-connect'
 }
 $apiClientUuid = Ensure-Client $apiClient
+
+$provisionerClient = @{
+    clientId = 'altivy-provisioner'; name = 'Altivy Provisioner'; enabled = $true; publicClient = $false
+    standardFlowEnabled = $false; implicitFlowEnabled = $false; directAccessGrantsEnabled = $false
+    serviceAccountsEnabled = $true; protocol = 'openid-connect'
+}
+if ($script:provisionerSecret) { $provisionerClient.secret = $script:provisionerSecret }
+$provisionerClientUuid = Ensure-Client $provisionerClient
 
 $bffClient = @{
     clientId = 'altivy-bff'; name = 'Altivy BFF'; enabled = $true; publicClient = $false
@@ -631,7 +658,17 @@ $providers = @(
         } 
     }
 )
-foreach ($provider in $providers) { Ensure-IdentityProvider $provider }
+if ($Bootstrap) {
+    foreach ($provider in $providers) { Ensure-IdentityProvider $provider }
+}
+else {
+    $configuredProviders = $providers | Where-Object {
+        (Get-EnvironmentSecret "ALTIVY_IDP_$($_.prefix)_CLIENT_ID") -or (Get-EnvironmentSecret "ALTIVY_IDP_$($_.prefix)_CLIENT_SECRET")
+    }
+    if ($configuredProviders) {
+        Write-Warning "Ignorando provedores sociais configurados ($($configuredProviders.alias -join ', ')); IdP exige manage-identity-providers. Use -Bootstrap."
+    }
+}
 
 $script:accessToken = $null
 Write-Output 'Configuração do Keycloak Altivy concluída.'

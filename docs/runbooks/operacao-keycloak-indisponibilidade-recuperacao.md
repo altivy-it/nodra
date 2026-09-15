@@ -1,3 +1,109 @@
+# Runbook: Indisponibilidade do Keycloak
+
+O Keycloak, PostgreSQL e gateway TLS são operados pela plataforma central em
+`architecture-knowledge-base/platforms/identity`. Este runbook cobre o impacto
+no AltivyNotes; não há uma stack local de Keycloak para reiniciar.
+
+## Sinais
+
+| Componente | Sinal | Resultado esperado de falha |
+| --- | --- | --- |
+| BFF | Discovery OIDC ou challenge indisponível | Login falha sem criar sessão |
+| API | Decisão UMA indisponível | HTTP 503 `authorization-service-unavailable` |
+| Browser | Não inicia login em `/bff/login` | Estado de erro, sem bypass de autorização |
+
+## Diagnóstico
+
+Na raiz do AltivyNotes, confirme o estado da aplicação e o discovery público:
+
+```powershell
+docker compose --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" `
+  -f deploy/e2e/docker-compose-altivynotes.yaml ps
+curl.exe --noproxy "*" --insecure --silent --include `
+  https://localhost:7443/realms/altivy/.well-known/openid-configuration
+```
+
+O discovery deve retornar HTTP 200 e o issuer
+`https://localhost:7443/realms/altivy`.
+
+Em seguida, no diretório `architecture-knowledge-base/platforms/identity`,
+execute o diagnóstico da plataforma:
+
+```powershell
+./scripts/test-platform.ps1
+docker compose --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Identity\.env" ps
+```
+
+## Mitigação e recuperação
+
+A API e o BFF devem falhar fechados. Não habilite autorização local nem reduza
+as verificações de token para contornar a indisponibilidade.
+
+O responsável pela plataforma central deve executar os procedimentos de
+recuperação e restore documentados em
+`architecture-knowledge-base/platforms/identity/docs/operations.md`. Depois da
+recuperação, reconcilie os clients do AltivyNotes com credenciais restritas ao
+realm `altivy`, valide discovery e faça um login completo.
+
+## Escalonamento
+
+Escale para o responsável pela plataforma de identidade quando `test-platform`
+falhar, houver risco ao bind mount PostgreSQL compartilhado, ou for necessário
+restaurar backup. Registre os horários, estados de health e códigos HTTP sem
+incluir tokens, credenciais ou conteúdo de notas.
+# Runbook: Indisponibilidade do Keycloak
+
+O Keycloak, PostgreSQL e gateway TLS são operados pela plataforma central em
+`architecture-knowledge-base/platforms/identity`. Este runbook cobre o impacto
+no AltivyNotes; não há uma stack `altivy-keycloak-lab` para reiniciar.
+
+## Sinais
+
+| Componente | Sinal | Resultado esperado de falha |
+| --- | --- | --- |
+| BFF | Discovery OIDC ou challenge indisponível | Login falha sem criar sessão |
+| API | Decisão UMA indisponível | HTTP 503 `authorization-service-unavailable` |
+| Browser | Não inicia login em `/bff/login` | Estado de erro, sem bypass de autorização |
+
+## Diagnóstico
+
+Na raiz do AltivyNotes, confirme o estado da aplicação e o discovery público:
+
+```powershell
+docker compose --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" `
+  -f deploy/e2e/docker-compose-altivynotes.yaml ps
+curl.exe --noproxy "*" --insecure --silent --include `
+  https://localhost:7443/realms/altivy/.well-known/openid-configuration
+```
+
+O discovery deve retornar HTTP 200 e o issuer
+`https://localhost:7443/realms/altivy`.
+
+Em seguida, no diretório `architecture-knowledge-base/platforms/identity`,
+execute o diagnóstico da plataforma:
+
+```powershell
+./scripts/test-platform.ps1
+docker compose --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Identity\.env" ps
+```
+
+## Mitigação e recuperação
+
+A API e o BFF devem falhar fechados. Não habilite autorização local nem reduza
+as verificações de token para contornar a indisponibilidade.
+
+O responsável pela plataforma central deve executar os procedimentos de
+recuperação e restore documentados em
+`architecture-knowledge-base/platforms/identity/docs/operations.md`. Depois da
+recuperação, reconcilie os clients do AltivyNotes com credenciais restritas ao
+realm `altivy`, valide discovery e faça um login completo.
+
+## Escalonamento
+
+Escale para o responsável pela plataforma de identidade quando `test-platform`
+falhar, houver risco ao bind mount PostgreSQL compartilhado, ou for necessário
+restaurar backup. Registre os horários, estados de health e códigos HTTP sem
+incluir tokens, credenciais ou conteúdo de notas.
 # Runbook: Indisponibilidade, Backup e Recuperação do Keycloak
 
 Este runbook orienta a operação diante de degradação ou indisponibilidade da

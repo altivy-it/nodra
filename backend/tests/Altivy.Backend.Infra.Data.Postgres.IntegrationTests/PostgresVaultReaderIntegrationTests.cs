@@ -305,6 +305,6 @@ public sealed class PostgresVaultReaderIntegrationTests : IAsyncLifetime
         }
 
         throw new InvalidOperationException(
-            $"Inicie deploy/keycloak/docker-compose-keycloak.yaml e forneça {variableName} para o PostgreSQL principal.");
+            $"Inicie a plataforma central architecture-knowledge-base/platforms/identity e forneça {variableName} para o PostgreSQL principal.");
     }
 }

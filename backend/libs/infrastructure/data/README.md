@@ -147,9 +147,8 @@ adapter e remover o ambiente ao final.
 
 ## Teste de integração no laboratório principal
 
-Os testes de integração usam exclusivamente o PostgreSQL persistente da stack
-principal `altivy-keycloak-lab`, definida em
-[`deploy/keycloak/docker-compose-keycloak.yaml`](../../../../deploy/keycloak/docker-compose-keycloak.yaml).
+Os testes de integração usam exclusivamente o PostgreSQL persistente da
+[plataforma global de identidade](../../../../../../architecture-knowledge-base/platforms/identity/README.md).
 O banco é publicado somente em `127.0.0.1:5432`; a porta `55432` da antiga
 stack descartável é recusada pela suíte para evitar execução no ambiente errado.
 
