@@ -16,4 +16,7 @@
     <ItemGroup>
         <ProjectReference Include="../../application/Altivy.Backend.Application.csproj" />
     </ItemGroup>
+    <ItemGroup>
+        <EmbeddedResource Include="Migrations/Script/**/*.sql" />
+    </ItemGroup>
 </Project>

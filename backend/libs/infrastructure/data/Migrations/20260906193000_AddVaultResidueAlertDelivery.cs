@@ -20,7 +20,8 @@ public partial class AddVaultResidueAlertDelivery : Migration
         migrationBuilder.AddColumn<Guid>(name: "alert_lease_id", schema: "altivy", table: "vault_residue_occurrences", type: "uuid", nullable: true);
         migrationBuilder.AddColumn<DateTimeOffset>(name: "next_alert_attempt_at", schema: "altivy", table: "vault_residue_occurrences", type: "timestamp with time zone", nullable: true);
 
-        migrationBuilder.Sql("UPDATE altivy.vault_residue_occurrences SET next_alert_attempt_at = last_detected_at WHERE alert_pending = true");
+        migrationBuilder.Sql(MigrationSqlScriptLoader.Load(
+            "20260906193000_AddVaultResidueAlertDelivery/Up/01-BackfillNextAlertAttempt.sql"));
 
         migrationBuilder.DropIndex(name: "IX_vault_residue_occurrences_alert_pending_last_detected_at", schema: "altivy", table: "vault_residue_occurrences");
         migrationBuilder.CreateIndex(name: "IX_vault_residue_occurrences_alert_pending_next_alert_attempt_at", schema: "altivy", table: "vault_residue_occurrences", columns: new[] { "alert_pending", "next_alert_attempt_at" });
