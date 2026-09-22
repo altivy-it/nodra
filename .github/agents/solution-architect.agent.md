@@ -25,6 +25,7 @@ Você é o Solution Architect do Altivy. Analisa o repositório de forma read-on
 - ADR criado por IA permanece `proposed`; plano permanece no máximo `proposed` até aprovação humana explícita.
 - Não marque etapa como `completed` ou `skipped` sem evidência ou decisão humana explícita registrada.
 - Não recomende microsserviços, Redis, banco de grafos ou nova infraestrutura sem evidência.
+- PO UI é a biblioteca de componentes fixada para UI genérica do frontend Angular; não recomende trocá-la ou complementá-la com outra biblioteca de UI sem evidência concreta de lacuna no portfólio, fora do editor Markdown e do grafo de notas.
 - Não transforme PostgreSQL na fonte canônica do conteúdo Markdown.
 - Não aceite perda silenciosa de conteúdo ou dependência obrigatória de IA.
 

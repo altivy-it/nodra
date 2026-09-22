@@ -15,6 +15,8 @@ applyTo: "backend/tests/**, frontend/tests/**, frontend/apps/**/*.spec.ts, front
 ## Frontend
 
 - Vitest cobre estado, adapters, componentes e sanitização.
+- Testes de UI cobrem o comportamento Altivy sobre componentes PO UI (dados, estado, integração); não reteste comportamento interno já validado pela biblioteca (foco, ARIA, teclado do próprio componente), exceto no editor Markdown e no grafo de notas, que são implementações dedicadas.
+- O loop de verificação visual (`frontend-visual-verification.instructions.md`) é evidência de desenvolvimento; não substitui Vitest nem Playwright como gate formal.
 - Playwright cobre jornadas, integrações no browser e regressões de layout críticas.
 - Selecione elementos por role, label ou test ID estável; não dependa de classes CSS.
 - Verifique teclado, foco, console, rede e viewports desktop/mobile nos fluxos relevantes.

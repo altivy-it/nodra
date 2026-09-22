@@ -70,6 +70,7 @@ O ADR deve registrar contexto, forças, opções, decisão, consequências, segu
 - Licença ausente, ambígua, alterada entre versões ou não verificada bloqueia a inclusão. Não presuma que gratuidade, código público ou pacote disponível implica licença permissiva.
 - O padrão Mediator é permitido quando reduzir acoplamento real entre remetentes, handlers e comportamentos de pipeline. Quando necessário, use exclusivamente `Nuuvify.CommonPack.Mediator` como implementação externa aprovada.
 - Não use a biblioteca MediatR. A restrição decorre do licenciamento do pacote e não proíbe o padrão Mediator.
+- PO UI (`@po-ui/ng-components`) é a biblioteca de componentes fixada para UI genérica do frontend Angular; adicionar biblioteca concorrente ou reimplementar componente equivalente fora do editor Markdown e do grafo de notas exige decisão humana explícita.
 - Mesmo com Mediator, casos de uso, transações, autorização e efeitos permanecem explícitos; notificações in-process não substituem Outbox, jobs duráveis ou integração entre processos.
 - Prefira recursos da plataforma e dependências já aprovadas. Uma nova dependência ainda exige necessidade real, manutenção ativa, versão fixada, análise de vulnerabilidades e SBOM.
 

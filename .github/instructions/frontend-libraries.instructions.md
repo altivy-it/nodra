@@ -10,6 +10,7 @@ applyTo: "frontend/libs/frontend/**"
 - Não importe `frontend/web` nem dependa de configuração específica do host.
 - Separe bibliotecas de UI, data access, editor, graph e utilitários quando houver consumidores reais.
 - Componentes do design system não contêm regra de negócio.
+- Bibliotecas de UI compõem componentes PO UI; não reimplementam controle já coberto pelo portfólio, exceto o editor Markdown e o grafo de notas.
 - Tokens de design são CSS custom properties versionadas; não espalhe valores literais.
 - Toda API pública deve ser tipada, documentada quando não óbvia e coberta por testes.
 - Evite barrel files profundos e ciclos; exporte somente o contrato suportado.

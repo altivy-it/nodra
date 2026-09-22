@@ -245,6 +245,14 @@ Exemplo de código:
 Revise as alterações da branch atual contra main. Priorize perda de dados, regressões de contrato, concorrência e testes ausentes. Ignore preferências estilísticas já cobertas por ferramentas.
 ```
 
+## Frontend Angular e PO UI
+
+PO UI (`@po-ui/ng-components`) é a única biblioteca de componentes de UI genérica aprovada para o frontend. O editor Markdown (CodeMirror 6) e o grafo de notas (Cytoscape) são exceções já aprovadas, por não terem equivalente no portfólio. Antes de desenhar uma tela fora dessas duas superfícies, consulte `https://po-ui.io/llms.txt` (índice), `https://po-ui.io/llms-full.txt` (documentação completa) ou, preferencialmente, o servidor MCP `po-ui` configurado em `.vscode/mcp.json` (ferramentas `list_components`, `search_docs`, `get_component_docs`, `get_guide`, `get_component_examples`). Regras completas em `.github/instructions/frontend-po-ui.instructions.md`.
+
+Se nenhum componente do portfólio atender a necessidade, não invente substituto: registre a lacuna e pergunte antes de prosseguir.
+
+Toda tela ou componente novo (incluindo editor e grafo) passa por um loop de screenshot, análise e ajuste (`frontend-visual-verification.instructions.md`) antes de ser considerado pronto, com no máximo 3 iterações antes de perguntar.
+
 ## 7. Prompts
 
 Prompts são comandos focados. No chat, digite `/` e selecione o prompt. Depois complete os argumentos solicitados.

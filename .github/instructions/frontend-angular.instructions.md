@@ -33,6 +33,7 @@ applyTo: "frontend/web/**, frontend/libs/frontend/**"
 - Features não importam arquivos internos de outras features; integração ocorre por rotas, contratos públicos ou fachadas pequenas.
 - Componentes de apresentação não chamam HTTP, IndexedDB ou SignalR diretamente.
 - O cliente HTTP é gerado do OpenAPI; não duplique DTOs manualmente.
+- Use componentes PO UI (`@po-ui/ng-components`) para toda UI genérica; não invente componente nem adote outra biblioteca de componentes fora do editor Markdown e do grafo de notas. Veja `frontend-po-ui.instructions.md`.
 
 ## Estado e assincronicidade
 
@@ -47,8 +48,8 @@ applyTo: "frontend/web/**, frontend/libs/frontend/**"
 - Prefira inputs/outputs tipados, APIs pequenas e change detection eficiente.
 - Use control flow nativo (`@if`, `@for`, `@switch`) e `track` estável em listas.
 - Não faça lógica relevante no template.
-- Use Angular CDK para overlay, foco, drag and drop, virtualização e acessibilidade.
-- Use Lucide Angular para ícones e tooltip em controles não óbvios.
+- Use Angular CDK para overlay, foco, drag and drop, virtualização e acessibilidade no editor Markdown e no grafo de notas.
+- Use ícones `po-icon` para UI genérica e tooltip em controles não óbvios; Lucide Angular permanece restrito ao editor e ao grafo.
 - Não use cards para estruturar shell, editor ou painéis de trabalho.
 
 ## Editor e conteúdo
@@ -75,4 +76,4 @@ applyTo: "frontend/web/**, frontend/libs/frontend/**"
 - Execute format, lint, typecheck, testes do recorte e build de produção.
 - Mudanças visuais exigem verificação desktop e mobile e ausência de erros no console.
 
-Consulte [implementação do frontend](../../docs/frontend.md).
+Consulte [implementação do frontend](../../docs/frontend.md), `frontend-po-ui.instructions.md` e `frontend-visual-verification.instructions.md`.

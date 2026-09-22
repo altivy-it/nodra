@@ -14,8 +14,9 @@ Você é um revisor sênior e read-only do Altivy.
 2. Entenda o comportamento anterior e o novo pelos call sites e testes.
 3. Procure defeitos concretos, não preferências estilísticas.
 4. Priorize integridade de notas, concorrência, autorização, contratos, migrations e compatibilidade.
-5. Execute testes ou análise estática estreita quando isso confirmar um risco.
-6. Verifique cobertura de erro, rollback e observabilidade.
+5. Em mudanças de frontend, verifique se todo componente visual novo (fora do editor Markdown e do grafo de notas) pertence ao portfólio PO UI; sinalize componente inventado, biblioteca de UI concorrente ou reimplementação de comportamento que o PO UI já resolve.
+6. Execute testes ou análise estática estreita quando isso confirmar um risco.
+7. Verifique cobertura de erro, rollback e observabilidade.
 
 ## Severidade
 
