@@ -61,7 +61,7 @@ Execute a partir da raiz, usando a ferramenta versionada em `dotnet-tools.json`:
 ```powershell
 dotnet tool restore
 dotnet tool run dotnet-ef migrations add NomeDaMigration `
-  --project .\backend\libs\backend\infrastructure\data\Altivy.Backend.Infra.Data.Postgres.csproj `
+  --project .\backend\libs\infrastructure\data\Altivy.Backend.Infra.Data.Postgres.csproj `
   --output-dir Migrations `
   --configuration Release
 ```
@@ -84,7 +84,7 @@ aprovação do rollout, execute:
 
 ```powershell
 dotnet tool run dotnet-ef database update `
-  --project .\backend\libs\backend\infrastructure\data\Altivy.Backend.Infra.Data.Postgres.csproj `
+  --project .\backend\libs\infrastructure\data\Altivy.Backend.Infra.Data.Postgres.csproj `
   --configuration Release
 ```
 
@@ -100,7 +100,7 @@ migrations:
 
 ```powershell
 dotnet tool run dotnet-ef migrations script `
-  --project .\backend\libs\backend\infrastructure\data\Altivy.Backend.Infra.Data.Postgres.csproj `
+  --project .\backend\libs\infrastructure\data\Altivy.Backend.Infra.Data.Postgres.csproj `
   --from 0 `
   --to 20260819181928_InitialCreate `
   --output .\artifacts\sql\altivy-initial.sql `
@@ -121,7 +121,7 @@ portas ou mapeamentos do Altivy.
 dotnet tool run dotnet-ef dbcontext scaffold `
   'Name=ConnectionStrings:AltivyPostgres' `
   Npgsql.EntityFrameworkCore.PostgreSQL `
-  --project .\backend\libs\backend\infrastructure\data\Altivy.Backend.Infra.Data.Postgres.csproj `
+  --project .\backend\libs\infrastructure\data\Altivy.Backend.Infra.Data.Postgres.csproj `
   --context PostgresDbContext `
   --schema altivy `
   --output-dir Scaffolding `
@@ -144,6 +144,31 @@ Testes que provam comportamento PostgreSQL devem usar PostgreSQL real, nunca
 banco em memória. O teste de integração da migration deve criar um database ou
 schema isolado, aplicar a migration, inserir dados sintéticos, consultar pelo
 adapter e remover o ambiente ao final.
+
+## Partições temporais das filas
+
+A migration `202609220001_PartitionDurableQueues` converte
+`note_index_jobs` e `vault_provisioning_operations` em tabelas particionadas
+mensalmente por `created_at_utc`. Ela cria 132 partições por tabela, de janeiro
+de 2026 até dezembro de 2036, além de uma partição `DEFAULT` de segurança.
+
+As tabelas `note_index_job_keys` e `vault_provisioning_operation_keys`
+preservam a unicidade global de IDs e chaves idempotentes entre partições. A
+role runtime não recebe escrita direta nessas tabelas; triggers
+`SECURITY DEFINER` mantêm as chaves durante inserção e exclusão.
+
+Antes de o horizonte restante ficar abaixo de seis meses, execute com a role de
+migration:
+
+```sql
+SELECT altivy.altivy_ensure_monthly_queue_partitions(DATE '2038-01-01');
+```
+
+A função falha fechado quando a partição `DEFAULT` contém linhas da faixa a
+ser criada. Nessa situação, mova os dados em uma transação operacional revisada
+antes de ampliar o horizonte. O gate `TemporalPartitionMigrationTests` exige
+ausência de migrations pendentes, partições mensais/default, horizonte final e
+roteamento correto.
 
 ## Teste de integração no laboratório principal
 

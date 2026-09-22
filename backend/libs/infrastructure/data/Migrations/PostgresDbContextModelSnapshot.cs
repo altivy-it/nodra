@@ -33,6 +33,10 @@ namespace Altivy.Backend.Infra.Data.Postgres.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("attempt_count");
 
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
                     b.Property<string>("IdempotencyKey")
                         .IsRequired()
                         .HasMaxLength(256)
@@ -71,8 +75,8 @@ namespace Altivy.Backend.Infra.Data.Postgres.Migrations
                         .HasColumnType("character varying(128)")
                         .HasColumnName("vault_id");
 
-                    b.HasKey("JobId");
-                    b.HasIndex("IdempotencyKey").IsUnique();
+                    b.HasKey("JobId", "CreatedAtUtc");
+                    b.HasIndex("IdempotencyKey", "CreatedAtUtc").IsUnique();
                     b.HasIndex("State", "LeaseExpiresAt");
                     b.HasIndex("State", "NextAttemptAt");
                     b.ToTable("note_index_jobs", "altivy");
@@ -148,6 +152,10 @@ namespace Altivy.Backend.Infra.Data.Postgres.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("attempt_count");
 
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at_utc");
+
                     b.Property<string>("IdempotencyKey")
                         .IsRequired()
                         .HasMaxLength(128)
@@ -193,7 +201,7 @@ namespace Altivy.Backend.Infra.Data.Postgres.Migrations
                         .HasColumnType("character varying(64)")
                         .HasColumnName("vault_id");
 
-                    b.HasKey("OperationId");
+                    b.HasKey("OperationId", "CreatedAtUtc");
 
                     b.HasIndex("VaultId");
 
@@ -201,7 +209,7 @@ namespace Altivy.Backend.Infra.Data.Postgres.Migrations
 
                     b.HasIndex("State", "NextAttemptAt");
 
-                    b.HasIndex("Subject", "IdempotencyKey")
+                    b.HasIndex("Subject", "IdempotencyKey", "CreatedAtUtc")
                         .IsUnique();
 
                     b.ToTable("vault_provisioning_operations", "altivy");

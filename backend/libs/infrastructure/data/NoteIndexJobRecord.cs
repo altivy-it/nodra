@@ -7,6 +7,8 @@ public sealed class NoteIndexJobRecord
 {
     public Guid JobId { get; set; }
 
+    public DateTimeOffset CreatedAtUtc { get; set; }
+
     public string VaultId { get; set; } = string.Empty;
 
     public string? Path { get; set; }

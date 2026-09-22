@@ -26,6 +26,7 @@ public sealed class PostgresNoteIndexJobStore(PostgresDbContext dbContext) : INo
         var record = new NoteIndexJobRecord
         {
             JobId = Guid.NewGuid(),
+            CreatedAtUtc = DateTimeOffset.UtcNow,
             VaultId = vaultId,
             Path = path,
             IdempotencyKey = idempotencyKey,

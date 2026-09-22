@@ -1,3 +1,5 @@
+using Altivy.Backend.Infra.Data.Postgres;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -5,6 +7,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Altivy.Backend.Infra.Data.Postgres.Migrations;
 
 /// <inheritdoc />
+[DbContext(typeof(PostgresDbContext))]
+[Migration("20260908170000_AddNoteIndexJobs")]
 public partial class AddNoteIndexJobs : Migration
 {
     /// <inheritdoc />

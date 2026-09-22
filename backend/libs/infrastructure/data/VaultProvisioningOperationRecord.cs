@@ -8,6 +8,9 @@ public sealed class VaultProvisioningOperationRecord
     /// <summary>Obtém ou define o identificador da operação.</summary>
     public Guid OperationId { get; set; }
 
+    /// <summary>Obtém ou define o instante UTC de criação da operação.</summary>
+    public DateTimeOffset CreatedAtUtc { get; set; }
+
     /// <summary>Obtém ou define o identificador do vault.</summary>
     public string VaultId { get; set; } = string.Empty;
 

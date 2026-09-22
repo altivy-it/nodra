@@ -33,6 +33,7 @@ public sealed class PostgresVaultProvisioningStore(PostgresDbContext dbContext) 
         dbContext.VaultProvisioningOperations.Add(new VaultProvisioningOperationRecord
         {
             OperationId = operation.OperationId,
+            CreatedAtUtc = DateTimeOffset.UtcNow,
             VaultId = operation.VaultId,
             Name = operation.Name,
             Subject = operation.Subject,
