@@ -7,6 +7,7 @@ import { Note, NoteSummary } from '../core/notes.service';
 import { VaultRealtimeStatus } from '../core/vault-realtime.service';
 import { VaultSummary } from '../core/vaults.service';
 import { ActivityRegistry } from './activity-registry';
+import { FolderExplorerComponent } from '../features/explorer/folder-explorer.component';
 import { HelpPanel } from './help-panel';
 import { HelpService } from './help.service';
 import { VaultSelector } from './vault-selector';
@@ -14,7 +15,7 @@ import { WorkspaceService } from './workspace.service';
 
 @Component({
   selector: 'app-workspace-shell',
-  imports: [HelpPanel, MarkdownComponent, VaultSelector],
+  imports: [FolderExplorerComponent, HelpPanel, MarkdownComponent, VaultSelector],
   templateUrl: './workspace-shell-v2.html',
   styleUrl: './workspace-shell.css'
 })
@@ -29,10 +30,12 @@ export class WorkspaceShell {
   @Input() vaultsLoading = false;
   @Input() realtimeStatus: VaultRealtimeStatus = 'disconnected';
   @Output() readonly noteOpened = new EventEmitter<string>();
-  @Output() readonly noteCreated = new EventEmitter<void>();
+  @Output() readonly noteCreated = new EventEmitter<string | null>();
   @Output() readonly notesReloaded = new EventEmitter<void>();
   @Output() readonly noteChanged = new EventEmitter<{ path: string; content: string }>();
   @Output() readonly noteRemoved = new EventEmitter<void>();
+  @Output() readonly noteMoved = new EventEmitter<string>();
+  @Output() readonly folderMoved = new EventEmitter<{ from: string; to: string }>();
   @Output() readonly loggedOut = new EventEmitter<void>();
   @Output() readonly vaultSelected = new EventEmitter<string>();
   readonly previewMode = signal<'editor' | 'split' | 'preview'>('split');

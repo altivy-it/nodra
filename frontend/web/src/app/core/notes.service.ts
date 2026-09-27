@@ -1,4 +1,4 @@
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Injectable, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
@@ -22,6 +22,16 @@ export function normalizeNotePath(path: string): string {
     const fileName = segments.at(-1)!;
     if (!/\.md$/i.test(fileName)) segments[segments.length - 1] = `${fileName}.md`;
     return segments.join('/');
+}
+
+function moveErrorMessage(error: unknown): string {
+    if (!(error instanceof HttpErrorResponse)) return 'Não foi possível mover a nota.';
+    const code = (error.error as { code?: string } | null)?.code;
+    if (code === 'note-destination-exists') return 'Já existe um item com esse caminho.';
+    if (code === 'note-destination-folder-missing') return 'A pasta de destino não existe.';
+    if (error.status === 409) return 'A nota foi alterada por outra sessão. Recarregue antes de movê-la.';
+    if (error.status === 403) return 'Você não tem permissão para mover esta nota.';
+    return 'Não foi possível mover a nota.';
 }
 
 @Injectable({ providedIn: 'root' })
@@ -72,7 +82,11 @@ export class NotesService {
         } catch { if (this.isCurrent(context)) this.error.set('Não foi possível abrir a nota.'); }
     }
 
-    newNote(): void { this.selected.set({ path: 'nova-nota.md', content: '# Nova nota\n', eTag: '' }); }
+    newNote(parentPath: string | null = null): void {
+        const path = normalizeNotePath(parentPath ? `${parentPath}/nova-nota` : 'nova-nota');
+        this.error.set(null);
+        this.selected.set({ path, content: '# Nova nota\n', eTag: '' });
+    }
 
     async save(note: Note): Promise<void> {
         const context = this.context();
@@ -101,6 +115,39 @@ export class NotesService {
                 ? items.map(item => item.path === normalizedPath ? { ...item, eTag } : item)
                 : [...items, { path: normalizedPath, eTag }].sort((left, right) => left.path.localeCompare(right.path)));
         } catch { if (this.isCurrent(context)) this.error.set('Não foi possível salvar. A nota pode ter sido alterada por outra pessoa.'); }
+    }
+
+    /** Move ou renomeia uma nota salva; retorna `null` em sucesso ou a mensagem de erro. */
+    async move(note: Note, destination: string): Promise<string | null> {
+        const context = this.context();
+        if (!context || !note.eTag) return 'Salve a nota antes de movê-la.';
+        let normalizedDestination: string;
+        try { normalizedDestination = normalizeNotePath(destination); }
+        catch (error) { return this.fail((error as Error).message); }
+        if (normalizedDestination === note.path) return null;
+
+        try {
+            await firstValueFrom(this.http.patch(
+                this.noteUrl(context.baseUrl, note.path),
+                { path: normalizedDestination },
+                { headers: new HttpHeaders({ 'If-Match': `"${note.eTag}"` }) }));
+        } catch (error) {
+            if (!this.isCurrent(context)) return null;
+            return this.fail(moveErrorMessage(error));
+        }
+
+        if (!this.isCurrent(context)) return null;
+        this.error.set(null);
+        this.selected.update(current => current?.path === note.path ? { ...current, path: normalizedDestination } : current);
+        this.notes.update(items => items
+            .map(item => item.path === note.path ? { ...item, path: normalizedDestination } : item)
+            .sort((left, right) => left.path.localeCompare(right.path)));
+        return null;
+    }
+
+    private fail(message: string): string {
+        this.error.set(message);
+        return message;
     }
 
     async delete(note: Note): Promise<void> {

@@ -60,11 +60,24 @@ describe('App', () => {
     await vi.waitFor(() => {
       http.expectOne('/api/v1/vaults/vault-1/notes').flush([{ path: 'projetos/plano.md', eTag: 'version-1' }]);
     });
+    await vi.waitFor(() => {
+      http.expectOne('/api/v1/vaults/vault-1/entries').flush([
+        { path: 'projetos', name: 'projetos', kind: 'folder', eTag: null }
+      ]);
+    });
+    fixture.detectChanges();
+    (fixture.nativeElement.querySelector('[role="treeitem"]') as HTMLButtonElement).click();
+    await vi.waitFor(() => {
+      http.expectOne('/api/v1/vaults/vault-1/entries?parentPath=projetos').flush([
+        { path: 'projetos/plano.md', name: 'plano.md', kind: 'note', eTag: 'version-1' }
+      ]);
+    });
     await fixture.whenStable();
     fixture.detectChanges();
 
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.textContent).toContain('projetos/plano.md');
+    expect(compiled.textContent).toContain('projetos');
+    expect(compiled.textContent).toContain('plano.md');
     expect(compiled.textContent).toContain('Principal');
     expect(Array.from(compiled.querySelectorAll('button')).some(button => button.textContent?.includes('Nova nota'))).toBe(true);
     http.verify();

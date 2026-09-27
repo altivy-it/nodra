@@ -106,6 +106,50 @@ public sealed class FileSystemNoteStore(string vaultRoot) : INoteStore
         return NoteWriteResult.Updated;
     }
 
+    /// <inheritdoc />
+    public async Task<NoteMoveResult> MoveAsync(
+        string vaultId,
+        NotePath source,
+        NotePath destination,
+        string expectedETag,
+        CancellationToken cancellationToken)
+    {
+        var existing = await FindAsync(vaultId, source, cancellationToken);
+        if (existing is null)
+        {
+            return NoteMoveResult.NotFound;
+        }
+
+        if (!string.Equals(existing.ETag, expectedETag, StringComparison.Ordinal))
+        {
+            return NoteMoveResult.VersionConflict;
+        }
+
+        var sourcePath = GetFilePath(vaultId, source);
+        var destinationPath = GetFilePath(vaultId, destination);
+        if (!Directory.Exists(Path.GetDirectoryName(destinationPath)))
+        {
+            return NoteMoveResult.DestinationFolderNotFound;
+        }
+
+        if (File.Exists(destinationPath) || Directory.Exists(destinationPath))
+        {
+            return NoteMoveResult.DestinationExists;
+        }
+
+        try
+        {
+            // overwrite:false keeps the move from replacing a file created concurrently at the destination.
+            File.Move(sourcePath, destinationPath, overwrite: false);
+        }
+        catch (IOException) when (File.Exists(destinationPath))
+        {
+            return NoteMoveResult.DestinationExists;
+        }
+
+        return NoteMoveResult.Moved;
+    }
+
     private string GetVaultRoot(string vaultId)
     {
         var root = Path.GetFullPath(Path.Combine(vaultRoot, vaultId));

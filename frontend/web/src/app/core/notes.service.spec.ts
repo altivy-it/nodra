@@ -60,4 +60,50 @@ describe('NotesService', () => {
         expect(normalizeNotePath('pasta\\nota')).toBe('pasta/nota.md');
         expect(() => normalizeNotePath('C:/fora/nota.md')).toThrow();
     });
+
+    it('cria uma nota no diretório selecionado', () => {
+        const service = TestBed.inject(NotesService);
+
+        service.newNote('projetos/decisoes');
+
+        expect(service.selected()?.path).toBe('projetos/decisoes/nova-nota.md');
+    });
+
+    it('move uma nota salva com PATCH e If-Match e atualiza o caminho selecionado', async () => {
+        const service = TestBed.inject(NotesService);
+        const http = TestBed.inject(HttpTestingController);
+        service.activateVault('vault-1');
+        const note = { path: 'rascunho.md', content: '# Rascunho', eTag: 'v1' };
+        service.selected.set(note);
+        service.notes.set([{ path: 'rascunho.md', eTag: 'v1' }]);
+
+        const move = service.move(note, 'projetos/plano');
+        const request = http.expectOne('/api/v1/vaults/vault-1/notes/rascunho.md');
+        expect(request.request.method).toBe('PATCH');
+        expect(request.request.headers.get('If-Match')).toBe('"v1"');
+        expect(request.request.body).toEqual({ path: 'projetos/plano.md' });
+        request.flush({ path: 'projetos/plano.md' });
+
+        await expect(move).resolves.toBeNull();
+        expect(service.selected()?.path).toBe('projetos/plano.md');
+        expect(service.notes()[0].path).toBe('projetos/plano.md');
+        http.verify();
+    });
+
+    it('mantém o caminho original quando o destino já existe', async () => {
+        const service = TestBed.inject(NotesService);
+        const http = TestBed.inject(HttpTestingController);
+        service.activateVault('vault-1');
+        const note = { path: 'a.md', content: '# A', eTag: 'v1' };
+        service.selected.set(note);
+
+        const move = service.move(note, 'b.md');
+        http.expectOne('/api/v1/vaults/vault-1/notes/a.md').flush(
+            { title: 'Conflito', status: 409, code: 'note-destination-exists' },
+            { status: 409, statusText: 'Conflict' });
+
+        await expect(move).resolves.toContain('Já existe');
+        expect(service.selected()?.path).toBe('a.md');
+        http.verify();
+    });
 });

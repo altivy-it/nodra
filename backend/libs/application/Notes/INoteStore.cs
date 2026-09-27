@@ -63,4 +63,20 @@ public interface INoteStore
         NotePath path,
         string expectedETag,
         CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Move ou renomeia a nota sem sobrescrever o destino e somente quando a versão esperada ainda é atual.
+    /// </summary>
+    /// <param name="vaultId">Identificador estável do vault.</param>
+    /// <param name="source">Caminho atual da nota.</param>
+    /// <param name="destination">Novo caminho da nota, com a pasta de destino já existente.</param>
+    /// <param name="expectedETag">Versão recebida anteriormente.</param>
+    /// <param name="cancellationToken">Token de cancelamento da operação.</param>
+    /// <returns>O resultado do movimento condicional.</returns>
+    Task<NoteMoveResult> MoveAsync(
+        string vaultId,
+        NotePath source,
+        NotePath destination,
+        string expectedETag,
+        CancellationToken cancellationToken);
 }

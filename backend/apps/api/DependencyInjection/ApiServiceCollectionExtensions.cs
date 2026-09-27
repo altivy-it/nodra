@@ -75,13 +75,19 @@ public static class ApiServiceCollectionExtensions
         }
 
         _ = services.AddSingleton<INoteStore>(new FileSystemNoteStore(vaultRoot));
+        _ = services.AddSingleton<IFolderStore>(new FileSystemFolderStore(vaultRoot));
         _ = services.AddSingleton<IVaultFileSystemProvisioner>(
             new FileSystemVaultProvisioner(vaultRoot));
         _ = services.AddScoped<CreateNoteCommandHandler>();
+        _ = services.AddScoped<DeleteEmptyFolderCommandHandler>();
+        _ = services.AddScoped<EnsureFolderCommandHandler>();
+        _ = services.AddScoped<ListFolderChildrenQueryHandler>();
         _ = services.AddScoped<GetNoteQueryHandler>();
         _ = services.AddScoped<ListNotesQueryHandler>();
         _ = services.AddScoped<UpdateNoteCommandHandler>();
         _ = services.AddScoped<DeleteNoteCommandHandler>();
+        _ = services.AddScoped<MoveNoteCommandHandler>();
+        _ = services.AddScoped<MoveFolderCommandHandler>();
         _ = services.AddHttpClient<IAuthorizationDecisionService, KeycloakAuthorizationDecisionService>(client =>
         {
             client.Timeout = TimeSpan.FromSeconds(15);

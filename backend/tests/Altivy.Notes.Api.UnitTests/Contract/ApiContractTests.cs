@@ -262,6 +262,268 @@ public sealed class ApiContractTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task ListFolderEntriesWithReadGrantReturnsImmediateEntries()
+    {
+        factory.DecisionService.Decision = new AuthorizationDecision(true, true, 200);
+        factory.FolderStore.SetEntries(
+            "projetos",
+            [
+                new VaultEntry("projetos/plano.md", "plano.md", false, "etag-1"),
+                new VaultEntry("projetos/decisoes", "decisoes", true, null)
+            ]);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+
+        using var response = await client.GetAsync("/api/v1/vaults/lab-0001/entries?parentPath=projetos");
+        var body = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("\"kind\":\"note\"", body, StringComparison.Ordinal);
+        Assert.Contains("\"kind\":\"folder\"", body, StringComparison.Ordinal);
+        Assert.Equal("vault:read", factory.DecisionService.Scope);
+        Assert.Equal("projetos", factory.FolderStore.ParentPath);
+    }
+
+    [Fact]
+    public async Task ListFolderEntriesWithDeniedGrantDoesNotReadTheStore()
+    {
+        factory.DecisionService.Decision = new AuthorizationDecision(false, true, 403);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+
+        using var response = await client.GetAsync("/api/v1/vaults/lab-0001/entries");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal(0, factory.FolderStore.CallCount);
+    }
+
+    [Fact]
+    public async Task ListFolderEntriesWithInvalidPathReturnsProblemDetails()
+    {
+        factory.DecisionService.Decision = new AuthorizationDecision(true, true, 200);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+
+        using var response = await client.GetAsync("/api/v1/vaults/lab-0001/entries?parentPath=..%2Ffora");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+        Assert.Equal(0, factory.FolderStore.CallCount);
+    }
+
+    [Fact]
+    public async Task EnsureFolderWithWriteGrantIsIdempotent()
+    {
+        factory.DecisionService.Decision = new AuthorizationDecision(true, true, 200);
+        factory.FolderStore.CreationResult = FolderCreationResult.Created;
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+
+        using var created = await client.PutAsync("/api/v1/vaults/lab-0001/folders/projetos", null);
+        factory.FolderStore.CreationResult = FolderCreationResult.AlreadyExists;
+        using var existing = await client.PutAsync("/api/v1/vaults/lab-0001/folders/projetos", null);
+
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        Assert.Equal("/api/v1/vaults/lab-0001/folders/projetos", created.Headers.Location?.OriginalString);
+        Assert.Equal(HttpStatusCode.NoContent, existing.StatusCode);
+        Assert.Equal("vault:write", factory.DecisionService.Scope);
+        Assert.Equal(2, factory.FolderStore.CallCount);
+    }
+
+    [Fact]
+    public async Task EnsureFolderWithDeniedGrantDoesNotAccessTheStore()
+    {
+        factory.DecisionService.Decision = new AuthorizationDecision(false, true, 403);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+
+        using var response = await client.PutAsync("/api/v1/vaults/lab-0001/folders/projetos", null);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal(0, factory.FolderStore.CallCount);
+    }
+
+    [Fact]
+    public async Task EnsureFolderWithInvalidPathReturnsProblemDetails()
+    {
+        factory.DecisionService.Decision = new AuthorizationDecision(true, true, 200);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+
+        using var response = await client.PutAsync("/api/v1/vaults/lab-0001/folders/..%2Ffora", null);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+        Assert.Equal(0, factory.FolderStore.CallCount);
+    }
+
+    [Fact]
+    public async Task DeleteEmptyFolderWithDeleteGrantReturnsNoContent()
+    {
+        factory.DecisionService.Decision = new AuthorizationDecision(true, true, 200);
+        factory.FolderStore.DeletionResult = FolderDeletionResult.Deleted;
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+
+        using var response = await client.DeleteAsync("/api/v1/vaults/lab-0001/folders/projetos");
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.Equal("vault:delete", factory.DecisionService.Scope);
+        Assert.Equal(1, factory.FolderStore.CallCount);
+    }
+
+    [Fact]
+    public async Task DeleteEmptyFolderWithDeniedGrantDoesNotAccessStore()
+    {
+        factory.DecisionService.Decision = new AuthorizationDecision(false, true, 403);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+
+        using var response = await client.DeleteAsync("/api/v1/vaults/lab-0001/folders/projetos");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal(0, factory.FolderStore.CallCount);
+    }
+
+    [Fact]
+    public async Task DeleteNonEmptyFolderReturnsConflict()
+    {
+        factory.DecisionService.Decision = new AuthorizationDecision(true, true, 200);
+        factory.FolderStore.DeletionResult = FolderDeletionResult.NotEmpty;
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+
+        using var response = await client.DeleteAsync("/api/v1/vaults/lab-0001/folders/projetos");
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task MoveFolderWithWriteGrantReturnsNewPath()
+    {
+        factory.DecisionService.Decision = new AuthorizationDecision(true, true, 200);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+
+        using var response = await client.PatchAsJsonAsync(
+            "/api/v1/vaults/lab-0001/folders/projetos", new { path = "arquivo/projetos" });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("vault:write", factory.DecisionService.Scope);
+        Assert.Equal(1, factory.FolderStore.CallCount);
+    }
+
+    [Fact]
+    public async Task MoveFolderIntoItselfIsRejectedWithoutAccessingStore()
+    {
+        factory.DecisionService.Decision = new AuthorizationDecision(true, true, 200);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+
+        using var response = await client.PatchAsJsonAsync(
+            "/api/v1/vaults/lab-0001/folders/projetos", new { path = "projetos/interno" });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(0, factory.FolderStore.CallCount);
+    }
+
+    [Fact]
+    public async Task MoveFolderToExistingDestinationReturnsCodedConflict()
+    {
+        factory.DecisionService.Decision = new AuthorizationDecision(true, true, 200);
+        factory.FolderStore.MoveResult = FolderMoveResult.DestinationExists;
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+
+        using var response = await client.PatchAsJsonAsync(
+            "/api/v1/vaults/lab-0001/folders/projetos", new { path = "arquivo" });
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Contains("folder-destination-exists", await response.Content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task MoveFolderWithDeniedGrantDoesNotAccessStore()
+    {
+        factory.DecisionService.Decision = new AuthorizationDecision(false, true, 403);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+
+        using var response = await client.PatchAsJsonAsync(
+            "/api/v1/vaults/lab-0001/folders/projetos", new { path = "arquivo" });
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal(0, factory.FolderStore.CallCount);
+    }
+
+    [Fact]
+    public async Task MoveNoteWithWriteGrantChangesPathAndRequiresCurrentEtag()
+    {
+        factory.DecisionService.Decision = new AuthorizationDecision(true, true, 200);
+        await factory.Services.GetRequiredService<INoteStore>().TryCreateAsync(
+            "lab-0001", NotePath.Create("rascunho.md"), "# Rascunho", CancellationToken.None);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+
+        using var withoutEtag = await client.PatchAsJsonAsync(
+            "/api/v1/vaults/lab-0001/notes/rascunho.md", new { path = "plano.md" });
+        using var stale = await SendPatchAsync(client, "rascunho.md", "plano.md", "\"version-old\"");
+        using var moved = await SendPatchAsync(client, "rascunho.md", "plano.md", "\"version-1\"");
+        using var missing = await client.GetAsync("/api/v1/vaults/lab-0001/notes/rascunho.md");
+        using var current = await client.GetAsync("/api/v1/vaults/lab-0001/notes/plano.md");
+
+        Assert.Equal(HttpStatusCode.PreconditionRequired, withoutEtag.StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, stale.StatusCode);
+        Assert.Contains("note-version-conflict", await stale.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+        Assert.Equal(HttpStatusCode.OK, moved.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
+        Assert.Equal(HttpStatusCode.OK, current.StatusCode);
+        Assert.Equal(VaultAuthorization.ReadScope, factory.DecisionService.Scope);
+    }
+
+    [Fact]
+    public async Task MoveNoteToOccupiedDestinationReturnsConflictWithoutOverwriting()
+    {
+        factory.DecisionService.Decision = new AuthorizationDecision(true, true, 200);
+        var store = factory.Services.GetRequiredService<INoteStore>();
+        await store.TryCreateAsync("lab-0001", NotePath.Create("a.md"), "# A", CancellationToken.None);
+        await store.TryCreateAsync("lab-0001", NotePath.Create("b.md"), "# B", CancellationToken.None);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+
+        using var response = await SendPatchAsync(client, "a.md", "b.md", "\"version-1\"");
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Contains("note-destination-exists", await response.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+        Assert.Equal("# B", (await store.FindAsync("lab-0001", NotePath.Create("b.md"), CancellationToken.None))!.Content);
+    }
+
+    [Fact]
+    public async Task MoveNoteWithDeniedGrantDoesNotMoveTheNote()
+    {
+        var store = factory.Services.GetRequiredService<INoteStore>();
+        await store.TryCreateAsync("lab-0001", NotePath.Create("a.md"), "# A", CancellationToken.None);
+        factory.DecisionService.Decision = new AuthorizationDecision(false, true, 403);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+
+        using var response = await SendPatchAsync(client, "a.md", "b.md", "\"version-1\"");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.NotNull(await store.FindAsync("lab-0001", NotePath.Create("a.md"), CancellationToken.None));
+    }
+
+    private static Task<HttpResponseMessage> SendPatchAsync(HttpClient client, string source, string destination, string etag)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Patch, $"/api/v1/vaults/lab-0001/notes/{source}")
+        {
+            Content = JsonContent.Create(new { path = destination })
+        };
+        request.Headers.IfMatch.ParseAdd(etag);
+        return client.SendAsync(request);
+    }
+
+    [Fact]
     public async Task UpdateNoteWithoutIfMatchReturnsPreconditionRequired()
     {
         factory.DecisionService.Decision = new AuthorizationDecision(true, true, 200);
@@ -282,11 +544,14 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
 
     public FakeNoteStore NoteStore { get; } = new();
 
+    public FakeFolderStore FolderStore { get; } = new();
+
     public void Reset()
     {
         DecisionService.Reset();
         VaultReader.Reset();
         NoteStore.Reset();
+        FolderStore.Reset();
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -299,6 +564,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<IVaultReader>(VaultReader);
             services.RemoveAll<INoteStore>();
             services.AddSingleton<INoteStore>(NoteStore);
+            services.RemoveAll<IFolderStore>();
+            services.AddSingleton<IFolderStore>(FolderStore);
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = "Test";
@@ -307,6 +574,71 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
                 "Test",
                 _ => { });
         });
+    }
+}
+
+public sealed class FakeFolderStore : IFolderStore
+{
+    private readonly Dictionary<string, IReadOnlyList<VaultEntry>> entries = new(StringComparer.Ordinal);
+
+    public int CallCount { get; private set; }
+
+    public string? ParentPath { get; private set; }
+
+    public FolderCreationResult CreationResult { get; set; } = FolderCreationResult.Created;
+
+    public FolderDeletionResult DeletionResult { get; set; } = FolderDeletionResult.NotFound;
+
+    public Task<IReadOnlyList<VaultEntry>> ListChildrenAsync(
+        string vaultId,
+        FolderPath? parentPath,
+        CancellationToken cancellationToken)
+    {
+        CallCount++;
+        ParentPath = parentPath?.Value;
+        return Task.FromResult(entries.GetValueOrDefault(ParentPath ?? string.Empty, []));
+    }
+
+    public Task<FolderCreationResult> EnsureCreatedAsync(
+        string vaultId,
+        FolderPath path,
+        CancellationToken cancellationToken)
+    {
+        CallCount++;
+        return Task.FromResult(CreationResult);
+    }
+
+    public Task<FolderDeletionResult> DeleteEmptyAsync(
+        string vaultId,
+        FolderPath path,
+        CancellationToken cancellationToken)
+    {
+        CallCount++;
+        return Task.FromResult(DeletionResult);
+    }
+
+    public FolderMoveResult MoveResult { get; set; } = FolderMoveResult.Moved;
+
+    public Task<FolderMoveOutcome> MoveAsync(
+        string vaultId,
+        FolderPath source,
+        FolderPath destination,
+        CancellationToken cancellationToken)
+    {
+        CallCount++;
+        return Task.FromResult(new FolderMoveOutcome(MoveResult, []));
+    }
+
+    public void SetEntries(string parentPath, IReadOnlyList<VaultEntry> value) => entries[parentPath] = value;
+
+    public void Reset()
+    {
+        entries.Clear();
+        CallCount = 0;
+        ParentPath = null;
+        CreationResult = FolderCreationResult.Created;
+        DeletionResult = FolderDeletionResult.NotFound;
+        MoveResult = FolderMoveResult.Moved;
     }
 }
 
@@ -339,6 +671,16 @@ public sealed class FakeNoteStore : INoteStore
         Task.FromResult(notes.TryGetValue(path.Value, out var note) && note.ETag == expectedETag
             ? notes.Remove(path.Value) ? NoteWriteResult.Updated : NoteWriteResult.NotFound
             : notes.ContainsKey(path.Value) ? NoteWriteResult.Conflict : NoteWriteResult.NotFound);
+
+    public Task<NoteMoveResult> MoveAsync(string vaultId, NotePath source, NotePath destination, string expectedETag, CancellationToken cancellationToken)
+    {
+        if (!notes.TryGetValue(source.Value, out var note)) return Task.FromResult(NoteMoveResult.NotFound);
+        if (note.ETag != expectedETag) return Task.FromResult(NoteMoveResult.VersionConflict);
+        if (notes.ContainsKey(destination.Value)) return Task.FromResult(NoteMoveResult.DestinationExists);
+        notes.Remove(source.Value);
+        notes[destination.Value] = note with { Path = destination };
+        return Task.FromResult(NoteMoveResult.Moved);
+    }
 
     public void Reset() => notes.Clear();
 }

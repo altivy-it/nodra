@@ -54,6 +54,35 @@ public sealed class FileSystemNoteStoreIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task MovePreservesContentAndRejectsStaleVersionOrOccupiedDestination()
+    {
+        var store = new FileSystemNoteStore(root);
+        var source = NotePath.Create("rascunho.md");
+        var destination = NotePath.Create("projetos/plano.md");
+        Directory.CreateDirectory(Path.Combine(root, "lab-0001", "projetos"));
+        await store.TryCreateAsync("lab-0001", source, "# Rascunho", CancellationToken.None);
+        await store.TryCreateAsync("lab-0001", NotePath.Create("ocupado.md"), "# Outra", CancellationToken.None);
+        var current = await store.FindAsync("lab-0001", source, CancellationToken.None);
+
+        var stale = await store.MoveAsync("lab-0001", source, destination, "desatualizado", CancellationToken.None);
+        var occupied = await store.MoveAsync(
+            "lab-0001", source, NotePath.Create("ocupado.md"), current!.ETag, CancellationToken.None);
+        var missingFolder = await store.MoveAsync(
+            "lab-0001", source, NotePath.Create("ausente/plano.md"), current.ETag, CancellationToken.None);
+        var moved = await store.MoveAsync("lab-0001", source, destination, current.ETag, CancellationToken.None);
+
+        Assert.Equal(NoteMoveResult.VersionConflict, stale);
+        Assert.Equal(NoteMoveResult.DestinationExists, occupied);
+        Assert.Equal(NoteMoveResult.DestinationFolderNotFound, missingFolder);
+        Assert.Equal(NoteMoveResult.Moved, moved);
+        Assert.Null(await store.FindAsync("lab-0001", source, CancellationToken.None));
+        var movedNote = await store.FindAsync("lab-0001", destination, CancellationToken.None);
+        Assert.Equal("# Rascunho", movedNote!.Content);
+        Assert.Equal(current.ETag, movedNote.ETag);
+        Assert.Equal("# Outra", (await store.FindAsync("lab-0001", NotePath.Create("ocupado.md"), CancellationToken.None))!.Content);
+    }
+
+    [Fact]
     public async Task ProvisionCreatesVaultDirectoryIdempotently()
     {
         var provisioner = new FileSystemVaultProvisioner(root);

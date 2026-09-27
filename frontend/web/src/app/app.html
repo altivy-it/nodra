@@ -16,8 +16,9 @@
 </main>
 } @else if (session.session()?.authenticated) {
 <app-workspace-shell [userName]="session.session()?.name ?? null" [notes]="notes.notes()" [selected]="notes.selected()"
-  [loading]="notes.loading()" [error]="notes.error()" (noteOpened)="open($event)" (noteCreated)="create()"
+  [loading]="notes.loading()" [error]="notes.error()" (noteOpened)="open($event)" (noteCreated)="create($event)"
   (notesReloaded)="notes.load()" (noteChanged)="save($event.path, $event.content)" (noteRemoved)="remove()"
+  (noteMoved)="move($event)" (folderMoved)="folderMoved($event.from, $event.to)"
   [vaults]="vaults.vaults()" [currentVaultId]="vaults.current()?.id ?? null" [vaultsLoading]="vaults.loading()"
   [realtimeStatus]="realtime.status()" (vaultSelected)="selectVault($event)" (loggedOut)="session.logout()" />
 } @else {

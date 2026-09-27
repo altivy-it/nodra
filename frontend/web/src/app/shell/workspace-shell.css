@@ -522,6 +522,15 @@ textarea:focus-visible {
     box-shadow: 6px 0 0 rgba(0, 0, 0, .08);
   }
 
+  .primary-panel,
+  .context-panel {
+    width: min(82vw, 300px) !important;
+  }
+
+  .workspace:has(.primary-panel) .context-panel {
+    display: none;
+  }
+
   .primary-panel {
     left: 44px;
   }
@@ -534,6 +543,72 @@ textarea:focus-visible {
   .topbar,
   .content {
     grid-column: 2;
+  }
+
+  .topbar {
+    gap: 6px;
+    padding-inline: 8px;
+  }
+
+  .context {
+    min-width: 0;
+    flex: 1;
+    gap: 6px;
+    overflow: hidden;
+  }
+
+  .brand-mark,
+  .account,
+  .connection {
+    display: none;
+  }
+
+  app-vault-selector {
+    min-width: 0;
+    flex: 1;
+  }
+
+  app-vault-selector select {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .topbar-actions {
+    flex: none;
+    gap: 4px;
+  }
+
+  .icon-button {
+    padding: 5px;
+  }
+
+  .logout-button {
+    padding: 4px 6px;
+  }
+
+  .editor {
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .editor-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .preview-controls {
+    flex-wrap: wrap;
+  }
+
+  .editor-panes {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(150px, 1fr) minmax(150px, 1fr);
+    overflow: auto;
+  }
+
+  .editor-panes textarea,
+  .editor-panes .markdown-preview {
+    min-height: 150px;
   }
 
   .statusbar {
@@ -615,6 +690,23 @@ textarea:focus-visible {
   margin-bottom: 22px;
   color: var(--accent);
   font: 10px var(--font-mono);
+}
+
+@media (max-width: 800px) {
+  .editor-toolbar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .editor-panes {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(150px, 1fr) minmax(150px, 1fr);
+    overflow: auto;
+  }
+
+  .editor-panes textarea,
+  .editor-panes .markdown-preview {
+    min-height: 150px;
+  }
 }
 
 .markdown-preview h1,

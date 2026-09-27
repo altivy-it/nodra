@@ -1,0 +1,183 @@
+:host {
+    display: flex;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+}
+
+.tree-viewport {
+    min-height: 120px;
+    flex: 1;
+    overflow: auto;
+    overscroll-behavior: contain;
+    outline: none;
+}
+
+.tree-row {
+    display: flex;
+    box-sizing: border-box;
+    align-items: center;
+    width: 100%;
+    height: 30px;
+    gap: 7px;
+    overflow: hidden;
+    padding-block: 0;
+    padding-inline-end: 10px;
+    border: 0;
+    border-inline-start: 2px solid transparent;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.folder-form-actions button,
+.folder-actions button,
+.tree-error button {
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+.tree-row:hover,
+.tree-row[aria-selected='true'] {
+    background: var(--selection, #dfe8e1);
+}
+
+.tree-row:focus-visible {
+    position: relative;
+    z-index: 1;
+    outline: 2px solid var(--accent, #b24d32);
+    outline-offset: -2px;
+}
+
+.tree-marker {
+    display: inline-flex;
+    width: 12px;
+    flex: 0 0 12px;
+    justify-content: center;
+    color: var(--muted, #69716d);
+    font-family: var(--font-mono);
+}
+
+.folder-marker {
+    color: var(--accent, #b24d32);
+}
+
+.tree-name {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tree-state,
+.tree-error {
+    margin: 10px 12px;
+    color: var(--muted, #69716d);
+    font-size: 12px;
+}
+
+.tree-error {
+    display: flex;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 6px;
+    color: #a3362a;
+}
+
+.tree-error button {
+    padding: 4px 0;
+    color: inherit;
+    text-decoration: underline;
+}
+
+.create-folder-form {
+    display: grid;
+    gap: 8px;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--line, #c8c9c2);
+}
+
+.create-folder-form label,
+.move-folder-form label {
+    display: grid;
+    gap: 4px;
+    color: var(--muted, #69716d);
+    font-size: 11px;
+}
+
+.create-folder-form input,
+.move-folder-form input {
+    min-width: 0;
+    padding: 6px 7px;
+    border: 1px solid var(--line, #c8c9c2);
+    border-radius: 2px;
+    background: var(--surface-raised, #fbfaf7);
+    color: var(--text, #202525);
+    font: inherit;
+}
+
+.folder-form-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.folder-form-actions button {
+    min-height: 30px;
+    padding: 4px 8px;
+    border: 1px solid var(--line, #c8c9c2);
+}
+
+.folder-form-actions button:disabled {
+    cursor: not-allowed;
+    opacity: .55;
+}
+
+.folder-form-actions button:hover:not(:disabled) {
+    border-color: var(--accent, #b24d32);
+    color: var(--accent, #b24d32);
+}
+
+.folder-actions {
+    display: grid;
+    gap: 6px;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--line, #c8c9c2);
+}
+
+.folder-action-path {
+    overflow: hidden;
+    color: var(--muted, #69716d);
+    font: 10px var(--font-mono);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.move-folder-form {
+    display: grid;
+    gap: 8px;
+}
+
+.folder-actions > button + button {
+    margin-top: 0;
+}
+
+.folder-actions button {
+    min-height: 30px;
+    justify-self: start;
+    padding: 4px 8px;
+    border: 1px solid var(--line, #c8c9c2);
+}
+
+.folder-actions button:disabled {
+    cursor: not-allowed;
+    opacity: .55;
+}
+
+.folder-actions button:hover:not(:disabled) {
+    border-color: var(--accent, #b24d32);
+    color: var(--accent, #b24d32);
+}

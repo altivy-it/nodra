@@ -2,7 +2,7 @@
 
 **Status:** in-progress  
 **Data de criação:** 2026-09-01  
-**Última atualização:** 2026-09-02  
+**Última atualização:** 2026-09-26  
 **Responsáveis:** Lincoln Zocateli  
 **Origem:** IA assistida a partir da solicitação do produto  
 **Revisor humano:** Lincoln Zocateli  
@@ -154,13 +154,11 @@ O schema inicial deve usar campos namespaced para evitar colisão com frontmatte
 já usado por outras ferramentas:
 
 ```yaml
----
 altivy:
   metadata_version: "1.0"
   classification: unclassified
   doc_type: note
   tags: [inbox]
----
 ```
 
 `classification` é um rótulo de organização e busca; não concede acesso nem
@@ -182,7 +180,6 @@ vez de comentário HTML, devem ficar no frontmatter `altivy.agent` para que seja
 parseáveis, versionáveis, visíveis e editáveis pela mesma tela de Propriedades:
 
 ```yaml
----
 altivy:
   metadata_version: "1.0"
   classification: internal
@@ -198,7 +195,6 @@ altivy:
     answer_style: "regra objetiva + sinais de alerta + exemplos de código"
     canonical_section_order: ["Visão Geral", "Regra Obrigatória", "Referências"]
     strict_citations: false
----
 ```
 
 O frontmatter não aparece no preview renderizado, mas nunca é oculto do usuário:
@@ -209,6 +205,7 @@ alterar autorização, executar ações, suplantar o conteúdo da nota, dispensa
 citações ou forçar comportamento de um modelo. Enquanto uma capacidade de IA não
 existir ou estiver desabilitada, o Altivy apenas preserva e indexa esses campos
 sem enviá-los a qualquer serviço externo.
+
 ## Ajuda integrada
 
 O Altivy inclui uma central de ajuda em Markdown versionada junto do frontend e
@@ -306,6 +303,13 @@ não for apropriada ao usuário final.
 - Angular CDK, Lucide Angular, CodeMirror e Cytoscape.js somente entram nas etapas
   que os utilizam, com versão fixada, licença permissiva verificada e SBOM
   atualizado.
+- Em 2026-09-26, a versão publicada consultada de `@po-ui/ng-components` foi
+  `21.31.0` (MIT), com peers `@angular/* ^21`, incompatíveis com o Angular
+  `22.1` deste projeto. Para continuar este plano sem degradar a stack nem
+  introduzir peer dependency inválida, controles nativos locais podem cobrir
+  somente capacidades do workspace sem componente PO UI compatível. Não será
+  adicionada biblioteca visual concorrente; a exceção deve ser reavaliada quando
+  PO UI suportar a major adotada.
 
 ## Etapas
 
@@ -390,15 +394,14 @@ Evidências:
   persistido junto ao layout; módulos desconhecidos são ignorados.
 - Painéis primário e contextual usam separadores operáveis por ponteiro e
   teclado, com `aria-valuenow`, limites anunciados e persistência de largura.
-- Suíte executada em `frontend/web` pelo terminal integrado: 3 arquivos e 10
-  testes aprovados, incluindo sessão, realtime e composição da aplicação.
+- Suíte frontend executada em 2026-09-26: 16 arquivos e 42 testes aprovados,
+  incluindo sessão, realtime, árvore lazy, virtualização e jornada autenticada.
 - Spec focado de preferências: 3 testes aprovados.
-- Build de produção concluído; permanece aviso de orçamento do CSS do shell
-  (`5.00 kB` contra `4.00 kB`).
-- Pendências: execução confirmada do teste de separadores, capturas dos três
-  temas e validação visual desktop/mobile. O asset
-  inicial `frontend/web/public/help.md` foi versionado, mas ainda aguarda
-  integração com um renderer Markdown seguro.
+- O build de produção falha no orçamento do bundle inicial: 4,08 MB contra erro
+  máximo de 1 MB; lazy loading e divisão dos scripts globais permanecem pendentes.
+- Pendências: capturas dos três temas, auditoria de acessibilidade e verificação
+  visual tablet/mobile completa. O Help já usa parser/renderização somente
+  leitura; o teste Playwright do fluxo continua pendente.
 
 ### P-03: Implementar barra de atividades e navegação modular
 
@@ -448,14 +451,14 @@ Evidências:
 - O spec do `WorkspaceShell` cobre o atalho de ajuda, a devolução de foco à área
   central e a navegação `Home`/`End` da barra de atividades.
 - Diagnóstico TypeScript limpo nos arquivos do registro e do shell.
-- Pendente: execução confirmada dos specs Angular/Vitest e teste Playwright de
-  ajuda por atalho/menu com preservação de foco; o executor de testes e o
-  terminal interativo disponíveis nesta sessão não conseguiram iniciar o runner
-  Angular.
+- Suíte Angular/Vitest executada em 2026-09-26: 16 arquivos e 42 testes
+  aprovados, incluindo o registro de atividades, composição do shell e jornada
+  autenticada; teste Playwright de ajuda por atalho/menu com preservação de foco
+  continua pendente.
 
 ### P-04: Evoluir o explorador de pastas e arquivos
 
-**Status:** not-started  
+**Status:** in-progress  
 **Responsável:** frontend e backend Notes/Vaults  
 **Dependências:** P-02 e contratos de notas e pastas
 
@@ -484,7 +487,81 @@ Validação:
 
 Evidências:
 
-- pendente; registrar testes, medição e fixture utilizada.
+- Criado `FolderPath` no domínio para normalizar separadores e rejeitar caminhos
+  absolutos, traversal, caracteres inválidos, nomes reservados do Windows e
+  segmentos ambíguos.
+- Adicionado `IFolderStore` e `FileSystemFolderStore`: a listagem retorna apenas
+  filhos imediatos e arquivos Markdown; criação exige pai existente, não
+  atravessa caminhos fora do vault e rejeita reparse points.
+- Adicionada consulta de aplicação e `GET /api/v1/vaults/{vaultId}/entries`, com
+  autorização `vault:read` antes do filesystem; OpenAPI descreve path, tipo e
+  ETag. A API compila sem warnings quando os analyzers são desativados.
+- O workspace não possui gerador nem artefato de cliente OpenAPI em
+  `frontend/web`; o novo serviço HTTP segue o padrão manual existente e deve ser
+  migrado ao cliente gerado quando esse fluxo de geração estiver disponível.
+- O frontend agora carrega filhos ao expandir, isola estado por vault e descarta
+  respostas obsoletas. A árvore navega por setas, Home e End e virtualiza a lista;
+  teste com 1.000 entradas mantém menos de 40 itens no DOM.
+- A criação de pastas usa `PUT` idempotente, não cria pais implicitamente e
+  diferencia pasta criada, já existente e colisão com arquivo. A exclusão usa
+  `DELETE`, é idempotente para destino ausente e remove somente pastas vazias;
+  conteúdo e subpastas nunca são apagados implicitamente.
+- O menu do explorador cria notas no diretório selecionado e cria pastas na
+  pasta selecionada (ou na raiz). A exclusão de pasta exige confirmação em duas
+  etapas, atualiza a lista do pai e apresenta conflito para pastas não vazias.
+- Testes frontend completos: 51 aprovados. Testes da API: 44 aprovados. Testes
+  de aplicação: 36 aprovados. Integração real de filesystem (notas e pastas):
+  15 aprovados. Os testes .NET foram executados com
+  `RunAnalyzers=false` porque o projeto já falha em `CA1305` em
+  `NoteProjectionBuilderTests` fora desta alteração.
+- Verificação visual com dados sintéticos confirmou árvore/nota em desktop e
+  painéis exclusivos e barra superior contida a 390 px. O navegador integrado
+  desconectou antes da captura final após alternar para o painel contextual.
+- Notas podem ser movidas ou renomeadas por `PATCH /notes/{path}` com
+  `If-Match`: o destino nunca é sobrescrito, pastas não são criadas
+  implicitamente, conteúdo e ETag são preservados e o problema traz `code`
+  distinto para versão desatualizada, destino ocupado e pasta inexistente. O
+  movimento enfileira dois jobs idempotentes que removem a projeção antiga e
+  indexam o novo caminho.
+- Corrigido bug preexistente: editar o caminho de uma nota salva disparava o
+  autosave com `PUT` no caminho novo e ETag antigo. O campo agora renomeia ao
+  confirmar (Enter/blur), após descarregar o autosave pendente, e o conteúdo
+  continua salvo no caminho atual.
+- Corrigido: atualizar a árvore esvaziava pastas expandidas; o recarregamento
+  agora inclui a raiz e todas as pastas abertas.
+- Corrigido: o estado "BFF indisponível" encostava na borda da janela abaixo de
+  1100 px; agora mantém margens laterais em desktop e mobile.
+- Jornada Playwright `frontend/tests/e2e/test_folder_explorer_mocked.py` (API
+  simulada no browser, sem credenciais) aprovada em desktop 1440 px e mobile
+  390 px: expandir, criar pasta contextual, excluir pasta vazia, receber
+  conflito ao excluir pasta com conteúdo, renomear/mover nota salva e manter
+  margens no estado sem BFF, sem overflow horizontal nem erro de
+  página. Screenshots em `artifacts/e2e/`.
+- A análise dos screenshots revelou e corrigiu dois defeitos: bordas nativas de
+  botão nas linhas da árvore (encapsulamento impedia o reset do shell) e conflito
+  de exclusão exibido como erro de carregamento com "Tentar novamente"; erros de
+  criação/exclusão agora ficam junto da ação.
+- Pastas podem ser movidas ou renomeadas por `PATCH /folders/{path}` com
+  `vault:write`: destino igual ou interno à origem retorna 400, o destino nunca
+  é sobrescrito, pais não são criados e links simbólicos em qualquer ponto da
+  subárvore bloqueiam a operação antes do `Directory.Move`. Cada nota Markdown
+  contida gera jobs de reconciliação para o caminho antigo e o novo. No
+  frontend, a ação "Renomear ou mover" preserva a expansão no novo caminho e
+  atualiza a nota aberta e o autosave pendente.
+- Corrigido: a chave de idempotência do movimento de nota não distinguia
+  operações repetidas entre os mesmos caminhos (a→b→a→b), o que descartaria a
+  reconciliação do terceiro movimento; agora inclui um identificador por
+  operação.
+- Validação após mover pastas: frontend 55/55, API 48/48, aplicação 42/42,
+  integração de filesystem 18/18 e Playwright com API simulada 7/7 (inclui
+  renomear pasta com nota aberta em 1440 px e 390 px).
+- Ainda pendentes: drag and drop, exclusão de pastas
+  não vazias via fluxo de
+  lixeira, menu de contexto,
+  operações otimistas reversíveis, foco contido, Playwright de jornada contra
+  ambiente real (BFF/API/Keycloak) e
+  benchmark de 20 mil entradas. O teste Domain legado também não compila por referência ausente a
+  `NoteDocument` em `MarkdownDocumentParserTests`.
 
 ### P-05: Integrar abas, editor e barra de status
 
@@ -670,12 +747,18 @@ Evidências:
   densidade e restauração explícita das preferências locais.
 - Shell possui comportamento responsivo para transformar painéis laterais em
   overlays em telas estreitas e respeita `prefers-reduced-motion`.
-- Pendentes: screenshots desktop/tablet/mobile, auditoria WCAG/axe, foco contido
-  nos overlays, zoom de 200% e validação manual com leitor de tela.
+- Pendentes: screenshots tablet e mobile com painel contextual, auditoria
+  WCAG/axe, foco contido nos overlays, zoom de 200% e validação manual com leitor
+  de tela.
+- Ajuste em 2026-09-26: no breakpoint mobile, os painéis primário e contextual
+  não se sobrepõem; a barra superior permanece dentro da viewport e o editor
+  dividido passa a uma coluna. A captura desktop foi analisada; a captura mobile
+  de conteúdo com painel contextual e auditoria de teclado/leitor de tela ainda
+  não foram concluídas.
 
 ### P-10: Consolidar desempenho, observabilidade e rollout
 
-**Status:** not-started  
+**Status:** in-progress  
 **Responsável:** frontend, qualidade e operações  
 **Dependências:** P-04 a P-09
 
@@ -881,6 +964,13 @@ do layout anterior exige aprovação humana e evidência dos critérios finais.
 | 2026-09-02 | P-11 | in-progress | in-progress | template antigo removido e shell passou a ter composição única com HelpPanel; validação executável final ainda pendente | IA assistida |
 | 2026-09-02 | P-11 | in-progress | in-progress | busca local restrita ao corpus da ajuda adicionada; validação de componente e jornada Playwright ainda pendentes | IA assistida |
 | 2026-09-03 | P-11 | in-progress | in-progress | fechamento da ajuda retorna ao módulo anterior e preserva contexto; teste unitário criado, execução e Playwright pendentes | IA assistida |
+| 2026-09-26 | P-04 | not-started | in-progress | início da implementação do explorador após solicitação humana para continuar o plano | IA assistida |
+| 2026-09-26 | P-04 | in-progress | in-progress | contrato de leitura, adapter de filesystem, árvore lazy/virtualizada e testes focados implementados; operações mutáveis e E2E continuam pendentes | IA assistida |
+| 2026-09-26 | P-09 | in-progress | in-progress | painel contextual e explorador tornados mutuamente exclusivos em viewport estreita; screenshot mobile e verificação final de foco continuam pendentes | IA assistida |
+| 2026-09-26 | P-10 | not-started | in-progress | build de produção revelou bundle inicial de 4,08 MB acima do orçamento de 1 MB; análise e lazy loading continuam pendentes | IA assistida |
+| 2026-09-27 | P-04 | in-progress | in-progress | criação idempotente e exclusão de pasta vazia, criação contextual de nota/pasta, correções visuais e jornada Playwright com API simulada aprovada em desktop e mobile; rename/move e reconciliação continuam pendentes | IA assistida |
+| 2026-09-27 | P-04 | in-progress | in-progress | mover/renomear nota com If-Match e reconciliação da projeção; corrigidos autosave ao editar caminho, recarga de pastas expandidas e margens do estado sem BFF; mover pastas e lixeira continuam pendentes | IA assistida |
+| 2026-09-27 | P-04 | in-progress | in-progress | mover/renomear pasta com reconciliação por nota, bloqueio de links simbólicos e remapeamento da nota aberta; corrigida chave de idempotência do movimento de nota; drag and drop, lixeira e menu de contexto continuam pendentes | IA assistida |
 
 ## Regras de atualização
 

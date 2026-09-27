@@ -1,0 +1,86 @@
+@if (folderFormOpen()) {
+    <form class="create-folder-form" (submit)="submitFolder($event)">
+        <p>Nova pasta em: {{ folderParentPath ?? 'raiz do vault' }}</p>
+        <label>
+            <span>Nome da nova pasta</span>
+            <input type="text" [value]="folderName()" (input)="setFolderName($event)"
+                [disabled]="creatingFolder()" maxlength="255" autocomplete="off">
+        </label>
+        @if (folderError(); as error) { <p class="tree-error" role="alert">{{ error }}</p> }
+        <div class="folder-form-actions">
+            <button type="submit" [disabled]="creatingFolder() || !folderName().trim()">
+                {{ creatingFolder() ? 'Criando...' : 'Criar pasta' }}
+            </button>
+            <button type="button" [disabled]="creatingFolder()" (click)="toggleFolderForm()">Cancelar</button>
+        </div>
+    </form>
+}
+@if (activeFolderPath(); as folderPath) {
+    <div class="folder-actions">
+        <span class="folder-action-path" [title]="folderPath">{{ folderPath }}</span>
+        @if (moveFormOpen()) {
+            <form class="move-folder-form" (submit)="submitMove($event)">
+                <label>
+                    <span>Novo caminho da pasta</span>
+                    <input type="text" [value]="moveTarget()" (input)="setMoveTarget($event)"
+                        [disabled]="movingFolder()" maxlength="1024" autocomplete="off">
+                </label>
+                <div class="folder-form-actions">
+                    <button type="submit" [disabled]="movingFolder() || !moveTarget().trim()">
+                        {{ movingFolder() ? 'Movendo...' : 'Mover pasta' }}
+                    </button>
+                    <button type="button" [disabled]="movingFolder()" (click)="cancelMove()">Cancelar</button>
+                </div>
+                @if (moveError(); as error) { <p class="tree-error" role="alert">{{ error }}</p> }
+            </form>
+        } @else if (confirmingFolderDelete()) {
+            <button type="button" [disabled]="deletingFolder()" (click)="deleteActiveFolder()">
+                {{ deletingFolder() ? 'Excluindo...' : 'Confirmar exclusão' }}
+            </button>
+            <button type="button" [disabled]="deletingFolder()" (click)="cancelFolderDelete()">Cancelar</button>
+        } @else {
+            <button type="button" (click)="openMoveForm()">Renomear ou mover</button>
+            <button type="button" (click)="deleteActiveFolder()">Excluir pasta vazia</button>
+        }
+        @if (deleteError(); as error) { <p class="tree-error" role="alert">{{ error }}</p> }
+    </div>
+}
+
+<div #viewport class="tree-viewport" role="tree" aria-label="Pastas e notas do vault" (scroll)="onScroll($event)" (keydown)="handleKeydown($event)">
+    <div class="tree-spacer" [style.height.px]="windowedRows().top" aria-hidden="true"></div>
+    @for (row of windowedRows().rows; track row.entry.path) {
+        <button
+            type="button"
+            class="tree-row"
+            role="treeitem"
+            [style.padding-inline-start.px]="10 + row.depth * 16"
+            [attr.aria-level]="row.depth + 1"
+            [attr.aria-expanded]="row.entry.kind === 'folder' ? explorer.expandedFolders().has(row.entry.path) : null"
+            [attr.aria-selected]="selectedPath === row.entry.path ? 'true' : null"
+            [attr.tabindex]="activePath() === row.entry.path || (!activePath() && row.index === 0) ? 0 : -1"
+            [attr.data-row-index]="row.index"
+            (focus)="activePath.set(row.entry.path)"
+            (click)="activate(row.entry)">
+            <span class="tree-marker" [class.folder-marker]="row.entry.kind === 'folder'" aria-hidden="true">
+                @if (row.entry.kind === 'folder') {
+                    {{ explorer.expandedFolders().has(row.entry.path) ? 'v' : '>' }}
+                } @else { · }
+            </span>
+            <span class="tree-name">{{ row.entry.name }}</span>
+        </button>
+    }
+    <div class="tree-spacer" [style.height.px]="windowedRows().bottom" aria-hidden="true"></div>
+</div>
+
+@if (loadingPath() !== null) {
+    <p class="tree-state" role="status" aria-live="polite">
+        {{ loadingPath() ? 'Carregando pasta...' : 'Carregando arquivos...' }}
+    </p>
+} @else if (firstError(); as error) {
+    <div class="tree-error" role="alert">
+        <span>{{ error.message }}</span>
+        <button type="button" (click)="retry()">Tentar novamente</button>
+    </div>
+} @else if (rows().length === 0) {
+    <p class="tree-state">Nenhuma nota neste vault.</p>
+}

@@ -20,6 +20,10 @@ def pytest_configure(config: pytest.Config) -> None:
         "markers",
         "authenticated: jornada que exige credenciais de laboratório fornecidas em runtime",
     )
+    config.addinivalue_line(
+        "markers",
+        "mocked: jornada com API simulada no browser, sem BFF, API ou Keycloak",
+    )
 
     if not config.option.base_url:
         config.option.base_url = os.getenv("ALTIVY_E2E_BASE_URL")

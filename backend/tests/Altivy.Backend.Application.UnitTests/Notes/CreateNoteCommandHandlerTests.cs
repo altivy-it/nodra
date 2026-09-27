@@ -75,5 +75,13 @@ public sealed class CreateNoteCommandHandlerTests
             string expectedETag,
             CancellationToken cancellationToken) =>
             Task.FromResult(NoteWriteResult.NotFound);
+
+        public Task<NoteMoveResult> MoveAsync(
+            string vaultId,
+            NotePath source,
+            NotePath destination,
+            string expectedETag,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(NoteMoveResult.NotFound);
     }
 }

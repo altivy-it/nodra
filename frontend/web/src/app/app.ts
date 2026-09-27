@@ -5,6 +5,7 @@ import { Note, NotesService } from './core/notes.service';
 import { SessionService } from './core/session.service';
 import { VaultRealtimeService } from './core/vault-realtime.service';
 import { VaultsService } from './core/vaults.service';
+import { FolderExplorerService, remapPath } from './data-access/folder-explorer.service';
 import { WorkspaceShell } from './shell/workspace-shell';
 import { WorkspaceService } from './shell/workspace.service';
 
@@ -27,6 +28,7 @@ export class App {
     protected readonly vaults: VaultsService,
     protected readonly realtime: VaultRealtimeService,
     protected readonly workspace: WorkspaceService,
+    private readonly explorer: FolderExplorerService,
     private readonly router: Router) {
     effect(() => {
       const currentSession = this.session.session();
@@ -41,7 +43,7 @@ export class App {
 
   open(path: string): void { void this.notes.open(path); }
 
-  create(): void { this.notes.newNote(); }
+  create(parentPath: string | null): void { this.notes.newNote(parentPath); }
 
   save(path: string, content: string): void {
     const note = this.notes.selected();
@@ -70,6 +72,30 @@ export class App {
   remove(): void {
     const note = this.notes.selected();
     if (note) void this.notes.delete(note);
+  }
+
+  async move(destination: string): Promise<void> {
+    await this.flushPendingSave();
+    const note = this.notes.selected();
+    if (!note) return;
+    const error = await this.notes.move(note, destination);
+    if (!error) this.explorer.reload();
+  }
+
+  private async flushPendingSave(): Promise<void> {
+    if (this.saveTimer) {
+      clearTimeout(this.saveTimer);
+      this.saveTimer = null;
+    }
+    await this.flushSave();
+  }
+
+  /** Keeps the open note and any queued save pointing at the note's new location after a folder move. */
+  folderMoved(from: string, to: string): void {
+    const selected = this.notes.selected();
+    if (selected) this.notes.selected.set({ ...selected, path: remapPath(selected.path, from, to) });
+    if (this.pendingSave) this.pendingSave = { ...this.pendingSave, path: remapPath(this.pendingSave.path, from, to) };
+    void this.notes.load();
   }
 
   selectVault(vaultId: string): void {

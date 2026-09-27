@@ -76,5 +76,8 @@ public sealed class NoteIndexJobProcessorTests
 
         public Task<NoteWriteResult> DeleteAsync(string vaultId, NotePath path, string expectedETag, CancellationToken cancellationToken) =>
             Task.FromResult(NoteWriteResult.NotFound);
+
+        public Task<NoteMoveResult> MoveAsync(string vaultId, NotePath source, NotePath destination, string expectedETag, CancellationToken cancellationToken) =>
+            Task.FromResult(NoteMoveResult.NotFound);
     }
 }

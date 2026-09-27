@@ -102,6 +102,98 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "503": { $ref: "#/components/responses/Unavailable" }
+  /api/v1/vaults/{vaultId}/entries:
+    get:
+      summary: Lista filhos imediatos de uma pasta autorizada
+      description: >-
+        Exige `vault:read` e retorna somente pastas e notas Markdown diretamente contidas em `parentPath`. Quando ausente, a pasta consultada é a raiz do vault. Paths são normalizados e não podem escapar do vault.
+      parameters:
+        - $ref: "#/components/parameters/VaultId"
+        - name: parentPath
+          in: query
+          required: false
+          description: Caminho relativo normalizado da pasta; ausente representa a raiz.
+          schema:
+            type: string
+            maxLength: 1024
+            example: projetos
+      responses:
+        "200":
+          description: Filhos imediatos ordenados pelo caminho relativo
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VaultEntry"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+  /api/v1/vaults/{vaultId}/folders/{path}:
+    put:
+      summary: Garante a existência de uma pasta no vault
+      description: >-
+        Exige `vault:write`. Operação idempotente: cria a pasta relativa quando ausente, não altera uma pasta existente e não cria pais implicitamente. Falha se um arquivo já ocupar o caminho.
+      parameters:
+        - $ref: "#/components/parameters/VaultId"
+        - $ref: "#/components/parameters/FolderPath"
+      responses:
+        "201":
+          description: Pasta criada
+          headers:
+            Location:
+              description: URL da pasta criada
+              schema: { type: string, format: uri-reference }
+        "204": { description: Pasta já existente; nenhuma alteração foi realizada }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { description: Vault ou pasta pai inexistente }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+    delete:
+      summary: Exclui uma pasta vazia
+      description: >-
+        Exige `vault:delete`. Remove somente a pasta indicada e nunca remove seu conteúdo. A pasta ausente retorna sucesso idempotente; pastas não vazias ou um arquivo no caminho retornam conflito.
+      parameters:
+        - $ref: "#/components/parameters/VaultId"
+        - $ref: "#/components/parameters/FolderPath"
+      responses:
+        "204": { description: Pasta excluída ou já ausente }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+    patch:
+      summary: Move ou renomeia uma pasta
+      description: >-
+        Exige `vault:write`. Move a pasta com todo o conteúdo, nunca sobrescreve o destino, não cria pastas pai implicitamente e rejeita destino igual ou interno à origem com 400. Links simbólicos na subárvore bloqueiam a operação. O campo `code` do problema distingue `folder-destination-exists` e `folder-destination-folder-missing`.
+      parameters:
+        - $ref: "#/components/parameters/VaultId"
+        - $ref: "#/components/parameters/FolderPath"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/FolderMoveRequest" }
+      responses:
+        "200":
+          description: Pasta movida para o novo caminho
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [path]
+                properties:
+                  path: { type: string, example: arquivo/projetos }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "503": { $ref: "#/components/responses/Unavailable" }
   /api/v1/vaults/{vaultId}/notes/{path}:
     parameters:
       - $ref: "#/components/parameters/VaultId"
@@ -176,6 +268,34 @@ paths:
         "409": { $ref: "#/components/responses/Conflict" }
         "428": { $ref: "#/components/responses/PreconditionRequired" }
         "503": { $ref: "#/components/responses/Unavailable" }
+    patch:
+      summary: Move ou renomeia uma nota Markdown
+      description: >-
+        Exige `vault:write` e o header `If-Match` com o ETag atual. Altera somente o caminho relativo da nota: o conteúdo e o ETag são preservados, o destino nunca é sobrescrito e pastas não são criadas implicitamente. O campo `code` do problema distingue `note-version-conflict`, `note-destination-exists` e `note-destination-folder-missing`.
+      parameters:
+        - $ref: "#/components/parameters/IfMatch"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NoteMoveRequest" }
+      responses:
+        "200":
+          description: Nota movida para o novo caminho
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [path]
+                properties:
+                  path: { type: string, example: projetos/plano.md }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "503": { $ref: "#/components/responses/Unavailable" }
 components:
   securitySchemes:
     bearerAuth:
@@ -224,6 +344,17 @@ components:
       schema:
         type: string
         example: projetos/plano.md
+    FolderPath:
+      name: path
+      in: path
+      required: true
+      allowReserved: true
+      description: Caminho relativo normalizado da pasta, sem traversal ou path absoluto.
+      schema:
+        type: string
+        minLength: 1
+        maxLength: 1024
+        example: projetos/decisoes
     IfMatch:
       name: If-Match
       in: header
@@ -296,6 +427,26 @@ components:
       properties:
         path: { type: string, example: projetos/plano.md }
         eTag: { type: string, example: 8E5D0B7C }
+    VaultEntry:
+      type: object
+      additionalProperties: false
+      required: [path, name, kind, eTag]
+      properties:
+        path:
+          type: string
+          maxLength: 1024
+          example: projetos/plano.md
+        name:
+          type: string
+          maxLength: 255
+          example: plano.md
+        kind:
+          type: string
+          enum: [folder, note]
+        eTag:
+          type: string
+          nullable: true
+          description: Versão da nota; nula para pastas.
     Note:
       type: object
       required: [path, content]
@@ -309,6 +460,27 @@ components:
         content:
           type: string
           maxLength: 1048576
+    NoteMoveRequest:
+      type: object
+      additionalProperties: false
+      required: [path]
+      properties:
+        path:
+          type: string
+          maxLength: 1024
+          description: Novo caminho relativo da nota Markdown.
+          example: projetos/plano.md
+    FolderMoveRequest:
+      type: object
+      additionalProperties: false
+      required: [path]
+      properties:
+        path:
+          type: string
+          minLength: 1
+          maxLength: 1024
+          description: Novo caminho relativo da pasta.
+          example: arquivo/projetos
     ProblemDetails:
       type: object
       required: [title, status]

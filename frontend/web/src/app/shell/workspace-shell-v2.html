@@ -23,18 +23,16 @@
     @if (workspace.primaryPanelOpen()) { <aside class="primary-panel" [style.width.px]="workspace.primaryPanelWidth()"
         aria-label="Explorador de arquivos">
         <div class="panel-heading"><span>EXPLORADOR</span><button type="button" class="small-button"
-                (click)="noteCreated.emit()" aria-label="Criar nota">+</button></div>
-        <div class="panel-actions"><button type="button" (click)="noteCreated.emit()">Nova nota</button><button
-                type="button" (click)="notesReloaded.emit()" aria-label="Atualizar arquivos">↻</button></div>
+            (click)="noteCreated.emit(folderExplorer.noteParentPath)" aria-label="Criar nota">+</button></div>
+        <div class="panel-actions"><button type="button" (click)="noteCreated.emit(folderExplorer.noteParentPath)">Nova nota</button><button
+            type="button" (click)="folderExplorer.toggleFolderForm()">Nova pasta</button><button
+            type="button" (click)="folderExplorer.reload(); notesReloaded.emit()" aria-label="Atualizar arquivos">↻</button></div>
         <div class="resize-handle" role="separator" aria-orientation="vertical" tabindex="0"
             aria-label="Ajustar largura do explorador" aria-valuemin="220" aria-valuemax="420"
             [attr.aria-valuenow]="workspace.primaryPanelWidth()" (pointerdown)="startResize($event, 'primary')"
-            (keydown)="resizeFromKeyboard($event, 'primary')"></div>@if (loading) { <p class="muted">Carregando
-            arquivos...
-        </p> } @for (note of notes; track note.path) { <button type="button" class="file-row"
-            [class.selected]="selected?.path === note.path" (click)="noteOpened.emit(note.path)"><span
-                aria-hidden="true">·</span>{{ note.path }}</button> } @if (!loading && notes.length === 0) { <p
-            class="muted">Nenhuma nota neste vault.</p> }
+            (keydown)="resizeFromKeyboard($event, 'primary')"></div><app-folder-explorer #folderExplorer
+            [vaultId]="currentVaultId" [selectedPath]="selected?.path ?? null"
+            (noteOpened)="noteOpened.emit($event)" (folderMoved)="folderMoved.emit($event)" />
     </aside> }
     <main class="content" aria-label="Área de trabalho">
         <div class="document-tabs"><span class="tab active">{{ selected?.path || 'Workspace' }}</span><button
@@ -42,7 +40,8 @@
             {{ error }}</p> } @if (isModule('files')) { @if (selected; as note) { <section class="editor"
             aria-label="Editor Markdown">
             <div class="editor-toolbar"><label>Caminho <input #path [value]="note.path" aria-label="Caminho da nota"
-                        (input)="save(path.value, content.value)"></label>
+                        (input)="note.eTag ? null : save(path.value, content.value)"
+                        (change)="note.eTag ? noteMoved.emit(path.value) : null"></label>
                 <div class="preview-controls" role="group" aria-label="Modo de visualização"><button type="button"
                         [class.active]="previewMode() === 'editor'"
                         (click)="setPreviewMode('editor')">Editor</button><button type="button"
@@ -57,7 +56,7 @@
             </div>
             <div class="editor-panes" [class.editor-only]="previewMode() === 'editor'"
                 [class.preview-only]="previewMode() === 'preview'"><textarea #content [value]="note.content"
-                    aria-label="Conteúdo Markdown" (input)="save(path.value, content.value)"></textarea>
+                    aria-label="Conteúdo Markdown" (input)="save(note.eTag ? note.path : path.value, content.value)"></textarea>
                 <article class="markdown-preview" aria-label="Preview Markdown">
                     <div class="preview-heading"><span>PREVIEW</span><span class="muted">{{ note.path }}</span></div>
                     <markdown mermaid katex [data]="note.content"></markdown>

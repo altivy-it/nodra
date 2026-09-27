@@ -49,6 +49,34 @@ public static class ApiEndpointRouteBuilderExtensions
         _ = notes.MapPost("{**path}", CreateNoteAsync).WithSummary("Cria uma nota Markdown no vault.");
         _ = notes.MapPut("{**path}", UpdateNoteAsync).WithSummary("Atualiza uma nota mediante ETag atual.");
         _ = notes.MapDelete("{**path}", DeleteNoteAsync).WithSummary("Exclui uma nota mediante ETag atual.");
+        _ = notes.MapPatch("{**path}", MoveNoteAsync)
+            .WithSummary("Move ou renomeia uma nota mediante ETag atual.")
+            .WithDescription(
+                "Exige vault:write e If-Match. Altera o caminho da nota sem sobrescrever o destino nem criar pastas; o conteúdo e o ETag são preservados.");
+
+        _ = app.MapGet("/api/v1/vaults/{vaultId}/entries", ListFolderChildrenAsync)
+            .RequireAuthorization()
+            .WithSummary("Lista as entradas imediatas de uma pasta autorizada.")
+            .WithDescription(
+                "Exige vault:read e retorna somente pastas e notas Markdown diretamente contidas na pasta informada; parentPath ausente representa a raiz.");
+
+        _ = app.MapPut("/api/v1/vaults/{vaultId}/folders/{**path}", EnsureFolderAsync)
+            .RequireAuthorization()
+            .WithSummary("Garante a existência de uma pasta no vault.")
+            .WithDescription(
+                "Exige vault:write. O PUT é idempotente: cria a pasta relativa quando ausente, retorna sem alteração quando ela já existe e não cria pastas pai implicitamente.");
+
+        _ = app.MapDelete("/api/v1/vaults/{vaultId}/folders/{**path}", DeleteEmptyFolderAsync)
+            .RequireAuthorization()
+            .WithSummary("Exclui uma pasta vazia do vault.")
+            .WithDescription(
+                "Exige vault:delete. A operação remove somente a pasta informada; pastas que contenham arquivos ou subpastas não são excluídas.");
+
+        _ = app.MapPatch("/api/v1/vaults/{vaultId}/folders/{**path}", MoveFolderAsync)
+            .RequireAuthorization()
+            .WithSummary("Move ou renomeia uma pasta do vault.")
+            .WithDescription(
+                "Exige vault:write. Move a pasta com todo o conteúdo sem sobrescrever o destino nem criar pastas pai; o destino não pode estar dentro da origem.");
 
         _ = app.MapHub<VaultHub>("/hubs/vaults")
             .RequireAuthorization();
@@ -206,6 +234,144 @@ public static class ApiEndpointRouteBuilderExtensions
         return Results.Ok(notes.Select(note => new { path = note.Path.Value, eTag = note.ETag }));
     }
 
+    private static async Task<IResult> ListFolderChildrenAsync(
+        string vaultId,
+        string? parentPath,
+        HttpContext context,
+        IAuthorizationDecisionService authorization,
+        ListFolderChildrenQueryHandler query,
+        CancellationToken cancellationToken)
+    {
+        var access = await AuthorizeAsync(vaultId, VaultAuthorization.ReadScope, context, authorization, cancellationToken);
+        if (access is not null) return access;
+        try
+        {
+            var entries = await query.HandleAsync(vaultId, parentPath, cancellationToken);
+            return Results.Ok(entries.Select(entry => new
+            {
+                path = entry.Path,
+                name = entry.Name,
+                kind = entry.IsFolder ? "folder" : "note",
+                eTag = entry.ETag
+            }));
+        }
+        catch (ArgumentException)
+        {
+            return Results.Problem(statusCode: 400, title: "Caminho da pasta inválido.");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Results.Problem(statusCode: 403, title: "Acesso ao conteúdo do vault negado.");
+        }
+    }
+
+    private static async Task<IResult> EnsureFolderAsync(
+        string vaultId,
+        string path,
+        HttpContext context,
+        IAuthorizationDecisionService authorization,
+        EnsureFolderCommandHandler command,
+        CancellationToken cancellationToken)
+    {
+        var access = await AuthorizeAsync(vaultId, VaultAuthorization.WriteScope, context, authorization, cancellationToken);
+        if (access is not null) return access;
+        try
+        {
+            var result = await command.HandleAsync(
+                vaultId,
+                Uri.UnescapeDataString(path),
+                cancellationToken);
+            return result switch
+            {
+                FolderCreationResult.Created => Results.Created(FolderLocation(vaultId, path), null),
+                FolderCreationResult.AlreadyExists => Results.NoContent(),
+                _ => Results.Conflict()
+            };
+        }
+        catch (ArgumentException)
+        {
+            return Results.Problem(statusCode: 400, title: "Caminho da pasta inválido.");
+        }
+        catch (DirectoryNotFoundException)
+        {
+            return Results.Problem(statusCode: 404, title: "A pasta pai não foi encontrada.");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Results.Problem(statusCode: 403, title: "Acesso ao conteúdo do vault negado.");
+        }
+    }
+
+    private static string FolderLocation(string vaultId, string path) =>
+        $"/api/v1/vaults/{Uri.EscapeDataString(vaultId)}/folders/" +
+        string.Join('/', path.Split('/').Select(Uri.EscapeDataString));
+
+    private static async Task<IResult> DeleteEmptyFolderAsync(
+        string vaultId,
+        string path,
+        HttpContext context,
+        IAuthorizationDecisionService authorization,
+        DeleteEmptyFolderCommandHandler command,
+        CancellationToken cancellationToken)
+    {
+        var access = await AuthorizeAsync(vaultId, VaultAuthorization.DeleteScope, context, authorization, cancellationToken);
+        if (access is not null) return access;
+        try
+        {
+            var result = await command.HandleAsync(
+                vaultId,
+                Uri.UnescapeDataString(path),
+                cancellationToken);
+            return result switch
+            {
+                FolderDeletionResult.Deleted or FolderDeletionResult.NotFound => Results.NoContent(),
+                _ => Results.Conflict()
+            };
+        }
+        catch (ArgumentException)
+        {
+            return Results.Problem(statusCode: 400, title: "Caminho da pasta inválido.");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Results.Problem(statusCode: 403, title: "Acesso ao conteúdo do vault negado.");
+        }
+    }
+
+    private static async Task<IResult> MoveFolderAsync(
+        string vaultId,
+        string path,
+        FolderMoveRequest request,
+        HttpContext context,
+        IAuthorizationDecisionService authorization,
+        MoveFolderCommandHandler command,
+        CancellationToken cancellationToken)
+    {
+        var access = await AuthorizeAsync(vaultId, VaultAuthorization.WriteScope, context, authorization, cancellationToken);
+        if (access is not null) return access;
+        try
+        {
+            var result = await command.HandleAsync(vaultId, Uri.UnescapeDataString(path), request.Path, cancellationToken);
+            return result switch
+            {
+                FolderMoveResult.Moved => Results.Ok(new { path = request.Path }),
+                FolderMoveResult.NotFound => Results.NotFound(),
+                FolderMoveResult.DestinationExists => Results.Problem(
+                    statusCode: 409, title: "Já existe um item no caminho de destino.", extensions: ProblemCode("folder-destination-exists")),
+                _ => Results.Problem(
+                    statusCode: 409, title: "A pasta de destino não existe.", extensions: ProblemCode("folder-destination-folder-missing"))
+            };
+        }
+        catch (ArgumentException)
+        {
+            return Results.Problem(statusCode: 400, title: "Caminho da pasta inválido.");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return Results.Problem(statusCode: 403, title: "Acesso ao conteúdo do vault negado.");
+        }
+    }
+
     private static async Task<IResult> GetNoteAsync(
         string vaultId, string path, HttpContext context, IAuthorizationDecisionService authorization, GetNoteQueryHandler query,
         CancellationToken cancellationToken)
@@ -248,6 +414,35 @@ public static class ApiEndpointRouteBuilderExtensions
         DeleteNoteCommandHandler command, CancellationToken cancellationToken) =>
         await WriteNoteAsync(vaultId, null, context, authorization,
             (_, tag) => command.HandleAsync(vaultId, path, tag, cancellationToken), cancellationToken);
+
+    private static async Task<IResult> MoveNoteAsync(
+        string vaultId, string path, NoteMoveRequest request, HttpContext context, IAuthorizationDecisionService authorization,
+        MoveNoteCommandHandler command, CancellationToken cancellationToken)
+    {
+        var access = await AuthorizeAsync(vaultId, VaultAuthorization.WriteScope, context, authorization, cancellationToken);
+        if (access is not null) return access;
+        var etag = context.Request.Headers.IfMatch.ToString().Trim('"');
+        if (string.IsNullOrWhiteSpace(etag)) return Results.Problem(statusCode: 428, title: "If-Match é obrigatório.");
+        try
+        {
+            var source = Uri.UnescapeDataString(path);
+            var result = await command.HandleAsync(vaultId, source, request.Path, etag, cancellationToken);
+            return result switch
+            {
+                NoteMoveResult.Moved => Results.Ok(new { path = request.Path }),
+                NoteMoveResult.NotFound => Results.NotFound(),
+                NoteMoveResult.VersionConflict => Results.Problem(
+                    statusCode: 409, title: "A nota foi alterada por outra sessão.", extensions: ProblemCode("note-version-conflict")),
+                NoteMoveResult.DestinationExists => Results.Problem(
+                    statusCode: 409, title: "Já existe um item no caminho de destino.", extensions: ProblemCode("note-destination-exists")),
+                _ => Results.Problem(
+                    statusCode: 409, title: "A pasta de destino não existe.", extensions: ProblemCode("note-destination-folder-missing"))
+            };
+        }
+        catch (ArgumentException) { return Results.Problem(statusCode: 400, title: "Caminho da nota inválido."); }
+    }
+
+    private static Dictionary<string, object?> ProblemCode(string code) => new() { ["code"] = code };
 
     private static async Task<IResult> WriteNoteAsync(
         string vaultId, string? content, HttpContext context, IAuthorizationDecisionService authorization,

@@ -24,4 +24,5 @@ public sealed class NotePathTests
     {
         Assert.Throws<ArgumentException>(() => NotePath.Create(value));
     }
+
 }
