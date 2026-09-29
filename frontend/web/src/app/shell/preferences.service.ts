@@ -12,6 +12,7 @@ export interface WorkspacePreferences {
   contextPanelWidth: number;
   primaryPanelOpen: boolean;
   contextPanelOpen: boolean;
+  expandedFolders: string[];
 }
 
 const defaults: WorkspacePreferences = {
@@ -22,7 +23,8 @@ const defaults: WorkspacePreferences = {
   primaryPanelWidth: 280,
   contextPanelWidth: 320,
   primaryPanelOpen: true,
-  contextPanelOpen: true
+  contextPanelOpen: true,
+  expandedFolders: []
 };
 
 @Injectable({ providedIn: 'root' })
@@ -38,7 +40,7 @@ export class PreferencesService {
   }
 
   write(subject: string, vaultId: string, preferences: WorkspacePreferences): void {
-    try { localStorage.setItem(this.key(subject, vaultId), JSON.stringify(preferences)); } catch { }
+    try { localStorage.setItem(this.key(subject, vaultId), JSON.stringify(this.normalize(preferences))); } catch { }
   }
 
   clear(subject: string, vaultId: string): void {
@@ -63,12 +65,20 @@ export class PreferencesService {
       primaryPanelWidth: this.width(value.primaryPanelWidth, 220, 420, defaults.primaryPanelWidth),
       contextPanelWidth: this.width(value.contextPanelWidth, 240, 480, defaults.contextPanelWidth),
       primaryPanelOpen: value.primaryPanelOpen !== false,
-      contextPanelOpen: value.contextPanelOpen !== false
+      contextPanelOpen: value.contextPanelOpen !== false,
+      expandedFolders: this.paths(value.expandedFolders)
     };
   }
 
   private width(value: number | undefined, min: number, max: number, fallback: number): number {
     return typeof value === 'number' && Number.isFinite(value)
       ? Math.min(max, Math.max(min, Math.round(value))) : fallback;
+  }
+
+  private paths(value: unknown): string[] {
+    if (!Array.isArray(value)) return [];
+    return [...new Set(value.filter((path): path is string => typeof path === 'string' &&
+      path.length > 0 && path.length <= 1024 && !path.startsWith('/') && !path.includes('\\') &&
+      path.split('/').every(segment => segment.length > 0 && segment !== '.' && segment !== '..')))].slice(0, 500);
   }
 }

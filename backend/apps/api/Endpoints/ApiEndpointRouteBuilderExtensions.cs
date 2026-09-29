@@ -32,6 +32,8 @@ public static class ApiEndpointRouteBuilderExtensions
         .WithSummary("Retorna a identidade técnica da sessão.")
         .WithDescription("Exige um access token válido emitido pelo realm Altivy.");
 
+        MapTrashSettingsEndpoints(app);
+
         _ = app.MapGet("/api/v1/vaults", ListVaultsAsync)
             .RequireAuthorization()
             .WithSummary("Lista os vaults autorizados.")
@@ -48,7 +50,9 @@ public static class ApiEndpointRouteBuilderExtensions
         _ = notes.MapGet("{**path}", GetNoteAsync).WithSummary("Obtém uma nota autorizada pelo caminho relativo.");
         _ = notes.MapPost("{**path}", CreateNoteAsync).WithSummary("Cria uma nota Markdown no vault.");
         _ = notes.MapPut("{**path}", UpdateNoteAsync).WithSummary("Atualiza uma nota mediante ETag atual.");
-        _ = notes.MapDelete("{**path}", DeleteNoteAsync).WithSummary("Exclui uma nota mediante ETag atual.");
+        _ = notes.MapDelete("{**path}", DeleteNoteAsync)
+            .WithSummary("Move uma nota para a lixeira mediante ETag atual.")
+            .WithDescription("Exige vault:delete e If-Match. Move a nota para a lixeira sem remover seu conteúdo permanentemente.");
         _ = notes.MapPatch("{**path}", MoveNoteAsync)
             .WithSummary("Move ou renomeia uma nota mediante ETag atual.")
             .WithDescription(
@@ -66,11 +70,13 @@ public static class ApiEndpointRouteBuilderExtensions
             .WithDescription(
                 "Exige vault:write. O PUT é idempotente: cria a pasta relativa quando ausente, retorna sem alteração quando ela já existe e não cria pastas pai implicitamente.");
 
-        _ = app.MapDelete("/api/v1/vaults/{vaultId}/folders/{**path}", DeleteEmptyFolderAsync)
+        _ = app.MapDelete("/api/v1/vaults/{vaultId}/folders/{**path}", DeleteFolderAsync)
             .RequireAuthorization()
-            .WithSummary("Exclui uma pasta vazia do vault.")
+            .WithSummary("Move uma pasta para a lixeira.")
             .WithDescription(
-                "Exige vault:delete. A operação remove somente a pasta informada; pastas que contenham arquivos ou subpastas não são excluídas.");
+                "Exige vault:delete. Move a pasta e todo seu conteúdo para a lixeira do sujeito autenticado; não exclui conteúdo permanentemente.");
+
+        MapTrashEndpoints(app);
 
         _ = app.MapPatch("/api/v1/vaults/{vaultId}/folders/{**path}", MoveFolderAsync)
             .RequireAuthorization()
@@ -82,6 +88,37 @@ public static class ApiEndpointRouteBuilderExtensions
             .RequireAuthorization();
 
         return app;
+    }
+
+    private static void MapTrashEndpoints(WebApplication app)
+    {
+        _ = app.MapGet("/api/v1/vaults/{vaultId}/trash", ListTrashAsync)
+            .RequireAuthorization()
+            .WithSummary("Lista uma página da lixeira do sujeito autenticado.")
+            .WithDescription("Exige vault:read e retorna somente metadados mínimos das operações de lixeira pertencentes ao sub autenticado.");
+
+        _ = app.MapPatch("/api/v1/vaults/{vaultId}/trash/{operationId:guid}", RestoreTrashEntryAsync)
+            .RequireAuthorization()
+            .WithSummary("Restaura uma operação da lixeira para um destino informado.")
+            .WithDescription("Exige vault:write. O destino é explícito, relativo e nunca sobrescreve uma entrada existente.");
+
+        _ = app.MapDelete("/api/v1/vaults/{vaultId}/trash", TrashPurgeEndpoint.HandleAsync)
+            .RequireAuthorization()
+            .WithSummary("Esvazia a lixeira do sujeito após reautenticação recente.")
+            .WithDescription("Exige vault:delete, confirmação no cliente e auth_time recente propagado pelo BFF. A operação é auditada antes e depois do filesystem.");
+    }
+
+    private static void MapTrashSettingsEndpoints(WebApplication app)
+    {
+        _ = app.MapGet("/api/v1/me/trash-settings", GetTrashSettingsAsync)
+            .RequireAuthorization()
+            .WithSummary("Obtém o parâmetro de retenção da lixeira do sujeito.")
+            .WithDescription("Retorna somente o parâmetro não autorizativo do sub autenticado; ausência de configuração retorna null.");
+
+        _ = app.MapPut("/api/v1/me/trash-settings", SetTrashSettingsAsync)
+            .RequireAuthorization()
+            .WithSummary("Atualiza o parâmetro de retenção da lixeira do sujeito.")
+            .WithDescription("Aceita null para desabilitar a remoção automática. A alteração não habilita purge sem step-up e auditoria.");
     }
 
     private static async Task<IResult> ListVaultsAsync(
@@ -162,6 +199,46 @@ public static class ApiEndpointRouteBuilderExtensions
             return Results.Problem(
                 statusCode: StatusCodes.Status400BadRequest,
                 title: "Cursor de vault inválido.");
+        }
+    }
+
+    private static async Task<IResult> GetTrashSettingsAsync(
+        HttpContext context,
+        ITrashRetentionSettingsStore store,
+        CancellationToken cancellationToken)
+    {
+        var subject = GetSubject(context);
+        if (subject is null) return Results.Unauthorized();
+        try
+        {
+            return Results.Ok(new { retentionDays = await store.GetRetentionDaysAsync(subject, cancellationToken) });
+        }
+        catch (InvalidOperationException)
+        {
+            return Results.Problem(statusCode: 503, title: "Persistência de parâmetros indisponível.");
+        }
+    }
+
+    private static async Task<IResult> SetTrashSettingsAsync(
+        TrashSettingsRequest request,
+        HttpContext context,
+        ITrashRetentionSettingsStore store,
+        CancellationToken cancellationToken)
+    {
+        var subject = GetSubject(context);
+        if (subject is null) return Results.Unauthorized();
+        if (request.RetentionDays is < 1 or > 3650)
+        {
+            return Results.Problem(statusCode: 400, title: "O prazo de retenção deve estar entre 1 e 3650 dias, ou ser null.");
+        }
+        try
+        {
+            await store.SetRetentionDaysAsync(subject, request.RetentionDays, cancellationToken);
+            return Results.NoContent();
+        }
+        catch (InvalidOperationException)
+        {
+            return Results.Problem(statusCode: 503, title: "Persistência de parâmetros indisponível.");
         }
     }
 
@@ -411,9 +488,124 @@ public static class ApiEndpointRouteBuilderExtensions
 
     private static async Task<IResult> DeleteNoteAsync(
         string vaultId, string path, HttpContext context, IAuthorizationDecisionService authorization,
-        DeleteNoteCommandHandler command, CancellationToken cancellationToken) =>
-        await WriteNoteAsync(vaultId, null, context, authorization,
-            (_, tag) => command.HandleAsync(vaultId, path, tag, cancellationToken), cancellationToken);
+        MoveEntryToTrashCommandHandler command, CancellationToken cancellationToken)
+    {
+        var access = await AuthorizeAsync(vaultId, VaultAuthorization.DeleteScope, context, authorization, cancellationToken);
+        if (access is not null) return access;
+        var etag = context.Request.Headers.IfMatch.ToString().Trim('"');
+        if (string.IsNullOrWhiteSpace(etag)) return Results.Problem(statusCode: 428, title: "If-Match é obrigatório.");
+        var subject = GetSubject(context);
+        if (subject is null) return Results.Unauthorized();
+        try
+        {
+            var result = await command.HandleAsync(vaultId, subject, Uri.UnescapeDataString(path), etag, cancellationToken);
+            return TrashMoveResultResponse(result);
+        }
+        catch (ArgumentException) { return Results.Problem(statusCode: 400, title: "Caminho da nota inválido."); }
+        catch (UnauthorizedAccessException) { return Results.Problem(statusCode: 403, title: "Acesso ao conteúdo do vault negado."); }
+    }
+
+    private static async Task<IResult> DeleteFolderAsync(
+        string vaultId,
+        string path,
+        HttpContext context,
+        IAuthorizationDecisionService authorization,
+        MoveEntryToTrashCommandHandler command,
+        CancellationToken cancellationToken)
+    {
+        var access = await AuthorizeAsync(vaultId, VaultAuthorization.DeleteScope, context, authorization, cancellationToken);
+        if (access is not null) return access;
+        var subject = GetSubject(context);
+        if (subject is null) return Results.Unauthorized();
+        try
+        {
+            var result = await command.HandleAsync(vaultId, subject, Uri.UnescapeDataString(path), null, cancellationToken);
+            return TrashMoveResultResponse(result);
+        }
+        catch (ArgumentException) { return Results.Problem(statusCode: 400, title: "Caminho da pasta inválido."); }
+        catch (UnauthorizedAccessException) { return Results.Problem(statusCode: 403, title: "Acesso ao conteúdo do vault negado."); }
+    }
+
+    private static async Task<IResult> ListTrashAsync(
+        string vaultId,
+        string? cursor,
+        int? limit,
+        HttpContext context,
+        IAuthorizationDecisionService authorization,
+        ListTrashQueryHandler query,
+        CancellationToken cancellationToken)
+    {
+        var access = await AuthorizeAsync(vaultId, VaultAuthorization.ReadScope, context, authorization, cancellationToken);
+        if (access is not null) return access;
+        var subject = GetSubject(context);
+        if (subject is null) return Results.Unauthorized();
+        try
+        {
+            var page = await query.HandleAsync(vaultId, subject, cursor, limit ?? 20, cancellationToken);
+            return Results.Ok(new
+            {
+                items = page.Items.Select(entry => new
+                {
+                    id = entry.Id,
+                    path = entry.OriginalPath,
+                    name = entry.Name,
+                    kind = entry.IsFolder ? "folder" : "note",
+                    deletedAtUtc = entry.DeletedAtUtc,
+                    retentionDays = entry.RetentionDays,
+                    canRestoreToOriginal = entry.CanRestoreToOriginal
+                }),
+                nextCursor = page.NextCursor
+            });
+        }
+        catch (ArgumentException) { return Results.Problem(statusCode: 400, title: "Cursor ou limite da lixeira inválido."); }
+        catch (UnauthorizedAccessException) { return Results.Problem(statusCode: 403, title: "Acesso à lixeira negado."); }
+    }
+
+    private static async Task<IResult> RestoreTrashEntryAsync(
+        string vaultId,
+        Guid operationId,
+        TrashRestoreRequest request,
+        HttpContext context,
+        IAuthorizationDecisionService authorization,
+        RestoreTrashEntryCommandHandler command,
+        CancellationToken cancellationToken)
+    {
+        var access = await AuthorizeAsync(vaultId, VaultAuthorization.WriteScope, context, authorization, cancellationToken);
+        if (access is not null) return access;
+        var subject = GetSubject(context);
+        if (subject is null) return Results.Unauthorized();
+        try
+        {
+            var outcome = await command.HandleAsync(vaultId, subject, operationId, request.Path, cancellationToken);
+            return outcome.Result switch
+            {
+                TrashRestoreResult.Restored => Results.NoContent(),
+                TrashRestoreResult.NotFound => Results.NotFound(),
+                TrashRestoreResult.DestinationFolderNotFound => Results.Problem(
+                    statusCode: 409, title: "A pasta de destino não existe.", extensions: ProblemCode("trash-destination-folder-missing")),
+                _ => Results.Problem(
+                    statusCode: 409, title: "O destino informado já está ocupado.", extensions: ProblemCode("trash-destination-exists"))
+            };
+        }
+        catch (ArgumentException) { return Results.Problem(statusCode: 400, title: "Caminho de restauração inválido."); }
+        catch (UnauthorizedAccessException) { return Results.Problem(statusCode: 403, title: "Acesso à lixeira negado."); }
+    }
+
+    private static IResult TrashMoveResultResponse(TrashMoveOutcome result) => result.Result switch
+    {
+        TrashMoveResult.Moved => Results.NoContent(),
+        TrashMoveResult.NotFound => Results.NotFound(),
+        TrashMoveResult.VersionConflict => Results.Problem(
+            statusCode: 409, title: "A nota foi alterada por outra sessão.", extensions: ProblemCode("note-version-conflict")),
+        _ => Results.Problem(statusCode: 409, title: "Apenas notas Markdown e pastas podem ir para a lixeira.",
+            extensions: ProblemCode("trash-entry-unsupported"))
+    };
+
+    private static string? GetSubject(HttpContext context)
+    {
+        var subject = context.User.FindFirst("sub")?.Value;
+        return string.IsNullOrWhiteSpace(subject) ? null : subject;
+    }
 
     private static async Task<IResult> MoveNoteAsync(
         string vaultId, string path, NoteMoveRequest request, HttpContext context, IAuthorizationDecisionService authorization,

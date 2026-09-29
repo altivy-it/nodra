@@ -11,6 +11,12 @@ applyTo: "frontend/web/**, frontend/libs/frontend/**"
 - Execute os comandos Angular a partir de `frontend/web` usando o alias `ng` do
 	profile do PowerShell. O alias fornece o runtime containerizado oficial do
 	projeto.
+- Quando um comando ou teste precisar manter a aplicação em execução, o
+	Angular, BFF e API rodam exclusivamente em containers na rede Docker e
+	todo HTTP do navegador/Playwright passa pelo nginx containerizado. Para
+	Playwright simulado use `deploy/e2e/nginx-mocked.conf`; para integração real
+	use o gateway descrito em `deploy/e2e/README.md`. Não acesse a porta do
+	`ng serve` ou dos serviços diretamente, mesmo quando publicados no host.
 - Antes de invocar `ng`, confirme o diretório atual. Quando o terminal iniciar
 	na raiz do monorepo, execute
 	`Set-Location $env:USERPROFILE\projetos\AltivyNotes\frontend\web`; a raiz não

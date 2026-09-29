@@ -7,6 +7,16 @@
 - Consulte [frontend](../docs/frontend.md), [backend](../docs/backend.md) e [evolução do produto](../docs/evolucao-produto.md) conforme o escopo.
 - Arquivos Markdown no vault são a fonte canônica; PostgreSQL é uma projeção reconstruível.
 - A solução deve operar em containers, sem exigir runtimes instalados na máquina do usuário final.
+- Runners de testes, ferramentas de build e runtimes da aplicação rodam em
+	containers; comandos Docker no host apenas os orquestram. Sempre que um teste,
+	preview ou validação exigir uma aplicação em execução, suba-a em container e
+	acesse-a exclusivamente pela borda de um proxy reverso nginx também em
+	container. Isso vale para Playwright com API simulada e para E2E com serviços
+	reais: não use `ng serve`, BFF ou API diretamente como URL do navegador/teste.
+	Testes unitários sem aplicação HTTP em execução continuam em containers e não
+	exigem subir um nginx ocioso. Use a topologia de `deploy/e2e/` para ambientes
+	reais e `deploy/e2e/nginx-mocked.conf` para testes simulados; os comandos de
+	execução ficam em `frontend/tests/e2e/README.md`.
 
 ## Estrutura do monorepo
 

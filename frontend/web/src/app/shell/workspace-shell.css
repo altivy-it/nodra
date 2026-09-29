@@ -204,6 +204,12 @@ textarea:focus-visible {
   background: var(--surface-deep);
 }
 
+.primary-panel {
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+}
+
 .context-panel {
   border-right: 0;
   border-left: 1px solid var(--line);
@@ -781,4 +787,29 @@ textarea:focus-visible {
 
 .preview-empty {
   color: var(--muted);
+}
+
+.trash-settings {
+  display: grid;
+  max-width: 560px;
+  gap: 8px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.trash-settings h2 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.trash-settings p,
+.trash-settings small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.trash-settings input {
+  width: 120px;
+  margin-inline-start: 8px;
 }

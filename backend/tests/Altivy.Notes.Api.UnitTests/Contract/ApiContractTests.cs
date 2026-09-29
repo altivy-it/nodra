@@ -46,6 +46,37 @@ public sealed class ApiContractTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task TrashSettingsRoundTripUsesAuthenticatedSubject()
+    {
+        factory.DecisionService.Decision = new AuthorizationDecision(true, true, 200);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+
+        using var update = await client.PutAsJsonAsync("/api/v1/me/trash-settings", new { retentionDays = 30 });
+        using var get = await client.GetAsync("/api/v1/me/trash-settings");
+        using var clear = await client.PutAsJsonAsync("/api/v1/me/trash-settings", new { retentionDays = (int?)null });
+
+        Assert.Equal(HttpStatusCode.NoContent, update.StatusCode);
+        Assert.Equal("{\"retentionDays\":30}", await get.Content.ReadAsStringAsync());
+        Assert.Equal(HttpStatusCode.NoContent, clear.StatusCode);
+        Assert.Equal("synthetic-user", factory.RetentionStore.Subject);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(3651)]
+    public async Task TrashSettingsRejectsOutOfRangeValues(int retentionDays)
+    {
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+
+        using var response = await client.PutAsJsonAsync("/api/v1/me/trash-settings", new { retentionDays });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Null(factory.RetentionStore.LastValue);
+    }
+
+    [Fact]
     public async Task ListVaultsReturnsOnlyAuthorizedVaultsAcrossCandidatePages()
     {
         factory.VaultReader.SetCandidates(
@@ -358,10 +389,12 @@ public sealed class ApiContractTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
-    public async Task DeleteEmptyFolderWithDeleteGrantReturnsNoContent()
+    public async Task DeleteFolderWithDeleteGrantMovesEntryToTrash()
     {
         factory.DecisionService.Decision = new AuthorizationDecision(true, true, 200);
-        factory.FolderStore.DeletionResult = FolderDeletionResult.Deleted;
+        factory.FolderStore.TrashMoveOutcome = new TrashMoveOutcome(
+            TrashMoveResult.Moved,
+            new TrashEntry(Guid.NewGuid(), "projetos", "projetos", true, DateTimeOffset.UtcNow, null, true));
         using var client = factory.CreateClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
 
@@ -370,6 +403,7 @@ public sealed class ApiContractTests : IClassFixture<ApiFactory>
         Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
         Assert.Equal("vault:delete", factory.DecisionService.Scope);
         Assert.Equal(1, factory.FolderStore.CallCount);
+        Assert.Equal("synthetic-user", factory.FolderStore.Subject);
     }
 
     [Fact]
@@ -386,16 +420,125 @@ public sealed class ApiContractTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
-    public async Task DeleteNonEmptyFolderReturnsConflict()
+    public async Task DeleteNonEmptyFolderMovesToTrashInsteadOfConflicting()
     {
         factory.DecisionService.Decision = new AuthorizationDecision(true, true, 200);
-        factory.FolderStore.DeletionResult = FolderDeletionResult.NotEmpty;
+        factory.FolderStore.TrashMoveOutcome = new TrashMoveOutcome(
+            TrashMoveResult.Moved,
+            new TrashEntry(Guid.NewGuid(), "projetos", "projetos", true, DateTimeOffset.UtcNow, null, true));
         using var client = factory.CreateClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
 
         using var response = await client.DeleteAsync("/api/v1/vaults/lab-0001/folders/projetos");
 
-        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.Equal(1, factory.FolderStore.CallCount);
+    }
+
+    [Fact]
+    public async Task DeleteNoteRequiresIfMatchAndMovesToTrash()
+    {
+        factory.DecisionService.Decision = new AuthorizationDecision(true, true, 200);
+        factory.FolderStore.TrashMoveOutcome = new TrashMoveOutcome(
+            TrashMoveResult.Moved,
+            new TrashEntry(Guid.NewGuid(), "projetos/plano.md", "plano.md", false, DateTimeOffset.UtcNow, null, true));
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+
+        using var missingPrecondition = await client.DeleteAsync("/api/v1/vaults/lab-0001/notes/projetos/plano.md");
+        using var request = new HttpRequestMessage(HttpMethod.Delete, "/api/v1/vaults/lab-0001/notes/projetos/plano.md");
+        request.Headers.IfMatch.ParseAdd("\"version-1\"");
+        using var moved = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.PreconditionRequired, missingPrecondition.StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, moved.StatusCode);
+        Assert.Equal("vault:delete", factory.DecisionService.Scope);
+        Assert.Equal("version-1", factory.FolderStore.ExpectedETag);
+    }
+
+    [Fact]
+    public async Task ListTrashIsIsolatedToAuthenticatedSubjectAndRequiresReadGrant()
+    {
+        factory.DecisionService.Decision = new AuthorizationDecision(true, true, 200);
+        factory.FolderStore.TrashEntries =
+        [
+            new TrashEntry(Guid.NewGuid(), "projetos/plano.md", "plano.md", false, DateTimeOffset.UtcNow, null, true)
+        ];
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+
+        using var response = await client.GetAsync("/api/v1/vaults/lab-0001/trash");
+        var body = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("projetos/plano.md", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("synthetic-user", body, StringComparison.Ordinal);
+        Assert.Equal("vault:read", factory.DecisionService.Scope);
+        Assert.Equal("synthetic-user", factory.FolderStore.Subject);
+    }
+
+    [Fact]
+    public async Task ListTrashWithDeniedGrantDoesNotAccessStore()
+    {
+        factory.DecisionService.Decision = new AuthorizationDecision(false, true, 403);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+
+        using var response = await client.GetAsync("/api/v1/vaults/lab-0001/trash");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal(0, factory.FolderStore.CallCount);
+    }
+
+    [Fact]
+    public async Task RestoreTrashUsesExplicitDestinationAndWriteGrant()
+    {
+        factory.DecisionService.Decision = new AuthorizationDecision(true, true, 200);
+        factory.FolderStore.TrashRestoreOutcome = new TrashRestoreOutcome(TrashRestoreResult.Restored);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+        var operationId = Guid.NewGuid();
+
+        using var response = await client.PatchAsJsonAsync(
+            $"/api/v1/vaults/lab-0001/trash/{operationId}", new { path = "arquivo/plano.md" });
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.Equal("vault:write", factory.DecisionService.Scope);
+        Assert.Equal("arquivo/plano.md", factory.FolderStore.RestoreDestination);
+        Assert.Equal(operationId, factory.FolderStore.RestoreOperationId);
+    }
+
+    [Fact]
+    public async Task EmptyTrashWithoutRecentReauthenticationReturnsPreconditionRequired()
+    {
+        factory.DecisionService.Decision = new AuthorizationDecision(true, true, 200);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+
+        using var response = await client.DeleteAsync("/api/v1/vaults/lab-0001/trash");
+
+        Assert.Equal(HttpStatusCode.PreconditionRequired, response.StatusCode);
+        Assert.Contains("reauthentication-required", await response.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+        Assert.Equal(0, factory.FolderStore.CallCount);
+    }
+
+    [Fact]
+    public async Task EmptyTrashWithFreshReauthenticationRecordsAuditAndReturnsCounts()
+    {
+        factory.DecisionService.Decision = new AuthorizationDecision(true, true, 200);
+        factory.FolderStore.EmptyTrashOutcome = new TrashEmptyOutcome(3, 1);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+        client.DefaultRequestHeaders.Add("X-Altivy-Reauth-At", DateTimeOffset.UtcNow.AddSeconds(-30).ToString("O"));
+
+        using var response = await client.DeleteAsync("/api/v1/vaults/lab-0001/trash");
+        var body = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("removedOperations", body, StringComparison.Ordinal);
+        Assert.Equal("empty-trash-intent", factory.AuditStore.Events[0].Action);
+        Assert.Equal("empty-trash-result", factory.AuditStore.Events[1].Action);
+        Assert.Equal(1, factory.FolderStore.CallCount);
     }
 
     [Fact]
@@ -513,14 +656,14 @@ public sealed class ApiContractTests : IClassFixture<ApiFactory>
         Assert.NotNull(await store.FindAsync("lab-0001", NotePath.Create("a.md"), CancellationToken.None));
     }
 
-    private static Task<HttpResponseMessage> SendPatchAsync(HttpClient client, string source, string destination, string etag)
+    private static async Task<HttpResponseMessage> SendPatchAsync(HttpClient client, string source, string destination, string etag)
     {
-        var request = new HttpRequestMessage(HttpMethod.Patch, $"/api/v1/vaults/lab-0001/notes/{source}")
+        using var request = new HttpRequestMessage(HttpMethod.Patch, $"/api/v1/vaults/lab-0001/notes/{source}")
         {
             Content = JsonContent.Create(new { path = destination })
         };
         request.Headers.IfMatch.ParseAdd(etag);
-        return client.SendAsync(request);
+        return await client.SendAsync(request);
     }
 
     [Fact]
@@ -546,12 +689,18 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
 
     public FakeFolderStore FolderStore { get; } = new();
 
+    public FakeTrashRetentionSettingsStore RetentionStore { get; } = new();
+
+    public FakeTrashAuditStore AuditStore { get; } = new();
+
     public void Reset()
     {
         DecisionService.Reset();
         VaultReader.Reset();
         NoteStore.Reset();
         FolderStore.Reset();
+        RetentionStore.Reset();
+        AuditStore.Reset();
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -566,6 +715,10 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             services.AddSingleton<INoteStore>(NoteStore);
             services.RemoveAll<IFolderStore>();
             services.AddSingleton<IFolderStore>(FolderStore);
+            services.RemoveAll<ITrashRetentionSettingsStore>();
+            services.AddSingleton<ITrashRetentionSettingsStore>(RetentionStore);
+            services.RemoveAll<ITrashAuditStore>();
+            services.AddSingleton<ITrashAuditStore>(AuditStore);
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = "Test";
@@ -588,6 +741,14 @@ public sealed class FakeFolderStore : IFolderStore
     public FolderCreationResult CreationResult { get; set; } = FolderCreationResult.Created;
 
     public FolderDeletionResult DeletionResult { get; set; } = FolderDeletionResult.NotFound;
+    public TrashMoveOutcome TrashMoveOutcome { get; set; } = new(TrashMoveResult.NotFound);
+    public TrashRestoreOutcome TrashRestoreOutcome { get; set; } = new(TrashRestoreResult.NotFound);
+    public TrashEmptyOutcome EmptyTrashOutcome { get; set; } = new(0, 0);
+    public IReadOnlyList<TrashEntry> TrashEntries { get; set; } = [];
+    public string? Subject { get; private set; }
+    public string? ExpectedETag { get; private set; }
+    public string? RestoreDestination { get; private set; }
+    public Guid RestoreOperationId { get; private set; }
 
     public Task<IReadOnlyList<VaultEntry>> ListChildrenAsync(
         string vaultId,
@@ -629,6 +790,53 @@ public sealed class FakeFolderStore : IFolderStore
         return Task.FromResult(new FolderMoveOutcome(MoveResult, []));
     }
 
+    public Task<TrashMoveOutcome> MoveToTrashAsync(
+        string vaultId,
+        string subject,
+        FolderPath path,
+        string? expectedETag,
+        CancellationToken cancellationToken)
+    {
+        CallCount++;
+        Subject = subject;
+        ExpectedETag = expectedETag;
+        return Task.FromResult(TrashMoveOutcome);
+    }
+
+    public Task<IReadOnlyList<TrashEntry>> ListTrashAsync(
+        string vaultId,
+        string subject,
+        CancellationToken cancellationToken)
+    {
+        CallCount++;
+        Subject = subject;
+        return Task.FromResult(TrashEntries);
+    }
+
+    public Task<TrashRestoreOutcome> RestoreFromTrashAsync(
+        string vaultId,
+        string subject,
+        Guid operationId,
+        FolderPath destination,
+        CancellationToken cancellationToken)
+    {
+        CallCount++;
+        Subject = subject;
+        RestoreDestination = destination.Value;
+        RestoreOperationId = operationId;
+        return Task.FromResult(TrashRestoreOutcome);
+    }
+
+    public Task<TrashEmptyOutcome> EmptyTrashAsync(
+        string vaultId,
+        string subject,
+        CancellationToken cancellationToken)
+    {
+        CallCount++;
+        Subject = subject;
+        return Task.FromResult(EmptyTrashOutcome);
+    }
+
     public void SetEntries(string parentPath, IReadOnlyList<VaultEntry> value) => entries[parentPath] = value;
 
     public void Reset()
@@ -639,7 +847,56 @@ public sealed class FakeFolderStore : IFolderStore
         CreationResult = FolderCreationResult.Created;
         DeletionResult = FolderDeletionResult.NotFound;
         MoveResult = FolderMoveResult.Moved;
+        TrashMoveOutcome = new TrashMoveOutcome(TrashMoveResult.NotFound);
+        TrashRestoreOutcome = new TrashRestoreOutcome(TrashRestoreResult.NotFound);
+        EmptyTrashOutcome = new TrashEmptyOutcome(0, 0);
+        TrashEntries = [];
+        Subject = null;
+        ExpectedETag = null;
+        RestoreDestination = null;
+        RestoreOperationId = Guid.Empty;
     }
+}
+
+public sealed class FakeTrashRetentionSettingsStore : ITrashRetentionSettingsStore
+{
+    public string? Subject { get; private set; }
+
+    public int? LastValue { get; private set; }
+
+    public Task<int?> GetRetentionDaysAsync(string subject, CancellationToken cancellationToken)
+    {
+        Subject = subject;
+        return Task.FromResult(LastValue);
+    }
+
+    public Task SetRetentionDaysAsync(string subject, int? retentionDays, CancellationToken cancellationToken)
+    {
+        Subject = subject;
+        LastValue = retentionDays;
+        return Task.CompletedTask;
+    }
+
+    public void Reset()
+    {
+        Subject = null;
+        LastValue = null;
+    }
+}
+
+public sealed class FakeTrashAuditStore : ITrashAuditStore
+{
+    private readonly List<TrashAuditEvent> events = [];
+
+    public IReadOnlyList<TrashAuditEvent> Events => events;
+
+    public Task RecordAsync(TrashAuditEvent auditEvent, CancellationToken cancellationToken)
+    {
+        events.Add(auditEvent);
+        return Task.CompletedTask;
+    }
+
+    public void Reset() => events.Clear();
 }
 
 public sealed class FakeNoteStore : INoteStore

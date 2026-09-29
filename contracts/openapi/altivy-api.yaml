@@ -39,6 +39,32 @@ paths:
                 $ref: "#/components/schemas/SessionResponse"
         "401":
           $ref: "#/components/responses/Unauthorized"
+  /api/v1/me/trash-settings:
+    get:
+      summary: Obtém o parâmetro de retenção da lixeira do sujeito
+      description: Exige sessão autenticada e retorna somente o parâmetro associado ao `sub` atual. Null indica ausência de configuração.
+      responses:
+        "200":
+          description: Parâmetro atual
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TrashSettingsResponse" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+    put:
+      summary: Atualiza o parâmetro de retenção da lixeira do sujeito
+      description: >-
+        Exige sessão autenticada. Aceita null para desabilitar a remoção automática. Este parâmetro não habilita purge sem step-up OIDC recente e auditoria append-only.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TrashSettingsRequest" }
+      responses:
+        "204": { description: Parâmetro salvo }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "503": { $ref: "#/components/responses/Unavailable" }
   /api/v1/vaults:
     get:
       summary: Lista os vaults autorizados
@@ -153,14 +179,14 @@ paths:
         "409": { $ref: "#/components/responses/Conflict" }
         "503": { $ref: "#/components/responses/Unavailable" }
     delete:
-      summary: Exclui uma pasta vazia
+      summary: Move uma pasta para a lixeira
       description: >-
-        Exige `vault:delete`. Remove somente a pasta indicada e nunca remove seu conteúdo. A pasta ausente retorna sucesso idempotente; pastas não vazias ou um arquivo no caminho retornam conflito.
+        Exige `vault:delete`. Move a pasta e toda sua subárvore para a lixeira do sujeito autenticado. O conteúdo não é removido permanentemente e não aparece no catálogo ativo.
       parameters:
         - $ref: "#/components/parameters/VaultId"
         - $ref: "#/components/parameters/FolderPath"
       responses:
-        "204": { description: Pasta excluída ou já ausente }
+        "204": { description: Pasta movida para a lixeira }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -188,6 +214,69 @@ paths:
                 required: [path]
                 properties:
                   path: { type: string, example: arquivo/projetos }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+  /api/v1/vaults/{vaultId}/trash:
+    get:
+      summary: Lista operações da lixeira do sujeito autenticado
+      description: >-
+        Exige `vault:read`. Retorna metadados mínimos somente das operações pertencentes ao `sub` autenticado. A lista usa cursor e não revela conteúdo de notas.
+      parameters:
+        - $ref: "#/components/parameters/VaultId"
+        - $ref: "#/components/parameters/TrashCursor"
+        - $ref: "#/components/parameters/TrashLimit"
+      responses:
+        "200":
+          description: Página ordenada pela exclusão mais recente
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TrashPage" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+    delete:
+      summary: Esvazia a lixeira do vault
+      description: >-
+        Exige `vault:delete`, confirmação explícita na interface e reautenticação OIDC recente. O BFF injeta a evidência `auth_time` somente no tráfego interno; a senha nunca chega à API. A operação registra intenção e resultado em auditoria append-only e pode retornar falhas parciais.
+      responses:
+        "200":
+          description: Resultado da remoção das operações da lixeira
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [removedOperations, failedOperations]
+                properties:
+                  removedOperations: { type: integer, format: int32, minimum: 0 }
+                  failedOperations: { type: integer, format: int32, minimum: 0 }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "428": { $ref: "#/components/responses/PreconditionRequired" }
+        "503": { $ref: "#/components/responses/Unavailable" }
+  /api/v1/vaults/{vaultId}/trash/{operationId}:
+    parameters:
+      - $ref: "#/components/parameters/VaultId"
+      - name: operationId
+        in: path
+        required: true
+        description: Identificador opaco da operação de lixeira.
+        schema: { type: string, format: uuid }
+    patch:
+      summary: Restaura uma operação da lixeira
+      description: >-
+        Exige `vault:write`. O usuário informa o caminho relativo de destino. A operação nunca sobrescreve conteúdo; a colisão retorna `trash-destination-exists` e uma pasta pai ausente retorna `trash-destination-folder-missing`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TrashRestoreRequest" }
+      responses:
+        "204": { description: Conteúdo restaurado para o destino informado }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -255,12 +344,12 @@ paths:
         "428": { $ref: "#/components/responses/PreconditionRequired" }
         "503": { $ref: "#/components/responses/Unavailable" }
     delete:
-      summary: Exclui uma nota Markdown
-      description: Exige `vault:delete` e o header `If-Match` com o ETag atual da nota.
+      summary: Move uma nota Markdown para a lixeira
+      description: Exige `vault:delete` e o header `If-Match` com o ETag atual da nota. O conteúdo permanece recuperável na lixeira.
       parameters:
         - $ref: "#/components/parameters/IfMatch"
       responses:
-        "204": { description: Nota excluída }
+        "204": { description: Nota movida para a lixeira }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -325,6 +414,23 @@ components:
         maximum: 100
         default: 20
         example: 20
+    TrashCursor:
+      name: cursor
+      in: query
+      required: false
+      description: ID opaco da última operação retornada na página anterior.
+      schema: { type: string, format: uuid }
+    TrashLimit:
+      name: limit
+      in: query
+      required: false
+      description: Quantidade máxima de operações de lixeira na página.
+      schema:
+        type: integer
+        format: int32
+        minimum: 1
+        maximum: 100
+        default: 20
     VaultId:
       name: vaultId
       in: path
@@ -481,6 +587,62 @@ components:
           maxLength: 1024
           description: Novo caminho relativo da pasta.
           example: arquivo/projetos
+    TrashRestoreRequest:
+      type: object
+      additionalProperties: false
+      required: [path]
+      properties:
+        path:
+          type: string
+          minLength: 1
+          maxLength: 1024
+          description: Destino relativo escolhido explicitamente pelo usuário.
+          example: arquivo/plano-restaurado.md
+    TrashSettingsRequest:
+      type: object
+      additionalProperties: false
+      required: [retentionDays]
+      properties:
+        retentionDays:
+          type: integer
+          nullable: true
+          minimum: 1
+          maximum: 3650
+          description: Prazo capturado em novas exclusões; null desabilita remoção automática.
+    TrashSettingsResponse:
+      type: object
+      additionalProperties: false
+      required: [retentionDays]
+      properties:
+        retentionDays:
+          type: integer
+          nullable: true
+          minimum: 1
+          maximum: 3650
+    TrashEntry:
+      type: object
+      additionalProperties: false
+      required: [id, path, name, kind, deletedAtUtc, retentionDays, canRestoreToOriginal]
+      properties:
+        id: { type: string, format: uuid }
+        path: { type: string, maxLength: 1024, description: Caminho relativo original. }
+        name: { type: string, maxLength: 255 }
+        kind: { type: string, enum: [folder, note] }
+        deletedAtUtc: { type: string, format: date-time }
+        retentionDays: { type: integer, nullable: true, minimum: 1, maximum: 3650 }
+        canRestoreToOriginal:
+          type: boolean
+          description: Indica se o caminho original está disponível no momento da listagem.
+    TrashPage:
+      type: object
+      additionalProperties: false
+      required: [items, nextCursor]
+      properties:
+        items:
+          type: array
+          maxItems: 100
+          items: { $ref: "#/components/schemas/TrashEntry" }
+        nextCursor: { type: string, nullable: true, format: uuid }
     ProblemDetails:
       type: object
       required: [title, status]

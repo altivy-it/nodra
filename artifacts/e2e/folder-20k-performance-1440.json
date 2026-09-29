@@ -1,0 +1,18 @@
+{
+  "application": "altivy-notes",
+  "team": "product",
+  "environment": "local-containerized-e2e",
+  "version": "local",
+  "commit": "local",
+  "scenario": "folder-tree-keyboard-20k",
+  "pipeline_run_id": "local",
+  "viewport_width": 1440,
+  "entry_count": 20000,
+  "samples": 100,
+  "p95_ms": 44.36,
+  "p99_ms": 46.55,
+  "thresholds_ms": {
+    "p95": 500,
+    "p99": 2000
+  }
+}

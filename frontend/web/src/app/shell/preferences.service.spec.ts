@@ -26,10 +26,30 @@ describe('PreferencesService', () => {
     it('mantém preferências isoladas por usuário e vault', () => {
         const preferences = service.read('user-1', 'vault-1');
         preferences.theme = 'dark';
+        preferences.expandedFolders = ['projetos'];
         service.write('user-1', 'vault-1', preferences);
 
         expect(service.read('user-1', 'vault-1').theme).toBe('dark');
+        expect(service.read('user-1', 'vault-1').expandedFolders).toEqual(['projetos']);
         expect(service.read('user-2', 'vault-1').theme).toBe('system');
         expect(service.read('user-1', 'vault-2').theme).toBe('system');
+        expect(service.read('user-1', 'vault-2').expandedFolders).toEqual([]);
+    });
+
+    it('descarta caminhos inválidos e limita a expansão restaurável', () => {
+        localStorage.setItem('altivy:preferences:v1:user-1:vault-1', JSON.stringify({
+            expandedFolders: ['projetos', '../fora', '/absoluto', 'a\\b', 'a//b', 'projetos', 42]
+        }));
+
+        expect(service.read('user-1', 'vault-1').expandedFolders).toEqual(['projetos']);
+    });
+
+    it('normaliza caminhos de expansão antes de gravar no storage', () => {
+        const preferences = service.read('user-1', 'vault-1');
+        preferences.expandedFolders = ['projetos', '../fora', 'projetos'];
+
+        service.write('user-1', 'vault-1', preferences);
+
+        expect(service.read('user-1', 'vault-1').expandedFolders).toEqual(['projetos']);
     });
 });

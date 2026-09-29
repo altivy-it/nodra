@@ -25,6 +25,10 @@ public sealed class FileSystemNoteStore(string vaultRoot) : INoteStore
         foreach (var filePath in Directory.EnumerateFiles(root, "*.md", SearchOption.AllDirectories))
         {
             cancellationToken.ThrowIfCancellationRequested();
+            if (FileSystemTrashArea.IsInsideManagedArea(root, filePath))
+            {
+                continue;
+            }
             var relativePath = Path.GetRelativePath(root, filePath).Replace('\\', '/');
             var content = await File.ReadAllTextAsync(filePath, cancellationToken);
             documents.Add(new NoteDocument(NotePath.Create(relativePath), content, CreateETag(content)));

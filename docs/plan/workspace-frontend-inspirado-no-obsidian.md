@@ -2,7 +2,7 @@
 
 **Status:** in-progress  
 **Data de criação:** 2026-09-01  
-**Última atualização:** 2026-09-26  
+**Última atualização:** 2026-09-28
 **Responsáveis:** Lincoln Zocateli  
 **Origem:** IA assistida a partir da solicitação do produto  
 **Revisor humano:** Lincoln Zocateli  
@@ -555,13 +555,101 @@ Evidências:
 - Validação após mover pastas: frontend 55/55, API 48/48, aplicação 42/42,
   integração de filesystem 18/18 e Playwright com API simulada 7/7 (inclui
   renomear pasta com nota aberta em 1440 px e 390 px).
-- Ainda pendentes: drag and drop, exclusão de pastas
-  não vazias via fluxo de
-  lixeira, menu de contexto,
-  operações otimistas reversíveis, foco contido, Playwright de jornada contra
-  ambiente real (BFF/API/Keycloak) e
-  benchmark de 20 mil entradas. O teste Domain legado também não compila por referência ausente a
-  `NoteDocument` em `MarkdownDocumentParserTests`.
+- O explorador permite arrastar pastas e notas salvas para outra pasta visível.
+  Recusa ciclos e movimentos sem efeito antes de chamar a API; pastas usam o
+  PATCH existente e notas usam `If-Match` com o ETag da listagem. O painel de
+  ações passou a ficar abaixo da árvore para evitar deslocar linhas durante o
+  gesto. A nota aberta acompanha a mudança e conflitos preservam a origem.
+- Validação do drag: Vitest 57/57; Playwright simulado 11/11 com nginx
+  containerizado como única borda, Angular sem porta publicada, em desktop
+  1440 px e mobile 390 px. Screenshots finais em `artifacts/e2e/`.
+- O menu de contexto por clique direito ou `Shift+F10` oferece ações para pasta
+  e nota, reaproveita criação contextual, renomeação e confirmação da exclusão
+  de pasta vazia, e devolve o foco à linha ao fechar com Escape. Vitest 60/60
+  e Playwright simulado 13/13 pela borda nginx; capturas em 1440 px e 390 px
+  sem overflow ou sobreposição. O teste adicional confirmou que excluir pelo
+  menu ainda exige confirmação antes de chamar a API.
+- O menu contextual mantém Tab e Shift+Tab dentro de seus itens até a ação
+  escolhida ou Escape; a jornada Playwright confirma o ciclo de foco nos dois
+  viewports. Os demais fluxos de foco ainda precisam de revisão.
+- O budget inicial de produção foi atualizado com limite de aviso de 4,5 MB
+  e erro de 5,1 MB (cerca de 24% acima dos 4,11 MB medidos, dentro da margem
+  máxima de 25% solicitada). Build de produção sem avisos, Vitest 61/61 e
+  Playwright simulado 13/13 pela borda nginx.
+- A listagem diferencia falta de permissão (403), sessão expirada (401) e
+  ausência de conexão (status 0). Revogação limpa filhos e erros em cache no
+  ramo negado e invalida respostas de subpastas ainda em voo; indisponibilidade
+  de uma subpasta preserva as demais entradas
+  e permite retry. Alertas identificam a pasta e foram verificados em 1440 px
+  e 390 px. A árvore de 20 mil entradas mantém menos de 40 itens no DOM e
+  navega até a última nota com End no Chromium; o painel agora restringe a
+  altura do viewport e o foco é reaplicado após scroll/renderização da janela virtual.
+- Validação desta entrega: Vitest 69/69, Playwright simulado 19/19 pela borda
+  nginx e build de produção em 4,11 MB sem avisos. O cenário de 20 mil entradas
+  é funcional; ainda não mede p95/p99 nem substitui benchmark formal.
+- A criação de pasta passou a inserir uma entrada provisória desabilitada e
+  identificada como "criando" quando o pai já está carregado. O PUT confirma
+  pelo servidor; conflito desfaz somente a entrada provisória, mesmo após
+  recarregamento concorrente. Troca de vault e revogação descartam a operação
+  pendente sem restaurar metadados negados. Vitest 74/74, Playwright simulado
+  21/21 via nginx em 1440 px e 390 px e build de produção em 4,11 MB.
+- A exclusão de pasta vazia continua exigindo confirmação, mas a árvore retira
+  a entrada enquanto aguarda o DELETE e anuncia a operação em andamento. Um
+  409 restaura somente a pasta removida e mantém os irmãos; reload concorrente
+  não reapresenta a pasta, troca de vault não restaura dados antigos e criação
+  simultânea no mesmo caminho é bloqueada. Vitest 77/77, Playwright simulado
+  23/23 pela borda nginx em 1440 px e 390 px e build de produção em 4,11 MB.
+- A atualização manual preserva as entradas em cache, o nó expandido e o
+  índice/scroll do item ativo durante a busca; apenas a resposta mais recente
+  por pasta substitui os filhos, impedindo retorno de dados obsoletos fora de
+  ordem. Playwright com nota adicionada externamente confirmou a atualização
+  sem piscar nem fechar a árvore em 1440 px e 390 px. Vitest 79/79,
+  Playwright simulado 25/25 pela borda nginx e build em 4,11 MB.
+- A expansão da árvore agora é persistida por `sub` e vault nas preferências
+  versionadas. Caminhos inválidos, repetidos, absolutos ou com traversal são
+  descartados; na reabertura, cada nível só é expandido depois de a pasta ser
+  encontrada na listagem autorizada do pai. Testes focados: Preferences 4/4,
+  serviço 26/26 e shell/componente 13/13; Playwright simulado 2/2 em desktop e
+  mobile após recarga completa.
+- Movimento de pasta e nota agora mostram estado otimista nas listagens já
+  carregadas, preservam a representação durante reload e revertem apenas a
+  entrada movida em conflito. O drag de nota carrega/expande o destino antes do
+  PATCH com `If-Match`. Serviço do explorador 28/28; Playwright simulado 4/4
+  em desktop e mobile para sucesso e conflito, pela borda nginx.
+- O foco dos formulários inline de pasta e movimento, confirmação de exclusão e
+  retorno ao cancelar agora é explícito. Os formulários não prendem Tab porque
+  não são diálogos; o menu contextual continua com seu ciclo de foco próprio.
+  Componente do explorador: 13/13 testes.
+- O cenário de 20 mil entradas mede 100 interações de teclado após aquecimento
+  e grava JSON com p95/p99 e contexto. No Chromium containerizado, desktop:
+  p95 107,07 ms / p99 141,77 ms; mobile: p95 267,98 ms / p99 368,35 ms,
+  abaixo dos limites de suporte de 500 ms / 2.000 ms. Os artefatos estão em
+  `artifacts/e2e/folder-20k-performance-1440.json` e
+  `artifacts/e2e/folder-20k-performance-390.json`.
+- Gate final deste avanço: Vitest 85/85, Playwright simulado 29/29 pela borda
+  nginx em container e build de produção aprovado com bundle inicial de
+  4,12 MB, sem avisos. O E2E real não foi executado: o processo não possui
+  `ALTIVY_E2E_USERNAME`/`ALTIVY_E2E_PASSWORD`; o arquivo externo de secrets
+  não foi lido.
+- A lixeira foi implementada conforme o [ADR 2026-0006 aceito](../adr/2026-0006-lixeira-segura-de-conteudo.md): área `.altivy-trash` marcada e confinada,
+  manifesto por operação, isolamento por `sub`, exclusão de notas com ETag,
+  movimento recursivo de pastas, listagem paginada, restauração para destino
+  explícito e proteção contra colisão/reparse point. Testes reais do filesystem:
+  11/11; API: 55/55; frontend: 91/91; Playwright mockado: 31/31; build de
+  produção: bundle inicial de 4,13 MB.
+- O CRUD fallback do parâmetro de retenção por `sub` também foi implementado em
+  `user_trash_retention_settings`, com limites de 1 a 3650 dias ou null, migration
+  explícita, endpoints autenticados `/api/v1/me/trash-settings` e controle na
+  tela de configurações. O valor ainda não ativa remoção automática: faltam
+  step-up OIDC recente, auditoria append-only e a operação de esvaziamento.
+  O BFF já inicia o desafio protegido em `/bff/reauthenticate` e valida/persiste
+  `auth_time` no ticket server-side; o esvaziamento continua fechado até usar
+  essa evidência com auditoria completa.
+  Também pendem indicadores
+  de classificação, metadados e links não resolvidos, que exigem dados e
+  contrato de leitura, e o Playwright contra BFF/API/Keycloak reais. O teste
+  Domain legado continua bloqueado pela referência ausente a `NoteDocument` em
+  `MarkdownDocumentParserTests`.
 
 ### P-05: Integrar abas, editor e barra de status
 
@@ -971,6 +1059,19 @@ do layout anterior exige aprovação humana e evidência dos critérios finais.
 | 2026-09-27 | P-04 | in-progress | in-progress | criação idempotente e exclusão de pasta vazia, criação contextual de nota/pasta, correções visuais e jornada Playwright com API simulada aprovada em desktop e mobile; rename/move e reconciliação continuam pendentes | IA assistida |
 | 2026-09-27 | P-04 | in-progress | in-progress | mover/renomear nota com If-Match e reconciliação da projeção; corrigidos autosave ao editar caminho, recarga de pastas expandidas e margens do estado sem BFF; mover pastas e lixeira continuam pendentes | IA assistida |
 | 2026-09-27 | P-04 | in-progress | in-progress | mover/renomear pasta com reconciliação por nota, bloqueio de links simbólicos e remapeamento da nota aberta; corrigida chave de idempotência do movimento de nota; drag and drop, lixeira e menu de contexto continuam pendentes | IA assistida |
+| 2026-09-28 | P-04 | in-progress | in-progress | drag de pastas e notas com validação de destino; 57 testes Angular e 11 Playwright simulados aprovados pela borda nginx containerizada; lixeira, menu de contexto e jornada real ainda pendentes | IA assistida |
+| 2026-09-28 | P-04 | in-progress | in-progress | menu contextual por mouse/teclado e foco restaurado; 60 Vitest e 13 Playwright simulados aprovados; build de produção ainda bloqueado por budget preexistente | IA assistida |
+| 2026-09-28 | P-04 | in-progress | in-progress | budget de produção limitado a 5,1 MB (até 25% sobre 4,11 MB medidos) com build aprovado; Tab contido no menu; Vitest 61/61 e Playwright simulado 13/13 | IA assistida |
+| 2026-09-28 | P-04 | in-progress | in-progress | estados 401/403/offline, revogação de cache e cenário funcional de 20 mil entradas validados; Vitest 69/69, Playwright simulado 19/19 e build de produção aprovados; benchmark formal e jornada real pendentes | IA assistida |
+| 2026-09-28 | P-04 | in-progress | in-progress | criação otimista de pasta com rollback isolado e limpeza após revogação; Vitest 74/74, Playwright simulado 21/21 e build de produção aprovados; lixeira e otimização das demais mutações pendentes | IA assistida |
+| 2026-09-28 | P-04 | in-progress | in-progress | exclusão otimista reversível de pasta vazia com confirmação e proteção contra reload/troca de vault; Vitest 77/77, Playwright simulado 23/23 e build de produção aprovados; lixeira e movimento otimista pendentes | IA assistida |
+| 2026-09-28 | P-04 | in-progress | in-progress | reload incremental sem perder árvore/foco e respostas fora de ordem ignoradas; Vitest 79/79, Playwright simulado 25/25 e build de produção aprovados; lixeira e E2E real pendentes | IA assistida |
+| 2026-09-28 | P-04 | in-progress | in-progress | expansão por usuário/vault persistida; movimentos otimistas de pasta/nota reversíveis; foco de formulários coberto; Vitest 85/85, Playwright mocked 29/29 e build de 4,12 MB; benchmark 20 mil entradas p95/p99 dentro dos limites; lixeira proposta em ADR, indicadores dependentes de contrato e E2E real sem credenciais de processo pendentes | IA assistida |
+| 2026-09-28 | P-04 | in-progress | in-progress | ADR 2026-0006 aprovado humanamente com retenção por parâmetro, esvaziamento com step-up OIDC e auditoria, destino explícito na restauração e manifesto varrido no filesystem; implementação da lixeira permanece pendente | IA assistida |
+| 2026-09-28 | P-04 | in-progress | in-progress | lixeira implementada no filesystem/API/frontend; parâmetro de retenção por sub persistido via CRUD fallback; 11 testes filesystem, 55 API, 89 Vitest, 31 Playwright mockado e build 4,13 MB aprovados; step-up, auditoria, esvaziamento e E2E real continuam pendentes | IA assistida |
+| 2026-09-28 | P-04 | in-progress | in-progress | lixeira recursiva e restauração com destino explícito validadas em desktop/mobile; parâmetro de retenção integrado à tela de configurações e migration; 11 filesystem, 55 API, 91 Vitest, 31 Playwright mockado e build 4,13 MB; step-up/auditoria/purge, indicadores semânticos e E2E real permanecem pendentes | IA assistida |
+| 2026-09-28 | P-04 | in-progress | in-progress | BFF passou a iniciar reautenticação OIDC protegida por `/bff/reauthenticate` com prompt=login e max_age=0; prova auth_time, auditoria append-only e esvaziamento continuam fechados até validação completa | IA assistida |
+| 2026-09-29 | P-04 | in-progress | in-progress | BFF captura auth_time somente no desafio OIDC, a API exige evidência recente, e move/restore/empty-trash gravam intenção e resultado em trash_audit_events; UI confirma esvaziamento e redireciona para reautenticação quando recebe 428 | IA assistida |
 
 ## Regras de atualização
 

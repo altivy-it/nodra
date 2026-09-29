@@ -40,6 +40,33 @@ public static class BffEndpointRouteBuilderExtensions
                 [OpenIdConnectDefaults.AuthenticationScheme]);
         }).AllowAnonymous().RequireRateLimiting("login");
 
+        endpoints.MapGet("/bff/reauthenticate", (string? returnUrl) =>
+        {
+            var redirectUri = LocalRedirect.Normalize(returnUrl);
+            var properties = new AuthenticationProperties { RedirectUri = redirectUri };
+            properties.Items[ReauthenticationEvidence.ChallengeItem] = "true";
+            properties.Items["prompt"] = "login";
+            properties.Items["max_age"] = "0";
+            return Results.Challenge(properties, [OpenIdConnectDefaults.AuthenticationScheme]);
+        }).RequireAuthorization().RequireRateLimiting("login");
+
+        endpoints.MapGet("/bff/reauthenticate/status", async (HttpContext context) =>
+        {
+            var authentication = await context.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            if (!authentication.Succeeded || authentication.Ticket is null ||
+                !ReauthenticationEvidence.TryRead(authentication.Ticket.Properties, context.User, out var evidence) || evidence is null)
+            {
+                return Results.Ok(new { authenticated = false, subject = (string?)null, authenticatedAtUtc = (DateTimeOffset?)null });
+            }
+
+            return Results.Ok(new
+            {
+                authenticated = true,
+                subject = evidence.Subject,
+                authenticatedAtUtc = evidence.AuthenticatedAtUtc
+            });
+        }).RequireAuthorization();
+
         endpoints.MapGet("/bff/antiforgery", (IAntiforgery antiforgery, HttpContext context) =>
         {
             var tokens = antiforgery.GetAndStoreTokens(context);

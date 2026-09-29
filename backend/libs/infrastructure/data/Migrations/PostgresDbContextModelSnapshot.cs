@@ -23,65 +23,6 @@ namespace Altivy.Backend.Infra.Data.Postgres.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Altivy.Backend.Infra.Data.Postgres.NoteIndexJobRecord", b =>
-                {
-                    b.Property<Guid>("JobId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("job_id");
-
-                    b.Property<int>("AttemptCount")
-                        .HasColumnType("integer")
-                        .HasColumnName("attempt_count");
-
-                    b.Property<DateTimeOffset>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at_utc");
-
-                    b.Property<string>("IdempotencyKey")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("idempotency_key");
-
-                    b.Property<string>("LastError")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)")
-                        .HasColumnName("last_error");
-
-                    b.Property<DateTimeOffset?>("LeaseExpiresAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("lease_expires_at");
-
-                    b.Property<Guid?>("LeaseId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("lease_id");
-
-                    b.Property<DateTimeOffset?>("NextAttemptAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("next_attempt_at");
-
-                    b.Property<string>("Path")
-                        .HasMaxLength(1024)
-                        .HasColumnType("character varying(1024)")
-                        .HasColumnName("path");
-
-                    b.Property<int>("State")
-                        .HasColumnType("integer")
-                        .HasColumnName("state");
-
-                    b.Property<string>("VaultId")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("character varying(128)")
-                        .HasColumnName("vault_id");
-
-                    b.HasKey("JobId", "CreatedAtUtc");
-                    b.HasIndex("IdempotencyKey", "CreatedAtUtc").IsUnique();
-                    b.HasIndex("State", "LeaseExpiresAt");
-                    b.HasIndex("State", "NextAttemptAt");
-                    b.ToTable("note_index_jobs", "altivy");
-                });
-
             modelBuilder.Entity("Altivy.Backend.Infra.Data.Postgres.NoteProjectionRecord", b =>
                 {
                     b.Property<string>("VaultId")
@@ -152,10 +93,6 @@ namespace Altivy.Backend.Infra.Data.Postgres.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("attempt_count");
 
-                    b.Property<DateTimeOffset>("CreatedAtUtc")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created_at_utc");
-
                     b.Property<string>("IdempotencyKey")
                         .IsRequired()
                         .HasMaxLength(128)
@@ -201,7 +138,7 @@ namespace Altivy.Backend.Infra.Data.Postgres.Migrations
                         .HasColumnType("character varying(64)")
                         .HasColumnName("vault_id");
 
-                    b.HasKey("OperationId", "CreatedAtUtc");
+                    b.HasKey("OperationId");
 
                     b.HasIndex("VaultId");
 
@@ -209,7 +146,7 @@ namespace Altivy.Backend.Infra.Data.Postgres.Migrations
 
                     b.HasIndex("State", "NextAttemptAt");
 
-                    b.HasIndex("Subject", "IdempotencyKey", "CreatedAtUtc")
+                    b.HasIndex("Subject", "IdempotencyKey")
                         .IsUnique();
 
                     b.ToTable("vault_provisioning_operations", "altivy");
@@ -309,6 +246,77 @@ namespace Altivy.Backend.Infra.Data.Postgres.Migrations
                         .IsUnique();
 
                     b.ToTable("vault_residue_occurrences", "altivy");
+                });
+
+            modelBuilder.Entity("Altivy.Backend.Infra.Data.Postgres.UserTrashRetentionSettingRecord", b =>
+                {
+                    b.Property<string>("Subject")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("subject");
+
+                    b.Property<int?>("RetentionDays")
+                        .HasColumnType("integer")
+                        .HasColumnName("retention_days");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at_utc");
+
+                    b.HasKey("Subject");
+
+                    b.ToTable("user_trash_retention_settings", "altivy", t =>
+                        {
+                            t.HasCheckConstraint("ck_user_trash_retention_settings_days", "retention_days IS NULL OR (retention_days >= 1 AND retention_days <= 3650)");
+                        });
+                });
+
+            modelBuilder.Entity("Altivy.Backend.Infra.Data.Postgres.TrashAuditRecord", b =>
+                {
+                    b.Property<Guid>("AuditId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_id");
+
+                    b.Property<Guid>("OperationId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("operation_id");
+
+                    b.Property<string>("VaultId")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("vault_id");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("subject");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("action");
+
+                    b.Property<string>("Outcome")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("outcome");
+
+                    b.Property<DateTimeOffset>("OccurredAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("occurred_at_utc");
+
+                    b.Property<DateTimeOffset?>("ReauthenticatedAtUtc")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reauthenticated_at_utc");
+
+                    b.HasKey("AuditId");
+                    b.HasIndex("Subject", "OccurredAtUtc");
+                    b.HasIndex("VaultId", "OccurredAtUtc");
+                    b.ToTable("trash_audit_events", "altivy");
                 });
 #pragma warning restore 612, 618
         }

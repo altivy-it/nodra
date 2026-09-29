@@ -11,12 +11,62 @@ Playwright ou browsers no host.
 - para cenários autenticados, credenciais de laboratório somente em variáveis
   de ambiente locais.
 
+Testes e ferramentas rodam em containers. Quando a aplicação estiver em
+execução, o navegador e o runner acessam somente nginx em container, nunca a
+porta do Angular, BFF ou API. O laboratório real usa o gateway HTTPS em
+`https://localhost:7443/notes`, conforme `deploy/e2e/README.md`.
+
+## Executar cenários com API simulada
+
+A partir da raiz do repositório no PowerShell 7, inicie uma rede isolada, o
+Angular sem porta publicada e o proxy nginx como única borda. A imagem e o
+volume de `node_modules` são os mesmos usados pelo alias `ng` do profile.
+Não use credenciais ou dados reais nesta suíte.
+
+```powershell
+Set-Location $env:USERPROFILE\projetos\AltivyNotes
+docker network inspect altivy-mocked-e2e *> $null
+if ($LASTEXITCODE -ne 0) { docker network create altivy-mocked-e2e }
+$webPath = (Resolve-Path frontend/web).Path
+$webHash = [Convert]::ToHexString([System.Security.Cryptography.SHA256]::HashData([System.Text.Encoding]::UTF8.GetBytes($webPath))).Substring(0, 12).ToLowerInvariant()
+docker run --rm --detach --name altivy-mocked-web --network altivy-mocked-e2e --network-alias web `
+  --volume "${webPath}:/workspace" `
+  --volume "ng-node-modules-${webHash}:/workspace/node_modules:nocopy" `
+  --workdir /workspace lzocateli/angular-cli:22.1.0-node24.15.0-bookworm ng serve --host 0.0.0.0
+docker run --rm --detach --name altivy-mocked-proxy --network altivy-mocked-e2e `
+  --publish 127.0.0.1:8088:8080 `
+  --volume "${PWD}/deploy/e2e/nginx-mocked.conf:/etc/nginx/conf.d/default.conf:ro" `
+  lzocateli/nginx:1.28.0-bookworm
+```
+
+Confira a borda com `Invoke-WebRequest http://localhost:8088/`. Se o Angular
+ainda estiver compilando, aguarde a resposta 200 do nginx antes do teste. O
+nginx encaminha o Host `localhost` aceito pelo servidor Angular. Na rede
+isolada, rode Playwright apontando para **o proxy**, não para `web:4200`:
+
+```powershell
+docker run --rm --network altivy-mocked-e2e `
+  --volume "${PWD}/frontend/tests:/app/tests:ro" `
+  --volume "${PWD}/artifacts/e2e:/app/reports" `
+  lzocateli/playwright-e2e:0.1.0 `
+  --base-url=http://altivy-mocked-proxy:8080 -m mocked -p no:cacheprovider
+```
+
+O resultado esperado são os testes marcados `mocked` aprovados. Para abrir a
+tela sintética no navegador, use somente `http://localhost:8088/`. Ao terminar,
+encerre somente os containers criados para esta suíte:
+
+```powershell
+docker stop altivy-mocked-proxy altivy-mocked-web
+docker network rm altivy-mocked-e2e
+```
+
 ## Executar
 
 No PowerShell, a partir da raiz do repositório:
 
 ```powershell
-$env:ALTIVY_E2E_BASE_URL = 'https://localhost:7443'
+$env:ALTIVY_E2E_BASE_URL = 'https://localhost:7443/notes'
 docker run --rm --network host `
   --volume "${PWD}/frontend/tests:/app/tests:ro" `
   --volume "${PWD}/artifacts/e2e:/app/reports" `
@@ -46,7 +96,7 @@ O conjunto completo pode ser executado dentro da imagem oficial, a partir da
 raiz do repositório:
 
 ```powershell
-$env:ALTIVY_E2E_BASE_URL = 'https://localhost:7443'
+$env:ALTIVY_E2E_BASE_URL = 'https://localhost:7443/notes'
 docker run --rm --network host `
   --volume "${PWD}/frontend/tests:/app/tests:ro" `
   lzocateli/playwright-e2e:0.1.0 `

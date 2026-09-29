@@ -32,7 +32,8 @@ public sealed class NotePath
         if (Path.IsPathRooted(normalizedValue) ||
             !normalizedValue.EndsWith(".md", StringComparison.OrdinalIgnoreCase) ||
             normalizedValue.Split('/').Any(segment =>
-                string.IsNullOrWhiteSpace(segment) || segment is "." or ".."))
+                string.IsNullOrWhiteSpace(segment) || segment is "." or ".." ||
+                string.Equals(segment, ".altivy-trash", StringComparison.OrdinalIgnoreCase)))
         {
             throw new ArgumentException("O caminho da nota é inválido.", nameof(value));
         }

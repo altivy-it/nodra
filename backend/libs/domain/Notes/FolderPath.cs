@@ -48,6 +48,7 @@ public sealed class FolderPath
         var baseName = segment.Split('.')[0];
         return string.IsNullOrWhiteSpace(segment) ||
             segment is "." or ".." ||
+            string.Equals(segment, ".altivy-trash", StringComparison.OrdinalIgnoreCase) ||
             segment.Any(character => char.IsControl(character) || "<>:\"|?*".Contains(character)) ||
             segment.EndsWith('.') ||
             segment.EndsWith(' ') ||

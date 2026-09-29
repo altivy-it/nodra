@@ -47,6 +47,52 @@
     background: var(--selection, #dfe8e1);
 }
 
+.tree-row.drop-target {
+    background: var(--selection, #dfe8e1);
+    border-inline-start-color: var(--accent, #b24d32);
+}
+
+.tree-row.pending {
+    cursor: progress;
+    opacity: .7;
+}
+
+.pending-label {
+    margin-inline-start: auto;
+    color: var(--muted, #69716d);
+    font-size: 11px;
+}
+
+.tree-context-menu {
+    position: fixed;
+    z-index: 20;
+    display: grid;
+    width: min(210px, calc(100vw - 16px));
+    padding: 4px;
+    border: 1px solid var(--line, #c8c9c2);
+    border-radius: 2px;
+    background: var(--surface-raised, #fbfaf7);
+    box-shadow: 0 6px 18px rgb(0 0 0 / 15%);
+}
+
+.tree-context-menu button {
+    min-height: 32px;
+    padding: 5px 8px;
+    border: 0;
+    background: transparent;
+    color: var(--text, #202525);
+    font: inherit;
+    text-align: start;
+    cursor: pointer;
+}
+
+.tree-context-menu button:hover,
+.tree-context-menu button:focus-visible {
+    background: var(--selection, #dfe8e1);
+    outline: 2px solid var(--accent, #b24d32);
+    outline-offset: -2px;
+}
+
 .tree-row:focus-visible {
     position: relative;
     z-index: 1;
@@ -88,6 +134,10 @@
     color: #a3362a;
 }
 
+.tree-error span {
+    overflow-wrap: anywhere;
+}
+
 .tree-error button {
     padding: 4px 0;
     color: inherit;
@@ -102,7 +152,8 @@
 }
 
 .create-folder-form label,
-.move-folder-form label {
+.move-folder-form label,
+.trash-restore-form label {
     display: grid;
     gap: 4px;
     color: var(--muted, #69716d);
@@ -110,7 +161,8 @@
 }
 
 .create-folder-form input,
-.move-folder-form input {
+.move-folder-form input,
+.trash-restore-form input {
     min-width: 0;
     padding: 6px 7px;
     border: 1px solid var(--line, #c8c9c2);
@@ -180,4 +232,116 @@
 .folder-actions button:hover:not(:disabled) {
     border-color: var(--accent, #b24d32);
     color: var(--accent, #b24d32);
+}
+
+.trash-panel {
+    display: flex;
+    min-height: 0;
+    flex: 1;
+    flex-direction: column;
+    overflow: auto;
+}
+
+.trash-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--line, #c8c9c2);
+}
+
+.trash-heading h2 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.trash-heading-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.trash-heading button,
+.trash-restore-button {
+    min-height: 30px;
+    padding: 4px 8px;
+    border: 1px solid var(--line, #c8c9c2);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+}
+
+.trash-heading button:hover,
+.trash-heading button:focus-visible,
+.trash-restore-button:hover,
+.trash-restore-button:focus-visible {
+    border-color: var(--accent, #b24d32);
+    outline: 2px solid var(--accent, #b24d32);
+    outline-offset: -2px;
+}
+
+.trash-purge-confirmation {
+    display: grid;
+    gap: 8px;
+    padding: 10px;
+    border-bottom: 1px solid var(--line, #c8c9c2);
+    background: color-mix(in srgb, #a3362a 8%, transparent);
+}
+
+.trash-purge-confirmation p {
+    margin: 0;
+    color: var(--text, #202525);
+    font-size: 12px;
+}
+
+.trash-list {
+    min-height: 0;
+    overflow: auto;
+}
+
+.trash-row {
+    display: grid;
+    gap: 7px;
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--line, #c8c9c2);
+}
+
+.trash-entry-info {
+    display: grid;
+    min-width: 0;
+    gap: 3px;
+}
+
+.trash-entry-name {
+    overflow: hidden;
+    font-size: 13px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.trash-entry-path,
+.trash-entry-date {
+    overflow: hidden;
+    color: var(--muted, #69716d);
+    font-size: 11px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.trash-destination-warning {
+    color: #9b3b2f;
+    font-size: 11px;
+}
+
+.trash-restore-form {
+    display: grid;
+    gap: 8px;
+}
+
+.trash-restore-form input {
+    width: 100%;
+    box-sizing: border-box;
 }

@@ -12,7 +12,8 @@ describe('WorkspaceService', () => {
             primaryPanelWidth: 360,
             contextPanelWidth: 400,
             primaryPanelOpen: false,
-            contextPanelOpen: true
+            contextPanelOpen: true,
+            expandedFolders: ['projetos']
         };
         const preferences = {
             read: vi.fn().mockReturnValue(stored),
@@ -27,6 +28,7 @@ describe('WorkspaceService', () => {
         expect(service.density()).toBe('compact');
         expect(service.primaryPanelWidth()).toBe(360);
         expect(service.primaryPanelOpen()).toBe(false);
+        expect(service.expandedFolders()).toEqual(['projetos']);
 
         service.cycleTheme();
         service.toggleContextPanel();
@@ -34,15 +36,17 @@ describe('WorkspaceService', () => {
         service.resizeContextPanel(-1000);
         service.setPrimaryPanelWidth(300);
         service.setContextPanelWidth(350);
+        service.setExpandedFolders(['projetos', 'rascunhos']);
 
         expect(service.theme()).toBe('high-contrast');
         expect(service.contextPanelOpen()).toBe(false);
         expect(service.primaryPanelWidth()).toBe(300);
         expect(service.contextPanelWidth()).toBe(350);
-        expect(preferences.write).toHaveBeenCalledTimes(6);
+        expect(preferences.write).toHaveBeenCalledTimes(7);
         expect(preferences.write).toHaveBeenLastCalledWith('user-1', 'vault-1', expect.objectContaining({
             theme: 'high-contrast',
-            contextPanelOpen: false
+            contextPanelOpen: false,
+            expandedFolders: ['projetos', 'rascunhos']
         }));
     });
 });

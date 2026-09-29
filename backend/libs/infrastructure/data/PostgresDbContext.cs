@@ -32,6 +32,10 @@ public sealed class PostgresDbContext(DbContextOptions<PostgresDbContext> option
     /// </summary>
     public DbSet<NoteIndexJobRecord> NoteIndexJobs => Set<NoteIndexJobRecord>();
 
+    public DbSet<UserTrashRetentionSettingRecord> UserTrashRetentionSettings => Set<UserTrashRetentionSettingRecord>();
+
+    public DbSet<TrashAuditRecord> TrashAuditEvents => Set<TrashAuditRecord>();
+
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -41,5 +45,7 @@ public sealed class PostgresDbContext(DbContextOptions<PostgresDbContext> option
         modelBuilder.ApplyConfiguration(new VaultResidueOccurrenceRecordConfiguration());
         modelBuilder.ApplyConfiguration(new NoteProjectionRecordConfiguration());
         modelBuilder.ApplyConfiguration(new NoteIndexJobRecordConfiguration());
+        modelBuilder.ApplyConfiguration(new UserTrashRetentionSettingRecordConfiguration());
+        modelBuilder.ApplyConfiguration(new TrashAuditRecordConfiguration());
     }
 }

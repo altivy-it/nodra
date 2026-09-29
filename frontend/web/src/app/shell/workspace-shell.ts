@@ -8,6 +8,8 @@ import { VaultRealtimeStatus } from '../core/vault-realtime.service';
 import { VaultSummary } from '../core/vaults.service';
 import { ActivityRegistry } from './activity-registry';
 import { FolderExplorerComponent } from '../features/explorer/folder-explorer.component';
+import { VaultEntry } from '../data-access/folder-explorer.service';
+import { TrashSettingsService } from '../data-access/trash-settings.service';
 import { HelpPanel } from './help-panel';
 import { HelpService } from './help.service';
 import { VaultSelector } from './vault-selector';
@@ -36,6 +38,8 @@ export class WorkspaceShell {
   @Output() readonly noteRemoved = new EventEmitter<void>();
   @Output() readonly noteMoved = new EventEmitter<string>();
   @Output() readonly folderMoved = new EventEmitter<{ from: string; to: string }>();
+  @Output() readonly noteDropped = new EventEmitter<{ path: string; eTag: string; destination: string }>();
+  @Output() readonly trashRequested = new EventEmitter<VaultEntry>();
   @Output() readonly loggedOut = new EventEmitter<void>();
   @Output() readonly vaultSelected = new EventEmitter<string>();
   readonly previewMode = signal<'editor' | 'split' | 'preview'>('split');
@@ -46,11 +50,13 @@ export class WorkspaceShell {
     readonly workspace: WorkspaceService,
     readonly activities: ActivityRegistry,
     readonly help: HelpService,
+    readonly trashSettings: TrashSettingsService,
     @Inject(DOCUMENT) private readonly document: Document,
     @Optional() private readonly router: Router | null) {
     effect(() => this.syncIcons(this.workspace.theme()));
     effect(() => {
       if (this.workspace.activeModule() === 'help') void this.help.load();
+      if (this.workspace.activeModule() === 'settings') void this.trashSettings.load();
     });
     const initialModule = this.router?.url.split('/').pop();
     if (initialModule) this.selectModuleFromRoute(initialModule);
@@ -61,6 +67,16 @@ export class WorkspaceShell {
   }
 
   save(path: string, content: string): void { this.noteChanged.emit({ path, content }); }
+
+  saveRetentionDays(value: string): void {
+    const trimmed = value.trim();
+    const days = trimmed ? Number(trimmed) : null;
+    if (days !== null && (!Number.isInteger(days) || days < 1 || days > 3650)) {
+      this.trashSettings.error.set('Informe um prazo inteiro entre 1 e 3650 dias, ou deixe vazio para desabilitar.');
+      return;
+    }
+    void this.trashSettings.save(days);
+  }
 
   setPreviewMode(mode: 'editor' | 'split' | 'preview'): void { this.previewMode.set(mode); }
 

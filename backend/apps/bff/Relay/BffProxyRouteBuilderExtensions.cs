@@ -1,4 +1,7 @@
 using System.Net.Http.Headers;
+using Altivy.Bff.Authentication;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace Altivy.Bff.Relay;
 
@@ -50,6 +53,19 @@ public static class BffProxyRouteBuilderExtensions
         }
 
         ProxyHeaders.CopyRequestHeaders(context.Request.Headers, request);
+        request.Headers.Remove("X-Altivy-Reauth-At");
+        if (HttpMethods.IsDelete(context.Request.Method) &&
+            path?.StartsWith("vaults/", StringComparison.OrdinalIgnoreCase) == true &&
+            path.Contains("/trash", StringComparison.OrdinalIgnoreCase))
+        {
+            var authentication = await context.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            if (authentication.Succeeded && authentication.Ticket is not null &&
+                ReauthenticationEvidence.TryRead(authentication.Ticket.Properties, context.User, out var evidence) &&
+                evidence is not null)
+            {
+                request.Headers.TryAddWithoutValidation("X-Altivy-Reauth-At", evidence.AuthenticatedAtUtc.ToString("O"));
+            }
+        }
 
         try
         {

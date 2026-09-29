@@ -197,4 +197,58 @@ public sealed class FileSystemFolderStoreIntegrationTests : IAsyncLifetime
             "vault-0001", FolderPath.Create("projetos"), FolderPath.Create("movida"), CancellationToken.None));
         Assert.True(Directory.Exists(Path.Combine(vault, "projetos")));
     }
+
+    [Fact]
+    public async Task TrashMovesFolderIntoSubjectInventoryAndRestoresWithoutOverwriting()
+    {
+        var vault = Path.Combine(root, "vault-0001");
+        Directory.CreateDirectory(Path.Combine(vault, "projetos", "interno"));
+        Directory.CreateDirectory(Path.Combine(vault, "arquivo", "projetos"));
+        await File.WriteAllTextAsync(Path.Combine(vault, "projetos", "plano.md"), "# Plano");
+        var store = new FileSystemFolderStore(root);
+
+        var moved = await store.MoveToTrashAsync(
+            "vault-0001", "subject-a", FolderPath.Create("projetos"), null, CancellationToken.None);
+
+        Assert.Equal(TrashMoveResult.Moved, moved.Result);
+        Assert.NotNull(moved.Entry);
+        Assert.False(Directory.Exists(Path.Combine(vault, "projetos")));
+        Assert.Single(await store.ListTrashAsync("vault-0001", "subject-a", CancellationToken.None));
+        Assert.Empty(await store.ListTrashAsync("vault-0001", "subject-b", CancellationToken.None));
+        Assert.Empty(await new FileSystemNoteStore(root).ListAsync("vault-0001", CancellationToken.None));
+        Assert.DoesNotContain(await store.ListChildrenAsync("vault-0001", null, CancellationToken.None),
+            entry => entry.Path == ".altivy-trash");
+
+        var collision = await store.RestoreFromTrashAsync(
+            "vault-0001", "subject-a", moved.Entry.Id, FolderPath.Create("arquivo/projetos"), CancellationToken.None);
+        Assert.Equal(TrashRestoreResult.DestinationExists, collision.Result);
+        Assert.Single(await store.ListTrashAsync("vault-0001", "subject-a", CancellationToken.None));
+
+        var restored = await store.RestoreFromTrashAsync(
+            "vault-0001", "subject-a", moved.Entry.Id, FolderPath.Create("arquivo/restaurado"), CancellationToken.None);
+
+        Assert.Equal(TrashRestoreResult.Restored, restored.Result);
+        Assert.Equal([("projetos/plano.md", "arquivo/restaurado/plano.md")], restored.MovedNotes);
+        Assert.Equal("# Plano", await File.ReadAllTextAsync(Path.Combine(vault, "arquivo", "restaurado", "plano.md")));
+        Assert.Empty(await store.ListTrashAsync("vault-0001", "subject-a", CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task TrashRejectsAnExistingUnmarkedUserFolderInsteadOfClaimingItsContents()
+    {
+        var vault = Path.Combine(root, "vault-0001");
+        var legacyFolder = Path.Combine(vault, ".altivy-trash");
+        Directory.CreateDirectory(legacyFolder);
+        await File.WriteAllTextAsync(Path.Combine(legacyFolder, "legado.md"), "# Preservar");
+        await File.WriteAllTextAsync(Path.Combine(vault, "nota.md"), "# Nota");
+        var store = new FileSystemFolderStore(root);
+        var etag = (await new FileSystemNoteStore(root).FindAsync(
+            "vault-0001", NotePath.Create("nota.md"), CancellationToken.None))!.ETag;
+
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => store.MoveToTrashAsync(
+            "vault-0001", "subject-a", FolderPath.Create("nota.md"), etag, CancellationToken.None));
+        Assert.Equal("# Preservar", await File.ReadAllTextAsync(Path.Combine(legacyFolder, "legado.md")));
+        Assert.Contains(await store.ListChildrenAsync("vault-0001", null, CancellationToken.None),
+            entry => entry.Path == ".altivy-trash");
+    }
 }

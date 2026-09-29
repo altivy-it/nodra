@@ -5,7 +5,7 @@ import { Note, NotesService } from './core/notes.service';
 import { SessionService } from './core/session.service';
 import { VaultRealtimeService } from './core/vault-realtime.service';
 import { VaultsService } from './core/vaults.service';
-import { FolderExplorerService, remapPath } from './data-access/folder-explorer.service';
+import { FolderExplorerService, remapPath, VaultEntry } from './data-access/folder-explorer.service';
 import { WorkspaceShell } from './shell/workspace-shell';
 import { WorkspaceService } from './shell/workspace.service';
 
@@ -69,9 +69,46 @@ export class App {
     }
   }
 
-  remove(): void {
+  async remove(): Promise<void> {
     const note = this.notes.selected();
-    if (note) void this.notes.delete(note);
+    if (!note) return;
+    if (!note.eTag) {
+      this.notes.selected.set(null);
+      return;
+    }
+    await this.flushPendingSave();
+    const current = this.notes.selected();
+    if (!current) return;
+    const error = await this.explorer.moveToTrash({
+      path: current.path,
+      name: current.path.split('/').at(-1)!,
+      kind: 'note',
+      eTag: current.eTag
+    });
+    if (error) {
+      this.notes.error.set(error);
+      return;
+    }
+    this.notes.selected.set(null);
+    await this.notes.load();
+  }
+
+  async trashEntry(entry: VaultEntry): Promise<void> {
+    const selected = this.notes.selected();
+    const removesSelected = !!selected && (selected.path === entry.path ||
+      (entry.kind === 'folder' && selected.path.startsWith(`${entry.path}/`)));
+    if (removesSelected) await this.flushPendingSave();
+    const current = this.notes.selected();
+    const target = removesSelected && entry.kind === 'note' && current?.path === entry.path
+      ? { ...entry, eTag: current.eTag }
+      : entry;
+    const error = await this.explorer.moveToTrash(target);
+    if (error) {
+      this.notes.error.set(error);
+      return;
+    }
+    if (removesSelected) this.notes.selected.set(null);
+    await this.notes.load();
   }
 
   async move(destination: string): Promise<void> {
@@ -79,6 +116,18 @@ export class App {
     const note = this.notes.selected();
     if (!note) return;
     const error = await this.notes.move(note, destination);
+    if (!error) this.explorer.reload();
+  }
+
+  async dropNote(path: string, eTag: string, destination: string): Promise<void> {
+    await this.flushPendingSave();
+    const selected = this.notes.selected();
+    const note = selected?.path === path ? selected : { path, eTag, content: '' };
+    const source = [...this.explorer.children().values()].flat()
+      .find(entry => entry.path === path && entry.kind === 'note');
+    if (source) this.explorer.beginOptimisticNoteMove(source, destination);
+    const error = await this.notes.move(note, destination);
+    if (source) this.explorer.settleOptimisticNoteMove(path, !error);
     if (!error) this.explorer.reload();
   }
 

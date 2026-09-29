@@ -27,12 +27,17 @@
         <div class="panel-actions"><button type="button" (click)="noteCreated.emit(folderExplorer.noteParentPath)">Nova nota</button><button
             type="button" (click)="folderExplorer.toggleFolderForm()">Nova pasta</button><button
             type="button" (click)="folderExplorer.reload(); notesReloaded.emit()" aria-label="Atualizar arquivos">↻</button></div>
+        <div class="panel-actions"><button type="button" (click)="folderExplorer.openTrash()">Lixeira</button></div>
         <div class="resize-handle" role="separator" aria-orientation="vertical" tabindex="0"
             aria-label="Ajustar largura do explorador" aria-valuemin="220" aria-valuemax="420"
             [attr.aria-valuenow]="workspace.primaryPanelWidth()" (pointerdown)="startResize($event, 'primary')"
             (keydown)="resizeFromKeyboard($event, 'primary')"></div><app-folder-explorer #folderExplorer
             [vaultId]="currentVaultId" [selectedPath]="selected?.path ?? null"
-            (noteOpened)="noteOpened.emit($event)" (folderMoved)="folderMoved.emit($event)" />
+            [expandedPaths]="workspace.expandedFolders()" (expandedPathsChange)="workspace.setExpandedFolders($event)"
+            (noteOpened)="noteOpened.emit($event)" (noteCreated)="noteCreated.emit($event)"
+            (folderMoved)="folderMoved.emit($event)"
+            (trashRequested)="trashRequested.emit($event)"
+            (noteDropped)="noteDropped.emit({ path: $event.note.path, eTag: $event.note.eTag!, destination: $event.destination })" />
     </aside> }
     <main class="content" aria-label="Área de trabalho">
         <div class="document-tabs"><span class="tab active">{{ selected?.path || 'Workspace' }}</span><button
@@ -80,7 +85,21 @@
                     <option value="comfortable">Confortável</option>
                     <option value="compact">Compacta</option>
                 </select></label><button type="button" class="reset-button" (click)="workspace.reset()">Restaurar
-                preferências locais</button>
+                        preferências locais</button>
+                    <div class="trash-settings">
+                        <h2>Retenção da lixeira</h2>
+                        <p>Define o prazo capturado em novas exclusões. A remoção automática permanece desabilitada até a configuração de step-up e auditoria.</p>
+                        <label>Prazo em dias <input type="number" min="1" max="3650" step="1"
+                            [value]="trashSettings.retentionDays() ?? ''"
+                            (change)="saveRetentionDays($any($event.target).value)"
+                            [disabled]="trashSettings.loading() || trashSettings.saving()"
+                            aria-describedby="trash-retention-help"></label>
+                        <small id="trash-retention-help">Deixe vazio para não definir retenção automática.</small>
+                        @if (trashSettings.loading()) { <p role="status">Carregando parâmetro...</p> }
+                        @if (trashSettings.saving()) { <p role="status">Salvando parâmetro...</p> }
+                        @if (trashSettings.saved()) { <p role="status">Parâmetro salvo.</p> }
+                        @if (trashSettings.error(); as settingsError) { <p class="error" role="alert">{{ settingsError }}</p> }
+                    </div>
         </section> } @else if (isModule('help')) { <app-help-panel (closed)="closeHelp()" /> } @else { <section
             class="module-page"><span class="empty-code">WORKSPACE / {{ workspace.activeModule() }}</span>
             <h1>Módulo em preparação.</h1>

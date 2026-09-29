@@ -65,6 +65,8 @@ public static class ApiServiceCollectionExtensions
             _ = services.AddScoped<IVaultReader>(provider =>
                 provider.GetRequiredService<PostgresVaultReader>());
             _ = services.AddScoped<IVaultProvisioningStore, PostgresVaultProvisioningStore>();
+            _ = services.AddScoped<ITrashRetentionSettingsStore, PostgresTrashRetentionSettingsStore>();
+            _ = services.AddScoped<ITrashAuditStore, PostgresTrashAuditStore>();
         }
         _ = services.AddScoped<GetVaultQueryHandler>();
         _ = services.AddScoped<ListVaultCandidatesQueryHandler>();
@@ -76,10 +78,15 @@ public static class ApiServiceCollectionExtensions
 
         _ = services.AddSingleton<INoteStore>(new FileSystemNoteStore(vaultRoot));
         _ = services.AddSingleton<IFolderStore>(new FileSystemFolderStore(vaultRoot));
+        _ = services.AddSingleton<ITrashStore>(provider => provider.GetRequiredService<IFolderStore>());
         _ = services.AddSingleton<IVaultFileSystemProvisioner>(
             new FileSystemVaultProvisioner(vaultRoot));
         _ = services.AddScoped<CreateNoteCommandHandler>();
         _ = services.AddScoped<DeleteEmptyFolderCommandHandler>();
+        _ = services.AddScoped<MoveEntryToTrashCommandHandler>();
+        _ = services.AddScoped<ListTrashQueryHandler>();
+        _ = services.AddScoped<RestoreTrashEntryCommandHandler>();
+        _ = services.AddScoped<EmptyTrashCommandHandler>();
         _ = services.AddScoped<EnsureFolderCommandHandler>();
         _ = services.AddScoped<ListFolderChildrenQueryHandler>();
         _ = services.AddScoped<GetNoteQueryHandler>();

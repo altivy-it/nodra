@@ -10,6 +10,7 @@ export class WorkspaceService {
   readonly primaryPanelOpen = signal(true);
   readonly contextPanelOpen = signal(true);
   readonly activeModule = signal('files');
+  readonly expandedFolders = signal<string[]>([]);
   private subject: string | null = null;
   private vaultId: string | null = null;
 
@@ -37,6 +38,7 @@ export class WorkspaceService {
     this.contextPanelWidth.set(320);
     this.primaryPanelOpen.set(true);
     this.contextPanelOpen.set(true);
+    this.expandedFolders.set([]);
   }
   togglePrimaryPanel(): void { this.primaryPanelOpen.update(open => !open); this.persist(); }
   toggleContextPanel(): void { this.contextPanelOpen.update(open => !open); this.persist(); }
@@ -60,6 +62,11 @@ export class WorkspaceService {
     this.persist();
   }
 
+  setExpandedFolders(paths: string[]): void {
+    this.expandedFolders.set(paths);
+    this.persist();
+  }
+
   private apply(value: WorkspacePreferences): void {
     this.activeModule.set(value.activeModule);
     this.theme.set(value.theme);
@@ -68,6 +75,7 @@ export class WorkspaceService {
     this.contextPanelWidth.set(value.contextPanelWidth);
     this.primaryPanelOpen.set(value.primaryPanelOpen);
     this.contextPanelOpen.set(value.contextPanelOpen);
+    this.expandedFolders.set(value.expandedFolders);
   }
 
   private persist(): void {
@@ -80,7 +88,8 @@ export class WorkspaceService {
       primaryPanelWidth: this.primaryPanelWidth(),
       contextPanelWidth: this.contextPanelWidth(),
       primaryPanelOpen: this.primaryPanelOpen(),
-      contextPanelOpen: this.contextPanelOpen()
+      contextPanelOpen: this.contextPanelOpen(),
+      expandedFolders: this.expandedFolders()
     });
   }
 

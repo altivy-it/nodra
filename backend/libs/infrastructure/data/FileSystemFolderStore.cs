@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using Altivy.Backend.Application.Notes;
 using Altivy.Backend.Domain.Notes;
 using Altivy.Backend.Domain.Vaults;
@@ -11,6 +12,10 @@ namespace Altivy.Backend.Infra.Data.Postgres;
 /// </summary>
 public sealed class FileSystemFolderStore(string vaultRoot) : IFolderStore
 {
+    private const string TrashDirectoryName = ".altivy-trash";
+    private const string ManifestFileName = "manifest.json";
+    private const string PendingManifestFileName = "manifest.json.pending";
+    private const string PayloadName = "payload";
     private readonly string vaultRoot = Path.GetFullPath(vaultRoot);
 
     /// <inheritdoc />
@@ -36,6 +41,11 @@ public sealed class FileSystemFolderStore(string vaultRoot) : IFolderStore
         foreach (var directory in Directory.EnumerateDirectories(parentDirectory))
         {
             cancellationToken.ThrowIfCancellationRequested();
+            if (string.Equals(Path.GetFileName(directory), TrashDirectoryName, StringComparison.OrdinalIgnoreCase) &&
+                FileSystemTrashArea.IsManagedDirectory(directory))
+            {
+                continue;
+            }
             EnsureNotReparsePoint(directory);
             var name = Path.GetFileName(directory);
             entries.Add(new VaultEntry(ToRelativePath(vaultPath, directory), name, true, null));
@@ -51,6 +61,273 @@ public sealed class FileSystemFolderStore(string vaultRoot) : IFolderStore
         }
 
         return entries.OrderBy(entry => entry.Path, StringComparer.Ordinal).ToArray();
+    }
+
+    /// <inheritdoc />
+    public async Task<TrashMoveOutcome> MoveToTrashAsync(
+        string vaultId,
+        string subject,
+        FolderPath path,
+        string? expectedETag,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ValidateSubject(subject);
+        ArgumentNullException.ThrowIfNull(path);
+
+        var vaultPath = GetVaultPath(vaultId);
+        var sourcePath = GetFolderPath(vaultPath, path);
+        var isFolder = Directory.Exists(sourcePath);
+        if (!isFolder && (!File.Exists(sourcePath) || !sourcePath.EndsWith(".md", StringComparison.OrdinalIgnoreCase)))
+        {
+            return new TrashMoveOutcome(File.Exists(sourcePath) ? TrashMoveResult.UnsupportedEntry : TrashMoveResult.NotFound);
+        }
+
+        EnsureNotReparsePoint(sourcePath);
+        if (isFolder)
+        {
+            EnsureSubtreeHasNoReparsePoints(sourcePath, cancellationToken);
+        }
+        else
+        {
+            var content = await File.ReadAllTextAsync(sourcePath, cancellationToken);
+            if (string.IsNullOrWhiteSpace(expectedETag) ||
+                !string.Equals(CreateETag(content), expectedETag, StringComparison.Ordinal))
+            {
+                return new TrashMoveOutcome(TrashMoveResult.VersionConflict);
+            }
+        }
+
+        var notePaths = isFolder
+            ? Directory.EnumerateFiles(sourcePath, "*.md", SearchOption.AllDirectories)
+                .Select(notePath => Path.GetRelativePath(vaultPath, notePath).Replace('\\', '/'))
+                .OrderBy(notePath => notePath, StringComparer.Ordinal)
+                .ToArray()
+            : [path.Value];
+
+        var parentPath = Path.GetDirectoryName(sourcePath)!;
+        EnsureNotReparsePoint(parentPath);
+        var operationId = Guid.NewGuid();
+        var operationDirectory = GetOperationDirectory(vaultPath, subject, operationId, createIfMissing: true);
+        Directory.CreateDirectory(operationDirectory);
+        EnsureNotReparsePoint(operationDirectory);
+
+        var manifest = new TrashManifest(
+            operationId,
+            vaultId,
+            subject,
+            path.Value,
+            isFolder,
+            DateTimeOffset.UtcNow,
+            null);
+        var pendingManifestPath = Path.Combine(operationDirectory, PendingManifestFileName);
+        var manifestPath = Path.Combine(operationDirectory, ManifestFileName);
+        var payloadPath = Path.Combine(operationDirectory, PayloadName);
+        try
+        {
+            await using (var stream = new FileStream(
+                pendingManifestPath,
+                FileMode.CreateNew,
+                FileAccess.Write,
+                FileShare.None,
+                bufferSize: 4096,
+                FileOptions.Asynchronous | FileOptions.WriteThrough))
+            {
+                await JsonSerializer.SerializeAsync(stream, manifest, cancellationToken: cancellationToken);
+                await stream.FlushAsync(cancellationToken);
+            }
+
+            if (isFolder)
+            {
+                Directory.Move(sourcePath, payloadPath);
+            }
+            else
+            {
+                File.Move(sourcePath, payloadPath, overwrite: false);
+            }
+            File.Move(pendingManifestPath, manifestPath, overwrite: false);
+        }
+        catch
+        {
+            if (!File.Exists(manifestPath))
+            {
+                RollbackPendingTrashMove(sourcePath, payloadPath, isFolder, operationDirectory);
+            }
+            throw;
+        }
+
+        return new TrashMoveOutcome(TrashMoveResult.Moved, ToTrashEntry(vaultPath, manifest), notePaths);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<TrashEntry>> ListTrashAsync(
+        string vaultId,
+        string subject,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ValidateSubject(subject);
+        var vaultPath = GetVaultPath(vaultId);
+        var subjectDirectory = GetSubjectTrashDirectory(vaultPath, subject, createIfMissing: false);
+        if (!Directory.Exists(subjectDirectory))
+        {
+            return [];
+        }
+
+        EnsureNotReparsePoint(subjectDirectory);
+        var entries = new List<TrashEntry>();
+        foreach (var operationDirectory in Directory.EnumerateDirectories(subjectDirectory))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            EnsureNotReparsePoint(operationDirectory);
+            var operationName = Path.GetFileName(operationDirectory);
+            if (!Guid.TryParseExact(operationName, "N", out var operationId))
+            {
+                throw new UnauthorizedAccessException("A área reservada da lixeira contém um identificador inválido.");
+            }
+
+            var manifest = await LoadManifestAsync(operationDirectory, vaultId, subject, operationId, cancellationToken);
+            if (manifest is null)
+            {
+                continue;
+            }
+            ValidateManifest(manifest, vaultId, subject, operationId);
+            var payloadPath = Path.Combine(operationDirectory, PayloadName);
+            var payloadExists = manifest.IsFolder ? Directory.Exists(payloadPath) : File.Exists(payloadPath);
+            if (!payloadExists)
+            {
+                TryDeleteOperationDirectory(operationDirectory);
+                continue;
+            }
+            EnsureNotReparsePoint(payloadPath);
+            if (manifest.IsFolder)
+            {
+                EnsureSubtreeHasNoReparsePoints(payloadPath, cancellationToken);
+            }
+            entries.Add(ToTrashEntry(vaultPath, manifest));
+        }
+
+        return entries.OrderByDescending(entry => entry.DeletedAtUtc).ThenBy(entry => entry.Id).ToArray();
+    }
+
+    /// <inheritdoc />
+    public async Task<TrashRestoreOutcome> RestoreFromTrashAsync(
+        string vaultId,
+        string subject,
+        Guid operationId,
+        FolderPath destination,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ValidateSubject(subject);
+        ArgumentNullException.ThrowIfNull(destination);
+        var vaultPath = GetVaultPath(vaultId);
+        var operationDirectory = GetOperationDirectory(vaultPath, subject, operationId, createIfMissing: false);
+        if (!Directory.Exists(operationDirectory))
+        {
+            return new TrashRestoreOutcome(TrashRestoreResult.NotFound);
+        }
+
+        EnsureNotReparsePoint(operationDirectory);
+        var manifest = await LoadManifestAsync(operationDirectory, vaultId, subject, operationId, cancellationToken);
+        if (manifest is null)
+        {
+            return new TrashRestoreOutcome(TrashRestoreResult.NotFound);
+        }
+        ValidateManifest(manifest, vaultId, subject, operationId);
+
+        var destinationPath = GetFolderPath(vaultPath, destination);
+        if (!manifest.IsFolder)
+        {
+            _ = NotePath.Create(destination.Value);
+        }
+        var destinationParent = Path.GetDirectoryName(destinationPath)!;
+        if (!Directory.Exists(destinationParent))
+        {
+            return new TrashRestoreOutcome(TrashRestoreResult.DestinationFolderNotFound);
+        }
+        EnsureNotReparsePoint(destinationParent);
+        if (File.Exists(destinationPath) || Directory.Exists(destinationPath))
+        {
+            return new TrashRestoreOutcome(TrashRestoreResult.DestinationExists);
+        }
+
+        var payloadPath = Path.Combine(operationDirectory, PayloadName);
+        var payloadExists = manifest.IsFolder ? Directory.Exists(payloadPath) : File.Exists(payloadPath);
+        if (!payloadExists)
+        {
+            TryDeleteOperationDirectory(operationDirectory);
+            return new TrashRestoreOutcome(TrashRestoreResult.NotFound);
+        }
+        EnsureNotReparsePoint(payloadPath);
+        var movedNotes = new List<(string From, string To)>();
+        if (manifest.IsFolder)
+        {
+            EnsureSubtreeHasNoReparsePoints(payloadPath, cancellationToken);
+            foreach (var notePath in Directory.EnumerateFiles(payloadPath, "*.md", SearchOption.AllDirectories))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var relativePath = Path.GetRelativePath(payloadPath, notePath).Replace('\\', '/');
+                movedNotes.Add(($"{manifest.OriginalPath}/{relativePath}", $"{destination.Value}/{relativePath}"));
+            }
+            Directory.Move(payloadPath, destinationPath);
+        }
+        else
+        {
+            File.Move(payloadPath, destinationPath, overwrite: false);
+            movedNotes.Add((manifest.OriginalPath, destination.Value));
+        }
+        TryDeleteOperationDirectory(operationDirectory);
+        return new TrashRestoreOutcome(TrashRestoreResult.Restored, movedNotes);
+    }
+
+    /// <inheritdoc />
+    public async Task<TrashEmptyOutcome> EmptyTrashAsync(
+        string vaultId,
+        string subject,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ValidateSubject(subject);
+        var vaultPath = GetVaultPath(vaultId);
+        var subjectDirectory = GetSubjectTrashDirectory(vaultPath, subject, createIfMissing: false);
+        if (!Directory.Exists(subjectDirectory)) return new TrashEmptyOutcome(0, 0);
+
+        EnsureNotReparsePoint(subjectDirectory);
+        var removed = 0;
+        var failed = 0;
+        foreach (var operationDirectory in Directory.EnumerateDirectories(subjectDirectory))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            try
+            {
+                EnsureNotReparsePoint(operationDirectory);
+                var operationName = Path.GetFileName(operationDirectory);
+                if (!Guid.TryParseExact(operationName, "N", out var operationId))
+                {
+                    throw new UnauthorizedAccessException("A operação da lixeira possui um identificador inválido.");
+                }
+                var manifest = await LoadManifestAsync(
+                    operationDirectory, vaultId, subject, operationId, cancellationToken);
+                if (manifest is null) continue;
+                TryDeleteOperationDirectory(operationDirectory);
+                removed++;
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (IOException)
+            {
+                failed++;
+            }
+            catch (UnauthorizedAccessException)
+            {
+                failed++;
+            }
+        }
+
+        return new TrashEmptyOutcome(removed, failed);
     }
 
     /// <inheritdoc />
@@ -196,6 +473,193 @@ public sealed class FileSystemFolderStore(string vaultRoot) : IFolderStore
         return Task.FromResult(new FolderMoveOutcome(FolderMoveResult.Moved, movedNotes));
     }
 
+    private static void ValidateSubject(string subject)
+    {
+        if (string.IsNullOrWhiteSpace(subject) || subject.Length > 512)
+        {
+            throw new ArgumentException("O sujeito autenticado é inválido.", nameof(subject));
+        }
+    }
+
+    private static TrashEntry ToTrashEntry(string vaultPath, TrashManifest manifest)
+    {
+        var original = GetFolderPath(vaultPath, FolderPath.Create(manifest.OriginalPath));
+        var parent = Path.GetDirectoryName(original)!;
+        var canRestore = Directory.Exists(parent) && !Directory.Exists(original) && !File.Exists(original);
+        return new TrashEntry(
+            manifest.Id,
+            manifest.OriginalPath,
+            manifest.OriginalPath.Split('/').Last(),
+            manifest.IsFolder,
+            manifest.DeletedAtUtc,
+            manifest.RetentionDays,
+            canRestore);
+    }
+
+    private static void ValidateManifest(TrashManifest manifest, string vaultId, string subject, Guid operationId)
+    {
+        if (manifest.Version != 1 || manifest.Id != operationId ||
+            !string.Equals(manifest.VaultId, vaultId, StringComparison.Ordinal) ||
+            !string.Equals(manifest.Subject, subject, StringComparison.Ordinal) ||
+            manifest.DeletedAtUtc.Offset != TimeSpan.Zero ||
+            manifest.RetentionDays is < 1 or > 3650)
+        {
+            throw new UnauthorizedAccessException("O manifesto da lixeira é inválido.");
+        }
+
+        try
+        {
+            var path = FolderPath.Create(manifest.OriginalPath);
+            if (!manifest.IsFolder)
+            {
+                _ = NotePath.Create(path.Value);
+            }
+        }
+        catch (ArgumentException exception)
+        {
+            throw new UnauthorizedAccessException("O caminho do manifesto da lixeira é inválido.", exception);
+        }
+    }
+
+    private static async Task<TrashManifest?> LoadManifestAsync(
+        string operationDirectory,
+        string vaultId,
+        string subject,
+        Guid operationId,
+        CancellationToken cancellationToken)
+    {
+        var manifestPath = Path.Combine(operationDirectory, ManifestFileName);
+        var pendingPath = Path.Combine(operationDirectory, PendingManifestFileName);
+        if (File.Exists(manifestPath))
+        {
+            return await DeserializeManifestAsync(manifestPath, cancellationToken);
+        }
+
+        if (File.Exists(pendingPath))
+        {
+            var pending = await DeserializeManifestAsync(pendingPath, cancellationToken);
+            ValidateManifest(pending, vaultId, subject, operationId);
+            var pendingPayload = Path.Combine(operationDirectory, PayloadName);
+            if (pending.IsFolder ? Directory.Exists(pendingPayload) : File.Exists(pendingPayload))
+            {
+                File.Move(pendingPath, manifestPath, overwrite: false);
+                return pending;
+            }
+
+            TryDeleteOperationDirectory(operationDirectory);
+            return null;
+        }
+
+        if (!Directory.EnumerateFileSystemEntries(operationDirectory).Any())
+        {
+            TryDeleteOperationDirectory(operationDirectory);
+            return null;
+        }
+
+        throw new UnauthorizedAccessException("A operação da lixeira não possui manifesto válido.");
+    }
+
+    private static async Task<TrashManifest> DeserializeManifestAsync(string path, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read);
+            return await JsonSerializer.DeserializeAsync<TrashManifest>(stream, cancellationToken: cancellationToken)
+                ?? throw new UnauthorizedAccessException("O manifesto da lixeira está vazio.");
+        }
+        catch (JsonException exception)
+        {
+            throw new UnauthorizedAccessException("O manifesto da lixeira é inválido.", exception);
+        }
+    }
+
+    private static string GetSubjectTrashDirectory(string vaultPath, string subject, bool createIfMissing)
+    {
+        var trashRoot = FileSystemTrashArea.GetDirectory(vaultPath);
+        if (createIfMissing)
+        {
+            FileSystemTrashArea.EnsureCreated(vaultPath);
+        }
+        else if (Directory.Exists(trashRoot))
+        {
+            FileSystemTrashArea.Validate(trashRoot);
+        }
+
+        var subjectHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(subject)));
+        var subjectDirectory = Path.Combine(trashRoot, subjectHash);
+        if (File.Exists(subjectDirectory))
+        {
+            throw new UnauthorizedAccessException("O diretório isolado da lixeira é inválido.");
+        }
+        if (createIfMissing) Directory.CreateDirectory(subjectDirectory);
+        if (Directory.Exists(subjectDirectory)) EnsureNotReparsePoint(subjectDirectory);
+        return subjectDirectory;
+    }
+
+    private static string GetOperationDirectory(string vaultPath, string subject, Guid operationId, bool createIfMissing)
+    {
+        var subjectDirectory = GetSubjectTrashDirectory(vaultPath, subject, createIfMissing);
+        return Path.Combine(subjectDirectory, operationId.ToString("N"));
+    }
+
+    private static void EnsureSubtreeHasNoReparsePoints(string root, CancellationToken cancellationToken)
+    {
+        var pending = new Stack<string>();
+        pending.Push(root);
+        while (pending.TryPop(out var directory))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            EnsureNotReparsePoint(directory);
+            foreach (var entry in Directory.EnumerateFileSystemEntries(directory))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                EnsureNotReparsePoint(entry);
+                if (Directory.Exists(entry))
+                {
+                    pending.Push(entry);
+                }
+            }
+        }
+    }
+
+    private static void RollbackPendingTrashMove(
+        string sourcePath,
+        string payloadPath,
+        bool isFolder,
+        string operationDirectory)
+    {
+        var payloadExists = isFolder ? Directory.Exists(payloadPath) : File.Exists(payloadPath);
+        if (payloadExists && !File.Exists(sourcePath) && !Directory.Exists(sourcePath))
+        {
+            var parent = Path.GetDirectoryName(sourcePath)!;
+            EnsureNotReparsePoint(parent);
+            if (isFolder)
+            {
+                Directory.Move(payloadPath, sourcePath);
+            }
+            else
+            {
+                File.Move(payloadPath, sourcePath, overwrite: false);
+            }
+        }
+
+        if (!Directory.Exists(payloadPath) && !File.Exists(payloadPath))
+        {
+            TryDeleteOperationDirectory(operationDirectory);
+        }
+    }
+
+    private static void TryDeleteOperationDirectory(string operationDirectory)
+    {
+        if (!Directory.Exists(operationDirectory))
+        {
+            return;
+        }
+
+        EnsureSubtreeHasNoReparsePoints(operationDirectory, CancellationToken.None);
+        Directory.Delete(operationDirectory, recursive: true);
+    }
+
     private string GetVaultPath(string vaultId)
     {
         _ = Vault.Create(vaultId, vaultId);
@@ -266,4 +730,14 @@ public sealed class FileSystemFolderStore(string vaultRoot) : IFolderStore
 
     private static string CreateETag(string content) =>
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(content)));
+
+    private sealed record TrashManifest(
+        Guid Id,
+        string VaultId,
+        string Subject,
+        string OriginalPath,
+        bool IsFolder,
+        DateTimeOffset DeletedAtUtc,
+        int? RetentionDays,
+        int Version = 1);
 }

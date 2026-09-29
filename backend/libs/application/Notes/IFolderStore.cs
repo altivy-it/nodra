@@ -5,7 +5,7 @@ namespace Altivy.Backend.Application.Notes;
 /// <summary>
 /// Define operações de leitura e criação de pastas e entradas imediatas do vault.
 /// </summary>
-public interface IFolderStore
+public interface IFolderStore : ITrashStore
 {
     /// <summary>
     /// Lista somente os filhos diretos de uma pasta autorizada.

@@ -1,9 +1,81 @@
+@if (trashOpen()) {
+    <section class="trash-panel" aria-label="Lixeira do vault">
+        <div class="trash-heading">
+            <button type="button" (click)="closeTrash()" aria-label="Voltar ao explorador">‹ Arquivos</button>
+            <h2>Lixeira</h2>
+            <div class="trash-heading-actions">
+                <button type="button" (click)="refreshTrash()" aria-label="Atualizar lixeira" title="Atualizar lixeira">↻</button>
+                @if (explorer.trashEntries().length > 0 && !confirmingTrashPurge()) {
+                    <button type="button" class="trash-purge-button" (click)="emptyTrash()">Esvaziar</button>
+                }
+            </div>
+        </div>
+        @if (confirmingTrashPurge()) {
+            <div class="trash-purge-confirmation" role="alertdialog" aria-label="Confirmar esvaziamento da lixeira">
+                <p>Esta ação remove permanentemente todos os itens da lixeira e exige uma autenticação recente.</p>
+                <div class="folder-form-actions">
+                    <button type="button" [disabled]="purgingTrash()" (click)="emptyTrash()">
+                        {{ purgingTrash() ? 'Esvaziando...' : 'Confirmar esvaziamento' }}
+                    </button>
+                    <button type="button" [disabled]="purgingTrash()" (click)="cancelTrashPurge()">Cancelar</button>
+                </div>
+            </div>
+        }
+        @if (purgeError(); as error) { <p class="tree-error" role="alert">{{ error }}</p> }
+        @if (purgeResult(); as result) { <p class="tree-state" role="status" aria-live="polite">{{ result }}</p> }
+        @if (explorer.trashLoading()) {
+            <p class="tree-state" role="status" aria-live="polite">Carregando lixeira...</p>
+        } @else if (explorer.trashError(); as error) {
+            <div class="tree-error" role="alert"><span>{{ error }}</span>
+                <button type="button" (click)="refreshTrash()">Tentar novamente</button></div>
+        } @else if (explorer.trashEntries().length === 0) {
+            <p class="tree-state">A lixeira está vazia.</p>
+        } @else {
+            <div class="trash-list" role="list" aria-label="Itens excluídos">
+                @for (entry of explorer.trashEntries(); track entry.id) {
+                    <div class="trash-row" role="listitem">
+                        <div class="trash-entry-info">
+                            <span class="trash-entry-name">{{ entry.name }}</span>
+                            <span class="trash-entry-path" [title]="entry.path">{{ entry.path }}</span>
+                            <time class="trash-entry-date" [attr.datetime]="entry.deletedAtUtc">{{ entry.deletedAtUtc }}</time>
+                        </div>
+                        @if (!entry.canRestoreToOriginal) {
+                            <span class="trash-destination-warning"
+                                title="O caminho original está ocupado. Informe outro destino para restaurar.">
+                                Destino original ocupado
+                            </span>
+                        }
+                        @if (restoreEntryId() === entry.id) {
+                            <form class="trash-restore-form" (submit)="submitRestore($event, entry)">
+                                <label>
+                                    <span>Novo destino</span>
+                                    <input #restorePathInput type="text" [value]="restoreTarget()"
+                                        (input)="setRestoreTarget($event)" [disabled]="restoringEntry()"
+                                        maxlength="1024" autocomplete="off" [placeholder]="entry.path">
+                                </label>
+                                @if (restoreError(); as error) { <p class="tree-error" role="alert">{{ error }}</p> }
+                                <div class="folder-form-actions">
+                                    <button type="submit" [disabled]="restoringEntry() || !restoreTarget().trim()">
+                                        {{ restoringEntry() ? 'Restaurando...' : 'Restaurar' }}
+                                    </button>
+                                    <button type="button" [disabled]="restoringEntry()" (click)="restoreEntryId.set(null)">Cancelar</button>
+                                </div>
+                            </form>
+                        } @else {
+                            <button type="button" class="trash-restore-button" (click)="beginRestore(entry)">Restaurar</button>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </section>
+} @else {
 @if (folderFormOpen()) {
     <form class="create-folder-form" (submit)="submitFolder($event)">
         <p>Nova pasta em: {{ folderParentPath ?? 'raiz do vault' }}</p>
         <label>
             <span>Nome da nova pasta</span>
-            <input type="text" [value]="folderName()" (input)="setFolderName($event)"
+            <input #folderNameInput type="text" [value]="folderName()" (input)="setFolderName($event)"
                 [disabled]="creatingFolder()" maxlength="255" autocomplete="off">
         </label>
         @if (folderError(); as error) { <p class="tree-error" role="alert">{{ error }}</p> }
@@ -15,6 +87,68 @@
         </div>
     </form>
 }
+@if (moveError() && !moveFormOpen()) { <p class="tree-error" role="alert">{{ moveError() }}</p> }
+
+<div #viewport class="tree-viewport" role="tree" aria-label="Pastas e notas do vault" (scroll)="onScroll($event)" (keydown)="handleKeydown($event)">
+    <div class="tree-spacer" [style.height.px]="windowedRows().top" aria-hidden="true"></div>
+    @for (row of windowedRows().rows; track row.entry.path) {
+        <button
+            type="button"
+            class="tree-row"
+            [class.pending]="explorer.pendingFolders().has(row.entry.path) || explorer.movingEntries().has(row.entry.path)"
+            [class.drop-target]="dropTarget() === row.entry.path"
+            [attr.draggable]="!explorer.pendingFolders().has(row.entry.path) && !explorer.movingEntries().has(row.entry.path) && (row.entry.kind === 'folder' || !!row.entry.eTag)"
+            [disabled]="explorer.pendingFolders().has(row.entry.path) || explorer.movingEntries().has(row.entry.path)"
+            role="treeitem"
+            [attr.aria-label]="explorer.pendingFolders().has(row.entry.path) ? row.entry.name + ' (criando)' : explorer.movingEntries().has(row.entry.path) ? row.entry.name + ' (movendo)' : null"
+            [style.padding-inline-start.px]="10 + row.depth * 16"
+            [attr.aria-level]="row.depth + 1"
+            [attr.aria-expanded]="row.entry.kind === 'folder' ? explorer.expandedFolders().has(row.entry.path) : null"
+            [attr.aria-selected]="selectedPath === row.entry.path ? 'true' : null"
+            [attr.tabindex]="activePath() === row.entry.path || (!activePath() && row.index === 0) ? 0 : -1"
+            [attr.data-row-index]="row.index"
+            (dragstart)="startEntryDrag(row.entry, $event)"
+            (dragover)="allowFolderDrop(row.entry, $event)"
+            (dragleave)="leaveFolderDrop(row.entry, $event)"
+            (drop)="dropFolder(row.entry, $event)"
+            (dragend)="endFolderDrag()"
+            (contextmenu)="openContextMenu(row.entry, $event)"
+            (focus)="activePath.set(row.entry.path)"
+            (click)="activate(row.entry)">
+            <span class="tree-marker" [class.folder-marker]="row.entry.kind === 'folder'" aria-hidden="true">
+                @if (row.entry.kind === 'folder') {
+                    {{ explorer.expandedFolders().has(row.entry.path) ? 'v' : '>' }}
+                } @else { · }
+            </span>
+            <span class="tree-name">{{ row.entry.name }}</span>
+            @if (explorer.pendingFolders().has(row.entry.path)) { <span class="pending-label" aria-hidden="true">criando</span> }
+            @if (explorer.movingEntries().has(row.entry.path)) { <span class="pending-label" aria-hidden="true">movendo</span> }
+        </button>
+    }
+    <div class="tree-spacer" [style.height.px]="windowedRows().bottom" aria-hidden="true"></div>
+</div>
+
+@if (deletingFolder()) {
+    <p class="tree-state" role="status" aria-live="polite">Movendo pasta para a lixeira...</p>
+}
+
+@if (contextEntry(); as entry) {
+    <div #contextMenu class="tree-context-menu" role="menu" [attr.aria-label]="'Ações para ' + entry.name"
+        [style.left.px]="contextPosition().left" [style.top.px]="contextPosition().top"
+        (keydown)="handleContextKeydown($event)">
+        @if (entry.kind === 'note') {
+            <button type="button" role="menuitem" (click)="chooseContextAction('open')">Abrir nota</button>
+            <button type="button" role="menuitem" (click)="chooseContextAction('trash')">Mover para a lixeira</button>
+        }
+        <button type="button" role="menuitem" (click)="chooseContextAction('new-note')">Nova nota</button>
+        <button type="button" role="menuitem" (click)="chooseContextAction('new-folder')">Nova pasta</button>
+        @if (entry.kind === 'folder') {
+            <button type="button" role="menuitem" (click)="chooseContextAction('move')">Renomear ou mover</button>
+            <button type="button" role="menuitem" (click)="chooseContextAction('delete')">Mover para a lixeira</button>
+        }
+    </div>
+}
+
 @if (activeFolderPath(); as folderPath) {
     <div class="folder-actions">
         <span class="folder-action-path" [title]="folderPath">{{ folderPath }}</span>
@@ -22,7 +156,7 @@
             <form class="move-folder-form" (submit)="submitMove($event)">
                 <label>
                     <span>Novo caminho da pasta</span>
-                    <input type="text" [value]="moveTarget()" (input)="setMoveTarget($event)"
+                    <input #movePathInput type="text" [value]="moveTarget()" (input)="setMoveTarget($event)"
                         [disabled]="movingFolder()" maxlength="1024" autocomplete="off">
                 </label>
                 <div class="folder-form-actions">
@@ -34,43 +168,17 @@
                 @if (moveError(); as error) { <p class="tree-error" role="alert">{{ error }}</p> }
             </form>
         } @else if (confirmingFolderDelete()) {
-            <button type="button" [disabled]="deletingFolder()" (click)="deleteActiveFolder()">
-                {{ deletingFolder() ? 'Excluindo...' : 'Confirmar exclusão' }}
+            <button #confirmDeleteButton type="button" [disabled]="deletingFolder()" (click)="deleteActiveFolder()">
+                {{ deletingFolder() ? 'Movendo...' : 'Confirmar movimentação' }}
             </button>
             <button type="button" [disabled]="deletingFolder()" (click)="cancelFolderDelete()">Cancelar</button>
         } @else {
             <button type="button" (click)="openMoveForm()">Renomear ou mover</button>
-            <button type="button" (click)="deleteActiveFolder()">Excluir pasta vazia</button>
+            <button type="button" (click)="deleteActiveFolder()">Mover para a lixeira</button>
         }
         @if (deleteError(); as error) { <p class="tree-error" role="alert">{{ error }}</p> }
     </div>
 }
-
-<div #viewport class="tree-viewport" role="tree" aria-label="Pastas e notas do vault" (scroll)="onScroll($event)" (keydown)="handleKeydown($event)">
-    <div class="tree-spacer" [style.height.px]="windowedRows().top" aria-hidden="true"></div>
-    @for (row of windowedRows().rows; track row.entry.path) {
-        <button
-            type="button"
-            class="tree-row"
-            role="treeitem"
-            [style.padding-inline-start.px]="10 + row.depth * 16"
-            [attr.aria-level]="row.depth + 1"
-            [attr.aria-expanded]="row.entry.kind === 'folder' ? explorer.expandedFolders().has(row.entry.path) : null"
-            [attr.aria-selected]="selectedPath === row.entry.path ? 'true' : null"
-            [attr.tabindex]="activePath() === row.entry.path || (!activePath() && row.index === 0) ? 0 : -1"
-            [attr.data-row-index]="row.index"
-            (focus)="activePath.set(row.entry.path)"
-            (click)="activate(row.entry)">
-            <span class="tree-marker" [class.folder-marker]="row.entry.kind === 'folder'" aria-hidden="true">
-                @if (row.entry.kind === 'folder') {
-                    {{ explorer.expandedFolders().has(row.entry.path) ? 'v' : '>' }}
-                } @else { · }
-            </span>
-            <span class="tree-name">{{ row.entry.name }}</span>
-        </button>
-    }
-    <div class="tree-spacer" [style.height.px]="windowedRows().bottom" aria-hidden="true"></div>
-</div>
 
 @if (loadingPath() !== null) {
     <p class="tree-state" role="status" aria-live="polite">
@@ -78,9 +186,10 @@
     </p>
 } @else if (firstError(); as error) {
     <div class="tree-error" role="alert">
-        <span>{{ error.message }}</span>
+        <span>{{ error.path || 'Raiz do vault' }}: {{ error.message }}</span>
         <button type="button" (click)="retry()">Tentar novamente</button>
     </div>
 } @else if (rows().length === 0) {
     <p class="tree-state">Nenhuma nota neste vault.</p>
+}
 }
