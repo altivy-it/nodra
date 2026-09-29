@@ -6,6 +6,9 @@ services:
     build:
       context: ../..
       dockerfile: frontend/web/Dockerfile
+      args:
+        WEB_CONFIGURATION: e2e
+        WEB_BASE_HREF: /notes/
     image: altivy-web:e2e
     restart: "no"
     stop_grace_period: 10s

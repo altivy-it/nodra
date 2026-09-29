@@ -1,0 +1,143 @@
+name: Deploy shared infrastructure files
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: Deploy files or restore the previous NGINX virtual host
+        required: true
+        type: choice
+        options:
+          - deploy
+          - rollback-nginx
+      target:
+        description: Select which shared-infrastructure files to deliver
+        required: true
+        type: choice
+        options:
+          - nginx
+          - postgres
+          - both
+
+permissions:
+  contents: read
+
+concurrency:
+  group: altivynotes-production-vps
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment:
+      name: production
+      url: https://notes.altivy.it
+    permissions:
+      contents: read
+    env:
+      VPS_HOST: ${{ vars.VPS_HOST }}
+      VPS_PORT: ${{ vars.VPS_PORT || '22' }}
+      VPS_USER: ${{ vars.VPS_USER }}
+      VPS_KNOWN_HOSTS: ${{ vars.VPS_KNOWN_HOSTS }}
+      VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+      OPERATION: ${{ inputs.operation }}
+      TARGET: ${{ inputs.target }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Validate inputs and configure pinned SSH host
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          [[ "$OPERATION" == deploy || "$OPERATION" == rollback-nginx ]] || { echo 'Operação inválida.' >&2; exit 2; }
+          [[ "$TARGET" == nginx || "$TARGET" == postgres || "$TARGET" == both ]] || { echo 'Target inválido.' >&2; exit 2; }
+          [[ "$OPERATION" != rollback-nginx || "$TARGET" == nginx ]] || {
+            echo 'Rollback é suportado somente para a configuração NGINX.' >&2
+            exit 2
+          }
+          [[ "$VPS_HOST" =~ ^[A-Za-z0-9][A-Za-z0-9.-]*$ ]] || { echo 'VPS_HOST inválido.' >&2; exit 2; }
+          [[ "$VPS_USER" =~ ^[A-Za-z_][A-Za-z0-9_.-]*$ ]] || { echo 'VPS_USER inválido.' >&2; exit 2; }
+          if [[ ! "$VPS_PORT" =~ ^[0-9]{1,5}$ ]] || (( VPS_PORT == 0 || VPS_PORT >= 65536 )); then
+            echo 'VPS_PORT inválido.' >&2
+            exit 2
+          fi
+          [[ -n "$VPS_SSH_PRIVATE_KEY" && -n "$VPS_KNOWN_HOSTS" ]] || {
+            echo 'Configure VPS_SSH_PRIVATE_KEY e VPS_KNOWN_HOSTS no Environment production.' >&2
+            exit 2
+          }
+
+          install -d -m 0700 "$RUNNER_TEMP/ssh"
+          printf '%s\n' "$VPS_SSH_PRIVATE_KEY" > "$RUNNER_TEMP/ssh/id_key"
+          printf '%s\n' "$VPS_KNOWN_HOSTS" > "$RUNNER_TEMP/ssh/known_hosts"
+          chmod 0600 "$RUNNER_TEMP/ssh/id_key" "$RUNNER_TEMP/ssh/known_hosts"
+          ssh-keygen -y -P '' -f "$RUNNER_TEMP/ssh/id_key" >/dev/null
+          cat > "$RUNNER_TEMP/ssh/config" <<EOF
+          Host altivynotes-vps
+            HostName $VPS_HOST
+            User $VPS_USER
+            Port $VPS_PORT
+            IdentityFile $RUNNER_TEMP/ssh/id_key
+            UserKnownHostsFile $RUNNER_TEMP/ssh/known_hosts
+            IdentitiesOnly yes
+            BatchMode yes
+            StrictHostKeyChecking yes
+            ForwardAgent no
+            RequestTTY no
+          EOF
+          chmod 0600 "$RUNNER_TEMP/ssh/config"
+          ssh -F "$RUNNER_TEMP/ssh/config" altivynotes-vps true
+
+      - name: Prepare remote infrastructure artifact
+        if: inputs.operation == 'deploy'
+        id: remote
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          release_dir="/userapps/altivynotes/releases/infra-${GITHUB_SHA:0:12}"
+          echo "release_dir=$release_dir" >> "$GITHUB_OUTPUT"
+          ssh -F "$RUNNER_TEMP/ssh/config" altivynotes-vps \
+            "install -d -m 0750 '$release_dir' /userapps/altivynotes/scripts"
+          scp -F "$RUNNER_TEMP/ssh/config" \
+            deploy/production/altivynotes-ops.sh \
+            altivynotes-vps:/userapps/altivynotes/scripts/altivynotes-ops.sh
+          if [[ "$TARGET" == nginx || "$TARGET" == both ]]; then
+            scp -F "$RUNNER_TEMP/ssh/config" \
+              deploy/nginx/altivynotes/notes.altivy.it.conf \
+              "altivynotes-vps:$release_dir/"
+          fi
+          if [[ "$TARGET" == postgres || "$TARGET" == both ]]; then
+            scp -F "$RUNNER_TEMP/ssh/config" \
+              backend/libs/infrastructure/data/sql/001-bootstrap-altivy-roles.sql \
+              "altivynotes-vps:$release_dir/"
+          fi
+
+      - name: Apply selected infrastructure files
+        if: inputs.operation == 'deploy'
+        env:
+          REMOTE_RELEASE_DIR: ${{ steps.remote.outputs.release_dir }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          if [[ "$TARGET" == nginx || "$TARGET" == both ]]; then
+            ssh -F "$RUNNER_TEMP/ssh/config" altivynotes-vps \
+              "bash /userapps/altivynotes/scripts/altivynotes-ops.sh deploy-nginx '$REMOTE_RELEASE_DIR'"
+          fi
+          if [[ "$TARGET" == postgres || "$TARGET" == both ]]; then
+            ssh -F "$RUNNER_TEMP/ssh/config" altivynotes-vps \
+              "bash /userapps/altivynotes/scripts/altivynotes-ops.sh deliver-postgres '$REMOTE_RELEASE_DIR'"
+          fi
+
+      - name: Roll back NGINX virtual host
+        if: inputs.operation == 'rollback-nginx'
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          scp -F "$RUNNER_TEMP/ssh/config" \
+            deploy/production/altivynotes-ops.sh \
+            altivynotes-vps:/userapps/altivynotes/scripts/altivynotes-ops.sh
+          ssh -F "$RUNNER_TEMP/ssh/config" altivynotes-vps \
+            'bash /userapps/altivynotes/scripts/altivynotes-ops.sh rollback-nginx'

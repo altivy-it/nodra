@@ -6,13 +6,17 @@ COPY frontend/web/package.json frontend/web/package-lock.json ./
 RUN npm ci --no-audit --no-fund
 
 COPY frontend/web/ ./
-RUN npm run build -- --configuration e2e --base-href /notes/
+ARG WEB_CONFIGURATION=production
+ARG WEB_BASE_HREF=/
+RUN npm run build -- --configuration ${WEB_CONFIGURATION} --base-href ${WEB_BASE_HREF}
 
 FROM lzocateli/nginx:1.28.0-bookworm AS runtime
+ARG IMAGE_VERSION=0.0.0
 LABEL org.opencontainers.image.title="altivy-web" \
   org.opencontainers.image.description="Proxy HTTPS e aplicação web estática do Altivy Notes." \
+  org.opencontainers.image.version="${IMAGE_VERSION}" \
   org.opencontainers.image.source="https://github.com/lzocateli/AltivyNotes" \
-  org.opencontainers.image.documentation="https://github.com/lzocateli/AltivyNotes/tree/main/deploy/e2e" \
+  org.opencontainers.image.documentation="https://github.com/lzocateli/AltivyNotes/tree/main/deploy/production" \
   org.opencontainers.image.url="https://github.com/lzocateli/AltivyNotes"
 COPY deploy/nginx/conf.d/web.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /src/dist/altivy-web/browser/ /usr/share/nginx/html/

@@ -1,0 +1,126 @@
+name: altivynotes
+
+services:
+  web:
+    image: ${ALTIVY_WEB_IMAGE:?Configure ALTIVY_WEB_IMAGE in release.env}
+    restart: unless-stopped
+    init: true
+    read_only: true
+    stop_grace_period: 10s
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx
+      - /var/log/nginx
+      - /var/run
+    networks:
+      edge:
+        aliases:
+          - altivynotes-web
+
+  bff:
+    image: ${ALTIVY_BFF_IMAGE:?Configure ALTIVY_BFF_IMAGE in release.env}
+    extra_hosts:
+      - "credential.altivy.it:${ALTIVY_KEYCLOAK_PROXY_IP:?Configure ALTIVY_KEYCLOAK_PROXY_IP in compose.env}"
+    env_file:
+      - ${ALTIVY_CONFIG_ROOT:?Configure ALTIVY_CONFIG_ROOT in compose.env}/bff.env
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+    restart: unless-stopped
+    init: true
+    read_only: true
+    stop_grace_period: 20s
+    tmpfs:
+      - /tmp
+    volumes:
+      - type: bind
+        source: ${ALTIVY_DATA_ROOT:?Configure ALTIVY_DATA_ROOT in compose.env}/bff-keys
+        target: /keys
+      - type: bind
+        source: ${ALTIVY_CONFIG_ROOT:?Configure ALTIVY_CONFIG_ROOT in compose.env}/altivy-data-protection.pfx
+        target: /certs/altivy-data-protection.pfx
+        read_only: true
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      edge:
+        aliases:
+          - altivynotes-bff
+      app:
+
+  api:
+    image: ${ALTIVY_API_IMAGE:?Configure ALTIVY_API_IMAGE in release.env}
+    extra_hosts:
+      - "credential.altivy.it:${ALTIVY_KEYCLOAK_PROXY_IP:?Configure ALTIVY_KEYCLOAK_PROXY_IP in compose.env}"
+    env_file:
+      - ${ALTIVY_CONFIG_ROOT:?Configure ALTIVY_CONFIG_ROOT in compose.env}/api.env
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+    restart: unless-stopped
+    init: true
+    read_only: true
+    stop_grace_period: 30s
+    tmpfs:
+      - /tmp
+    volumes:
+      - type: bind
+        source: ${ALTIVY_DATA_ROOT:?Configure ALTIVY_DATA_ROOT in compose.env}/vaults
+        target: /vaults
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8080/health/live"]
+      interval: 15s
+      timeout: 5s
+      start_period: 30s
+      retries: 4
+    networks:
+      app:
+      edge:
+      postgres:
+
+  worker:
+    image: ${ALTIVY_WORKER_IMAGE:?Configure ALTIVY_WORKER_IMAGE in release.env}
+    env_file:
+      - ${ALTIVY_CONFIG_ROOT:?Configure ALTIVY_CONFIG_ROOT in compose.env}/worker.env
+    environment:
+      DOTNET_ENVIRONMENT: Production
+    restart: unless-stopped
+    init: true
+    read_only: true
+    stop_grace_period: 30s
+    tmpfs:
+      - /tmp
+    volumes:
+      - type: bind
+        source: ${ALTIVY_DATA_ROOT:?Configure ALTIVY_DATA_ROOT in compose.env}/vaults
+        target: /vaults
+    networks:
+      app:
+      postgres:
+
+  migrator:
+    image: ${ALTIVY_MIGRATIONS_IMAGE:?Configure ALTIVY_MIGRATIONS_IMAGE in release.env}
+    env_file:
+      - ${ALTIVY_CONFIG_ROOT:?Configure ALTIVY_CONFIG_ROOT in compose.env}/migrator.env
+    entrypoint: ["/bin/sh", "-ec"]
+    command: ["exec /app/efbundle --connection \"$$ConnectionStrings__AltivyPostgres\""]
+    profiles:
+      - operations
+    restart: "no"
+    read_only: true
+    tmpfs:
+      - /tmp
+    networks:
+      postgres:
+
+networks:
+  app:
+    driver: bridge
+    internal: true
+  edge:
+    external: true
+    name: ${ALTIVY_EDGE_NETWORK:?Configure ALTIVY_EDGE_NETWORK in compose.env}
+  postgres:
+    external: true
+    name: ${ALTIVY_POSTGRES_NETWORK:?Configure ALTIVY_POSTGRES_NETWORK in compose.env}

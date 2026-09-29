@@ -40,32 +40,36 @@ O comportamento reproduzível deve ficar no Git:
 | Arquivo ou diretório | Responsabilidade |
 | --- | --- |
 | `.github/workflows/ci.yml` | format, lint, build, testes e contratos |
-| `.github/workflows/codeql.yml` | análise CodeQL de C# e TypeScript |
-| `.github/workflows/container.yml` | build, smoke test, scan e inspeção das imagens |
-| `.github/workflows/release.yml` | versão, SBOM, proveniência, publicação e GitHub Release |
-| `.github/workflows/deploy.yml` | promoção do mesmo artefato entre ambientes |
+| `.github/workflows/gitleaks.yml` | scan do histórico Git por secrets |
+| `.github/workflows/release.yml` | PR de release, SemVer, changelog, imagens, scan, SBOM e proveniência |
+| `.github/workflows/deploy.yml` | deploy/rollback independente da aplicação em `production` |
+| `.github/workflows/deploy-shared-infra.yml` | configuração NGINX e entrega do bootstrap PostgreSQL |
 | `.github/dependabot.yml` | atualizações de npm, NuGet, GitHub Actions e imagens base |
 | `.github/CODEOWNERS` | responsáveis por módulos e arquivos críticos |
 | `.github/SECURITY.md` | política de reporte e resposta a vulnerabilidades |
 | lockfiles e manifests | versões reproduzíveis das dependências |
 | configuração do Sonar | escopo, exclusões justificadas e relatórios de cobertura |
 
-Os nomes dos workflows são uma proposta inicial. Eles devem ser criados quando os projetos executáveis existirem, mantendo responsabilidades pequenas e checks estáveis.
+Os workflows existentes são a implementação inicial dos nomes e responsabilidades acima. CodeQL, Sonar, revisão de dependências, regras administrativas e promoção de outros ambientes permanecem controles futuros ou dependentes da configuração da conta GitHub.
 
 ### 2.2 Estado de implementação
 
-O repositório possui a fundação executável para a fase documental:
+O repositório possui CI de código e workflows de release/deploy versionados:
 
-- `.github/workflows/ci.yml` executa a validação do repositório e publica os checks estáveis `CI / Repository Baseline` e `CI / Result`;
+- `.github/workflows/ci.yml` executa baseline documental, testes Angular/.NET, integração PostgreSQL e build das imagens, agregando os resultados em `CI / Result`;
 - `tools/scripts/validate-repository.ps1` verifica arquivos obrigatórios, destinos locais de links e imagens Markdown, referências explícitas, IDs explícitos de headings, status geral e por etapa dos planos e fixação de actions externas por SHA ou digest completo;
 - `tools/scripts/test-validate-repository.ps1` cobre o cenário válido e rejeições de link ausente, referência sem definição, action mutável, status geral inválido e etapa sem status;
 - os validadores permanecem em PowerShell 7 porque usam apenas APIs nativas, já executam em Windows e Linux e não justificam adicionar Python ou bootstrap com `uv`;
 - `.github/CODEOWNERS` registra ownership global e explícito para arquivos críticos;
 - `.github/dependabot.yml` atualiza GitHub Actions semanalmente;
 - `.github/SECURITY.md` prepara a política de reporte responsável e informa que o canal ainda não está operacional;
-- Um checklist administrativo do mantenedor, mantido fora deste repositório público, registra configurações que exigem acesso a **Settings** e evidência manual.
+- `.github/workflows/release.yml` usa Release Please depois de CI verde, cria PR de versão/changelog e, após merge, constrói imagens por SemVer, anexa digests, CycloneDX, scan Trivy e proveniência BuildKit;
+- `.github/workflows/deploy.yml` promove frontend, backend ou ambos por manifesto de digests em GitHub Environment `production`; migrations precedem o deploy backend;
+- `.github/workflows/deploy-shared-infra.yml` valida/recarrega somente o virtual host Altivy e entrega SQL de bootstrap PostgreSQL sem executá-lo;
+- `deploy/production/` contém Compose da aplicação sem PostgreSQL próprio e operador remoto com rollback;
+- um checklist administrativo do mantenedor deve registrar configurações que exigem acesso a **Settings** e evidência manual.
 
-Ainda não existem projetos Angular ou .NET, contracts, lockfiles, Dockerfiles ou manifests de deploy. Os jobs de frontend, backend, integração, contracts, E2E, CodeQL compilado, container, release e deploy devem ser implementados junto com seus primeiros alvos executáveis. Criá-los antes disso produziria checks sem evidência ou permanentemente ignorados.
+Os workflows foram validados localmente, mas ainda precisam executar no GitHub e na VPS. A primeira implantação permanece bloqueada até configurar GitHub App, Environment `production`, host key/SSH, redes externas, arquivos de ambiente, database/roles, callbacks do realm e include NGINX. O CI atual ainda não executa Sonar, CodeQL, Dependency Review nem E2E autenticado; esses gates devem ser adicionados antes de declarar release estável.
 
 ### 2.3 Configuração administrativa na plataforma GitHub
 

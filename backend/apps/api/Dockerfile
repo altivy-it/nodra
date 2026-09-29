@@ -15,10 +15,12 @@ COPY backend/ backend/
 RUN dotnet publish backend/apps/api/Altivy.Notes.Api.csproj --configuration Release --no-restore --output /app/publish
 
 FROM lzocateli/dotnet-aspnet:10.0.11-noble AS runtime
+ARG IMAGE_VERSION=0.0.0
 LABEL org.opencontainers.image.title="altivy-api" \
     org.opencontainers.image.description="API interna do Altivy Notes." \
+    org.opencontainers.image.version="${IMAGE_VERSION}" \
     org.opencontainers.image.source="https://github.com/lzocateli/AltivyNotes" \
-    org.opencontainers.image.documentation="https://github.com/lzocateli/AltivyNotes/tree/main/deploy/e2e" \
+    org.opencontainers.image.documentation="https://github.com/lzocateli/AltivyNotes/tree/main/deploy/production" \
     org.opencontainers.image.url="https://github.com/lzocateli/AltivyNotes"
 WORKDIR /app
 USER root

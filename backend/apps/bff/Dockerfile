@@ -12,10 +12,12 @@ COPY backend/apps/bff/ backend/apps/bff/
 RUN dotnet publish backend/apps/bff/Altivy.Bff.csproj --configuration Release --no-restore --output /app/publish
 
 FROM lzocateli/dotnet-aspnet:10.0.11-noble AS runtime
+ARG IMAGE_VERSION=0.0.0
 LABEL org.opencontainers.image.title="altivy-bff" \
     org.opencontainers.image.description="BFF interno do Altivy Notes para sessão OIDC e relay autenticado." \
+    org.opencontainers.image.version="${IMAGE_VERSION}" \
     org.opencontainers.image.source="https://github.com/lzocateli/AltivyNotes" \
-    org.opencontainers.image.documentation="https://github.com/lzocateli/AltivyNotes/tree/main/deploy/e2e" \
+    org.opencontainers.image.documentation="https://github.com/lzocateli/AltivyNotes/tree/main/deploy/production" \
     org.opencontainers.image.url="https://github.com/lzocateli/AltivyNotes"
 WORKDIR /app
 USER root

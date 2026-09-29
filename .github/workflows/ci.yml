@@ -31,11 +31,146 @@ jobs:
           ./tools/scripts/test-validate-repository.ps1
           ./tools/scripts/validate-repository.ps1
 
+  frontend:
+    name: Frontend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Test and build Angular in container
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          docker run --rm \
+            --volume "$GITHUB_WORKSPACE/frontend/web:/workspace" \
+            --tmpfs /workspace/node_modules:rw,exec,mode=1777 \
+            --tmpfs /workspace/dist:rw,exec,mode=1777 \
+            --tmpfs /workspace/.angular:rw,exec,mode=1777 \
+            --workdir /workspace \
+            lzocateli/angular-cli:22.1.0-node24.15.0-bookworm \
+            bash -lc 'npm ci --no-audit --no-fund && npm test -- --watch=false && npm run build -- --configuration production'
+
+  backend:
+    name: Backend
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Test non-integration .NET projects in container
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          projects=(
+            backend/tests/Altivy.Notes.Api.UnitTests/Altivy.Notes.Api.UnitTests.csproj
+            backend/tests/Altivy.Backend.Application.UnitTests/Altivy.Backend.Application.UnitTests.csproj
+            backend/tests/Altivy.Backend.Domain.UnitTests/Altivy.Backend.Domain.UnitTests.csproj
+            backend/tests/Altivy.Bff.UnitTests/Altivy.Bff.UnitTests.csproj
+            backend/tests/Altivy.Notes.Worker.UnitTests/Altivy.Notes.Worker.UnitTests.csproj
+          )
+          for project in "${projects[@]}"; do
+            docker run --rm \
+              --volume "$GITHUB_WORKSPACE:/workspace" \
+              --workdir /workspace \
+              lzocateli/dotnet-sdk:10.0.400-noble \
+              dotnet test "$project" --configuration Release --verbosity minimal
+          done
+
+  backend-integration:
+    name: Backend Integration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: lzocateli/postgresql:18.4-pgvector0.8.6-bookworm
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci-local-only
+          POSTGRES_DB: altivy
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d altivy"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Bootstrap isolated PostgreSQL test roles
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          docker run --rm --network host \
+            --volume "$GITHUB_WORKSPACE/backend/libs/infrastructure/data/sql/001-bootstrap-altivy-roles.sql:/bootstrap.sql:ro" \
+            --env PGPASSWORD=ci-local-only \
+            --entrypoint psql \
+            lzocateli/postgresql:18.4-pgvector0.8.6-bookworm \
+            --host 127.0.0.1 --username postgres --dbname altivy \
+            --set ON_ERROR_STOP=1 \
+            --set altivy_migrator_password=ci-migrator-only \
+            --set altivy_runtime_password=ci-runtime-only \
+            --file /bootstrap.sql
+
+      - name: Run PostgreSQL and filesystem integration tests in container
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          docker run --rm --network host \
+            --volume "$GITHUB_WORKSPACE:/workspace" \
+            --workdir /workspace \
+            --env 'ALTIVY_INTEGRATION_MIGRATOR_CONNECTION_STRING=Host=127.0.0.1;Port=5432;Database=altivy;Username=altivy_migrator;Password=ci-migrator-only' \
+            --env 'ALTIVY_INTEGRATION_RUNTIME_CONNECTION_STRING=Host=127.0.0.1;Port=5432;Database=altivy;Username=altivy_runtime;Password=ci-runtime-only' \
+            lzocateli/dotnet-sdk:10.0.400-noble \
+            dotnet test backend/tests/Altivy.Backend.Infra.Data.Postgres.IntegrationTests/Altivy.Backend.Infra.Data.Postgres.IntegrationTests.csproj \
+              --configuration Release --verbosity minimal
+
+  images:
+    name: Container Images
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build production images in BuildKit
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          docker buildx inspect --bootstrap
+          docker buildx build --load --build-arg IMAGE_VERSION=0.0.0-ci \
+            --build-arg WEB_CONFIGURATION=production --build-arg WEB_BASE_HREF=/ \
+            --file frontend/web/Dockerfile --tag altivy-web:ci .
+          docker buildx build --load --build-arg IMAGE_VERSION=0.0.0-ci \
+            --file backend/apps/api/Dockerfile --tag altivy-api:ci .
+          docker buildx build --load --build-arg IMAGE_VERSION=0.0.0-ci \
+            --file backend/apps/bff/Dockerfile --tag altivy-bff:ci .
+          docker buildx build --load --build-arg IMAGE_VERSION=0.0.0-ci \
+            --file backend/apps/worker/Dockerfile --tag altivy-worker:ci .
+          docker buildx build --load --build-arg IMAGE_VERSION=0.0.0-ci \
+            --file deploy/production/migrations.Dockerfile --tag altivynotes-migrations:ci .
+
   result:
     name: Result
     if: ${{ always() }}
     needs:
       - repository-baseline
+      - frontend
+      - backend
+      - backend-integration
+      - images
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions: {}
@@ -43,9 +178,19 @@ jobs:
       - name: Evaluate required jobs
         env:
           REPOSITORY_BASELINE_RESULT: ${{ needs.repository-baseline.result }}
+          FRONTEND_RESULT: ${{ needs.frontend.result }}
+          BACKEND_RESULT: ${{ needs.backend.result }}
+          BACKEND_INTEGRATION_RESULT: ${{ needs.backend-integration.result }}
+          IMAGES_RESULT: ${{ needs.images.result }}
         shell: bash
         run: |
           if [[ "$REPOSITORY_BASELINE_RESULT" != "success" ]]; then
             echo "Repository Baseline terminou com: $REPOSITORY_BASELINE_RESULT"
             exit 1
           fi
+          for result in "$FRONTEND_RESULT" "$BACKEND_RESULT" "$BACKEND_INTEGRATION_RESULT" "$IMAGES_RESULT"; do
+            if [[ "$result" != "success" ]]; then
+              echo "Gate de CI terminou com: $result"
+              exit 1
+            fi
+          done
