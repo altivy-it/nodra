@@ -6,7 +6,7 @@ COPY frontend/web/package.json frontend/web/package-lock.json ./
 RUN npm ci --no-audit --no-fund
 
 COPY frontend/web/ ./
-RUN npm run build -- --configuration e2e
+RUN npm run build -- --configuration e2e --base-href /notes/
 
 FROM lzocateli/nginx:1.28.0-bookworm AS runtime
 LABEL org.opencontainers.image.title="altivy-web" \

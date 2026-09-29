@@ -1,13 +1,16 @@
 import pytest
 from playwright.sync_api import Page, expect
+from urllib.parse import urlsplit
 
 
 @pytest.mark.e2e
 def test_anonymous_browser_does_not_receive_tokens(page: Page, base_url: str) -> None:
     page.goto(base_url, wait_until="networkidle")
 
-    expect(page.get_by_role("heading", name="Entre para abrir seu workspace.")).to_be_visible()
-    expect(page.get_by_role("link", name="Entrar no Altivy Notes")).to_have_attribute("href", "/bff/login")
+    expect(page.get_by_role("heading", name="Seu conhecimento, em um só lugar.")).to_be_visible()
+    login_path = f"{urlsplit(base_url).path.rstrip('/')}/bff/login"
+    expect(page.get_by_role("link", name="Entrar no Altivy Notes")).to_have_attribute(
+        "href", login_path)
     assert page.evaluate("Object.keys(localStorage).length") == 0
     assert page.evaluate("Object.keys(sessionStorage).length") == 0
 

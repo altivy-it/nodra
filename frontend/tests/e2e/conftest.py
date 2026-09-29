@@ -1,8 +1,15 @@
 import os
 import re
+from dataclasses import dataclass
 
 import pytest
 from playwright.sync_api import Page, TimeoutError, expect
+
+
+@dataclass(frozen=True, repr=False)
+class E2ECredentials:
+    username: str
+    password: str
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:
@@ -44,23 +51,22 @@ def browser_context_args(browser_context_args: dict[str, object]) -> dict[str, o
 
 
 @pytest.fixture(scope="session")
-def credentials() -> tuple[str, str]:
+def credentials() -> E2ECredentials:
     username = os.getenv("ALTIVY_E2E_USERNAME")
     password = os.getenv("ALTIVY_E2E_PASSWORD")
     if not username or not password:
         pytest.skip("Defina ALTIVY_E2E_USERNAME e ALTIVY_E2E_PASSWORD para jornadas autenticadas.")
 
-    return username, password
+    return E2ECredentials(username, password)
 
 
 @pytest.fixture
-def authenticated_page(page: Page, base_url: str, credentials: tuple[str, str]) -> Page:
-    username, password = credentials
+def authenticated_page(page: Page, base_url: str, credentials: E2ECredentials) -> Page:
     page.goto(base_url, wait_until="networkidle")
     page.get_by_role("link", name="Entrar no Altivy Notes").click()
-    page.locator("#username").fill(username)
-    page.locator("#password").fill(password)
-    page.locator("#kc-login").click()
+    page.get_by_role("textbox", name="Username or email").fill(credentials.username)
+    page.get_by_role("textbox", name="Password").fill(credentials.password)
+    page.get_by_role("button", name="Sign In").click()
     try:
         page.wait_for_url(re.compile(rf"^{re.escape(base_url)}(?:/.*)?$"), timeout=10_000)
     except TimeoutError as error:

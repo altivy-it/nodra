@@ -1,15 +1,16 @@
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import DOMPurify from 'dompurify';
 import { KATEX_OPTIONS, MARKED_OPTIONS, MERMAID_OPTIONS, provideMarkdown, SANITIZE } from 'ngx-markdown';
 
 import { routes } from './app.routes';
+import { appBasePathInterceptor } from './core/app-base-path';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideHttpClient(),
+    provideHttpClient(withInterceptors([appBasePathInterceptor])),
     provideRouter(routes),
     provideMarkdown({
       markedOptions: {

@@ -2,7 +2,7 @@
 
 @font-face {
     font-family: 'Manrope';
-    src: url('/fonts/Manrope-Regular-Latin.woff2') format('woff2');
+    src: url('../public/fonts/Manrope-Regular-Latin.woff2') format('woff2');
     font-style: normal;
     font-weight: 400;
     font-display: swap;
@@ -10,7 +10,7 @@
 
 @font-face {
     font-family: 'Manrope';
-    src: url('/fonts/Manrope-Medium-Latin.woff2') format('woff2');
+    src: url('../public/fonts/Manrope-Medium-Latin.woff2') format('woff2');
     font-style: normal;
     font-weight: 500;
     font-display: swap;
@@ -18,7 +18,7 @@
 
 @font-face {
     font-family: 'Manrope';
-    src: url('/fonts/Manrope-SemiBold-Latin.woff2') format('woff2');
+    src: url('../public/fonts/Manrope-SemiBold-Latin.woff2') format('woff2');
     font-style: normal;
     font-weight: 600;
     font-display: swap;
@@ -26,7 +26,7 @@
 
 @font-face {
     font-family: 'IBM Plex Mono';
-    src: url('/fonts/IBMPlexMono-Regular-Latin1.woff2') format('woff2');
+    src: url('../public/fonts/IBMPlexMono-Regular-Latin1.woff2') format('woff2');
     font-style: normal;
     font-weight: 400;
     font-display: swap;
@@ -34,7 +34,7 @@
 
 @font-face {
     font-family: 'IBM Plex Mono';
-    src: url('/fonts/IBMPlexMono-SemiBold-Latin1.woff2') format('woff2');
+    src: url('../public/fonts/IBMPlexMono-SemiBold-Latin1.woff2') format('woff2');
     font-style: normal;
     font-weight: 600;
     font-display: swap;

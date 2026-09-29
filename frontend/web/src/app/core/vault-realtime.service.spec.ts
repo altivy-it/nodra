@@ -34,15 +34,17 @@ vi.mock('@microsoft/signalr', () => ({
 }));
 
 import { VaultRealtimeService } from './vault-realtime.service';
+import { TestBed } from '@angular/core/testing';
 
 describe('VaultRealtimeService', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mocks.connection.state = 'Disconnected';
+        TestBed.configureTestingModule({ providers: [VaultRealtimeService] });
     });
 
     it('conecta pelo BFF com cookies e entra no grupo do vault', async () => {
-        const service = new VaultRealtimeService();
+        const service = TestBed.inject(VaultRealtimeService);
 
         await service.joinVaultAsync('lab-0001');
 
@@ -55,7 +57,7 @@ describe('VaultRealtimeService', () => {
 
     it('desconecta e informa erro quando a entrada no vault falha', async () => {
         mocks.connection.invoke.mockRejectedValueOnce(new Error('Acesso negado.'));
-        const service = new VaultRealtimeService();
+        const service = TestBed.inject(VaultRealtimeService);
 
         await expect(service.joinVaultAsync('lab-0001')).rejects.toThrow('Acesso negado.');
 
@@ -64,7 +66,7 @@ describe('VaultRealtimeService', () => {
     });
 
     it('reentra no grupo após uma reconexão', async () => {
-        const service = new VaultRealtimeService();
+        const service = TestBed.inject(VaultRealtimeService);
         await service.joinVaultAsync('lab-0001');
         const onReconnected = mocks.connection.onreconnected.mock.calls[0]?.[0] as (() => void) | undefined;
 

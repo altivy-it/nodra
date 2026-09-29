@@ -1,6 +1,7 @@
 import { DOCUMENT } from '@angular/common';
 import { afterNextRender, Component, computed, ElementRef, EventEmitter, HostListener, inject, Injector, Input, OnChanges, Output, SimpleChanges, ViewChild, signal } from '@angular/core';
 import { FolderExplorerService, remapPath, TrashEntry, VaultEntry } from '../../data-access/folder-explorer.service';
+import { appPath } from '../../core/app-base-path';
 
 interface TreeRow {
     entry: VaultEntry;
@@ -167,7 +168,9 @@ export class FolderExplorerComponent implements OnChanges {
                     this.purgeError.set('Não foi possível preservar a confirmação. Reabra a lixeira e tente novamente após autenticar.');
                     return;
                 }
-                this.document.location.href = `/bff/reauthenticate?returnUrl=${encodeURIComponent(returnUrl)}`;
+                this.document.location.href = appPath(
+                    `/bff/reauthenticate?returnUrl=${encodeURIComponent(returnUrl)}`,
+                    this.document.baseURI);
                 return;
             }
             if (error) {

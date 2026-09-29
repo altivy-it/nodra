@@ -2,6 +2,7 @@ import { DOCUMENT } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { Inject, Injectable, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
+import { appPath } from './app-base-path';
 
 export interface BffSession {
     authenticated: boolean;
@@ -49,7 +50,7 @@ export class SessionService {
             const antiforgery = await firstValueFrom(this.http.get<AntiforgeryTokenResponse>('/bff/antiforgery'));
             const form = this.document.createElement('form');
             form.method = 'post';
-            form.action = '/bff/logout';
+            form.action = appPath('/bff/logout', this.document.baseURI);
 
             const token = this.document.createElement('input');
             token.type = 'hidden';

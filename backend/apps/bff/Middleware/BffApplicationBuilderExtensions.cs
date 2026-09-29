@@ -15,6 +15,7 @@ public static class BffApplicationBuilderExtensions
     /// <returns>A mesma aplicação Web, permitindo encadear outras extensões de pipeline.</returns>
     public static WebApplication UseBff(this WebApplication app)
     {
+        app.UseMiddleware<ForwardedPrefixMiddleware>();
         app.UseForwardedHeaders();
         app.UseHttpsRedirection();
         app.UseWebSockets();

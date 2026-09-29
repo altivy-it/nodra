@@ -1,4 +1,5 @@
-import { Component, effect } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { Component, effect, inject } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs';
 import { Note, NotesService } from './core/notes.service';
@@ -8,6 +9,7 @@ import { VaultsService } from './core/vaults.service';
 import { FolderExplorerService, remapPath, VaultEntry } from './data-access/folder-explorer.service';
 import { WorkspaceShell } from './shell/workspace-shell';
 import { WorkspaceService } from './shell/workspace.service';
+import { appPath } from './core/app-base-path';
 
 @Component({
   selector: 'app-root',
@@ -16,6 +18,7 @@ import { WorkspaceService } from './shell/workspace.service';
   styleUrl: './app.css'
 })
 export class App {
+  readonly loginUrl = appPath('/bff/login', inject(DOCUMENT).baseURI);
   private subject: string | null = null;
   private activeContext: string | null = null;
   private saveTimer: ReturnType<typeof setTimeout> | null = null;

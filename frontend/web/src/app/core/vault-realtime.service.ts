@@ -1,5 +1,7 @@
-import { Injectable, signal } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { Inject, Injectable, signal } from '@angular/core';
 import { HubConnection, HubConnectionBuilder, HubConnectionState } from '@microsoft/signalr';
+import { appPath } from './app-base-path';
 
 export type VaultRealtimeStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
 
@@ -10,6 +12,8 @@ export type VaultRealtimeStatus = 'disconnected' | 'connecting' | 'connected' | 
 @Injectable({ providedIn: 'root' })
 export class VaultRealtimeService {
     readonly status = signal<VaultRealtimeStatus>('disconnected');
+
+    constructor(@Inject(DOCUMENT) private readonly document: Document) { }
 
     private connection: HubConnection | null = null;
     private generation = 0;
@@ -23,7 +27,7 @@ export class VaultRealtimeService {
         await this.stopConnectionAsync();
 
         const connection = new HubConnectionBuilder()
-            .withUrl('/hubs/vaults', { withCredentials: true })
+            .withUrl(appPath('/hubs/vaults', this.document.baseURI), { withCredentials: true })
             .withAutomaticReconnect()
             .build();
 
