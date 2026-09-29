@@ -640,11 +640,19 @@ Evidências:
 - O CRUD fallback do parâmetro de retenção por `sub` também foi implementado em
   `user_trash_retention_settings`, com limites de 1 a 3650 dias ou null, migration
   explícita, endpoints autenticados `/api/v1/me/trash-settings` e controle na
-  tela de configurações. O valor ainda não ativa remoção automática: faltam
-  step-up OIDC recente, auditoria append-only e a operação de esvaziamento.
-  O BFF já inicia o desafio protegido em `/bff/reauthenticate` e valida/persiste
-  `auth_time` no ticket server-side; o esvaziamento continua fechado até usar
-  essa evidência com auditoria completa.
+  tela de configurações. O handler consulta o parâmetro do próprio sujeito e o
+  registra no manifesto de cada nova exclusão; null mantém a remoção automática
+  desabilitada. O esvaziamento manual exige `vault:delete`, confirmação
+  explícita, step-up OIDC recente e auditoria append-only. O callback exige o
+  mesmo `sub` e `auth_time` válido, o BFF mantém a evidência no ticket
+  server-side e o proxy remove header forjado pelo browser. Após redirect, a UI
+  só repete a confirmação da mesma aba/vault após status recente do BFF e nova
+  carga da lixeira. O purge valida os manifestos, preserva falhas individuais,
+  registra intenção antes da exclusão e resultado depois, inclusive parcial.
+  Validações focadas atuais: BFF 5/5, API 4/4, filesystem 3/3 e explorador
+  Angular 16/16; build de produção com bundle inicial de 4,14 MB. O EF lista
+  as 11 migrations, incluindo retenção e auditoria. O E2E real BFF/API/Keycloak
+  não foi executado; o arquivo externo de secrets não foi lido.
   Também pendem indicadores
   de classificação, metadados e links não resolvidos, que exigem dados e
   contrato de leitura, e o Playwright contra BFF/API/Keycloak reais. O teste
@@ -1072,6 +1080,7 @@ do layout anterior exige aprovação humana e evidência dos critérios finais.
 | 2026-09-28 | P-04 | in-progress | in-progress | lixeira recursiva e restauração com destino explícito validadas em desktop/mobile; parâmetro de retenção integrado à tela de configurações e migration; 11 filesystem, 55 API, 91 Vitest, 31 Playwright mockado e build 4,13 MB; step-up/auditoria/purge, indicadores semânticos e E2E real permanecem pendentes | IA assistida |
 | 2026-09-28 | P-04 | in-progress | in-progress | BFF passou a iniciar reautenticação OIDC protegida por `/bff/reauthenticate` com prompt=login e max_age=0; prova auth_time, auditoria append-only e esvaziamento continuam fechados até validação completa | IA assistida |
 | 2026-09-29 | P-04 | in-progress | in-progress | BFF captura auth_time somente no desafio OIDC, a API exige evidência recente, e move/restore/empty-trash gravam intenção e resultado em trash_audit_events; UI confirma esvaziamento e redireciona para reautenticação quando recebe 428 | IA assistida |
+| 2026-09-29 | P-04 | in-progress | in-progress | step-up vinculado ao mesmo sub no retorno OIDC, proxy descarta header forjado, status recente e retomada por aba/vault; auditoria antes/depois e purge validado com falha parcial e falha na persistência do outcome; retenção capturada no manifesto; 11 migrations reconhecidas; BFF 5/5, API 4/4, filesystem 3/3, Angular 16/16, Playwright mockado 31/31 e build 4,14 MB; E2E real e indicadores semânticos permanecem pendentes | IA assistida |
 
 ## Regras de atualização
 

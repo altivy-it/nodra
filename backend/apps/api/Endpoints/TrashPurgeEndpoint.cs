@@ -25,8 +25,15 @@ internal static class TrashPurgeEndpoint
                 extensions: new Dictionary<string, object?> { ["code"] = "reauthentication-required" });
         }
 
-        var result = await command.HandleAsync(vaultId, subject, reauthenticatedAtUtc, cancellationToken);
-        return Results.Ok(new { removedOperations = result.RemovedOperations, failedOperations = result.FailedOperations });
+        try
+        {
+            var result = await command.HandleAsync(vaultId, subject, reauthenticatedAtUtc, cancellationToken);
+            return Results.Ok(new { removedOperations = result.RemovedOperations, failedOperations = result.FailedOperations });
+        }
+        catch (InvalidOperationException)
+        {
+            return Results.Problem(statusCode: 503, title: "Auditoria da lixeira indisponível.");
+        }
     }
 
     private static async Task<IResult?> AuthorizeAsync(

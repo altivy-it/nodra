@@ -57,6 +57,85 @@ describe('FolderExplorerComponent', () => {
         expect(fixture.nativeElement.querySelector('[data-row-index="19999"]')).toBe(document.activeElement);
     });
 
+    it('preserva e recarrega operações restantes quando o purge falha parcialmente', async () => {
+        await TestBed.configureTestingModule({
+            imports: [FolderExplorerComponent],
+            providers: [provideHttpClient(), provideHttpClientTesting()]
+        }).compileComponents();
+        const component = TestBed.createComponent(FolderExplorerComponent).componentInstance;
+        const http = TestBed.inject(HttpTestingController);
+        const remaining = {
+            id: 'operation-1',
+            path: 'nota.md',
+            name: 'nota.md',
+            kind: 'note' as const,
+            deletedAtUtc: '2026-09-28T00:00:00Z',
+            retentionDays: null,
+            canRestoreToOriginal: true
+        };
+        component.explorer.activateVault('vault-1');
+        http.expectOne('/api/v1/vaults/vault-1/entries').flush([]);
+        await Promise.resolve();
+
+        const purge = component.explorer.emptyTrash();
+        http.expectOne({ method: 'DELETE', url: '/api/v1/vaults/vault-1/trash' })
+            .flush({ removedOperations: 2, failedOperations: 1 });
+        await Promise.resolve();
+        http.expectOne(request => request.method === 'GET' && request.url.endsWith('/trash'))
+            .flush({ items: [remaining], nextCursor: null });
+        const result = await purge;
+
+        expect(result).toContain('2 operação(ões) removida(s), 1 com falha');
+        expect(component.explorer.trashEntries()).toEqual([remaining]);
+        http.verify();
+    });
+
+    it('retoma uma confirmação de purge somente com reautenticação recente do BFF', async () => {
+        const storageSlot = 'altivy.trash-purge.pending-v1';
+        window.sessionStorage.removeItem(storageSlot);
+        window.sessionStorage.setItem(storageSlot, 'vault-1');
+        await TestBed.configureTestingModule({
+            imports: [FolderExplorerComponent],
+            providers: [provideHttpClient(), provideHttpClientTesting()]
+        }).compileComponents();
+        const fixture = TestBed.createComponent(FolderExplorerComponent);
+        const http = TestBed.inject(HttpTestingController);
+        fixture.componentRef.setInput('vaultId', 'vault-1');
+        fixture.detectChanges();
+
+        http.expectOne('/api/v1/vaults/vault-1/entries').flush([]);
+        http.expectOne(request => request.method === 'GET' && request.url.endsWith('/trash'))
+            .flush({ items: [{
+                id: 'operation-1',
+                path: 'nota.md',
+                name: 'nota.md',
+                kind: 'note',
+                deletedAtUtc: '2026-09-28T00:00:00Z',
+                retentionDays: null,
+                canRestoreToOriginal: true
+            }], nextCursor: null });
+        await Promise.resolve();
+        await Promise.resolve();
+        const statusRequest = await vi.waitFor(() => http.expectOne('/bff/reauthenticate/status'));
+        statusRequest.flush({
+            authenticated: true,
+            subject: 'subject-1',
+            authenticatedAtUtc: new Date().toISOString()
+        });
+        const purgeRequest = await vi.waitFor(() =>
+            http.expectOne({ method: 'DELETE', url: '/api/v1/vaults/vault-1/trash' }));
+        purgeRequest.flush({ removedOperations: 1, failedOperations: 0 });
+        const reloadRequest = await vi.waitFor(() => http.expectOne('/api/v1/vaults/vault-1/entries'));
+        reloadRequest.flush([]);
+        await fixture.whenStable();
+
+        expect(fixture.componentInstance.trashOpen()).toBe(true);
+        expect(fixture.componentInstance.purgeResult()).toBe('Lixeira esvaziada.');
+        expect(window.sessionStorage.getItem(storageSlot)).toBeNull();
+        window.sessionStorage.removeItem(storageSlot);
+        http.verify();
+    });
+
     it('usa a pasta selecionada como destino contextual', async () => {
         await TestBed.configureTestingModule({
             imports: [FolderExplorerComponent],

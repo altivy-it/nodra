@@ -17,6 +17,7 @@ const overscan = 8;
     styleUrl: './folder-explorer.component.css'
 })
 export class FolderExplorerComponent implements OnChanges {
+    private readonly pendingTrashPurgeStorageSlot = 'altivy.trash-purge.pending-v1';
     private readonly document = inject(DOCUMENT);
     private readonly injector = inject(Injector);
     @Input() vaultId: string | null = null;
@@ -110,6 +111,7 @@ export class FolderExplorerComponent implements OnChanges {
             this.trashOpen.set(false);
             this.endFolderDrag();
             this.explorer.activateVault(this.vaultId, this.expandedPaths);
+            void this.resumePendingTrashPurge();
         }
     }
 
@@ -157,6 +159,14 @@ export class FolderExplorerComponent implements OnChanges {
             const error = await this.explorer.emptyTrash();
             if (error === 'reauthentication-required') {
                 const returnUrl = `${this.document.location.pathname}${this.document.location.search}${this.document.location.hash}`;
+                try {
+                    const storage = this.document.defaultView?.sessionStorage;
+                    if (!storage || !this.vaultId) throw new Error('Armazenamento temporário indisponível.');
+                    storage.setItem(this.pendingTrashPurgeStorageSlot, this.vaultId);
+                } catch {
+                    this.purgeError.set('Não foi possível preservar a confirmação. Reabra a lixeira e tente novamente após autenticar.');
+                    return;
+                }
                 this.document.location.href = `/bff/reauthenticate?returnUrl=${encodeURIComponent(returnUrl)}`;
                 return;
             }
@@ -169,6 +179,31 @@ export class FolderExplorerComponent implements OnChanges {
         } finally {
             this.purgingTrash.set(false);
         }
+    }
+
+    private async resumePendingTrashPurge(): Promise<void> {
+        const storage = this.document.defaultView?.sessionStorage;
+        if (!storage) return;
+        let pendingVaultId: string | null;
+        try {
+            pendingVaultId = storage.getItem(this.pendingTrashPurgeStorageSlot);
+            if (pendingVaultId) storage.removeItem(this.pendingTrashPurgeStorageSlot);
+        } catch {
+            return;
+        }
+        if (!pendingVaultId || pendingVaultId !== this.vaultId) return;
+
+        this.trashOpen.set(true);
+        this.confirmingTrashPurge.set(true);
+        this.purgeError.set(null);
+        await this.explorer.loadTrash();
+        if (pendingVaultId !== this.vaultId) return;
+        if (this.explorer.trashError() || !(await this.explorer.hasRecentReauthentication())) {
+            this.confirmingTrashPurge.set(false);
+            this.purgeError.set('A reautenticação recente não foi confirmada. Confirme o esvaziamento novamente.');
+            return;
+        }
+        await this.emptyTrash();
     }
 
     cancelTrashPurge(): void {

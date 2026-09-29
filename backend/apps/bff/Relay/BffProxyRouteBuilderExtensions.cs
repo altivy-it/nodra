@@ -61,7 +61,8 @@ public static class BffProxyRouteBuilderExtensions
             var authentication = await context.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             if (authentication.Succeeded && authentication.Ticket is not null &&
                 ReauthenticationEvidence.TryRead(authentication.Ticket.Properties, context.User, out var evidence) &&
-                evidence is not null)
+                evidence is not null &&
+                evidence.IsFresh(DateTimeOffset.UtcNow, ReauthenticationEvidence.FreshnessWindow))
             {
                 request.Headers.TryAddWithoutValidation("X-Altivy-Reauth-At", evidence.AuthenticatedAtUtc.ToString("O"));
             }

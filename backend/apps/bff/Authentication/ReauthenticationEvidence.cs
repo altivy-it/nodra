@@ -11,6 +11,8 @@ public sealed record ReauthenticationEvidence(string Subject, DateTimeOffset Aut
 {
     public const string ChallengeItem = "Altivy.Reauthentication.Challenge";
     public const string AuthenticatedAtItem = "Altivy.Reauthentication.AuthenticatedAtUtc";
+    public const string ExpectedSubjectItem = "Altivy.Reauthentication.ExpectedSubject";
+    public static readonly TimeSpan FreshnessWindow = TimeSpan.FromMinutes(5);
 
     public static bool TryCreate(ClaimsPrincipal principal, out ReauthenticationEvidence? evidence)
     {
@@ -35,6 +37,20 @@ public sealed record ReauthenticationEvidence(string Subject, DateTimeOffset Aut
         }
     }
 
+    public static bool TryCreate(
+        ClaimsPrincipal principal,
+        string? expectedSubject,
+        out ReauthenticationEvidence? evidence)
+    {
+        if (!TryCreate(principal, out evidence) ||
+            !string.Equals(evidence!.Subject, expectedSubject, StringComparison.Ordinal))
+        {
+            evidence = null;
+            return false;
+        }
+        return true;
+    }
+
     public static bool TryRead(
         AuthenticationProperties properties,
         ClaimsPrincipal principal,
@@ -57,5 +73,5 @@ public sealed record ReauthenticationEvidence(string Subject, DateTimeOffset Aut
     }
 
     public bool IsFresh(DateTimeOffset nowUtc, TimeSpan maxAge) =>
-        AuthenticatedAtUtc <= nowUtc && nowUtc - AuthenticatedAtUtc <= maxAge;
+        AuthenticatedAtUtc <= nowUtc.AddSeconds(30) && nowUtc - AuthenticatedAtUtc <= maxAge;
 }

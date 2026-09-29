@@ -9,8 +9,8 @@
   "viewport_width": 390,
   "entry_count": 20000,
   "samples": 100,
-  "p95_ms": 55.32,
-  "p99_ms": 76.69,
+  "p95_ms": 309.3,
+  "p99_ms": 347.82,
   "thresholds_ms": {
     "p95": 500,
     "p99": 2000

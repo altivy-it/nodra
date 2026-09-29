@@ -1,3 +1,5 @@
+using Altivy.Backend.Infra.Data.Postgres;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -7,6 +9,8 @@ namespace Altivy.Backend.Infra.Data.Postgres.Migrations;
 /// <summary>
 /// Cria a trilha append-only das operações de lixeira.
 /// </summary>
+[DbContext(typeof(PostgresDbContext))]
+[Migration("20260928234000_AddTrashAuditEvents")]
 public partial class AddTrashAuditEvents : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)

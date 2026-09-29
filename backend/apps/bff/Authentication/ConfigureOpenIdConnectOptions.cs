@@ -63,15 +63,17 @@ public sealed class ConfigureOpenIdConnectOptions(IOptions<KeycloakOptions> keyc
             }
 
             if (context.Principal is null ||
-                !ReauthenticationEvidence.TryCreate(context.Principal, out var evidence) || evidence is null)
+                !properties.Items.TryGetValue(ReauthenticationEvidence.ExpectedSubjectItem, out var expectedSubject) ||
+                !ReauthenticationEvidence.TryCreate(context.Principal, expectedSubject, out var evidence) || evidence is null)
             {
-                context.Fail("O retorno OIDC não contém auth_time válido para reautenticação.");
+                context.Fail("O retorno OIDC não corresponde ao sujeito original ou não contém auth_time válido.");
                 return Task.CompletedTask;
             }
 
             properties.Items[ReauthenticationEvidence.AuthenticatedAtItem] =
                 evidence.AuthenticatedAtUtc.ToString("O", System.Globalization.CultureInfo.InvariantCulture);
             properties.Items.Remove(ReauthenticationEvidence.ChallengeItem);
+            properties.Items.Remove(ReauthenticationEvidence.ExpectedSubjectItem);
             return Task.CompletedTask;
         };
     }

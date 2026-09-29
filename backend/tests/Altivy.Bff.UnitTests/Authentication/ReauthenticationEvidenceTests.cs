@@ -44,4 +44,28 @@ public sealed class ReauthenticationEvidenceTests
 
         Assert.False(ReauthenticationEvidence.TryCreate(principal, out _));
     }
+
+    [Fact]
+    public void RejectsOidcEvidenceForADifferentSubject()
+    {
+        var principal = new ClaimsPrincipal(new ClaimsIdentity([
+            new Claim("sub", "subject-2"),
+            new Claim("auth_time", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(System.Globalization.CultureInfo.InvariantCulture))
+        ]));
+
+        Assert.False(ReauthenticationEvidence.TryCreate(principal, "subject-1", out _));
+        Assert.True(ReauthenticationEvidence.TryCreate(principal, "subject-2", out var evidence));
+        Assert.Equal("subject-2", evidence!.Subject);
+    }
+
+    [Fact]
+    public void AllowsLimitedClockSkewAndRejectsFarFutureAuthTime()
+    {
+        var now = DateTimeOffset.UtcNow;
+        var evidence = new ReauthenticationEvidence("subject-1", now.AddSeconds(20));
+
+        Assert.True(evidence.IsFresh(now, TimeSpan.FromMinutes(5)));
+        Assert.False(new ReauthenticationEvidence("subject-1", now.AddSeconds(31))
+            .IsFresh(now, TimeSpan.FromMinutes(5)));
+    }
 }

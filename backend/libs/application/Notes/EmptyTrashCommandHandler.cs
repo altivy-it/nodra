@@ -3,7 +3,7 @@ namespace Altivy.Backend.Application.Notes;
 /// <summary>
 /// Esvazia a lixeira depois que a API validou autorização e step-up OIDC recente.
 /// </summary>
-public sealed class EmptyTrashCommandHandler(ITrashStore trashStore, ITrashAuditStore auditStore)
+public sealed class EmptyTrashCommandHandler(ITrashStore trashStore, ITrashAuditStore? auditStore = null)
 {
     public async Task<TrashEmptyOutcome> HandleAsync(
         string vaultId,
@@ -11,6 +11,11 @@ public sealed class EmptyTrashCommandHandler(ITrashStore trashStore, ITrashAudit
         DateTimeOffset reauthenticatedAtUtc,
         CancellationToken cancellationToken)
     {
+        if (auditStore is null)
+        {
+            throw new InvalidOperationException("A auditoria do esvaziamento da lixeira está indisponível.");
+        }
+
         var operationId = Guid.NewGuid();
         await auditStore.RecordAsync(new TrashAuditEvent(
             operationId,
@@ -21,18 +26,22 @@ public sealed class EmptyTrashCommandHandler(ITrashStore trashStore, ITrashAudit
             DateTimeOffset.UtcNow,
             reauthenticatedAtUtc), cancellationToken);
 
+        TrashEmptyOutcome outcome;
         try
         {
-            var outcome = await trashStore.EmptyTrashAsync(vaultId, subject, cancellationToken);
+            outcome = await trashStore.EmptyTrashAsync(vaultId, subject, cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
             await auditStore.RecordAsync(new TrashAuditEvent(
                 operationId,
                 vaultId,
                 subject,
                 "empty-trash-result",
-                outcome.FailedOperations == 0 ? "succeeded" : "partial-failure",
+                "cancelled",
                 DateTimeOffset.UtcNow,
-                reauthenticatedAtUtc), cancellationToken);
-            return outcome;
+                reauthenticatedAtUtc), CancellationToken.None);
+            throw;
         }
         catch
         {
@@ -43,8 +52,18 @@ public sealed class EmptyTrashCommandHandler(ITrashStore trashStore, ITrashAudit
                 "empty-trash-result",
                 "failed",
                 DateTimeOffset.UtcNow,
-                reauthenticatedAtUtc), cancellationToken);
+                reauthenticatedAtUtc), CancellationToken.None);
             throw;
         }
+
+        await auditStore.RecordAsync(new TrashAuditEvent(
+            operationId,
+            vaultId,
+            subject,
+            "empty-trash-result",
+            outcome.FailedOperations == 0 ? "succeeded" : "partial-failure",
+            DateTimeOffset.UtcNow,
+            reauthenticatedAtUtc), CancellationToken.None);
+        return outcome;
     }
 }

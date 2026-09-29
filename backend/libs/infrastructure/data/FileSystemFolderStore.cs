@@ -69,11 +69,16 @@ public sealed class FileSystemFolderStore(string vaultRoot) : IFolderStore
         string subject,
         FolderPath path,
         string? expectedETag,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        int? retentionDays = null)
     {
         cancellationToken.ThrowIfCancellationRequested();
         ValidateSubject(subject);
         ArgumentNullException.ThrowIfNull(path);
+        if (retentionDays is < 1 or > 3650)
+        {
+            throw new ArgumentOutOfRangeException(nameof(retentionDays));
+        }
 
         var vaultPath = GetVaultPath(vaultId);
         var sourcePath = GetFolderPath(vaultPath, path);
@@ -119,7 +124,7 @@ public sealed class FileSystemFolderStore(string vaultRoot) : IFolderStore
             path.Value,
             isFolder,
             DateTimeOffset.UtcNow,
-            null);
+            retentionDays);
         var pendingManifestPath = Path.Combine(operationDirectory, PendingManifestFileName);
         var manifestPath = Path.Combine(operationDirectory, ManifestFileName);
         var payloadPath = Path.Combine(operationDirectory, PayloadName);
@@ -310,6 +315,7 @@ public sealed class FileSystemFolderStore(string vaultRoot) : IFolderStore
                 var manifest = await LoadManifestAsync(
                     operationDirectory, vaultId, subject, operationId, cancellationToken);
                 if (manifest is null) continue;
+                ValidateManifest(manifest, vaultId, subject, operationId);
                 TryDeleteOperationDirectory(operationDirectory);
                 removed++;
             }

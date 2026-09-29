@@ -1,6 +1,9 @@
 using Altivy.Backend.Application.Notes;
 using Altivy.Backend.Domain.Notes;
 using Altivy.Backend.Infra.Data.Postgres;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json.Nodes;
 using Xunit;
 
 namespace Altivy.Backend.Infra.Data.Postgres.IntegrationTests;
@@ -250,5 +253,71 @@ public sealed class FileSystemFolderStoreIntegrationTests : IAsyncLifetime
         Assert.Equal("# Preservar", await File.ReadAllTextAsync(Path.Combine(legacyFolder, "legado.md")));
         Assert.Contains(await store.ListChildrenAsync("vault-0001", null, CancellationToken.None),
             entry => entry.Path == ".altivy-trash");
+    }
+
+    [Fact]
+    public async Task EmptyTrashDeletesOnlyTheAuthenticatedSubjectsOperations()
+    {
+        var vault = Path.Combine(root, "vault-0001");
+        await File.WriteAllTextAsync(Path.Combine(vault, "nota-a.md"), "A");
+        await File.WriteAllTextAsync(Path.Combine(vault, "nota-b.md"), "B");
+        var noteStore = new FileSystemNoteStore(root);
+        var store = new FileSystemFolderStore(root);
+        var noteA = await noteStore.FindAsync("vault-0001", NotePath.Create("nota-a.md"), CancellationToken.None);
+        var noteB = await noteStore.FindAsync("vault-0001", NotePath.Create("nota-b.md"), CancellationToken.None);
+        var movedA = await store.MoveToTrashAsync(
+            "vault-0001", "subject-a", FolderPath.Create("nota-a.md"), noteA!.ETag, CancellationToken.None);
+        var movedB = await store.MoveToTrashAsync(
+            "vault-0001", "subject-b", FolderPath.Create("nota-b.md"), noteB!.ETag, CancellationToken.None);
+
+        var outcome = await store.EmptyTrashAsync("vault-0001", "subject-a", CancellationToken.None);
+
+        Assert.Equal(new TrashEmptyOutcome(1, 0), outcome);
+        Assert.Empty(await store.ListTrashAsync("vault-0001", "subject-a", CancellationToken.None));
+        Assert.Single(await store.ListTrashAsync("vault-0001", "subject-b", CancellationToken.None));
+        Assert.True(File.Exists(Path.Combine(vault, ".altivy-trash",
+            Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes("subject-b"))),
+            movedB.Entry!.Id.ToString("N"), "payload")));
+        Assert.NotNull(movedA.Entry);
+    }
+
+    [Fact]
+    public async Task EmptyTrashPreservesAnOperationWithAMismatchedManifestSubject()
+    {
+        await File.WriteAllTextAsync(Path.Combine(root, "vault-0001", "nota.md"), "Nota");
+        var note = await new FileSystemNoteStore(root).FindAsync(
+            "vault-0001", NotePath.Create("nota.md"), CancellationToken.None);
+        var store = new FileSystemFolderStore(root);
+        var moved = await store.MoveToTrashAsync(
+            "vault-0001", "subject-a", FolderPath.Create("nota.md"), note!.ETag, CancellationToken.None);
+        var operationDirectory = Path.Combine(root, "vault-0001", ".altivy-trash",
+            Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes("subject-a"))),
+            moved.Entry!.Id.ToString("N"));
+        var manifestPath = Path.Combine(operationDirectory, "manifest.json");
+        var manifest = JsonNode.Parse(await File.ReadAllTextAsync(manifestPath))!;
+        manifest["Subject"] = "subject-b";
+        await File.WriteAllTextAsync(manifestPath, manifest.ToJsonString());
+
+        var outcome = await store.EmptyTrashAsync("vault-0001", "subject-a", CancellationToken.None);
+
+        Assert.Equal(new TrashEmptyOutcome(0, 1), outcome);
+        Assert.True(File.Exists(Path.Combine(operationDirectory, "payload")));
+    }
+
+    [Fact]
+    public async Task TrashManifestCapturesRetentionDaysAtMoveTime()
+    {
+        await File.WriteAllTextAsync(Path.Combine(root, "vault-0001", "nota.md"), "Nota");
+        var note = await new FileSystemNoteStore(root).FindAsync(
+            "vault-0001", NotePath.Create("nota.md"), CancellationToken.None);
+        var store = new FileSystemFolderStore(root);
+
+        var moved = await store.MoveToTrashAsync(
+            "vault-0001", "subject-a", FolderPath.Create("nota.md"), note!.ETag,
+            CancellationToken.None, retentionDays: 30);
+        var listed = await store.ListTrashAsync("vault-0001", "subject-a", CancellationToken.None);
+
+        Assert.Equal(30, moved.Entry!.RetentionDays);
+        Assert.Equal(30, Assert.Single(listed).RetentionDays);
     }
 }

@@ -71,6 +71,10 @@ O gateway global é a única origem pública. Configure o Keycloak para anunciar
 ```powershell
 $env:KEYCLOAK_PUBLIC_URL = 'https://localhost:7443'
 $env:APP_PUBLIC_URL = 'https://localhost:7443/notes'
+$gatewayContainer = docker ps --filter 'name=altivy-identity-gateway-1' --format '{{.ID}}' | Select-Object -First 1
+if (-not $gatewayContainer) { throw 'Inicie a plataforma global de identidade antes do Compose E2E.' }
+$env:IDENTITY_GATEWAY_IP = docker inspect --format '{{with index .NetworkSettings.Networks "identity-global"}}{{.IPAddress}}{{end}}' $gatewayContainer
+if (-not $env:IDENTITY_GATEWAY_IP) { throw 'O gateway não está conectado à rede identity-global.' }
 ```
 
 Confirme que o issuer retornado é o esperado:

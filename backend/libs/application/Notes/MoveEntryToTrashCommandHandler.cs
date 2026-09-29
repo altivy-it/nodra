@@ -8,7 +8,8 @@ namespace Altivy.Backend.Application.Notes;
 public sealed class MoveEntryToTrashCommandHandler(
     ITrashStore trashStore,
     INoteIndexJobStore? indexJobStore = null,
-    ITrashAuditStore? auditStore = null)
+    ITrashAuditStore? auditStore = null,
+    ITrashRetentionSettingsStore? retentionSettingsStore = null)
 {
     /// <summary>
     /// Move a entrada depois de validar o vault, o sujeito e a precondição de nota quando aplicável.
@@ -25,8 +26,16 @@ public sealed class MoveEntryToTrashCommandHandler(
             throw new ArgumentException("O identificador do vault é inválido.", nameof(vaultId));
         }
 
+        var retentionDays = retentionSettingsStore is null
+            ? null
+            : await retentionSettingsStore.GetRetentionDaysAsync(subject, cancellationToken);
+        if (retentionDays is < 1 or > 3650)
+        {
+            throw new InvalidOperationException("O parâmetro de retenção da lixeira é inválido.");
+        }
+
         var outcome = await trashStore.MoveToTrashAsync(
-            vaultId, subject, FolderPath.Create(path), expectedETag, cancellationToken);
+            vaultId, subject, FolderPath.Create(path), expectedETag, cancellationToken, retentionDays);
         if (auditStore is not null)
         {
             await auditStore.RecordAsync(new TrashAuditEvent(

@@ -32,7 +32,7 @@ services:
       Authentication__Keycloak__ClientSecret: ${ALTIVY_E2E_BFF_CLIENT_SECRET:?Defina o secret local do client BFF}
       Downstream__Api__BaseUrl: http://api:8080
       Security__AllowedOrigins__0: https://localhost:7443
-      Security__TrustedProxies__0: 172.31.0.10
+      Security__TrustedProxies__0: ${IDENTITY_GATEWAY_IP:-172.31.0.10}
       Security__TrustedNetworks__0: 172.30.0.0/24
       Security__TrustedNetworks__1: 172.31.0.0/24
       Security__TrustedNetworks__2: 127.0.0.0/8
@@ -40,7 +40,7 @@ services:
       AllowedHosts: "*"
       SSL_CERT_FILE: /certs/rootCA.pem
     extra_hosts:
-      - localhost:172.31.0.10
+      - "localhost:${IDENTITY_GATEWAY_IP:-172.31.0.10}"
     volumes:
       - ${ALTIVY_E2E_DATA_PROTECTION_KEYS_PATH:?Defina o diretório absoluto para chaves de Data Protection}:/keys
       - ${ALTIVY_E2E_TLS_CA_PATH:?Defina o caminho absoluto da CA local do mkcert}:/certs/rootCA.pem:ro
@@ -82,7 +82,7 @@ services:
       VaultStorage__Root: /vaults
       SSL_CERT_FILE: /certs/rootCA.pem
     extra_hosts:
-      - localhost:172.31.0.10
+      - "localhost:${IDENTITY_GATEWAY_IP:-172.31.0.10}"
     volumes:
       - ${ALTIVY_E2E_TLS_CA_PATH:?Defina o caminho absoluto da CA local do mkcert}:/certs/rootCA.pem:ro
       - altivy-e2e-vaults:/vaults

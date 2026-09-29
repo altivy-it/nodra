@@ -15,7 +15,8 @@ public interface ITrashStore
         string subject,
         FolderPath path,
         string? expectedETag,
-        CancellationToken cancellationToken);
+        CancellationToken cancellationToken,
+        int? retentionDays = null);
 
     /// <summary>
     /// Lista as operações de lixeira pertencentes ao sujeito.

@@ -19,6 +19,12 @@ export interface TrashEntry {
     canRestoreToOriginal: boolean;
 }
 
+interface ReauthenticationStatus {
+    authenticated: boolean;
+    subject: string | null;
+    authenticatedAtUtc: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class FolderExplorerService {
     readonly children = signal<Map<string, VaultEntry[]>>(new Map());
@@ -174,9 +180,13 @@ export class FolderExplorerService {
         const generation = this.generation;
         if (!vaultId) return 'Nenhum vault ativo.';
         try {
-            await firstValueFrom(this.http.delete<{ removedOperations: number; failedOperations: number }>(
+            const outcome = await firstValueFrom(this.http.delete<{ removedOperations: number; failedOperations: number }>(
                 `/api/v1/vaults/${encodeURIComponent(vaultId)}/trash`));
             if (generation !== this.generation || vaultId !== this.vaultId) return 'O vault ativo mudou.';
+            if (outcome.failedOperations > 0) {
+                await this.loadTrash();
+                return `A lixeira foi esvaziada parcialmente: ${outcome.removedOperations} operação(ões) removida(s), ${outcome.failedOperations} com falha.`;
+            }
             this.trashEntries.set([]);
             this.reload();
             return null;
@@ -184,6 +194,16 @@ export class FolderExplorerService {
             if (error instanceof HttpErrorResponse && error.status === 428) return 'reauthentication-required';
             if (error instanceof HttpErrorResponse && error.status === 403) return 'Você não tem permissão para esvaziar a lixeira.';
             return 'Não foi possível esvaziar a lixeira.';
+        }
+    }
+
+    async hasRecentReauthentication(): Promise<boolean> {
+        try {
+            const status = await firstValueFrom(this.http.get<ReauthenticationStatus>('/bff/reauthenticate/status'));
+            const authenticatedAt = status.authenticatedAtUtc ? Date.parse(status.authenticatedAtUtc) : Number.NaN;
+            return status.authenticated && !!status.subject && Number.isFinite(authenticatedAt);
+        } catch {
+            return false;
         }
     }
 

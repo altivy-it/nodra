@@ -65,33 +65,35 @@ caminhos fora do formato permitido. O `sub` só é usado para filtrar a lixeira
 do usuário e registrar auditoria; nunca concede acesso ao vault. A operação
 não depende de título ou conteúdo do item.
 
-O prazo de retenção é um parâmetro por usuário. A implementação deve primeiro
-verificar se atributos do User Profile do Keycloak podem ser geridos pelo
-usuário e consumidos pela API com atualização confiável. Se essa integração não
-cobrir o caso, será criado CRUD mínimo para parâmetros do próprio usuário,
-identificado pelo `sub`, sem introduzir contas, memberships ou políticas de
 autorização locais. Um valor de retenção válido é capturado no manifesto no
-instante da exclusão; mudanças posteriores aplicam-se a novas exclusões. Sem
-valor válido ou configuração, a remoção automática fica desabilitada e os
-itens permanecem retidos. O intervalo permitido e qualquer prazo padrão devem
-ser definidos na implementação antes de habilitar a remoção automática; não se
-herda implicitamente o prazo de resíduos operacionais.
+O prazo de retenção é um parâmetro por usuário. Como a configuração atual do
+realm não oferece um atributo de perfil gerenciável pelo usuário e consumível
+pela API, foi adotado CRUD mínimo para esse parâmetro não autorizativo,
+identificado pelo `sub`, sem introduzir contas, memberships ou políticas de
+autorização locais. O handler consulta o parâmetro do sujeito no momento da
+exclusão e captura o valor no manifesto; mudanças posteriores aplicam-se a
+novas exclusões. Sem valor configurado, a remoção automática fica desabilitada
+e os itens permanecem retidos. O intervalo permitido é de 1 a 3650 dias; não
+se herda implicitamente o prazo de resíduos operacionais.
 
 O usuário pode esvaziar a própria lixeira. A ação requer autorização vigente
 do Keycloak para o vault, confirmação explícita na interface, reautenticação
 recente pelo fluxo OIDC do Keycloak e auditoria append-only. O BFF já expõe
-`/bff/reauthenticate`, que inicia o desafio com `prompt=login` e `max_age=0`;
-o endpoint de esvaziamento permanece fechado até a aplicação capturar e
-validar a evidência temporal desse retorno e registrar a auditoria. O BFF agora
-captura `auth_time` somente quando o desafio foi iniciado por `/bff/reauthenticate`
-e o persiste no ticket server-side; a API nunca recebe a senha. A aplicação nunca
-recebe, armazena ou transmite a senha. O BFF solicita nova autenticação
-(`prompt=login`/`max_age=0`) e só libera a operação depois de confirmar o mesmo
-`sub` e a evidência temporal de autenticação recente. Se essa evidência não
-puder ser validada, a operação falha fechada. A auditoria registra sujeito,
-vault, quantidade, instante, resultado e instante de reautenticação, sem
-conteúdo ou senha. A intenção auditável é persistida antes da exclusão; o
-resultado é registrado após a operação, inclusive em falha parcial.
+`/bff/reauthenticate`, que inicia o desafio com `prompt=login` e `max_age=0`.
+O BFF vincula o desafio ao `sub` atual, exige que o retorno OIDC contenha o
+mesmo `sub` e `auth_time` válido, e persiste a evidência somente no ticket
+server-side. O proxy descarta qualquer `X-Altivy-Reauth-At` recebido do browser
+e só injeta um valor derivado do ticket quando ainda recente; a API valida
+novamente o limite temporal. A retomada após o redirect usa apenas um marcador
+efêmero de intenção por aba/vault e consulta `/bff/reauthenticate/status` antes
+de repetir a ação já confirmada. A aplicação nunca recebe, armazena ou
+transmite a senha. Se a evidência não puder ser validada, a operação falha
+fechada. A auditoria registra sujeito, vault, operação, instante, resultado e
+instante de reautenticação, sem conteúdo ou senha. A intenção auditável é
+persistida antes da exclusão; o resultado é registrado após a operação,
+inclusive em falha parcial. Se a persistência do resultado falhar depois do
+efeito no filesystem, o endpoint falha sem inventar um outcome; a intenção
+permanece como evidência reconciliável.
 
 Restaurar sempre solicita o caminho de destino ao usuário, com o caminho
 original como sugestão editável. Se o original estiver ocupado ou não puder ser

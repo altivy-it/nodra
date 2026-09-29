@@ -1,3 +1,5 @@
+using Altivy.Backend.Infra.Data.Postgres;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -7,6 +9,8 @@ namespace Altivy.Backend.Infra.Data.Postgres.Migrations;
 /// <summary>
 /// Cria o armazenamento do parâmetro de retenção da lixeira por sujeito.
 /// </summary>
+[DbContext(typeof(PostgresDbContext))]
+[Migration("20260928232500_AddUserTrashRetentionSettings")]
 public partial class AddUserTrashRetentionSettings : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)

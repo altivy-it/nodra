@@ -62,6 +62,18 @@ public sealed class ApiContractTests : IClassFixture<ApiFactory>
         Assert.Equal("synthetic-user", factory.RetentionStore.Subject);
     }
 
+    [Fact]
+    public async Task TrashSettingsWithoutPersistenceReturnsUnavailable()
+    {
+        using var noPersistenceFactory = new ApiFactory { RegisterRetentionStore = false };
+        using var client = noPersistenceFactory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+
+        using var response = await client.GetAsync("/api/v1/me/trash-settings");
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(3651)]
@@ -407,6 +419,24 @@ public sealed class ApiContractTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task DeleteFolderCapturesCurrentSubjectRetentionInTrashManifest()
+    {
+        factory.DecisionService.Decision = new AuthorizationDecision(true, true, 200);
+        factory.FolderStore.TrashMoveOutcome = new TrashMoveOutcome(
+            TrashMoveResult.Moved,
+            new TrashEntry(Guid.NewGuid(), "projetos", "projetos", true, DateTimeOffset.UtcNow, 30, true));
+        factory.RetentionStore.ConfigureRetentionDays(30);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+
+        using var response = await client.DeleteAsync("/api/v1/vaults/lab-0001/folders/projetos");
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.Equal("synthetic-user", factory.RetentionStore.Subject);
+        Assert.Equal(30, factory.FolderStore.RetentionDays);
+    }
+
+    [Fact]
     public async Task DeleteEmptyFolderWithDeniedGrantDoesNotAccessStore()
     {
         factory.DecisionService.Decision = new AuthorizationDecision(false, true, 403);
@@ -523,6 +553,21 @@ public sealed class ApiContractTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task EmptyTrashWithoutAuditStoreReturnsUnavailableWithoutTouchingFilesystem()
+    {
+        using var noAuditFactory = new ApiFactory { RegisterAuditStore = false };
+        noAuditFactory.DecisionService.Decision = new AuthorizationDecision(true, true, 200);
+        using var client = noAuditFactory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+        client.DefaultRequestHeaders.Add("X-Altivy-Reauth-At", DateTimeOffset.UtcNow.AddSeconds(-30).ToString("O"));
+
+        using var response = await client.DeleteAsync("/api/v1/vaults/lab-0001/trash");
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        Assert.Equal(0, noAuditFactory.FolderStore.CallCount);
+    }
+
+    [Fact]
     public async Task EmptyTrashWithFreshReauthenticationRecordsAuditAndReturnsCounts()
     {
         factory.DecisionService.Decision = new AuthorizationDecision(true, true, 200);
@@ -539,6 +584,24 @@ public sealed class ApiContractTests : IClassFixture<ApiFactory>
         Assert.Equal("empty-trash-intent", factory.AuditStore.Events[0].Action);
         Assert.Equal("empty-trash-result", factory.AuditStore.Events[1].Action);
         Assert.Equal(1, factory.FolderStore.CallCount);
+    }
+
+    [Fact]
+    public async Task EmptyTrashOutcomeAuditFailureDoesNotRecordAFalseFilesystemFailure()
+    {
+        factory.DecisionService.Decision = new AuthorizationDecision(true, true, 200);
+        factory.FolderStore.EmptyTrashOutcome = new TrashEmptyOutcome(2, 0);
+        factory.AuditStore.FailOnAction = "empty-trash-result";
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+        client.DefaultRequestHeaders.Add("X-Altivy-Reauth-At", DateTimeOffset.UtcNow.AddSeconds(-30).ToString("O"));
+
+        using var response = await client.DeleteAsync("/api/v1/vaults/lab-0001/trash");
+
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        Assert.Equal(1, factory.FolderStore.CallCount);
+        Assert.Single(factory.AuditStore.Events);
+        Assert.Equal("empty-trash-intent", factory.AuditStore.Events[0].Action);
     }
 
     [Fact]
@@ -681,6 +744,9 @@ public sealed class ApiContractTests : IClassFixture<ApiFactory>
 
 public sealed class ApiFactory : WebApplicationFactory<Program>
 {
+    public bool RegisterAuditStore { get; set; } = true;
+    public bool RegisterRetentionStore { get; set; } = true;
+
     public FakeAuthorizationDecisionService DecisionService { get; } = new();
 
     public FakeVaultReader VaultReader { get; } = new();
@@ -716,9 +782,9 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
             services.RemoveAll<IFolderStore>();
             services.AddSingleton<IFolderStore>(FolderStore);
             services.RemoveAll<ITrashRetentionSettingsStore>();
-            services.AddSingleton<ITrashRetentionSettingsStore>(RetentionStore);
+            if (RegisterRetentionStore) services.AddSingleton<ITrashRetentionSettingsStore>(RetentionStore);
             services.RemoveAll<ITrashAuditStore>();
-            services.AddSingleton<ITrashAuditStore>(AuditStore);
+            if (RegisterAuditStore) services.AddSingleton<ITrashAuditStore>(AuditStore);
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = "Test";
@@ -747,6 +813,7 @@ public sealed class FakeFolderStore : IFolderStore
     public IReadOnlyList<TrashEntry> TrashEntries { get; set; } = [];
     public string? Subject { get; private set; }
     public string? ExpectedETag { get; private set; }
+    public int? RetentionDays { get; private set; }
     public string? RestoreDestination { get; private set; }
     public Guid RestoreOperationId { get; private set; }
 
@@ -795,11 +862,13 @@ public sealed class FakeFolderStore : IFolderStore
         string subject,
         FolderPath path,
         string? expectedETag,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        int? retentionDays = null)
     {
         CallCount++;
         Subject = subject;
         ExpectedETag = expectedETag;
+        RetentionDays = retentionDays;
         return Task.FromResult(TrashMoveOutcome);
     }
 
@@ -864,6 +933,8 @@ public sealed class FakeTrashRetentionSettingsStore : ITrashRetentionSettingsSto
 
     public int? LastValue { get; private set; }
 
+    public void ConfigureRetentionDays(int? retentionDays) => LastValue = retentionDays;
+
     public Task<int?> GetRetentionDaysAsync(string subject, CancellationToken cancellationToken)
     {
         Subject = subject;
@@ -890,13 +961,24 @@ public sealed class FakeTrashAuditStore : ITrashAuditStore
 
     public IReadOnlyList<TrashAuditEvent> Events => events;
 
+    public string? FailOnAction { get; set; }
+
     public Task RecordAsync(TrashAuditEvent auditEvent, CancellationToken cancellationToken)
     {
+        if (auditEvent.Action == FailOnAction)
+        {
+            FailOnAction = null;
+            throw new InvalidOperationException("Falha sintética na gravação da auditoria.");
+        }
         events.Add(auditEvent);
         return Task.CompletedTask;
     }
 
-    public void Reset() => events.Clear();
+    public void Reset()
+    {
+        events.Clear();
+        FailOnAction = null;
+    }
 }
 
 public sealed class FakeNoteStore : INoteStore

@@ -40,11 +40,14 @@ public static class BffEndpointRouteBuilderExtensions
                 [OpenIdConnectDefaults.AuthenticationScheme]);
         }).AllowAnonymous().RequireRateLimiting("login");
 
-        endpoints.MapGet("/bff/reauthenticate", (string? returnUrl) =>
+        endpoints.MapGet("/bff/reauthenticate", (HttpContext context, string? returnUrl) =>
         {
+            var subject = context.User.FindFirst("sub")?.Value;
+            if (string.IsNullOrWhiteSpace(subject)) return Results.Unauthorized();
             var redirectUri = LocalRedirect.Normalize(returnUrl);
             var properties = new AuthenticationProperties { RedirectUri = redirectUri };
             properties.Items[ReauthenticationEvidence.ChallengeItem] = "true";
+            properties.Items[ReauthenticationEvidence.ExpectedSubjectItem] = subject;
             properties.Items["prompt"] = "login";
             properties.Items["max_age"] = "0";
             return Results.Challenge(properties, [OpenIdConnectDefaults.AuthenticationScheme]);
@@ -59,11 +62,13 @@ public static class BffEndpointRouteBuilderExtensions
                 return Results.Ok(new { authenticated = false, subject = (string?)null, authenticatedAtUtc = (DateTimeOffset?)null });
             }
 
+            var isFresh = evidence.IsFresh(DateTimeOffset.UtcNow, ReauthenticationEvidence.FreshnessWindow);
+
             return Results.Ok(new
             {
-                authenticated = true,
-                subject = evidence.Subject,
-                authenticatedAtUtc = evidence.AuthenticatedAtUtc
+                authenticated = isFresh,
+                subject = isFresh ? evidence.Subject : null,
+                authenticatedAtUtc = isFresh ? evidence.AuthenticatedAtUtc : (DateTimeOffset?)null
             });
         }).RequireAuthorization();
 

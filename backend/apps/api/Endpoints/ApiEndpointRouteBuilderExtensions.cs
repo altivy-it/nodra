@@ -110,12 +110,12 @@ public static class ApiEndpointRouteBuilderExtensions
 
     private static void MapTrashSettingsEndpoints(WebApplication app)
     {
-        _ = app.MapGet("/api/v1/me/trash-settings", GetTrashSettingsAsync)
+        _ = app.MapGet("/api/v1/me/trash-settings", TrashSettingsEndpoint.GetAsync)
             .RequireAuthorization()
             .WithSummary("Obtém o parâmetro de retenção da lixeira do sujeito.")
             .WithDescription("Retorna somente o parâmetro não autorizativo do sub autenticado; ausência de configuração retorna null.");
 
-        _ = app.MapPut("/api/v1/me/trash-settings", SetTrashSettingsAsync)
+        _ = app.MapPut("/api/v1/me/trash-settings", TrashSettingsEndpoint.SetAsync)
             .RequireAuthorization()
             .WithSummary("Atualiza o parâmetro de retenção da lixeira do sujeito.")
             .WithDescription("Aceita null para desabilitar a remoção automática. A alteração não habilita purge sem step-up e auditoria.");
@@ -199,46 +199,6 @@ public static class ApiEndpointRouteBuilderExtensions
             return Results.Problem(
                 statusCode: StatusCodes.Status400BadRequest,
                 title: "Cursor de vault inválido.");
-        }
-    }
-
-    private static async Task<IResult> GetTrashSettingsAsync(
-        HttpContext context,
-        ITrashRetentionSettingsStore store,
-        CancellationToken cancellationToken)
-    {
-        var subject = GetSubject(context);
-        if (subject is null) return Results.Unauthorized();
-        try
-        {
-            return Results.Ok(new { retentionDays = await store.GetRetentionDaysAsync(subject, cancellationToken) });
-        }
-        catch (InvalidOperationException)
-        {
-            return Results.Problem(statusCode: 503, title: "Persistência de parâmetros indisponível.");
-        }
-    }
-
-    private static async Task<IResult> SetTrashSettingsAsync(
-        TrashSettingsRequest request,
-        HttpContext context,
-        ITrashRetentionSettingsStore store,
-        CancellationToken cancellationToken)
-    {
-        var subject = GetSubject(context);
-        if (subject is null) return Results.Unauthorized();
-        if (request.RetentionDays is < 1 or > 3650)
-        {
-            return Results.Problem(statusCode: 400, title: "O prazo de retenção deve estar entre 1 e 3650 dias, ou ser null.");
-        }
-        try
-        {
-            await store.SetRetentionDaysAsync(subject, request.RetentionDays, cancellationToken);
-            return Results.NoContent();
-        }
-        catch (InvalidOperationException)
-        {
-            return Results.Problem(statusCode: 503, title: "Persistência de parâmetros indisponível.");
         }
     }
 
