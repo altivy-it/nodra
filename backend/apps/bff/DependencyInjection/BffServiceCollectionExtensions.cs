@@ -154,6 +154,7 @@ public static class BffServiceCollectionExtensions
         services.AddAntiforgery(options =>
         {
             options.Cookie.Name = runtimeOptions.AntiforgeryCookieName;
+            options.Cookie.Path = "/";
             options.Cookie.HttpOnly = true;
             options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
             options.Cookie.SameSite = SameSiteMode.Strict;

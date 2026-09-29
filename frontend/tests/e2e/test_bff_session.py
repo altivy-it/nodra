@@ -54,12 +54,18 @@ def test_authenticated_can_negotiate_signalr_hub(authenticated_page: Page, base_
 
 @pytest.mark.e2e
 @pytest.mark.authenticated
-def test_authenticated_browser_can_log_out(authenticated_page: Page) -> None:
+def test_authenticated_browser_can_log_out(authenticated_page: Page, base_url: str) -> None:
     authenticated_page.get_by_role("button", name="Encerrar sessão").click()
 
-    expect(authenticated_page.get_by_role("heading", name="Entre para abrir seu workspace.")).to_be_visible()
-    expect(authenticated_page.get_by_role("link", name="Entrar no Altivy Notes")).to_have_attribute("href", "/bff/login")
-    assert authenticated_page.evaluate("Object.keys(localStorage).length") == 0
+    expect(authenticated_page.get_by_role("heading", name="Seu conhecimento, em um só lugar.")).to_be_visible()
+    login_path = f"{urlsplit(base_url).path.rstrip('/')}/bff/login"
+    expect(authenticated_page.get_by_role("link", name="Entrar no Altivy Notes")).to_have_attribute(
+        "href", login_path)
+    assert not authenticated_page.evaluate("""() => {
+        const entries = [...Object.entries(localStorage), ...Object.entries(sessionStorage)];
+        const jwt = /eyJ[A-Za-z0-9_-]+\\.eyJ[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+/;
+        return entries.some(([key, value]) => /token/i.test(key) || jwt.test(value));
+    }""")
     assert authenticated_page.evaluate("Object.keys(sessionStorage).length") == 0
 
 

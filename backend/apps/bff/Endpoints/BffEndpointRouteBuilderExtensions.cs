@@ -32,9 +32,10 @@ public static class BffEndpointRouteBuilderExtensions
             Predicate = registration => registration.Tags.Contains("ready")
         }).AllowAnonymous();
 
-        endpoints.MapGet("/bff/login", (string? returnUrl) =>
+        endpoints.MapGet("/bff/login", (HttpContext context, string? returnUrl) =>
         {
-            var redirectUri = LocalRedirect.Normalize(returnUrl);
+            var defaultReturnUrl = context.Request.PathBase.HasValue ? $"{context.Request.PathBase}/" : "/";
+            var redirectUri = LocalRedirect.Normalize(returnUrl, defaultReturnUrl);
             return Results.Challenge(
                 new AuthenticationProperties { RedirectUri = redirectUri },
                 [OpenIdConnectDefaults.AuthenticationScheme]);
@@ -44,7 +45,8 @@ public static class BffEndpointRouteBuilderExtensions
         {
             var subject = context.User.FindFirst("sub")?.Value;
             if (string.IsNullOrWhiteSpace(subject)) return Results.Unauthorized();
-            var redirectUri = LocalRedirect.Normalize(returnUrl);
+            var defaultReturnUrl = context.Request.PathBase.HasValue ? $"{context.Request.PathBase}/" : "/";
+            var redirectUri = LocalRedirect.Normalize(returnUrl, defaultReturnUrl);
             var properties = new AuthenticationProperties { RedirectUri = redirectUri };
             properties.Items[ReauthenticationEvidence.ChallengeItem] = "true";
             properties.Items[ReauthenticationEvidence.ExpectedSubjectItem] = subject;
@@ -85,9 +87,10 @@ public static class BffEndpointRouteBuilderExtensions
         endpoints.MapPost("/bff/logout", async (IAntiforgery antiforgery, HttpContext context) =>
         {
             await antiforgery.ValidateRequestAsync(context);
+            var defaultReturnUrl = context.Request.PathBase.HasValue ? $"{context.Request.PathBase}/" : "/";
 
             return Results.SignOut(
-                new AuthenticationProperties { RedirectUri = "/" },
+                new AuthenticationProperties { RedirectUri = LocalRedirect.Normalize(null, defaultReturnUrl) },
                 [CookieAuthenticationDefaults.AuthenticationScheme, OpenIdConnectDefaults.AuthenticationScheme]);
         }).RequireAuthorization();
 

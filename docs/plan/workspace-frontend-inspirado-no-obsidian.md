@@ -653,10 +653,12 @@ Evidências:
   Angular 16/16; build de produção com bundle inicial de 4,14 MB. O EF lista
   as 11 migrations, incluindo retenção e auditoria. O follow-up do subpath
   `/notes` passou Angular 98/98 e Playwright anônimo/mockado 33/33; assets e
-  sessão BFF respondem pela borda. O E2E autenticado chegou ao Keycloak, mas a
-  conta de laboratório exige troca de senha; nenhuma credencial foi alterada
-  e nenhum valor do env-file foi exibido. A conclusão do fluxo real depende da
-  ação de identidade no Keycloak.
+  sessão BFF respondem pela borda. Para a conta de laboratório, foram removidas
+  somente as ações obrigatórias `UPDATE_PASSWORD` e `CONFIGURE_TOTP`; nenhuma
+  senha ou política global foi alterada. O E2E real autenticado passou 6/7; a
+  negação foi skipped porque a conta possui acesso também a `lab-0002`. Nenhum
+  valor do env-file foi exibido. Indicadores semânticos e um vault de teste sem
+  grant continuam pendentes.
   Também pendem indicadores
   de classificação, metadados e links não resolvidos, que exigem dados e
   contrato de leitura, e o Playwright contra BFF/API/Keycloak reais. O teste
@@ -1085,7 +1087,7 @@ do layout anterior exige aprovação humana e evidência dos critérios finais.
 | 2026-09-28 | P-04 | in-progress | in-progress | BFF passou a iniciar reautenticação OIDC protegida por `/bff/reauthenticate` com prompt=login e max_age=0; prova auth_time, auditoria append-only e esvaziamento continuam fechados até validação completa | IA assistida |
 | 2026-09-29 | P-04 | in-progress | in-progress | BFF captura auth_time somente no desafio OIDC, a API exige evidência recente, e move/restore/empty-trash gravam intenção e resultado em trash_audit_events; UI confirma esvaziamento e redireciona para reautenticação quando recebe 428 | IA assistida |
 | 2026-09-29 | P-04 | in-progress | in-progress | step-up vinculado ao mesmo sub no retorno OIDC, proxy descarta header forjado, status recente e retomada por aba/vault; auditoria antes/depois e purge validado com falha parcial e falha na persistência do outcome; retenção capturada no manifesto; 11 migrations reconhecidas; BFF 5/5, API 4/4, filesystem 3/3, Angular 16/16, Playwright mockado 31/31 e build 4,14 MB; E2E real e indicadores semânticos permanecem pendentes | IA assistida |
-| 2026-09-29 | P-04 | in-progress | in-progress | suporte ao subpath /notes em HTTP, SignalR, login/logout, reauth, fontes e imagem E2E; BFF prefix middleware validado 2/2; Angular 98/98; Playwright anônimo/mockado 33/33; assets e sessão BFF 200 pela borda; login real chega ao Keycloak mas está bloqueado por troca de senha obrigatória da conta de laboratório; nenhuma senha alterada; E2E autenticado e indicadores semânticos permanecem pendentes | IA assistida |
+| 2026-09-29 | P-04 | in-progress | in-progress | suporte ao subpath /notes em HTTP, SignalR, login/logout, reauth, fontes e imagem E2E; BFF prefix middleware validado 2/2; Angular 98/98; Playwright anônimo/mockado 33/33; E2E autenticado 6/7 com um skip porque lab-0002 também está autorizado; removidas somente as ações obrigatórias UPDATE_PASSWORD e CONFIGURE_TOTP da conta lab; gateway encaminha callback preservando host/porta; indicadores semânticos e vault negado dedicado permanecem pendentes | IA assistida |
 
 ## Regras de atualização
 

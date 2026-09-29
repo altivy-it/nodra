@@ -28,4 +28,16 @@ public sealed class LocalRedirectTests
 
         Assert.Equal("/", result);
     }
+
+    [Theory]
+    [InlineData(null, "/notes/", "/notes/")]
+    [InlineData("https://attacker.example", "/notes/", "/notes/")]
+    [InlineData("/notes/workspace/lab-0001/files", "/notes/", "/notes/workspace/lab-0001/files")]
+    public void NormalizeUsesSafeFallbackWithinApplicationBasePath(
+        string? returnUrl,
+        string fallbackUrl,
+        string expected)
+    {
+        Assert.Equal(expected, LocalRedirect.Normalize(returnUrl, fallbackUrl));
+    }
 }
