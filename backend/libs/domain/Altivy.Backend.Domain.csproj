@@ -2,4 +2,7 @@
     <PropertyGroup>
         <RootNamespace>Altivy.Backend.Domain</RootNamespace>
     </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="YamlDotNet" />
+    </ItemGroup>
 </Project>

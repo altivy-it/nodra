@@ -38,6 +38,12 @@ public sealed class FileSystemFolderStore(string vaultRoot) : IFolderStore
 
         EnsureNotReparsePoint(parentDirectory);
         var entries = new List<VaultEntry>();
+        var knownPaths = Directory.EnumerateFiles(vaultPath, "*.md", SearchOption.AllDirectories)
+            .Select(notePath => ToRelativePath(vaultPath, notePath))
+            .Where(path => path.IndexOf("/.altivy-trash/", StringComparison.OrdinalIgnoreCase) < 0 &&
+                !path.Contains(".altivy-trash", StringComparison.OrdinalIgnoreCase))
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
         foreach (var directory in Directory.EnumerateDirectories(parentDirectory))
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -57,7 +63,29 @@ public sealed class FileSystemFolderStore(string vaultRoot) : IFolderStore
             EnsureNotReparsePoint(file);
             var content = await File.ReadAllTextAsync(file, cancellationToken);
             var name = Path.GetFileName(file);
-            entries.Add(new VaultEntry(ToRelativePath(vaultPath, file), name, false, CreateETag(content)));
+            var relativePath = ToRelativePath(vaultPath, file);
+            var metadataStatus = (IsUnclassified: true, HasMinimumMetadata: false);
+            bool hasUnresolvedLinks = false;
+            try
+            {
+                var document = MarkdownDocumentParser.Parse(content);
+                metadataStatus = (document.IsUnclassified, document.HasMinimumMetadata);
+                hasUnresolvedLinks = document.HasUnresolvedLinks(relativePath, knownPaths);
+            }
+            catch (ArgumentException)
+            {
+                metadataStatus = (true, false);
+                hasUnresolvedLinks = false;
+            }
+
+            entries.Add(new VaultEntry(
+                relativePath,
+                name,
+                false,
+                CreateETag(content),
+                metadataStatus.IsUnclassified,
+                metadataStatus.HasMinimumMetadata,
+                hasUnresolvedLinks));
         }
 
         return entries.OrderBy(entry => entry.Path, StringComparer.Ordinal).ToArray();

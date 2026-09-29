@@ -30,6 +30,35 @@ describe('FolderExplorerComponent', () => {
         expect(fixture.nativeElement.querySelectorAll('[role="treeitem"]').length).toBeLessThan(40);
     });
 
+    it('exibe e anuncia os estados de classificação, metadados mínimos e links não resolvidos', async () => {
+        await TestBed.configureTestingModule({
+            imports: [FolderExplorerComponent],
+            providers: [provideHttpClient(), provideHttpClientTesting()]
+        }).compileComponents();
+        const fixture = TestBed.createComponent(FolderExplorerComponent);
+        fixture.componentRef.setInput('vaultId', 'vault-1');
+        fixture.detectChanges();
+        TestBed.inject(HttpTestingController)
+            .expectOne('/api/v1/vaults/vault-1/entries')
+            .flush([{
+                path: 'nota.md',
+                name: 'nota.md',
+                kind: 'note',
+                eTag: 'v1',
+                isUnclassified: true,
+                hasMinimumMetadata: false,
+                hasUnresolvedLinks: true
+            }]);
+        await fixture.whenStable();
+        fixture.detectChanges();
+
+        const item = fixture.nativeElement.querySelector('[role="treeitem"]') as HTMLButtonElement;
+        expect(item.getAttribute('aria-label')).toBe('nota.md (sem classificação, metadados mínimos ausentes, link não resolvido)');
+        expect(item.textContent).toContain('!');
+        expect(item.textContent).toContain('M');
+        expect(item.textContent).toContain('L');
+    });
+
     it('mantém a árvore de 20 mil entradas virtualizada ao navegar até o fim', async () => {
         await TestBed.configureTestingModule({
             imports: [FolderExplorerComponent],

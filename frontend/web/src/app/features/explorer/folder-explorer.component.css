@@ -115,8 +115,28 @@
 
 .tree-name {
     min-width: 0;
+    flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.note-indicator {
+    display: inline-grid;
+    width: 18px;
+    height: 18px;
+    flex: 0 0 18px;
+    place-items: center;
+    border: 1px solid var(--line, #c8c9c2);
+    border-radius: 2px;
+    color: var(--accent, #b24d32);
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+.note-indicator.incomplete {
+    border-style: dashed;
+    color: var(--muted, #69716d);
 }
 
 .tree-state,

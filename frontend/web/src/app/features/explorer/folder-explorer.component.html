@@ -100,7 +100,7 @@
             [attr.draggable]="!explorer.pendingFolders().has(row.entry.path) && !explorer.movingEntries().has(row.entry.path) && (row.entry.kind === 'folder' || !!row.entry.eTag)"
             [disabled]="explorer.pendingFolders().has(row.entry.path) || explorer.movingEntries().has(row.entry.path)"
             role="treeitem"
-            [attr.aria-label]="explorer.pendingFolders().has(row.entry.path) ? row.entry.name + ' (criando)' : explorer.movingEntries().has(row.entry.path) ? row.entry.name + ' (movendo)' : null"
+            [attr.aria-label]="entryAccessibilityLabel(row.entry)"
             [style.padding-inline-start.px]="10 + row.depth * 16"
             [attr.aria-level]="row.depth + 1"
             [attr.aria-expanded]="row.entry.kind === 'folder' ? explorer.expandedFolders().has(row.entry.path) : null"
@@ -121,6 +121,15 @@
                 } @else { · }
             </span>
             <span class="tree-name">{{ row.entry.name }}</span>
+            @if (row.entry.kind === 'note' && row.entry.isUnclassified) {
+                <span class="note-indicator unclassified" title="Sem classificação" aria-hidden="true">!</span>
+            }
+            @if (row.entry.kind === 'note' && row.entry.hasMinimumMetadata === false) {
+                <span class="note-indicator incomplete" title="Metadados mínimos ausentes" aria-hidden="true">M</span>
+            }
+            @if (row.entry.kind === 'note' && row.entry.hasUnresolvedLinks) {
+                <span class="note-indicator" title="Link interno não resolvido" aria-hidden="true">L</span>
+            }
             @if (explorer.pendingFolders().has(row.entry.path)) { <span class="pending-label" aria-hidden="true">criando</span> }
             @if (explorer.movingEntries().has(row.entry.path)) { <span class="pending-label" aria-hidden="true">movendo</span> }
         </button>

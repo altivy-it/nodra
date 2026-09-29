@@ -7,6 +7,9 @@ export interface VaultEntry {
     name: string;
     kind: 'folder' | 'note';
     eTag: string | null;
+    isUnclassified?: boolean | null;
+    hasMinimumMetadata?: boolean | null;
+    hasUnresolvedLinks?: boolean | null;
 }
 
 export interface TrashEntry {

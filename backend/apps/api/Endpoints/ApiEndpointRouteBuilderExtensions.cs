@@ -289,7 +289,10 @@ public static class ApiEndpointRouteBuilderExtensions
                 path = entry.Path,
                 name = entry.Name,
                 kind = entry.IsFolder ? "folder" : "note",
-                eTag = entry.ETag
+                eTag = entry.ETag,
+                isUnclassified = entry.IsUnclassified,
+                hasMinimumMetadata = entry.HasMinimumMetadata,
+                hasUnresolvedLinks = entry.HasUnresolvedLinks
             }));
         }
         catch (ArgumentException)

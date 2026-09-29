@@ -121,6 +121,16 @@ export class FolderExplorerComponent implements OnChanges {
         this.explorer.reload();
     }
 
+    entryAccessibilityLabel(entry: VaultEntry): string | null {
+        const statuses: string[] = [];
+        if (this.explorer.pendingFolders().has(entry.path)) statuses.push('criando');
+        if (this.explorer.movingEntries().has(entry.path)) statuses.push('movendo');
+        if (entry.kind === 'note' && entry.isUnclassified) statuses.push('sem classificação');
+        if (entry.kind === 'note' && entry.hasMinimumMetadata === false) statuses.push('metadados mínimos ausentes');
+        if (entry.kind === 'note' && entry.hasUnresolvedLinks) statuses.push('link não resolvido');
+        return statuses.length > 0 ? `${entry.name} (${statuses.join(', ')})` : null;
+    }
+
     openTrash(): void {
         this.closeContextMenu();
         this.trashOpen.set(true);

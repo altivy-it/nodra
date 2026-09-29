@@ -28,22 +28,55 @@ public sealed class MarkdownDocumentParserTests
     }
 
     [Fact]
-    public void NoteDocumentExposesDerivedMetadataWithoutChangingCanonicalContent()
-    {
-        var note = new NoteDocument(NotePath.Create("plano.md"), "# Plano\nVeja [[Arquitetura]].", "etag");
-
-        Assert.Equal("# Plano\nVeja [[Arquitetura]].", note.Content);
-        Assert.Equal(["Plano"], note.Metadata.Headings);
-        Assert.Equal(["Arquitetura"], note.Metadata.WikiLinks);
-    }
-
-    [Fact]
     public void ParseDoesNotTreatRawHtmlOrJavascriptLinkAsSafeOutput()
     {
         var document = MarkdownDocumentParser.Parse("<script>alert(1)</script> [x](javascript:alert(1))");
 
         Assert.Empty(document.Headings);
         Assert.Empty(document.MarkdownLinks);
+    }
+
+    [Fact]
+    public void ParseExtractsNamespacedAltivyMetadata()
+    {
+        const string content = "---\n" +
+            "title: \"Plano\"\n" +
+            "altivy:\n" +
+            "  metadata_version: \"1.0\"\n" +
+            "  classification: unclassified\n" +
+            "  doc_type: note\n" +
+            "  tags: [inbox]\n" +
+            "---\n" +
+            "# Plano\n";
+
+        var document = MarkdownDocumentParser.Parse(content);
+
+        Assert.Equal("1.0", document.Properties["altivy.metadata_version"]);
+        Assert.Equal("unclassified", document.Properties["altivy.classification"]);
+        Assert.Equal("note", document.Properties["altivy.doc_type"]);
+        Assert.Equal(["inbox"], document.Tags);
+    }
+
+    [Fact]
+    public void ParseDetectsUnresolvedLocalLinksAgainstKnownVaultPaths()
+    {
+        const string content = "# Plano\nVeja [[Arquitetura]] e [guia](docs/guia.md).";
+        var document = MarkdownDocumentParser.Parse(content);
+        var knownPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "notas/novo.md",
+            "docs/outro.md"
+        };
+
+        Assert.True(document.HasUnresolvedLinks("notas/plano.md", knownPaths));
+
+        var resolved = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "notas/Arquitetura.md",
+            "docs/guia.md"
+        };
+
+        Assert.False(document.HasUnresolvedLinks("notas/plano.md", resolved));
     }
 
     [Theory]

@@ -536,7 +536,7 @@ components:
     VaultEntry:
       type: object
       additionalProperties: false
-      required: [path, name, kind, eTag]
+      required: [path, name, kind, eTag, isUnclassified, hasMinimumMetadata, hasUnresolvedLinks]
       properties:
         path:
           type: string
@@ -553,6 +553,18 @@ components:
           type: string
           nullable: true
           description: Versão da nota; nula para pastas.
+        isUnclassified:
+          type: boolean
+          nullable: true
+          description: Indica ausência de classificação válida ou uso do padrão; nulo para pastas.
+        hasMinimumMetadata:
+          type: boolean
+          nullable: true
+          description: Indica a presença de versão, classificação, tipo e ao menos uma tag válidos; nulo para pastas.
+        hasUnresolvedLinks:
+          type: boolean
+          nullable: true
+          description: Indica se a nota contém links internos que não resolvem para um caminho conhecido do vault; nulo para pastas.
     Note:
       type: object
       required: [path, content]

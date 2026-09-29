@@ -29,7 +29,9 @@ public sealed class NotePath
         }
 
         var normalizedValue = value.Replace('\\', '/').Trim();
+        var hasWindowsDrivePrefix = normalizedValue.Length >= 2 && normalizedValue[1] == ':';
         if (Path.IsPathRooted(normalizedValue) ||
+            hasWindowsDrivePrefix ||
             !normalizedValue.EndsWith(".md", StringComparison.OrdinalIgnoreCase) ||
             normalizedValue.Split('/').Any(segment =>
                 string.IsNullOrWhiteSpace(segment) || segment is "." or ".." ||

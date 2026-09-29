@@ -31,6 +31,7 @@ Todas as dependências gerenciadas centralmente em `backend/Directory.Packages.p
 | --- | --- | --- | --- |
 | `Microsoft.AspNetCore.Authentication.JwtBearer` | 10.0.0 | MIT | Validação de tokens JWT na API |
 | `Microsoft.AspNetCore.Authentication.OpenIdConnect` | 10.0.0 | MIT | Cliente OIDC confidencial no BFF |
+| `YamlDotNet` | 18.1.0 | MIT | Parsing seguro de frontmatter YAML |
 | `Microsoft.EntityFrameworkCore` | 10.0.0 | MIT | ORM de persistência |
 | `Microsoft.EntityFrameworkCore.Design` | 10.0.0 | MIT | Ferramentas de design-time / migrations |
 | `Npgsql.EntityFrameworkCore.PostgreSQL` | 10.0.0 | PostgreSQL License | Provedor PostgreSQL para EF Core |

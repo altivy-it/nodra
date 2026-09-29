@@ -52,6 +52,60 @@ public sealed class FileSystemFolderStoreIntegrationTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task ListChildrenDerivesMetadataIndicatorsWithoutRewritingNotes()
+    {
+        const string canonicalContent = "---\n" +
+            "altivy:\n" +
+            "  metadata_version: \"1.0\"\n" +
+            "  classification: unclassified\n" +
+            "  doc_type: note\n" +
+            "  tags: [inbox]\n" +
+            "---\n" +
+            "# Nova nota\n";
+        var vault = Path.Combine(root, "vault-0001");
+        var canonicalPath = Path.Combine(vault, "completa.md");
+        await File.WriteAllTextAsync(canonicalPath, canonicalContent);
+        await File.WriteAllTextAsync(Path.Combine(vault, "externa.md"), "# Nota externa\n");
+        var store = new FileSystemFolderStore(root);
+
+        var entries = await store.ListChildrenAsync("vault-0001", null, CancellationToken.None);
+        var complete = Assert.Single(entries, entry => entry.Name == "completa.md");
+        var external = Assert.Single(entries, entry => entry.Name == "externa.md");
+
+        Assert.True(complete.IsUnclassified);
+        Assert.True(complete.HasMinimumMetadata);
+        Assert.True(external.IsUnclassified);
+        Assert.False(external.HasMinimumMetadata);
+        Assert.Equal(canonicalContent, await File.ReadAllTextAsync(canonicalPath));
+    }
+
+    [Fact]
+    public async Task ListChildrenDerivesUnresolvedLinkIndicatorWithoutRewritingNotes()
+    {
+        const string canonicalContent = "# Plano\n\nVeja [[Arquitetura]] e [guia](docs/guia.md).\n";
+        var vault = Path.Combine(root, "vault-0001");
+        var notePath = Path.Combine(vault, "notas", "plano.md");
+        Directory.CreateDirectory(Path.Combine(vault, "notas"));
+        Directory.CreateDirectory(Path.Combine(vault, "docs"));
+        await File.WriteAllTextAsync(notePath, canonicalContent);
+        await File.WriteAllTextAsync(Path.Combine(vault, "notas", "Arquitetura.md"), "# Arquitetura\n");
+        await File.WriteAllTextAsync(Path.Combine(vault, "docs", "guia.md"), "# Guia\n");
+        var store = new FileSystemFolderStore(root);
+
+        var entries = await store.ListChildrenAsync("vault-0001", FolderPath.Create("notas"), CancellationToken.None);
+        var note = Assert.Single(entries, entry => entry.Name == "plano.md");
+
+        Assert.False(note.HasUnresolvedLinks);
+        Assert.Equal(canonicalContent, await File.ReadAllTextAsync(notePath));
+
+        await File.AppendAllTextAsync(notePath, "\nVeja [[Ausente]].\n");
+        entries = await store.ListChildrenAsync("vault-0001", FolderPath.Create("notas"), CancellationToken.None);
+        note = Assert.Single(entries, entry => entry.Name == "plano.md");
+
+        Assert.True(note.HasUnresolvedLinks);
+    }
+
+    [Fact]
     public async Task EnsureCreatedIsIdempotentAndRequiresAnExistingParent()
     {
         var store = new FileSystemFolderStore(root);

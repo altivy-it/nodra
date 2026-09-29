@@ -22,7 +22,10 @@ REPORTS = Path(os.getenv("ALTIVY_E2E_REPORTS", "/app/reports"))
 class FakeVault:
     def __init__(self) -> None:
         self.folders: set[str] = {"projetos"}
-        self.notes: dict[str, str] = {"projetos/plano.md": "# Plano sintético\n"}
+        self.notes: dict[str, str] = {
+            "projetos/plano.md": "# Plano sintético\n",
+            "projetos/sem-metadados.md": "# Nota externa\n",
+        }
         self.trash: dict[str, dict[str, object]] = {}
         self.requests: list[tuple[str, str, str | None]] = []
 
@@ -34,7 +37,12 @@ class FakeVault:
                 entries.append({"path": folder, "name": folder[len(prefix):], "kind": "folder", "eTag": None})
         for note in sorted(self.notes):
             if note.startswith(prefix) and "/" not in note[len(prefix):]:
-                entries.append({"path": note, "name": note[len(prefix):], "kind": "note", "eTag": "v1"})
+                entry: dict[str, object] = {
+                    "path": note, "name": note[len(prefix):], "kind": "note", "eTag": "v1"
+                }
+                if note == "projetos/sem-metadados.md":
+                    entry.update({"isUnclassified": True, "hasMinimumMetadata": False})
+                entries.append(entry)
         return entries
 
     def move_folder(self, source: str, target: str) -> None:
@@ -226,6 +234,9 @@ def test_create_and_restore_empty_and_nonempty_folders(page: Page, base_url: str
 
     tree.get_by_role("treeitem", name="projetos").click()
     expect(tree.get_by_role("treeitem", name="plano.md")).to_be_visible()
+    expect(tree.get_by_role(
+        "treeitem", name="sem-metadados.md (sem classificação, metadados mínimos ausentes)"
+    )).to_be_visible()
 
     page.get_by_role("button", name="Nova pasta").click()
     expect(page.get_by_text("Nova pasta em: projetos")).to_be_visible()
