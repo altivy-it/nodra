@@ -1,3 +1,4 @@
+using System.Globalization;
 using Altivy.Backend.Application.Notes;
 using Altivy.Backend.Domain.Notes;
 using Altivy.Backend.Infra.Data.Postgres;
@@ -19,7 +20,7 @@ public sealed class NoteProjectionBuilderTests
         var projection = NoteProjectionBuilder.Build(
             "lab-0001",
             note,
-            DateTimeOffset.Parse("2026-09-08T12:00:00+00:00"));
+            DateTimeOffset.Parse("2026-09-08T12:00:00+00:00", CultureInfo.InvariantCulture));
 
         Assert.Equal("lab-0001", projection.VaultId);
         Assert.Equal("projetos/plano.md", projection.Path);

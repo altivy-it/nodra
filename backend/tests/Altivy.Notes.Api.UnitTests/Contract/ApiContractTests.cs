@@ -598,7 +598,7 @@ public sealed class ApiContractTests : IClassFixture<ApiFactory>
 
         using var response = await client.DeleteAsync("/api/v1/vaults/lab-0001/trash");
 
-        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
         Assert.Equal(1, factory.FolderStore.CallCount);
         Assert.Single(factory.AuditStore.Events);
         Assert.Equal("empty-trash-intent", factory.AuditStore.Events[0].Action);
