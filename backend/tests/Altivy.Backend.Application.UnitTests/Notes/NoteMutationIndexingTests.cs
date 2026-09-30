@@ -146,6 +146,35 @@ public sealed class NoteMutationIndexingTests
         public Task<FolderDeletionResult> DeleteEmptyAsync(string vaultId, FolderPath path, CancellationToken cancellationToken) =>
             Task.FromResult(FolderDeletionResult.Deleted);
 
+        public Task<TrashMoveOutcome> MoveToTrashAsync(
+            string vaultId,
+            string subject,
+            FolderPath path,
+            string? expectedETag,
+            CancellationToken cancellationToken,
+            int? retentionDays = null) =>
+            Task.FromResult(new TrashMoveOutcome(TrashMoveResult.NotFound));
+
+        public Task<IReadOnlyList<TrashEntry>> ListTrashAsync(
+            string vaultId,
+            string subject,
+            CancellationToken cancellationToken) =>
+            Task.FromResult<IReadOnlyList<TrashEntry>>([]);
+
+        public Task<TrashRestoreOutcome> RestoreFromTrashAsync(
+            string vaultId,
+            string subject,
+            Guid operationId,
+            FolderPath destination,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(new TrashRestoreOutcome(TrashRestoreResult.NotFound));
+
+        public Task<TrashEmptyOutcome> EmptyTrashAsync(
+            string vaultId,
+            string subject,
+            CancellationToken cancellationToken) =>
+            Task.FromResult(new TrashEmptyOutcome(0, 0));
+
         public Task<FolderMoveOutcome> MoveAsync(string vaultId, FolderPath source, FolderPath destination, CancellationToken cancellationToken)
         {
             Called = true;

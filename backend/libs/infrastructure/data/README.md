@@ -173,7 +173,7 @@ roteamento correto.
 ## Teste de integração no laboratório principal
 
 Os testes de integração usam exclusivamente o PostgreSQL persistente da
-[plataforma global de identidade](../../../../../../architecture-knowledge-base/platforms/identity/README.md).
+[plataforma global de identidade](https://github.com/altivy-it/architecture-knowledge-base/blob/main/platforms/identity/README.md).
 O banco é publicado somente em `127.0.0.1:5432`; a porta `55432` da antiga
 stack descartável é recusada pela suíte para evitar execução no ambiente errado.
 
