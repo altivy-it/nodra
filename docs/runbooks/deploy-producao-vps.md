@@ -122,28 +122,68 @@ Configure uma GitHub App instalada somente neste repositório:
 - habilite a App no repositório para que release PRs e tags criados por ela
   disparem os workflows normais.
 
+O script de administração da organização (`architecture-knowledge-base/tools/scripts/manage-github-organization.ps1`)
+tem a ação `ConfigureOrganizationActions`. Execute primeiro com `-WhatIf`; ao
+aplicar, ele copia somente variables não secretas do Environment
+`Altivy/production` para Organization variables com acesso `selected` conforme
+`github-organization-policy.json`. `VPS_DEPLOY_PATH`, `VPS_DOMAIN` e os paths de
+TLS ficam limitados ao repo `Altivy`; `VPS_SSH_PORT` pode ser compartilhada por
+`Altivy` e `AltivyNotes`.
+
+O script não lê nem cria valores de secrets. Ele apenas informa se os nomes
+`VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`, `VPS_SSH_KNOWN_HOSTS` e
+`RELEASE_APP_PRIVATE_KEY` existem e estão limitados aos repos previstos. Crie
+ou atualize os valores manualmente em **Organization settings > Secrets and
+variables > Actions**, usando visibilidade `Selected repositories`; secrets
+vazios não existem no GitHub. Cadastre `RELEASE_APP_CLIENT_ID` como variable
+selecionada para `AltivyNotes`.
+
+Variables no Environment têm precedência sobre Organization variables para
+aquele Environment. O script não remove nem modifica as variables atuais de
+`Altivy/production`; durante a migração, mantenha os valores iguais e valide
+ambos os repos antes de alterar ou remover valores de Environment.
+
+Para executar a ação, autentique `gh` com `repo` e `admin:org`, confirme a
+policy/escopos e rode:
+
+```powershell
+./tools/scripts/manage-github-organization.ps1 -Action ConfigureOrganizationActions -WhatIf
+./tools/scripts/manage-github-organization.ps1 -Action ConfigureOrganizationActions -Confirm:$false
+```
+
+O segundo comando altera apenas Organization variables definidas na policy;
+não cria secrets, não altera workflow/release e não acessa a VPS.
+
 Crie o Environment `production`, restrinja branches/tags autorizadas e exija
-revisor humano. As variáveis não confidenciais podem ser definidas como
-organization variables limitadas a `AltivyNotes` ou diretamente neste
-Environment. Configure:
+revisor humano. Configure as variables não secretas da organization com acesso
+selecionado, usando a policy versionada; as variables de domínio/path/TLS do
+workflow Altivy são limitadas a esse repositório. `VPS_SSH_PORT` pode ser
+compartilhada com `AltivyNotes` quando ambas usam a mesma porta. O script copia
+os valores atuais do Environment `production` do repo `Altivy` e não imprime
+esses valores.
 
-- variables: `VPS_HOST`, `VPS_SSH_PORT` (porta SSH, padrão `22`), `VPS_USER` e
-  `VPS_KNOWN_HOSTS` (host key pública obtida por canal confiável);
-- secret `VPS_SSH_KEY`: chave privada dedicada, rotacionável e restrita ao host.
-  Prefira Environment secret para que o acesso fique protegido pela aprovação
-  do Environment; se usar organization secret, limite o acesso ao repositório;
-- repository variable `ALTIVY_VPS_PLATFORM` com `linux/amd64` ou plataforma
-  efetiva da VPS;
-- habilite publicação/consulta de pacotes GHCR pelo `GITHUB_TOKEN` no
-  repositório.
+Configure os secrets da organization com visibilidade `selected`:
 
-`VPS_DEPLOY_PATH` e `VPS_DOMAIN` do print não são consumidos pelos workflows
-AltivyNotes: o caminho permanece fixo em `/userapps/altivynotes` e o domínio em
-`notes.altivy.it`, conforme a decisão de topologia. Não defina esses dois como
-organization variables compartilhadas se outro produto na mesma VPS usa paths
-ou domínios diferentes. `VPS_HOST`, `VPS_SSH_PORT` e `VPS_USER` não são secrets;
-a chave privada `VPS_SSH_KEY` é secret. O workflow também requer
-`VPS_KNOWN_HOSTS`, ausente no print, para fixar a host key SSH.
+- `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` e `VPS_SSH_KNOWN_HOSTS` para `Altivy` e
+  `AltivyNotes`;
+- `RELEASE_APP_PRIVATE_KEY` somente para `AltivyNotes`.
+
+A chave SSH é dedicada, rotacionável e restrita ao host. O script lista somente
+nomes e escopos dos secrets; ele nunca lê, cria vazio, grava ou imprime valores.
+Cadastre os valores manualmente na Organization settings ou nos Environments.
+`RELEASE_APP_CLIENT_ID` também precisa ser cadastrado como organization/repo
+variable selecionada para `AltivyNotes`; o script audita sua presença.
+`ALTIVY_VPS_PLATFORM` pode ser definido como `linux/amd64` ou a plataforma
+efetiva do build e fica selecionado para `AltivyNotes`. Habilite
+publicação/consulta de pacotes GHCR pelo `GITHUB_TOKEN`.
+
+`VPS_DEPLOY_PATH` e `VPS_DOMAIN` configuram o workflow do repo `Altivy`; os
+workflows AltivyNotes mantêm `/userapps/altivynotes` e `notes.altivy.it` fixos,
+conforme a topologia aprovada. Por isso a policy restringe domínio/path ao repo
+`Altivy`, evitando sobrescrever o endpoint de outro produto na mesma VPS.
+`VPS_SSH_PORT` é variable; `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` e
+`VPS_SSH_KNOWN_HOSTS` são secrets. O host key secret é obrigatório para
+`StrictHostKeyChecking` e não consta no print.
 
 `VPS_KNOWN_HOSTS` deve conter a chave pública do host coletada e conferida por
 canal confiável; o workflow não usa `ssh-keyscan` nem desativa
