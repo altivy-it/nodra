@@ -1,6 +1,6 @@
 # Plano: Tema personalizado de login do Keycloak
 
-**Status:** accepted  
+**Status:** approved
 **Data de criação:** 2026-08-15  
 **Última atualização:** 2026-09-01  
 **Responsáveis:** equipe Altivy  
@@ -332,7 +332,7 @@ alterar as políticas de autorização para contornar uma falha visual.
 | Data | Escopo | De | Para | Evidência ou motivo | Autor |
 | --- | --- | --- | --- | --- | --- |
 | 2026-08-15 | plano | - | proposed | plano físico criado a partir do plano de sessão | IA assistida |
-| 2026-08-15 | plano | proposed | accepted | aprovação humana registrada para iniciar a implementação | responsável pelo projeto |
+| 2026-08-15 | plano | proposed | approved | aprovação humana registrada para iniciar a implementação; normalização do valor em 2026-09-29 | responsável pelo projeto |
 | 2026-08-15 | P-01 | - | blocked | depende do P-01 e P-02 do plano BFF | IA assistida |
 | 2026-08-15 | P-01 | blocked | in-progress | aprovação registrada; versão e contrato visual definidos, validação de laboratório pendente | IA assistida |
 | 2026-08-15 | P-02 | not-started | in-progress | tema e empacotador implementados; build local validado | IA assistida |
@@ -348,7 +348,7 @@ alterar as políticas de autorização para contornar uma falha visual.
 
 ## Regras de atualização
 
-- O plano permanece `accepted`; mudanças de escopo ou de identidade visual
+- O plano permanece `approved`; mudanças de escopo ou de identidade visual
   exigem nova aprovação humana explícita.
 - Etapas bloqueadas devem registrar dependência e condição de desbloqueio.
 - IA não marca etapas como `completed` nem o plano como `approved` sem evidência
