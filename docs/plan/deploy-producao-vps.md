@@ -51,7 +51,9 @@ ou reiniciar o NGINX, PostgreSQL ou Keycloak compartilhados.
 - [ADR 2026-0007](../adr/2026-0007-deploy-altivy-vps-compartilhada.md), ainda
   `proposed` até aprovação formal do registro arquitetural;
 - GitHub App instalada no repositório com apenas `Contents: write` e
-  `Pull requests: write` para criação de release PRs;
+  `Pull requests: write` para criação de release PRs; o workflow consome o
+  Client ID via `RELEASE_APP_CLIENT_ID` e a chave PEM via
+  `RELEASE_APP_PRIVATE_KEY`;
 - Environment `production` protegido e pacote GHCR acessível ao
   `GITHUB_TOKEN`;
 - VPS x86-64 por padrão ou variável `ALTIVY_VPS_PLATFORM` ajustada à arquitetura
@@ -124,9 +126,9 @@ Evidências:
   uma referência local inválida preexistente para
   `architecture-knowledge-base/platforms/identity/README.md` em
   `backend/libs/infrastructure/data/README.md`;
-- o workflow Release da `main` falhou no run `36726173202` porque a repository
-  variable `RELEASE_APP_ID` não está configurada; `publish` foi ignorado. A
-  criação da App token também requer `RELEASE_APP_PRIVATE_KEY` e instalação da
+- o workflow Release da `main` falhou no run `36726173202` porque a variável
+  `RELEASE_APP_CLIENT_ID` não estava disponível; `publish` foi ignorado. A
+  criação do token também requer `RELEASE_APP_PRIVATE_KEY` e instalação da
   GitHub App com as permissões descritas no runbook. Isso é configuração externa
   pendente, não falha dos gates de CI;
 - a branch local de continuação atualiza a action para `client-id` em vez do

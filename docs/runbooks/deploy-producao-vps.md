@@ -112,21 +112,38 @@ em rollback.
 Configure uma GitHub App instalada somente neste repositório:
 
 - `Contents: write` e `Pull requests: write`, sem permissões administrativas;
-- repository variable `RELEASE_APP_ID` e repository secret
-  `RELEASE_APP_PRIVATE_KEY`;
+- registre a App em `altivy-it > Settings > Developer settings > GitHub Apps`;
+- em `General`, copie o **Client ID** da App (não o App ID numérico) para a
+  Actions variable `RELEASE_APP_CLIENT_ID`; pode ser repository variable ou
+  organization variable com acesso limitado a `AltivyNotes`;
+- gere uma chave em `Private keys` e salve o PEM como Actions secret
+  `RELEASE_APP_PRIVATE_KEY`, no repositório ou como organization secret com
+  acesso permitido somente a `AltivyNotes`;
 - habilite a App no repositório para que release PRs e tags criados por ela
   disparem os workflows normais.
 
 Crie o Environment `production`, restrinja branches/tags autorizadas e exija
-revisor humano. Configure nele:
+revisor humano. As variáveis não confidenciais podem ser definidas como
+organization variables limitadas a `AltivyNotes` ou diretamente neste
+Environment. Configure:
 
-- variables: `VPS_HOST`, `VPS_PORT`, `VPS_USER`, `VPS_KNOWN_HOSTS`;
-- secret: `VPS_SSH_PRIVATE_KEY`, chave dedicada sem passphrase, rotacionável e
-  restrita ao host;
+- variables: `VPS_HOST`, `VPS_SSH_PORT` (porta SSH, padrão `22`), `VPS_USER` e
+  `VPS_KNOWN_HOSTS` (host key pública obtida por canal confiável);
+- secret `VPS_SSH_KEY`: chave privada dedicada, rotacionável e restrita ao host.
+  Prefira Environment secret para que o acesso fique protegido pela aprovação
+  do Environment; se usar organization secret, limite o acesso ao repositório;
 - repository variable `ALTIVY_VPS_PLATFORM` com `linux/amd64` ou plataforma
   efetiva da VPS;
 - habilite publicação/consulta de pacotes GHCR pelo `GITHUB_TOKEN` no
   repositório.
+
+`VPS_DEPLOY_PATH` e `VPS_DOMAIN` do print não são consumidos pelos workflows
+AltivyNotes: o caminho permanece fixo em `/userapps/altivynotes` e o domínio em
+`notes.altivy.it`, conforme a decisão de topologia. Não defina esses dois como
+organization variables compartilhadas se outro produto na mesma VPS usa paths
+ou domínios diferentes. `VPS_HOST`, `VPS_SSH_PORT` e `VPS_USER` não são secrets;
+a chave privada `VPS_SSH_KEY` é secret. O workflow também requer
+`VPS_KNOWN_HOSTS`, ausente no print, para fixar a host key SSH.
 
 `VPS_KNOWN_HOSTS` deve conter a chave pública do host coletada e conferida por
 canal confiável; o workflow não usa `ssh-keyscan` nem desativa
