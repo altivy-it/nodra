@@ -8,6 +8,7 @@ using Xunit;
 namespace Altivy.Backend.Infra.Data.Postgres.IntegrationTests;
 
 [Trait("Category", "Integration")]
+[Collection("Shared PostgreSQL schema")]
 public sealed class PostgresVaultReaderIntegrationTests : IAsyncLifetime
 {
     private readonly string migratorConnectionString;
