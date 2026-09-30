@@ -77,8 +77,12 @@ jobs:
           )
           for project in "${projects[@]}"; do
             docker run --rm \
+              --user "$(id -u):$(id -g)" \
               --volume "$GITHUB_WORKSPACE:/workspace" \
               --workdir /workspace \
+              --env HOME=/tmp \
+              --env DOTNET_CLI_HOME=/tmp \
+              --env NUGET_PACKAGES=/tmp/nuget-packages \
               lzocateli/dotnet-sdk:10.0.400-noble \
               dotnet test "$project" --configuration Release --verbosity minimal
           done
@@ -127,8 +131,12 @@ jobs:
         run: |
           set -Eeuo pipefail
           docker run --rm --network host \
+            --user "$(id -u):$(id -g)" \
             --volume "$GITHUB_WORKSPACE:/workspace" \
             --workdir /workspace \
+            --env HOME=/tmp \
+            --env DOTNET_CLI_HOME=/tmp \
+            --env NUGET_PACKAGES=/tmp/nuget-packages \
             --env 'ALTIVY_INTEGRATION_MIGRATOR_CONNECTION_STRING=Host=127.0.0.1;Port=5432;Database=altivy;Username=altivy_migrator;Password=ci-migrator-only' \
             --env 'ALTIVY_INTEGRATION_RUNTIME_CONNECTION_STRING=Host=127.0.0.1;Port=5432;Database=altivy;Username=altivy_runtime;Password=ci-runtime-only' \
             lzocateli/dotnet-sdk:10.0.400-noble \
