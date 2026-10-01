@@ -41,11 +41,11 @@ jobs:
       contents: read
       packages: read
     env:
-      VPS_HOST: ${{ vars.VPS_HOST }}
-      VPS_PORT: ${{ vars.VPS_PORT || '22' }}
-      VPS_USER: ${{ vars.VPS_USER }}
-      VPS_KNOWN_HOSTS: ${{ vars.VPS_KNOWN_HOSTS }}
-      VPS_SSH_PRIVATE_KEY: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+      VPS_HOST: ${{ secrets.VPS_HOST }}
+      VPS_SSH_PORT: ${{ vars.VPS_SSH_PORT || '22' }}
+      VPS_USER: ${{ secrets.VPS_USER }}
+      VPS_KNOWN_HOSTS: ${{ secrets.VPS_SSH_KNOWN_HOSTS }}
+      VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
       GH_TOKEN: ${{ github.token }}
       OPERATION: ${{ inputs.operation }}
       COMPONENTS: ${{ inputs.components }}
@@ -75,18 +75,18 @@ jobs:
           fi
           [[ "$VPS_HOST" =~ ^[A-Za-z0-9][A-Za-z0-9.-]*$ ]] || { echo 'VPS_HOST inválido.' >&2; exit 2; }
           [[ "$VPS_USER" =~ ^[A-Za-z_][A-Za-z0-9_.-]*$ ]] || { echo 'VPS_USER inválido.' >&2; exit 2; }
-          if [[ ! "$VPS_PORT" =~ ^[0-9]{1,5}$ ]] || (( VPS_PORT == 0 || VPS_PORT >= 65536 )); then
-            echo 'VPS_PORT inválido.' >&2
+          if [[ ! "$VPS_SSH_PORT" =~ ^[0-9]{1,5}$ ]] || (( VPS_SSH_PORT == 0 || VPS_SSH_PORT >= 65536 )); then
+            echo 'VPS_SSH_PORT inválido.' >&2
             exit 2
           fi
-          [[ -n "$VPS_SSH_PRIVATE_KEY" && -n "$VPS_KNOWN_HOSTS" ]] || {
-            echo 'Configure VPS_SSH_PRIVATE_KEY e VPS_KNOWN_HOSTS no Environment production.' >&2
+          [[ -n "$VPS_SSH_KEY" && -n "$VPS_KNOWN_HOSTS" ]] || {
+            echo 'Configure VPS_SSH_KEY e VPS_KNOWN_HOSTS no Environment production.' >&2
             exit 2
           }
           [[ "$GHCR_USERNAME" =~ ^[A-Za-z0-9_.-]+$ ]] || { echo 'Ator GHCR inválido.' >&2; exit 2; }
 
           install -d -m 0700 "$RUNNER_TEMP/ssh"
-          printf '%s\n' "$VPS_SSH_PRIVATE_KEY" > "$RUNNER_TEMP/ssh/id_key"
+          printf '%s\n' "$VPS_SSH_KEY" > "$RUNNER_TEMP/ssh/id_key"
           printf '%s\n' "$VPS_KNOWN_HOSTS" > "$RUNNER_TEMP/ssh/known_hosts"
           chmod 0600 "$RUNNER_TEMP/ssh/id_key" "$RUNNER_TEMP/ssh/known_hosts"
           ssh-keygen -y -P '' -f "$RUNNER_TEMP/ssh/id_key" >/dev/null
@@ -94,7 +94,7 @@ jobs:
           Host altivynotes-vps
             HostName $VPS_HOST
             User $VPS_USER
-            Port $VPS_PORT
+            Port $VPS_SSH_PORT
             IdentityFile $RUNNER_TEMP/ssh/id_key
             UserKnownHostsFile $RUNNER_TEMP/ssh/known_hosts
             IdentitiesOnly yes

@@ -2,7 +2,7 @@
 
 **Status:** in-progress  
 **Data de criação:** 2026-09-29  
-**Última atualização:** 2026-09-29  
+**Última atualização:** 2026-09-30
 **Responsáveis:** Lincoln Zocateli  
 **Origem:** IA assistida  
 **Revisor humano:** Lincoln Zocateli  
@@ -51,7 +51,9 @@ ou reiniciar o NGINX, PostgreSQL ou Keycloak compartilhados.
 - [ADR 2026-0007](../adr/2026-0007-deploy-altivy-vps-compartilhada.md), ainda
   `proposed` até aprovação formal do registro arquitetural;
 - GitHub App instalada no repositório com apenas `Contents: write` e
-  `Pull requests: write` para criação de release PRs;
+  `Pull requests: write` para criação de release PRs; o workflow consome o
+  Client ID via `RELEASE_APP_CLIENT_ID` e a chave PEM via
+  `RELEASE_APP_PRIVATE_KEY`;
 - Environment `production` protegido e pacote GHCR acessível ao
   `GITHUB_TOKEN`;
 - VPS x86-64 por padrão ou variável `ALTIVY_VPS_PLATFORM` ajustada à arquitetura
@@ -116,15 +118,22 @@ Evidências:
 - workflows executam `actionlint` sem erros;
 - testes Angular 99/99 e build de produção passam;
 - Domain 26/26, BFF 87/87 e Worker 2/2 passam;
-- CI backend ainda é bloqueado por falha em `ApiContractTests` (espera 500,
-  recebe 503), implementação faltante em `MovingFolderStore` e analyzer
-  `CA1305` em `NoteProjectionBuilderTests`; nenhuma dessas falhas foi
-  mascarada ou alterada neste plano;
+- as falhas de CI de `ApiContractTests`, `MovingFolderStore` e analyzer
+  `CA1305` foram corrigidas no PR #7 e integradas à `main`; os checks de
+  Repository Baseline, Frontend, Backend, Backend Integration, Container Images,
+  Full History e Result passaram no run `36717790270`;
 - CI documental passa nos 7 cenários sintéticos; a varredura completa encontra
   uma referência local inválida preexistente para
   `architecture-knowledge-base/platforms/identity/README.md` em
   `backend/libs/infrastructure/data/README.md`;
-- execução dos workflows no GitHub ainda pendente.
+- o workflow Release da `main` falhou no run `36726173202` porque a variável
+  `RELEASE_APP_CLIENT_ID` não estava disponível; `publish` foi ignorado. A
+  criação do token também requer `RELEASE_APP_PRIVATE_KEY` e instalação da
+  GitHub App com as permissões descritas no runbook. Isso é configuração externa
+  pendente, não falha dos gates de CI;
+- a branch local de continuação atualiza a action para `client-id` em vez do
+  input depreciado `app-id`; actionlint passou em todos os workflows locais,
+  mas a correção ainda não foi integrada à `main`.
 
 ### P-03: Implementar deploy da aplicação
 
@@ -153,6 +162,10 @@ Evidências:
 - Dockerfile de migrations construído em container;
 - build E2E mantém `base-href /notes/` e build de produção usa `/`;
 - Compose de produção resolve sintaticamente com perfil `operations`;
+- em 2026-09-30, `docker compose config --quiet` passou usando somente paths
+  temporários, env files vazios e digests fictícios; nenhum serviço foi iniciado;
+- o operador passou `bash -n` e `--help` em container Linux; `.gitattributes`
+  fixa LF para `deploy/production/*.sh` e evita CRLF em checkouts Windows;
 - deploy remoto agora exige backup lógico de `altivy` e arquivo compactado do
   vault antes de executar migrations; backups falhos interrompem a promoção;
 - teste remoto ainda pendente.
@@ -181,6 +194,8 @@ Evidências:
 
 - `nginx -t` passou em container com a configuração atual;
 - certificado do NGINX é verificado para o SAN `notes.altivy.it` antes do reload;
+- em 2026-09-30, actionlint passou para todos os workflows presentes no
+  checkout de continuação; nenhuma execução de infraestrutura foi disparada;
 - execução na VPS ainda pendente.
 
 ### P-05: Provisionar e validar primeiro deploy
@@ -246,6 +261,7 @@ configuração e é recarregado somente após `nginx -t` e confirmação de incl
 | 2026-09-29 | plano | proposed | approved | aprovação humana explícita para implementar a arquitetura descrita | Lincoln Zocateli |
 | 2026-09-29 | plano | approved | in-progress | implementação e validação local iniciadas; deploy remoto permanece pendente | IA assistida |
 | 2026-09-29 | P-01 | not-started | completed | topologia e limites definidos pelo responsável no pedido | Lincoln Zocateli |
+| 2026-09-30 | P-02/P-03/P-04 | in-progress | in-progress | CI da main passou e Compose/operador/workflows foram validados localmente; Release aguarda `RELEASE_APP_ID`/GitHub App e deploy na VPS não foi executado | IA assistida |
 
 ## Regras de atualização
 
