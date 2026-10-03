@@ -422,9 +422,10 @@ planos e não substitui as dependências `P-NN` declaradas dentro de cada um.
 | ---: | --- | --- | --- | --- |
 | 0 | [Identidade visual e branding](plan/altivy-branding.md) | redirecionamento histórico | nenhuma | não executar; está `superseded` e aponta para a fonte canônica no repositório `Altivy` |
 | 1 | [BFF com Keycloak](plan/bff-keycloak.md) | fundação de identidade, sessão e autorização | decisões da Fase 0 aplicáveis | executar antes de qualquer plano que exponha integração autenticada ou selecione vaults |
-| 2 | [Deploy de produção em VPS](plan/deploy-producao-vps.md) | release SemVer e promoção independente da aplicação sobre NGINX/PostgreSQL/Keycloak compartilhados | plano BFF concluído; capacidades essenciais de Notes; decisão humana da VPS; redes, DNS/TLS, realm e database externos preparados | deploy exige Environment protegido e não reinicia os serviços compartilhados |
-| 3 | [Plataforma de plugins e plugin Teams](plan/app-altivy-notes-teams-external-push.md) | fundação plugável, importação explícita e API de ingestão | plano do BFF concluído; núcleo de Notes, jobs, filesystem e indexação disponível; gate da Fase 3 atendido; início da Fase 5 aprovado por humano | entregar o Plugin Host e a primeira integração sem leitura do Microsoft Graph |
-| 4 | [Notas de reunião do Teams via Graph](plan/integracao-teams-notas-reuniao.md) | espelhamento automático Loop → Altivy | mesmas pré-condições da ordem 3; gates G1 e G2 próprios; contratos do Plugin Host reconciliados | executar depois de `external-push` na ordem padrão ou em paralelo somente com coordenação explícita |
+| 2 | [Deploy de produção em VPS](plan/deploy-producao-vps.md) | registro histórico da topologia VPS | nenhuma | `superseded` pelo ADR 2026-0008; não executar |
+| 3 | [Deploy self-hosted por Docker Compose](plan/deploy-self-hosted-compose.md) | iniciar e operar a stack no host escolhido pelo operador | plano BFF concluído; Keycloak, TLS, secrets externos e paths persistentes configurados pelo operador | publicar somente gateway HTTPS; PostgreSQL e serviços da aplicação permanecem privados |
+| 4 | [Plataforma de plugins e plugin Teams](plan/app-altivy-notes-teams-external-push.md) | fundação plugável, importação explícita e API de ingestão | plano do BFF concluído; núcleo de Notes, jobs, filesystem e indexação disponível; gate da Fase 3 atendido; início da Fase 5 aprovado por humano | entregar o Plugin Host e a primeira integração sem leitura do Microsoft Graph |
+| 5 | [Notas de reunião do Teams via Graph](plan/integracao-teams-notas-reuniao.md) | espelhamento automático Loop → Altivy | mesmas pré-condições da ordem 4; gates G1 e G2 próprios; contratos do Plugin Host reconciliados | executar depois de `external-push` na ordem padrão ou em paralelo somente com coordenação explícita |
 
 Os planos de Teams são iniciativas da Fase 5. A Fase 5 exige nova descoberta e
 não começa automaticamente após a fase anterior. Uma IA não deve interpretar a
@@ -437,7 +438,7 @@ flowchart TD
      Master[Plano mestre] --> Evolution[Evolução do produto]
      Evolution --> Foundation[Fases 0 a 3 e núcleo operacional]
      Foundation --> Bff[Plano BFF com Keycloak]
-    Bff --> Production[Deploy de produção em VPS]
+    Bff --> Production[Deploy self-hosted por Compose]
     Production --> CorporateGate[Gate de saída da Fase 3]
      CorporateGate --> HumanGate{Início da Fase 5 aprovado?}
      HumanGate -->|não| Stop[Manter integrações bloqueadas]
@@ -456,8 +457,8 @@ A ordem padrão para uma única IA ou um único worktree é:
 3. entregar e validar as capacidades das Fases 0 a 3 necessárias aos planos de
     integração, incluindo Notes, autorização por vault, jobs duráveis,
     filesystem seguro, indexação, auditoria e operação;
-4. preparar e validar o deploy da aplicação em VPS conforme o plano próprio,
-    sem considerar o deploy como conclusão dos gates de release estável;
+4. preparar e validar o deploy self-hosted local por Compose conforme o plano
+    próprio, sem considerar o deploy como conclusão dos gates de release estável;
 5. obter e registrar a decisão humana de entrada na Fase 5;
 6. executar P-01 a P-03 dos dois planos Teams como descoberta arquitetural,
     sem iniciar implementação posterior aos gates;

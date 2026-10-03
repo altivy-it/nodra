@@ -17,6 +17,8 @@ namespace Altivy.Notes.Worker.DependencyInjection;
 /// </summary>
 public static class WorkerServiceCollectionExtensions
 {
+    private static readonly string[] SmtpConfigurationKeys = ["Host", "Username", "Password", "From", "To"];
+
     /// <summary>
     /// Adiciona persistência, filesystem e o worker de operações de vault.
     /// </summary>
@@ -36,6 +38,12 @@ public static class WorkerServiceCollectionExtensions
             throw new InvalidOperationException("ConnectionStrings:AltivyPostgres é obrigatória para o worker.");
         }
 
+        var postgresHostOverride = configuration["Database:PostgresHostOverride"];
+        if (environment.IsDevelopment() && !string.IsNullOrWhiteSpace(postgresHostOverride))
+        {
+            connectionString = PostgresConnectionStringOverrides.WithHost(connectionString, postgresHostOverride);
+        }
+
         var vaultRoot = configuration["VaultStorage:Root"];
         if (string.IsNullOrWhiteSpace(vaultRoot))
         {
@@ -50,11 +58,20 @@ public static class WorkerServiceCollectionExtensions
         _ = services.AddSingleton<IVaultFileSystemProvisioner>(new FileSystemVaultProvisioner(vaultRoot));
         _ = services.AddSingleton<INoteStore>(new FileSystemNoteStore(vaultRoot));
         _ = services.AddScoped<NoteIndexJobProcessor>();
-        _ = services.AddOptions<AdministrativeSmtpOptions>()
-            .Bind(configuration.GetSection(AdministrativeSmtpOptions.SectionName))
-            .ValidateOnStart();
-        _ = services.AddSingleton<IValidateOptions<AdministrativeSmtpOptions>, AdministrativeSmtpOptionsValidator>();
-        _ = services.AddSingleton<IAdministrativeNotifier, AdministrativeSmtpNotifier>();
+        var smtpSection = configuration.GetSection(AdministrativeSmtpOptions.SectionName);
+        var smtpIsConfigured = SmtpConfigurationKeys.Any(key => !string.IsNullOrWhiteSpace(smtpSection[key]));
+        if (environment.IsDevelopment() && !smtpIsConfigured)
+        {
+            _ = services.AddSingleton<IAdministrativeNotifier, DevelopmentAdministrativeNotifier>();
+        }
+        else
+        {
+            _ = services.AddOptions<AdministrativeSmtpOptions>()
+                .Bind(smtpSection)
+                .ValidateOnStart();
+            _ = services.AddSingleton<IValidateOptions<AdministrativeSmtpOptions>, AdministrativeSmtpOptionsValidator>();
+            _ = services.AddSingleton<IAdministrativeNotifier, AdministrativeSmtpNotifier>();
+        }
         _ = services.AddScoped<VaultProvisioningProcessor>();
         _ = services.AddScoped<VaultProjectionReconciler>();
         _ = services.AddScoped<VaultOrphanDirectoryReconciler>();

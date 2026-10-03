@@ -1,5 +1,9 @@
 # Deploy de produção
 
+> **Legado supersedido:** esta composição depende de NGINX/PostgreSQL/Keycloak
+> compartilhados e de uma VPS. A instalação self-hosted ativa está em
+> [`deploy/self-hosted`](../self-hosted/README.md).
+
 Esta composição executa apenas web, BFF, API, worker e migrations. PostgreSQL,
 NGINX e Keycloak são serviços compartilhados e não são iniciados por este
 Compose.

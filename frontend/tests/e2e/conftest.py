@@ -19,6 +19,12 @@ def pytest_addoption(parser: pytest.Parser) -> None:
         default=os.getenv("ALTIVY_E2E_DENIED_VAULT_ID"),
         help="Vault que o usuário de laboratório não pode ler, ou ALTIVY_E2E_DENIED_VAULT_ID.",
     )
+    parser.addoption(
+        "--write-vault-id",
+        action="store",
+        default=os.getenv("ALTIVY_E2E_WRITE_VAULT_ID"),
+        help="Vault sintético isolado para teste de gravação, ou ALTIVY_E2E_WRITE_VAULT_ID.",
+    )
 
 
 def pytest_configure(config: pytest.Config) -> None:

@@ -111,14 +111,19 @@ imprime os valores resolvidos.
 
 Após alterar o arquivo externo
 `$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env`, Dockerfile, proxy ou
-configuração do BFF/API, recrie somente `web`, `bff` e `api`. O comando abaixo
-usa esse arquivo externo, reconstrói as imagens e aguarda os health checks sem
-interromper Keycloak ou PostgreSQL:
+configuração do BFF/API/worker, recrie somente os serviços consumidores
+`web`, `bff`, `api` e `worker`. O comando abaixo usa esse arquivo externo,
+reconstrói as imagens e aguarda os health checks sem interromper Keycloak ou
+PostgreSQL:
 
 ```powershell
 docker compose --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" `
-  -f deploy/e2e/docker-compose-altivynotes.yaml up --build --force-recreate --wait
+  -f deploy/e2e/docker-compose-altivynotes.yaml up --build --force-recreate --wait web bff api worker
 ```
+
+No perfil `Development`, quando a seção SMTP estiver completamente ausente, o
+worker registra um aviso sanitizado e não envia alertas administrativos. Uma
+configuração SMTP parcial continua falhando; Production sempre exige SMTP válido.
 
 O Compose habilita `Bff__AllowInsecureHttpForDevelopment=true` somente para
 permitir HTTP na rede Docker interna e alcançar o Keycloak local pelo host.

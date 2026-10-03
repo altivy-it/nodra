@@ -83,6 +83,28 @@ $env:ALTIVY_E2E_PASSWORD = '<senha-do-laboratorio>'
 $env:ALTIVY_E2E_DENIED_VAULT_ID = '<vault-sem-permissao-de-leitura>'
 ```
 
+Para validar gravação e autosave, use um vault sintético isolado previamente
+provisionado no filesystem, no PostgreSQL e no Keycloak. Não use `lab-0001` ou
+`lab-0002`; o teste cria notas com nomes únicos e as mantém nesse vault. Defina
+`ALTIVY_E2E_WRITE_VAULT_ID` e execute somente o cenário autenticado de escrita:
+
+```powershell
+$env:ALTIVY_E2E_WRITE_VAULT_ID = 'lab-write-e2e'
+docker run --rm --network host `
+  --env ALTIVY_E2E_USERNAME --env ALTIVY_E2E_PASSWORD `
+  --env ALTIVY_E2E_WRITE_VAULT_ID `
+  --volume "${PWD}/frontend/tests:/app/tests:ro" `
+  --volume "${PWD}/artifacts/e2e:/app/reports" `
+  lzocateli/playwright-e2e:0.1.0 `
+  /app/tests/e2e/test_bff_session.py `
+  --base-url=https://localhost:7443/notes -m authenticated -k autosave
+```
+
+O teste confirma POST, leitura com ETag, atualização PUT com `If-Match` e
+persistência pelo BFF/gateway. Jobs de indexação são processados pelo worker; a
+limpeza de notas retidas na lixeira exige um procedimento administrativo
+separado.
+
 No laboratório atual, `lab-0002` é o recurso de negação usado pelo cenário
 E2E. Confirme que o usuário configurado não possui `vault:read` nesse recurso
 antes de usá-lo como `ALTIVY_E2E_DENIED_VAULT_ID`.

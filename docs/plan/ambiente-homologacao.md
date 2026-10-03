@@ -39,8 +39,8 @@ laptop de desenvolvimento.
 
 - provisionar produção; este plano cobre apenas homologação;
 - decidir o provedor específico de VPS/hospedagem;
-- implementar o pipeline de deploy completo (`deploy.yml`), coberto por
-  `ci-cd-seguranca.md`;
+- implementar um workflow de deploy remoto; a instalação de aplicação é operada
+  localmente pelo Compose self-hosted e ambientes isolados seguem plano próprio;
 - alterar o tema de login ou qualquer artefato de aplicação.
 
 ## Dependências e decisões
