@@ -2,7 +2,7 @@
 
 **Status:** in-progress  
 **Data de criação:** 2026-10-02  
-**Última atualização:** 2026-10-02  
+**Última atualização:** 2026-10-04
 **Responsáveis:** Lincoln Zocateli  
 **Origem:** decisão humana registrada na conversa de 2026-10-02  
 **Revisor humano:** Lincoln Zocateli  
@@ -126,7 +126,7 @@ Evidências:
 
 ### P-03: Provisionar e validar primeiro boot autenticado
 
-**Status:** in-progress  
+**Status:** blocked
 **Responsável:** Lincoln Zocateli  
 **Dependências:** P-02
 
@@ -160,6 +160,11 @@ Evidências:
   suíte completa de testes unitários do worker 7/7. O Compose E2E injeta a
   connection string runtime existente e conecta API e worker à rede
   `identity-data`.
+- A solução `Altivy.slnx` continha dez referências cruzadas para projetos do
+  Dokpod ausentes deste repositório. As referências foram removidas; o build
+  Release com analyzers passou com zero warnings/erros e os testes backend fora
+  de Integration passaram 181/181. O Vitest passou 99/99 e o build Angular de
+  produção foi gerado.
 - As migrations pendentes foram aplicadas ao schema `altivy` com a role de
   migration. A conexão runtime foi validada por
   `PostgresVaultReaderReadsProjectedVaultWithRuntimeRole` (1/1); o cleanup
@@ -170,8 +175,8 @@ Evidências:
   volume E2E e autorização UMA somente para `lzocateli`; nenhum grant de
   `lab-0001` ou `lab-0002` foi alterado. A jornada Playwright pelo gateway
   `https://localhost:7443/notes` passou: POST, GET com ETag, PUT com `If-Match`
-  e leitura final do conteúdo atualizado. Duas execuções criaram duas notas
-  sintéticas, mantidas apenas nesse vault; a limpeza da lixeira não foi feita.
+  e leitura final do conteúdo atualizado. As notas sintéticas permanecem
+  apenas nesse vault; a limpeza da lixeira não foi feita.
 - Playwright real via `https://localhost:7443/notes`: smoke anônimo aprovado;
   oito jornadas positivas autenticadas passaram, incluindo login/logout,
   catálogo/leitura autorizada e SignalR. O teste de negação de `lab-0002`
@@ -184,22 +189,108 @@ Evidências:
   agora repete `TimeoutException` e `NpgsqlException.IsTransient` com backoff
   limitado de 5 a 60 segundos; o teste `RetriesTransientDatabaseFailureAndKeepsRunning`
   passou e a suíte unitária completa passou 7/7. O container permaneceu ativo,
-  executou consultas às filas e ao catálogo no PostgreSQL healthy; a fila de
-  indexação estava vazia, portanto um job real ainda não foi comprovado. Os
-  logs também registraram aviso não fatal de `libgssapi_krb5.so.2` ausente.
+  executou consultas às filas e ao catálogo no PostgreSQL healthy. A
+  comprovação posterior de quatro jobs concluídos e duas projeções consta abaixo.
+  Os logs também registraram aviso não fatal de `libgssapi_krb5.so.2` ausente.
   Em Development, a ausência total de SMTP seleciona
   `DevelopmentAdministrativeNotifier`, que registra metadados sanitizados sem
   enviar e-mail; Production continua exigindo SMTP completo. Nenhum valor
   externo foi lido ou exibido.
 - O worker concluiu quatro jobs de indexação do fixture (state `Completed`, uma
-  tentativa cada) e materializou duas projeções. O container permaneceu
-  `running`, com zero restarts; PostgreSQL ficou `healthy`. Um aviso não fatal de
-  `libgssapi_krb5.so.2` ausente continua visível nos logs. Reinício com
-  persistência e validação da stack self-hosted completa seguem pendentes.
+  tentativa cada) e materializou duas projeções. Após os testes adicionais, o
+  estado final foi oito jobs concluídos e quatro projeções. O container
+  permaneceu `running`, com zero restarts; PostgreSQL ficou `healthy`.
+- A recriação de web/BFF/API/worker inicialmente deixou o BFF unhealthy porque
+  `localhost` apontava para o IP antigo `172.31.0.10`. O Compose agora exige o
+  IP e a sub-rede atuais de `identity-global`, obtidos por inspeção do gateway;
+  a configuração passou e os quatro consumidores ficaram healthy. Após a
+  recriação, a leitura autenticada de uma nota preexistente passou (1/1),
+  provando a persistência do volume do vault. O diretório de Data Protection
+  contém uma chave; a sessão anônima pelo gateway respondeu como esperado.
+- A suíte E2E autenticada pós-recriação passou 10/10. O único cenário excluído
+  continua sendo a negação de `lab-0002`, pois o usuário real possui grant; não
+  alteramos essa autorização. O runner em volume somente leitura emite avisos
+  não bloqueantes do pytest cache.
+- O aviso não fatal de `libgssapi_krb5.so.2` ausente continua visível nos logs.
+  A validação isolada da composição self-hosted com PostgreSQL próprio continua
+  pendente; backup, restore, upgrade e rollback pertencem à etapa P-04.
+- Em 2026-10-04, Lincoln Zocateli autorizou o reinício do PostgreSQL
+  compartilhado. `docker restart --timeout 60` preservou as contagens antes e
+  depois: três vaults, oito jobs do fixture, oito concluídos e quatro projeções.
+  O banco voltou a aceitar conexões e ficou healthy; o worker manteve zero
+  restarts. Sete cenários Playwright via gateway passaram, incluindo login,
+  leitura da nota preexistente, negociação SignalR e logout. Isso comprova
+  persistência após restart, não após remoção/recriação do container do banco.
+- Após o ensaio coordenado de backup, escrita/autosave e leitura persistida
+  passaram 2/2 via gateway. A fila de indexação chegou a dez jobs concluídos e
+  cinco projeções no vault sintético, comprovando reconexão e nova gravação.
+- O preflight da composição self-hosted isolada, com project name
+  `altivy-selfhosted-validation` e arquivo externo aprovado, falhou na
+  interpolação. Faltam configuração específica de origem/rede/paths, identidade
+  do banco e credenciais Production; a lista operacional está no
+  [guia self-hosted](../../deploy/self-hosted/README.md#desbloquear-o-preflight).
+  Nenhum serviço dessa composição foi iniciado. Configuração do laboratório
+  E2E não substitui esses valores. P-03 fica blocked até o operador preparar a
+  configuração externa, certificados e callbacks da origem escolhida.
 
 ### P-04: Backup, restore, upgrade e recuperação
 
-**Status:** not-started  
+Em 2026-10-05, as credenciais existentes foram encontradas nas variáveis de
+integração. Connection strings foram construídas em memória por parser
+estruturado, preservando senhas e roles e ajustando host/database para o banco
+próprio. PostgreSQL Production iniciou em bind mount exclusivo; roles runtime
+e migrator foram provisionadas sem flags administrativos. Backup pré-migration
+foi capturado fora do repositório; as 12 migrations concluíram com sucesso.
+
+A stack `altivy-selfhosted-production` iniciou no perfil Production em
+`https://localhost:8443`. Foram corrigidos HTTPS interno obrigatório do BFF,
+permissões dos tmpfs NGINX e colisão do IP de gateway. O override local de
+identidade preserva a plataforma compartilhada. Banco/API/BFF/web/gateway
+ficaram healthy e worker ativo; somente o gateway próprio publica 8443 em
+loopback. Sessão anônima HTTPS respondeu corretamente com CA validada.
+
+O gate funcional segue bloqueado por OIDC, não por credenciais ausentes:
+tentativas de adicionar callbacks Production ao client existente foram
+rejeitadas com HTTP 400 e não confirmadas; a borda de identidade mascara o
+corpo do erro. No Playwright Production, a tela anônima passou e negociação
+SignalR falhou com 500 durante challenge/PAR. Não houve desativação de TLS,
+PKCE ou PAR. Login, logout, escrita autenticada e recuperação da instalação
+Production ainda precisam de evidência; P-03 permanece blocked.
+
+No novo preflight de Production em 2026-10-05, a combinação dos arquivos
+externos da plataforma de identidade e do AltivyNotes resolveu as variáveis
+administrativas centralizadas, sem copiar valores. Restaram somente
+`ALTIVY_POSTGRES_RUNTIME_CONNECTION_STRING` e
+`ALTIVY_POSTGRES_MIGRATOR_CONNECTION_STRING`. O script de bootstrap disponível
+é exclusivo do laboratório e aponta diretamente para `keycloak`; não foi
+executado. Production não foi iniciado; as roles e connection strings para o
+banco próprio precisam estar configuradas antes de aplicar migrations.
+
+Em 2026-10-05, por solicitação de Lincoln Zocateli, os parâmetros
+administrativos PostgreSQL passaram a usar `POSTGRES_ADMIN_USERNAME` e
+`POSTGRES_ADMIN_PASSWORD`, como na plataforma de identidade. Compose, exemplo
+e guia foram alinhados; `config --quiet` passou com dados sintéticos. Nenhum
+valor real foi copiado e nenhum serviço foi iniciado por essa alteração.
+
+O preflight de início de Production em 2026-10-05 resolveu TLS e PFX usando
+`certs-prd`. O PFX foi validado com a senha do arquivo externo, tem chave
+criptografada AES-256-CBC e validade até 2028-10-04. Parâmetros não secretos da
+instalação local isolada foram definidos somente na sessão do terminal.
+Restam `POSTGRES_ADMIN_USERNAME`, `POSTGRES_ADMIN_PASSWORD`,
+`ALTIVY_POSTGRES_RUNTIME_CONNECTION_STRING`,
+`ALTIVY_POSTGRES_MIGRATOR_CONNECTION_STRING` e `ALTIVY_SMTP_TO`. Nenhum serviço
+Production foi iniciado; P-03 permanece blocked. A stack compartilhada segue
+operacional, sem promoção ou mudança das credenciais existentes.
+
+Em 2026-10-05, Lincoln Zocateli autorizou reutilizar credenciais/certificados em
+Production. A composição passou a aceitar aliases externos de secret BFF e
+paths TLS existentes, com prioridade dos nomes próprios de Production. Testes
+Compose sintéticos de fallback/precedência passaram; o preflight real resolveu
+esses aliases, mas P-03 continua blocked por configuração Production restante.
+PFX dedicado/senha e destinatário SMTP não são substituídos pelo TLS. Não houve
+promoção dos consumidores nem mudança na topologia ou nas credenciais reais.
+
+**Status:** in-progress
 **Responsável:** operação Altivy  
 **Dependências:** P-03
 
@@ -223,7 +314,24 @@ Validação:
 
 Evidências:
 
-- pendente.
+- Em 2026-10-04, BFF/API/worker foram parados graciosamente durante a captura
+  coordenada e retomados em `finally`. O dump custom-format inclui somente o
+  schema `altivy`, sem owners/grants; o tar inclui apenas `lab-write-e2e`.
+  Nenhum schema de identidade ou credencial foi exportado. Os artefatos e
+  diretórios restaurados ficaram fora do repositório, sob
+  `%LOCALAPPDATA%/AltivyNotes/Recovery/`, com ACL restrita ao usuário atual.
+- `pg_restore --exit-on-error` passou em PostgreSQL limpo com a mesma imagem por
+  ID, sem rede/portas, usando bind mount novo. O baseline restaurado foi
+  `3|8|8|4` (vaults, jobs, concluídos, projeções). As quatro notas restauradas em
+  diretório limpo tiveram hashes SHA-256 idênticos aos da origem.
+- O container de destino foi removido/recriado preservando seu bind mount; o
+  baseline permaneceu `3|8|8|4`. Os dois containers auxiliares foram removidos
+  depois do teste; o banco compartilhado nunca foi alvo de restore.
+- Procedimento, diagnóstico e limites estão no
+  [runbook de recuperação](../runbooks/recuperacao-self-hosted.md). O ensaio
+  parcial não comprova restauração completa de todos os vaults, chaves/PFX do
+  BFF, roles/grants ou identidade. Upgrade/rollback entre versões diferentes
+  e validação da composição self-hosted isolada continuam pendentes.
 
 ## Critérios de aceite finais
 
@@ -266,6 +374,8 @@ coordenada documentada em P-04.
 | 2026-10-02 | P-01 | not-started | completed | decisão humana registrada no ADR 2026-0008 | Lincoln Zocateli |
 | 2026-10-02 | P-02 | not-started | in-progress | Compose, gateway e guia criados; validação de config aprovada; build/startup ainda pendentes | IA assistida |
 | 2026-10-03 | P-03 | not-started | in-progress | migrations aplicadas, PostgreSQL runtime 1/1, filesystem 9/9, E2E positivo 8/8 e worker iniciado em Development; processamento de job, escrita E2E e restore pendentes | IA assistida |
+| 2026-10-04 | P-04 | not-started | in-progress | continuação autorizada por Lincoln Zocateli; restart PostgreSQL preservou baseline e sete testes E2E passaram; ensaio isolado de restore iniciado | IA assistida |
+| 2026-10-04 | P-03 | in-progress | blocked | preflight self-hosted falhou por variáveis Production ausentes no ambiente/arquivo externo; nenhum serviço isolado foi iniciado | IA assistida |
 
 ## Regras de atualização
 

@@ -54,6 +54,17 @@ public sealed class ConfigureOpenIdConnectOptions(IOptions<KeycloakOptions> keyc
             ValidateIssuer = true
         };
         options.Events ??= new OpenIdConnectEvents();
+        options.Events.OnRedirectToIdentityProvider = context =>
+        {
+            if (context.Request.Path.StartsWithSegments("/api/v1") ||
+                context.Request.Path.StartsWithSegments("/hubs"))
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                context.HandleResponse();
+            }
+
+            return Task.CompletedTask;
+        };
         options.Events.OnTicketReceived = context =>
         {
             var properties = context.Properties;

@@ -99,6 +99,27 @@ def test_authenticated_can_create_and_autosave_note_in_write_vault(
 
 @pytest.mark.e2e
 @pytest.mark.authenticated
+def test_authenticated_can_read_persisted_note_after_container_recreation(
+    authenticated_page: Page,
+    base_url: str,
+    pytestconfig: pytest.Config,
+) -> None:
+    vault_id = pytestconfig.getoption("write_vault_id")
+    note_path = pytestconfig.getoption("persisted_note_path")
+    if not vault_id or not note_path:
+        pytest.skip("Defina os IDs do vault de escrita e da nota persistida para validar recriação.")
+
+    response = authenticated_page.request.get(
+        f"{base_url}/api/v1/vaults/{vault_id}/notes/{note_path}"
+    )
+
+    assert response.status == 200
+    assert response.headers.get("etag")
+    assert response.json()["content"] == "# Autosave E2E\nAtualização com ETag pelo navegador."
+
+
+@pytest.mark.e2e
+@pytest.mark.authenticated
 def test_authenticated_can_negotiate_signalr_hub(authenticated_page: Page, base_url: str) -> None:
     result = authenticated_page.evaluate("""async (url) => {
         const response = await fetch(url, { method: 'POST', credentials: 'include' });

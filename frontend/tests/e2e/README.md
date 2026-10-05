@@ -105,6 +105,20 @@ persistência pelo BFF/gateway. Jobs de indexação são processados pelo worker
 limpeza de notas retidas na lixeira exige um procedimento administrativo
 separado.
 
+Para conferir a persistência depois de recriar web/BFF/API/worker, informe o
+caminho de uma nota criada pela jornada anterior:
+
+```powershell
+$env:ALTIVY_E2E_PERSISTED_NOTE_PATH = '<caminho-retornado-pelo-job-de-teste>'
+docker run --rm --network host `
+  --env ALTIVY_E2E_USERNAME --env ALTIVY_E2E_PASSWORD `
+  --env ALTIVY_E2E_WRITE_VAULT_ID --env ALTIVY_E2E_PERSISTED_NOTE_PATH `
+  --volume "${PWD}/frontend/tests:/app/tests:ro" `
+  lzocateli/playwright-e2e:0.1.0 `
+  /app/tests/e2e/test_bff_session.py `
+  --base-url=https://localhost:7443/notes -m authenticated -k persisted_note
+```
+
 No laboratório atual, `lab-0002` é o recurso de negação usado pelo cenário
 E2E. Confirme que o usuário configurado não possui `vault:read` nesse recurso
 antes de usá-lo como `ALTIVY_E2E_DENIED_VAULT_ID`.

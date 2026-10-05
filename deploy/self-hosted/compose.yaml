@@ -13,8 +13,8 @@ services:
       - /tmp:rw,noexec,nosuid,size=16m,uid=101,gid=101,mode=0700
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - ${ALTIVY_TLS_CERTIFICATE_PATH:?Configure ALTIVY_TLS_CERTIFICATE_PATH}:/etc/nginx/certs/tls.crt:ro
-      - ${ALTIVY_TLS_PRIVATE_KEY_PATH:?Configure ALTIVY_TLS_PRIVATE_KEY_PATH}:/etc/nginx/certs/tls.key:ro
+      - ${ALTIVY_TLS_CERTIFICATE_PATH:-${ALTIVY_E2E_TLS_CERTIFICATE_PATH:?Configure ALTIVY_TLS_CERTIFICATE_PATH ou ALTIVY_E2E_TLS_CERTIFICATE_PATH}}:/etc/nginx/certs/tls.crt:ro
+      - ${ALTIVY_TLS_PRIVATE_KEY_PATH:-${ALTIVY_E2E_TLS_KEY_PATH:?Configure ALTIVY_TLS_PRIVATE_KEY_PATH ou ALTIVY_E2E_TLS_KEY_PATH}}:/etc/nginx/certs/tls.key:ro
     depends_on:
       - web
       - bff
@@ -43,9 +43,9 @@ services:
     stop_grace_period: 10s
     tmpfs:
       - /tmp
-      - /var/cache/nginx
-      - /var/log/nginx
-      - /var/run
+      - /var/cache/nginx:rw,noexec,nosuid,size=32m,uid=101,gid=101,mode=0700
+      - /var/log/nginx:rw,noexec,nosuid,size=16m,uid=101,gid=101,mode=0700
+      - /var/run:rw,noexec,nosuid,size=4m,uid=101,gid=101,mode=0700
     networks:
       proxy-web:
 
@@ -59,8 +59,9 @@ services:
       ASPNETCORE_URLS: http://+:8080
       Authentication__Keycloak__Authority: ${ALTIVY_KEYCLOAK_AUTHORITY:?Configure ALTIVY_KEYCLOAK_AUTHORITY}
       Authentication__Keycloak__ClientId: altivy-bff
-      Authentication__Keycloak__ClientSecret: ${ALTIVY_BFF_CLIENT_SECRET:?Configure ALTIVY_BFF_CLIENT_SECRET}
-      Downstream__Api__BaseUrl: http://api:8080
+      Authentication__Keycloak__ClientSecret: ${ALTIVY_BFF_CLIENT_SECRET:-${ALTIVY_E2E_BFF_CLIENT_SECRET:?Configure ALTIVY_BFF_CLIENT_SECRET ou ALTIVY_E2E_BFF_CLIENT_SECRET}}
+      Downstream__Api__BaseUrl: https://api:8443
+      SSL_CERT_FILE: /certs/rootCA.pem
       AllowedHosts: ${ALTIVY_PUBLIC_HOST:?Configure ALTIVY_PUBLIC_HOST}
       Security__AllowedOrigins__0: ${ALTIVY_PUBLIC_ORIGIN:?Configure ALTIVY_PUBLIC_ORIGIN}
       Security__TrustedProxies__0: ${ALTIVY_GATEWAY_IP:?Configure ALTIVY_GATEWAY_IP}
@@ -81,6 +82,7 @@ services:
         source: ${ALTIVY_CONFIG_ROOT:?Configure ALTIVY_CONFIG_ROOT}/altivy-data-protection.pfx
         target: /certs/altivy-data-protection.pfx
         read_only: true
+      - ${ALTIVY_TLS_CA_PATH:?Configure ALTIVY_TLS_CA_PATH}:/certs/rootCA.pem:ro
     depends_on:
       api:
         condition: service_healthy
@@ -95,7 +97,10 @@ services:
     image: altivy-api:local
     environment:
       ASPNETCORE_ENVIRONMENT: Production
-      ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_URLS: https://+:8443
+      Kestrel__Certificates__Default__Path: /certs/api.crt
+      Kestrel__Certificates__Default__KeyPath: /certs/api.key
+      SSL_CERT_FILE: /certs/rootCA.pem
       Keycloak__Authority: ${ALTIVY_KEYCLOAK_AUTHORITY:?Configure ALTIVY_KEYCLOAK_AUTHORITY}
       Keycloak__Audience: altivy-api
       ConnectionStrings__AltivyPostgres: ${ALTIVY_POSTGRES_RUNTIME_CONNECTION_STRING:?Configure ALTIVY_POSTGRES_RUNTIME_CONNECTION_STRING}
@@ -110,8 +115,11 @@ services:
       - type: bind
         source: ${ALTIVY_DATA_ROOT:?Configure ALTIVY_DATA_ROOT}/vaults
         target: /vaults
+      - ${ALTIVY_API_TLS_CERTIFICATE_PATH:?Configure ALTIVY_API_TLS_CERTIFICATE_PATH}:/certs/api.crt:ro
+      - ${ALTIVY_API_TLS_PRIVATE_KEY_PATH:?Configure ALTIVY_API_TLS_PRIVATE_KEY_PATH}:/certs/api.key:ro
+      - ${ALTIVY_TLS_CA_PATH:?Configure ALTIVY_TLS_CA_PATH}:/certs/rootCA.pem:ro
     healthcheck:
-      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8080/health/live"]
+      test: ["CMD", "curl", "--fail", "--silent", "--cacert", "/certs/rootCA.pem", "https://localhost:8443/health/live"]
       interval: 15s
       timeout: 5s
       start_period: 30s
@@ -160,8 +168,8 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_DB: altivy
-      POSTGRES_USER: ${ALTIVY_POSTGRES_ADMIN_USER:?Configure ALTIVY_POSTGRES_ADMIN_USER}
-      POSTGRES_PASSWORD: ${ALTIVY_POSTGRES_ADMIN_PASSWORD:?Configure ALTIVY_POSTGRES_ADMIN_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_ADMIN_USERNAME:?Configure POSTGRES_ADMIN_USERNAME}
+      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?Configure POSTGRES_ADMIN_PASSWORD}
     volumes:
       - type: bind
         source: ${ALTIVY_DATA_ROOT:?Configure ALTIVY_DATA_ROOT}/postgres
@@ -182,9 +190,8 @@ services:
       dockerfile: deploy/production/migrations.Dockerfile
     image: altivy-migrations:local
     environment:
-      ConnectionStrings__AltivyPostgres: ${ALTIVY_POSTGRES_MIGRATOR_CONNECTION_STRING:?Configure ALTIVY_POSTGRES_MIGRATOR_CONNECTION_STRING}
-    entrypoint: ["/bin/sh", "-ec"]
-    command: ["exec /app/efbundle --connection \"$$ConnectionStrings__AltivyPostgres\""]
+      ALTIVY_DESIGNTIME_CONNECTION_STRING: ${ALTIVY_POSTGRES_MIGRATOR_CONNECTION_STRING:?Configure ALTIVY_POSTGRES_MIGRATOR_CONNECTION_STRING}
+    entrypoint: ["/app/efbundle"]
     profiles:
       - operations
     restart: "no"

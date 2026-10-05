@@ -7,6 +7,7 @@ import { vi } from 'vitest';
 import { App } from './app';
 import { routes } from './app.routes';
 import { VaultRealtimeService } from './core/vault-realtime.service';
+import { SessionService } from './core/session.service';
 
 const realtime = {
   status: signal<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected'),
@@ -41,6 +42,29 @@ describe('App', () => {
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('main')?.textContent).toContain('Entre para abrir seu workspace');
+    http.verify();
+  });
+
+  it('should allow an authenticated session without vaults to log out', async () => {
+    const fixture = TestBed.createComponent(App);
+    const http = TestBed.inject(HttpTestingController);
+    const logout = vi.spyOn(TestBed.inject(SessionService), 'logout').mockResolvedValue(undefined);
+
+    http.expectOne('/bff/session').flush({ authenticated: true, subject: 'user-empty', name: 'Pessoa' });
+    fixture.detectChanges();
+    await fixture.whenStable();
+    await vi.waitFor(() => {
+      http.expectOne(request => request.url === '/api/v1/vaults').flush({ items: [], nextCursor: null });
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain('Nenhum vault disponível.');
+    const button = compiled.querySelector('button') as HTMLButtonElement;
+    expect(button.textContent).toContain('Encerrar sessão');
+    button.click();
+    expect(logout).toHaveBeenCalledOnce();
     http.verify();
   });
 
