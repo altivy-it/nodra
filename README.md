@@ -62,7 +62,9 @@ tools/         automação do repositório
 - [Arquitetura do backend](docs/backend.md)
 - [CI/CD e segurança](docs/ci-cd-seguranca.md)
 - [Configuração do Keycloak](docs/configuracao-keycloak.md)
-- [Instalação self-hosted](deploy/self-hosted/README.md)
+- [Instalação self-hosted](deploy/self-hosted/README.md): pré-requisitos,
+  comando único de subida e sequência automatizada de backup, migrations,
+  configuração OIDC, health checks e smoke test.
 - [Governança do repositório](.github/GOVERNANCE.md)
 - [Guia de contribuição](.github/CONTRIBUTING.md)
 - [Política de segurança](.github/SECURITY.md)

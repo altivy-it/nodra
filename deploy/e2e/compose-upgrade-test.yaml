@@ -18,7 +18,7 @@ services:
       start_period: 5s
 
   migrator:
-    image: ${P04_CURRENT_MIGRATIONS_IMAGE:-altivy-migrations:local}
+    image: ${P04_CURRENT_MIGRATIONS_IMAGE:-altivy-migrations:0.1.0}
     pull_policy: never
     environment:
       ALTIVY_DESIGNTIME_CONNECTION_STRING: "Host=127.0.0.1;Database=altivy;Username=${P04_TEST_USER:-restore_operator};Password=${P04_TEST_PASSWORD:?Generate a disposable test password}"
@@ -29,7 +29,7 @@ services:
     profiles: [upgrade]
 
   previous-migrator:
-    image: ${P04_PREVIOUS_MIGRATIONS_IMAGE:-altivy-migrations:local}
+    image: ${P04_PREVIOUS_MIGRATIONS_IMAGE:-altivy-migrations:0.1.0}
     pull_policy: never
     environment:
       ALTIVY_DESIGNTIME_CONNECTION_STRING: "Host=127.0.0.1;Database=altivy;Username=${P04_TEST_USER:-restore_operator};Password=${P04_TEST_PASSWORD:?Generate a disposable test password}"

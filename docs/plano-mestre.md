@@ -119,7 +119,7 @@ Como filesystem e PostgreSQL não compartilham uma transação, inconsistências
 
 ```mermaid
 flowchart LR
-    U[Browser] -->|HTTPS| P[Proxy reverso opcional]
+    U[Browser] -->|HTTPS| P[Gateway compartilhado]
     P --> W[altivy-web]
     U -->|HTTP local| W
     W -->|/bff, /api e /hubs| B[altivy-bff]
@@ -143,11 +143,11 @@ flowchart LR
 | `altivy-bff` | cliente OIDC, sessão técnica, antiforgery e relay para API/SignalR | somente rede interna | key ring e estado técnico conforme ADR |
 | `altivy-api` | PEP, regras de negócio, arquivos, consultas e SignalR | somente rede interna | vault em leitura e escrita |
 | `altivy-worker` | reconciliação, parsing, indexação e embeddings | nenhuma | mesmo vault, conforme estratégia de escrita |
-| `altivy-postgres` | catálogo, busca, relações, jobs e vetores | somente rede interna | dados e backups em bind mounts |
+| PostgreSQL compartilhado | catálogo, busca, relações, jobs e vetores em database dedicado | rede externa restrita `identity-client` | fora do ciclo de vida do Altivy Notes |
 | `embedding-provider` | embeddings locais opcionais | somente rede interna | cache/modelos, se necessário |
 | Keycloak externo | identidade, sessões de SSO e decisão de autorização | HTTPS configurado pelo operador | fora do ciclo de vida do Altivy |
 
-A imagem de banco obrigatória é `lzocateli/postgresql:18.4-pgvector0.8.6-bookworm`, mantida separadamente em `containers-lzo/postgres`. O Altivy não deve duplicar seu Dockerfile.
+A imagem de banco obrigatória é `lzocateli/postgresql:18.4-pgvector0.8.6-bookworm`, mantida separadamente em `containers-lzo/postgres`. Gateway, PostgreSQL e Keycloak são operados pela stack compartilhada `altivy-identity` no repositório `architecture-knowledge-base`; a stack `altivy-notes` contém somente web, BFF, API e worker. O Altivy não deve duplicar os Composes ou Dockerfiles dessa infraestrutura.
 
 ### 3.5 Estilo arquitetural e padrões
 

@@ -16,9 +16,7 @@ Diretorio persistente externo. Padrao: LOCALAPPDATA/AltivyNotes/Production no Wi
 .PARAMETER PublicOrigin
 Origem HTTPS opcional, sobrepondo a configuracao externa.
 .PARAMETER ProjectName
-Nome Compose. Padrao: altivy-selfhosted-production.
-.PARAMETER LocalIdentity
-Usa o gateway da plataforma compartilhada existente na rede identity-global.
+Nome Compose. Padrao: altivy-notes.
 .PARAMETER SyncOidc
 Sincroniza callbacks por script pertencente a architecture-knowledge-base.
 .PARAMETER IdentityScript
@@ -32,11 +30,11 @@ Reutiliza imagens locais ja construidas.
 .PARAMETER ValidationVaultId
 Fixture opcional lab-* para ensaio de escrita. Nao cria nem altera grants Keycloak.
 .PARAMETER RecreateConsumers
-Recria web, BFF, API, worker e gateway sem recriar o PostgreSQL.
+Recria web, BFF, API e worker sem alterar a stack compartilhada.
 .PARAMETER RemainingArguments
 Aceita somente --help.
 .EXAMPLE
-./tools/scripts/start-self-hosted.ps1 -LocalIdentity -SyncOidc -IdentityEnvironmentFile "$env:APPDATA/Microsoft/UserSecrets/Altivy.Identity/.env"
+./tools/scripts/start-self-hosted.ps1 -SyncOidc -IdentityEnvironmentFile "$env:APPDATA/Microsoft/UserSecrets/Altivy.Identity/.env"
 .EXAMPLE
 pwsh -NoProfile -File tools/scripts/start-self-hosted.ps1 -EnvironmentFile /secure/altivy.env -CertificateDirectory /secure/certs -DataRoot /srv/altivy -ValidateOnly
 .EXAMPLE
@@ -58,8 +56,7 @@ param(
     [string] $CertificateDirectory,
     [string] $DataRoot,
     [string] $PublicOrigin,
-    [ValidatePattern('^[a-z0-9][a-z0-9_-]+$')][string] $ProjectName = 'altivy-selfhosted-production',
-    [switch] $LocalIdentity,
+    [ValidatePattern('^[a-z0-9][a-z0-9_-]+$')][string] $ProjectName = 'altivy-notes',
     [switch] $SyncOidc,
     [string] $IdentityScript,
     [string] $ReleaseImageManifest,
@@ -129,11 +126,6 @@ function Get-RoleConnection {
     return $builder
 }
 
-function ConvertTo-PsqlLiteral {
-    param([string] $Value)
-    return $Value.Replace('\', '\\').Replace("'", "\'").Replace("`r", '\r').Replace("`n", '\n')
-}
-
 $savedEnvironment = @{}
 Push-Location $repository
 try {
@@ -148,13 +140,13 @@ try {
     }
     $resolved = Invoke-Docker -Arguments (@('compose') + $fileArguments + @('-f', $sourcePath, 'config', '--format', 'json')) -Capture | ConvertFrom-Json
     $source = $resolved.services.source.environment
-    foreach ($required in @('POSTGRES_ADMIN_USERNAME','POSTGRES_ADMIN_PASSWORD','BFF_SECRET','PFX_PASSWORD','SMTP_HOST','SMTP_USERNAME','SMTP_PASSWORD','SMTP_FROM','SMTP_TO')) {
+    foreach ($required in @('RUNTIME','MIGRATOR','BFF_SECRET','PFX_PASSWORD','SMTP_HOST','SMTP_USERNAME','SMTP_PASSWORD','SMTP_FROM','SMTP_TO')) {
         if ([string]::IsNullOrWhiteSpace($source.$required)) { throw "Configuracao $required ausente. Use --help." }
     }
     if (-not $PublicOrigin) { $PublicOrigin = $source.ORIGIN }
     $origin = [Uri]$PublicOrigin
     $authority = [Uri]$source.AUTHORITY
-    if (-not $origin.IsAbsoluteUri -or $origin.Scheme -ne 'https' -or $origin.AbsolutePath -ne '/' -or
+    if (-not $origin.IsAbsoluteUri -or $origin.Scheme -ne 'https' -or $origin.AbsolutePath.TrimEnd('/') -ne '/notes' -or
         $origin.Query -or $origin.Fragment -or -not $authority.IsAbsoluteUri -or $authority.Scheme -ne 'https') {
         throw 'Origem e issuer devem ser HTTPS validos. Use --help.'
     }
@@ -174,7 +166,6 @@ try {
         }
     }
     $certificates = @{
-        ALTIVY_TLS_CERTIFICATE_PATH='tls.crt'; ALTIVY_TLS_PRIVATE_KEY_PATH='tls.key'
         ALTIVY_TLS_CA_PATH='rootCA.pem'; ALTIVY_API_TLS_CERTIFICATE_PATH='api.crt'
         ALTIVY_API_TLS_PRIVATE_KEY_PATH='api.key'
     }
@@ -184,20 +175,18 @@ try {
         Set-ProcessSetting $name ([IO.Path]::GetFullPath($path))
     }
     if (-not (Test-Path (Join-Path $CertificateDirectory 'altivy-data-protection.pfx') -PathType Leaf)) { throw 'PFX Data Protection ausente. Use --help.' }
-    & (Join-Path $PSScriptRoot 'new-local-production-certificates.ps1') -EnvironmentFile $EnvironmentFile -CertificateDirectory $CertificateDirectory -ValidateOnly
     $runtime = Get-RoleConnection $source.RUNTIME 'altivy_runtime'
     $migrator = Get-RoleConnection $source.MIGRATOR 'altivy_migrator'
     $settings = @{
         ALTIVY_DATA_ROOT=[IO.Path]::GetFullPath($DataRoot); ALTIVY_CONFIG_ROOT=[IO.Path]::GetFullPath($CertificateDirectory)
         ALTIVY_PUBLIC_HOST=$origin.Host; ALTIVY_PUBLIC_ORIGIN=$origin.GetLeftPart([UriPartial]::Authority)
-        ALTIVY_HTTPS_PORT=[string]$origin.Port; ALTIVY_KEYCLOAK_AUTHORITY=$authority.AbsoluteUri.TrimEnd('/')
-        ALTIVY_GATEWAY_IP=$source.GATEWAY_IP; ALTIVY_PROXY_BFF_SUBNET=$source.PROXY_SUBNET
+        ALTIVY_KEYCLOAK_AUTHORITY=$authority.AbsoluteUri.TrimEnd('/')
         ALTIVY_WEB_IMAGE=$source.WEB_IMAGE; ALTIVY_BFF_IMAGE=$source.BFF_IMAGE
         ALTIVY_API_IMAGE=$source.API_IMAGE; ALTIVY_WORKER_IMAGE=$source.WORKER_IMAGE
         ALTIVY_MIGRATIONS_IMAGE=$source.MIGRATIONS_IMAGE
+        ALTIVY_BACKEND_VERSION=$source.BACKEND_VERSION; ALTIVY_WEB_VERSION=$source.WEB_VERSION
         ALTIVY_IMAGE_PULL_POLICY=$source.IMAGE_PULL_POLICY
         ALTIVY_BFF_CLIENT_SECRET=$source.BFF_SECRET; ALTIVY_DATA_PROTECTION_CERTIFICATE_PASSWORD=$source.PFX_PASSWORD
-        POSTGRES_ADMIN_USERNAME=$source.POSTGRES_ADMIN_USERNAME; POSTGRES_ADMIN_PASSWORD=$source.POSTGRES_ADMIN_PASSWORD
         ALTIVY_POSTGRES_RUNTIME_CONNECTION_STRING=$runtime.get_ConnectionString()
         ALTIVY_POSTGRES_MIGRATOR_CONNECTION_STRING=$migrator.get_ConnectionString()
         ALTIVY_SMTP_HOST=$source.SMTP_HOST; ALTIVY_SMTP_PORT=$source.SMTP_PORT
@@ -246,17 +235,17 @@ try {
         $manifestBytes = $null; $manifestText = $null; $checksumText = $null
     }
     foreach ($name in $settings.Keys) { Set-ProcessSetting $name ([string]$settings[$name]) }
+    $gatewayIp = Invoke-Docker -Arguments @('inspect','--format','{{with index .NetworkSettings.Networks "identity-global"}}{{.IPAddress}}{{end}}','altivy-identity-gateway-1') -Capture
+    if (-not [Net.IPAddress]::TryParse($gatewayIp, [ref]([Net.IPAddress]$null))) { throw 'Gateway compartilhado sem IP valido na identity-global.' }
+    Set-ProcessSetting 'IDENTITY_GATEWAY_IP' $gatewayIp
     $compose = @('compose','--progress','plain') + $fileArguments + @('-p',$ProjectName,'-f','deploy/self-hosted/compose.yaml')
-    if ($LocalIdentity) {
-        $gatewayIp = Invoke-Docker -Arguments @('inspect','--format','{{with index .NetworkSettings.Networks "identity-global"}}{{.IPAddress}}{{end}}','altivy-identity-gateway-1') -Capture
-        if (-not [Net.IPAddress]::TryParse($gatewayIp, [ref]([Net.IPAddress]$null))) { throw 'Gateway local sem IP valido.' }
-        Set-ProcessSetting 'IDENTITY_GATEWAY_IP' $gatewayIp
-        $compose += @('-f','deploy/self-hosted/compose.local-identity.yaml')
-    }
     Invoke-Docker -Arguments ($compose + @('config','--quiet')) -Quiet
     Write-Host 'Preflight Production aprovado; secrets mantidos somente em memoria.'
     if ($ValidateOnly) { return }
-    foreach ($folder in @('postgres','vaults','bff-keys','backups')) {
+    if ($ReleaseImageManifest) {
+        Invoke-Docker -Arguments ($compose + @('pull','web','bff','api','worker'))
+    }
+    foreach ($folder in @('vaults','bff-keys','backups')) {
         New-Item -ItemType Directory -Force -Path (Join-Path $DataRoot $folder) | Out-Null
     }
     if ($IsWindows) {
@@ -265,8 +254,8 @@ try {
         if ($LASTEXITCODE -ne 0) { throw 'ACL de dados falhou.' }
     }
     Invoke-Docker -Arguments @('run','--rm','--network','none','--user','0:0','--volume',"${DataRoot}:/data",'--entrypoint','/bin/sh','lzocateli/dotnet-aspnet:10.0.11-noble','-ec','chown 1654:1654 /data/vaults /data/bff-keys; chmod 0700 /data/vaults /data/bff-keys /data/backups') -Quiet
-    Invoke-Docker -Arguments ($compose + @('up','-d','--wait','--wait-timeout','240','postgres'))
-    $databaseContainer = Invoke-Docker -Arguments ($compose + @('ps','-q','postgres')) -Capture
+    $databaseContainer = Invoke-Docker -Arguments @('ps','--filter','label=com.docker.compose.project=altivy-identity','--filter','label=com.docker.compose.service=postgres','--format','{{.ID}}') -Capture
+    if ([string]::IsNullOrWhiteSpace($databaseContainer) -or $databaseContainer -match "`r?`n") { throw 'PostgreSQL compartilhado altivy-identity nao esta em execucao de forma univoca.' }
     $databaseImageId = Invoke-Docker -Arguments @('inspect','--format','{{.Image}}',$databaseContainer) -Capture
     if ($databaseImageId -notmatch '^sha256:[a-f0-9]{64}$') { throw 'Imagem PostgreSQL nao resolvida por ID.' }
     $backupId = [DateTimeOffset]::UtcNow.ToString('yyyyMMddTHHmmss') + '-' + [Guid]::NewGuid().ToString('N')
@@ -274,9 +263,13 @@ try {
     $metadataPartialCreated = $false
     $writersStopped = $false
     try {
-        Invoke-Docker -Arguments ($compose + @('stop','--timeout','30','bff','api','worker')) -Quiet
-        $writersStopped = $true
-        Invoke-Docker -Arguments @('exec',$databaseContainer,'sh','-c','umask 077; exec pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --format=custom --file=/tmp/pre-migration.dump') -Quiet
+        $runningServices = Invoke-Docker -Arguments @('ps','--filter',"label=com.docker.compose.project=$ProjectName",'--format','{{.Label "com.docker.compose.service"}}') -Capture
+        $runningWriters = @($runningServices -split "`r?`n" | Where-Object { $_ -in @('bff','api','worker') })
+        if ($runningWriters.Count -gt 0) {
+            Invoke-Docker -Arguments ($compose + @('stop','--timeout','30','bff','api','worker')) -Quiet
+            $writersStopped = $true
+        }
+        Invoke-Docker -Arguments @('exec',$databaseContainer,'sh','-c','umask 077; exec pg_dump -U "$POSTGRES_USER" -d altivy --format=custom --file=/tmp/pre-migration.dump') -Quiet
         Invoke-Docker -Arguments @('cp',"${databaseContainer}:/tmp/pre-migration.dump",(Join-Path $DataRoot "backups/$backupId.dump")) -Quiet
         Invoke-Docker -Arguments @('exec',$databaseContainer,'rm','/tmp/pre-migration.dump') -Quiet
         if (Test-Path -LiteralPath $metadataPartialPath) { throw 'Destino de metadata de backup ja existe.' }
@@ -294,15 +287,19 @@ try {
         $archiveCommand = "set -eu; umask 077; trap 'rm -f /data/backups/$backupId.tar.gz.partial /data/backups/$backupId.sha256.partial /data/backups/$backupId.files.sha256.partial /data/backups/$backupId.metadata.json.partial' EXIT; cd /data; find vaults bff-keys -type f -print0 | sort -z | xargs -0 -r sha256sum > /data/backups/$backupId.files.sha256.partial; tar -czf /data/backups/$backupId.tar.gz.partial -C /data vaults bff-keys; mv /data/backups/$backupId.tar.gz.partial /data/backups/$backupId.tar.gz; mv /data/backups/$backupId.files.sha256.partial /data/backups/$backupId.files.sha256; mv /data/backups/$backupId.metadata.json.partial /data/backups/$backupId.metadata.json; cd /data/backups; sha256sum $backupId.dump $backupId.tar.gz $backupId.metadata.json > $backupId.sha256.partial; sha256sum --check $backupId.sha256.partial; mv $backupId.sha256.partial $backupId.sha256; cd /data; sha256sum --check backups/$backupId.files.sha256; chmod 0600 backups/$backupId.dump backups/$backupId.tar.gz backups/$backupId.sha256 backups/$backupId.files.sha256 backups/$backupId.metadata.json"
         Invoke-Docker -Arguments @('run','--rm','--network','none','--user','0:0','--volume',"${DataRoot}:/data",'--entrypoint','/bin/sh','lzocateli/dotnet-aspnet:10.0.11-noble','-ec',$archiveCommand) -Quiet
         Write-Host "Backup pre-migration verificado (ID $backupId)."
-        $bootstrap = "\set altivy_runtime_password '$(ConvertTo-PsqlLiteral $runtime.get_Item('Password'))'`n\set altivy_migrator_password '$(ConvertTo-PsqlLiteral $migrator.get_Item('Password'))'`n"
-        $bootstrap += Get-Content -LiteralPath 'backend/libs/infrastructure/data/sql/001-bootstrap-altivy-roles.sql' -Raw
-        Invoke-Docker -Arguments @('exec','-i',$databaseContainer,'sh','-c','exec psql -X -q -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1') -InputText $bootstrap -Quiet
-        $bootstrap = $null
-        if (-not $NoBuild) { Invoke-Docker -Arguments ($compose + @('build','migrator')) }
-        $migratorArguments = @('--profile','operations','run','--no-deps','--rm')
-        if ($ReleaseImageManifest) { $migratorArguments += @('--pull','always') }
-        $migratorArguments += 'migrator'
-        Invoke-Docker -Arguments ($compose + $migratorArguments)
+        $migrationImage = [string]$settings.ALTIVY_MIGRATIONS_IMAGE
+        if (-not $NoBuild) {
+            Invoke-Docker -Arguments @('build','--build-arg',"IMAGE_VERSION=$($source.BACKEND_VERSION)",'--tag',$migrationImage,'--file','deploy/production/migrations.Dockerfile','.')
+        } elseif ($ReleaseImageManifest) {
+            Invoke-Docker -Arguments @('pull',$migrationImage)
+        }
+        Set-ProcessSetting 'ALTIVY_DESIGNTIME_CONNECTION_STRING' $migrator.get_ConnectionString()
+        try {
+            Invoke-Docker -Arguments @('run','--rm','--network','identity-client','--read-only','--tmpfs','/tmp:rw,noexec,nosuid,size=16m','--env','ALTIVY_DESIGNTIME_CONNECTION_STRING',$migrationImage)
+        } finally {
+            Set-ProcessSetting 'ALTIVY_DESIGNTIME_CONNECTION_STRING' $null
+        }
+        Write-Host 'Migrations validadas no PostgreSQL compartilhado.'
         if ($ValidationVaultId) {
             $fixtureDirectory = Join-Path $DataRoot "vaults/$ValidationVaultId"
             if ((Test-Path -LiteralPath $fixtureDirectory) -and
@@ -323,21 +320,24 @@ COMMIT;
                 New-Item -ItemType Directory -Path $fixtureDirectory | Out-Null
                 Invoke-Docker -Arguments @('run','--rm','--network','none','--user','0:0','--volume',"${fixtureDirectory}:/fixture",'--entrypoint','/bin/sh','lzocateli/dotnet-aspnet:10.0.11-noble','-ec','chown 1654:1654 /fixture; chmod 0700 /fixture') -Quiet
             }
-            Invoke-Docker -Arguments @('exec','-i',$databaseContainer,'sh','-c','exec psql -X -q -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1') -InputText $fixtureSql -Quiet
+            Set-ProcessSetting 'PGPASSWORD' $migrator.get_Item('Password')
+            Invoke-Docker -Arguments @('run','--rm','--network','identity-client','--env','PGPASSWORD','--entrypoint','psql','lzocateli/postgresql:18.4-pgvector0.8.6-bookworm','-X','-q','-h','postgres','-U','altivy_migrator','-d','altivy','-v','ON_ERROR_STOP=1') -InputText $fixtureSql -Quiet
+            Set-ProcessSetting 'PGPASSWORD' $null
             Write-Host 'Fixture sintetica pronta; autorizacao continua sendo exclusiva do Keycloak.'
         }
         if ($SyncOidc) {
             if (-not $IdentityScript) { $IdentityScript = Join-Path (Split-Path $repository) 'architecture-knowledge-base/platforms/identity/scripts/sync-product-oidc.ps1' }
             if (-not (Test-Path $IdentityScript -PathType Leaf)) { throw 'Informe -IdentityScript da plataforma compartilhada. Use --help.' }
-            & $IdentityScript -BaseUrl $authority.GetLeftPart([UriPartial]::Authority) -PublicOrigin $origin.GetLeftPart([UriPartial]::Authority)
+            & $IdentityScript -BaseUrl $authority.GetLeftPart([UriPartial]::Authority) -PublicOrigin $origin.AbsoluteUri.TrimEnd('/')
             if (-not $?) { throw 'Sincronizacao OIDC falhou.' }
+            Write-Host 'Callbacks OIDC sincronizados na identidade compartilhada.'
         }
         $startArguments = @('up','-d','--wait','--wait-timeout','240')
         if (-not $NoBuild) { $startArguments += '--build' }
         $startServices = @()
         if ($RecreateConsumers) {
             $startArguments += @('--no-deps','--force-recreate')
-            $startServices = @('web','bff','api','worker','gateway')
+            $startServices = @('web','bff','api','worker')
         }
         Invoke-Docker -Arguments ($compose + $startArguments + $startServices)
         $writersStopped = $false
@@ -347,11 +347,11 @@ COMMIT;
             Remove-Item -LiteralPath $metadataPartialPath -Force
         }
     }
-    Invoke-Docker -Arguments @('run','--rm','--network','host','--volume',"${CertificateDirectory}:/certs:ro",'--entrypoint','curl','lzocateli/dotnet-sdk:10.0.400-noble','--cacert','/certs/rootCA.pem','--silent','--show-error','--fail',($origin.GetLeftPart([UriPartial]::Authority) + '/bff/session'))
-    Write-Host "Production online em $($origin.GetLeftPart([UriPartial]::Authority))."
+    Invoke-Docker -Arguments @('run','--rm','--network','host','--volume',"${CertificateDirectory}:/certs:ro",'--entrypoint','curl','lzocateli/dotnet-sdk:10.0.400-noble','--cacert','/certs/rootCA.pem','--silent','--show-error','--fail',($origin.AbsoluteUri.TrimEnd('/') + '/bff/session'))
+    Write-Host "Production online em $($origin.AbsoluteUri.TrimEnd('/'))."
 } finally {
     foreach ($name in $savedEnvironment.Keys) { [Environment]::SetEnvironmentVariable($name,$savedEnvironment[$name],'Process') }
-    $source = $null; $settings = $null; $resolved = $null; $runtime = $null; $migrator = $null; $bootstrap = $null
+    $source = $null; $settings = $null; $resolved = $null; $runtime = $null; $migrator = $null
     $metadata = $null; $metadataBytes = $null; $metadataStream = $null
     Pop-Location
 }

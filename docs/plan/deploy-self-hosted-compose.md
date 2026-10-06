@@ -2,7 +2,7 @@
 
 **Status:** in-progress  
 **Data de criação:** 2026-10-02  
-**Última atualização:** 2026-10-05
+**Última atualização:** 2026-10-06
 **Responsáveis:** Lincoln Zocateli  
 **Origem:** decisão humana registrada na conversa de 2026-10-02  
 **Revisor humano:** Lincoln Zocateli  
@@ -10,10 +10,10 @@
 
 ## Objetivo
 
-Entregar e validar uma instalação self-hosted no host escolhido pelo operador,
-subida por Docker Compose, com PostgreSQL persistente, gateway HTTPS e os hosts
-web, BFF, API, worker e migrations. A instalação não depende de uma VPS ou de
-NGINX/PostgreSQL compartilhados do projeto.
+Entregar e validar a stack `altivy-notes` no host escolhido pelo operador, com
+web, BFF, API e worker em Docker Compose. Gateway, PostgreSQL e Keycloak são
+compartilhados na stack `altivy-identity`, pertencente ao AKB; migrations são
+operações transitórias.
 
 ## Contexto e premissas
 
@@ -24,8 +24,8 @@ NGINX/PostgreSQL compartilhados do projeto.
   usuário, credencial ou política.
 - O operador configura issuer, redirect URIs, certificados, secrets, SMTP,
   diretórios persistentes e host de publicação.
-- O bind do gateway é loopback por padrão. Publicação em LAN/internet é escolha
-  explícita do operador e exige TLS, firewall e hostname compatíveis.
+- A stack do produto não publica portas; toda navegação entra pelo gateway
+  compartilhado em `/notes`.
 - Secrets locais ficam exclusivamente no arquivo externo aprovado; nenhum
   `.env` real ou cópia entra no repositório.
 - `deploy/production/` e os documentos de VPS ficam apenas como histórico até a
@@ -90,16 +90,15 @@ Evidências:
 **Responsável:** equipe Altivy  
 **Dependências:** P-01
 
-**Objetivo:** fornecer uma composição local persistente, com fronteiras de rede
-seguras e um único ponto HTTPS publicado.
+**Objetivo:** fornecer uma composição de produto persistente, consumida pelo
+gateway e PostgreSQL compartilhados por redes externas restritas.
 
 Entregas:
 
-- Compose em `deploy/self-hosted/` com gateway NGINX não-root, web, BFF, API,
-  worker, PostgreSQL e perfil exclusivo de migrations;
-- bind mounts documentados para vault, PostgreSQL, chaves do BFF e certificado
+- Compose em `deploy/self-hosted/` somente com web, BFF, API e worker;
+- bind mounts documentados para vault, chaves do BFF e certificado
   de Data Protection;
-- publicação apenas do gateway, em loopback por padrão;
+- nenhuma porta publicada pela stack `altivy-notes`;
 - configuração de hostname, origem, proxy confiável e issuer sem valores
   sensíveis versionados;
 - documentação de instalação e lista de variáveis seguras de exemplo.
@@ -107,8 +106,8 @@ Entregas:
 Validação:
 
 - `docker compose config --quiet` com placeholders não inicia serviços;
-- apenas a porta HTTPS do gateway é publicada;
-- NGINX valida a configuração e inicia não-root/read-only;
+- aliases `notes-web` e `notes-bff` resolvem na rede `identity-global`;
+- API e worker alcançam PostgreSQL somente pela rede `identity-client`;
 - imagens constroem em container e health checks ficam saudáveis.
 
 Evidências:
@@ -212,8 +211,9 @@ Evidências:
   alteramos essa autorização. O runner em volume somente leitura emite avisos
   não bloqueantes do pytest cache.
 - O aviso não fatal de `libgssapi_krb5.so.2` ausente continua visível nos logs.
-  A validação isolada da composição self-hosted com PostgreSQL próprio continua
-  pendente; backup, restore, upgrade e rollback pertencem à etapa P-04.
+  A validação isolada com PostgreSQL próprio foi supersedida pela decisão de
+  consumir exclusivamente o PostgreSQL compartilhado; backup, restore, upgrade
+  e rollback pertencem à etapa P-04.
 - Em 2026-10-04, Lincoln Zocateli autorizou o reinício do PostgreSQL
   compartilhado. `docker restart --timeout 60` preservou as contagens antes e
   depois: três vaults, oito jobs do fixture, oito concluídos e quatro projeções.
@@ -224,8 +224,8 @@ Evidências:
 - Após o ensaio coordenado de backup, escrita/autosave e leitura persistida
   passaram 2/2 via gateway. A fila de indexação chegou a dez jobs concluídos e
   cinco projeções no vault sintético, comprovando reconexão e nova gravação.
-- Em 2026-10-05, o preflight da composição self-hosted isolada, com project name
-  `altivy-selfhosted-validation` e arquivo externo aprovado, falhou na
+- Em 2026-10-05, o preflight histórico da composição isolada, com project name
+  hoje obsoleto `altivy-selfhosted-validation` e arquivo externo aprovado, falhou na
   interpolação. Faltam configuração específica de origem/rede/paths, identidade
   do banco e credenciais Production; a lista operacional está no
   [guia self-hosted](../../deploy/self-hosted/README.md). Esse bloqueio foi
@@ -270,7 +270,8 @@ próprio. PostgreSQL Production iniciou em bind mount exclusivo; roles runtime
 e migrator foram provisionadas sem flags administrativos. Backup pré-migration
 foi capturado fora do repositório; as 12 migrations concluíram com sucesso.
 
-A stack `altivy-selfhosted-production` iniciou no perfil Production em
+A stack histórica `altivy-selfhosted-production`, posteriormente substituída
+pelo padrão `altivy-notes`, iniciou no perfil Production em
 `https://localhost:8443`. Foram corrigidos HTTPS interno obrigatório do BFF,
 permissões dos tmpfs NGINX e colisão do IP de gateway. O override local de
 identidade preserva a plataforma compartilhada. Banco/API/BFF/web/gateway

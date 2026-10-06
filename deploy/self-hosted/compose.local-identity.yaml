@@ -1,17 +1,2 @@
-services:
-  bff:
-    extra_hosts:
-      - "localhost:${IDENTITY_GATEWAY_IP:?Defina o IP atual do gateway compartilhado}"
-    networks:
-      identity-global:
-
-  api:
-    extra_hosts:
-      - "localhost:${IDENTITY_GATEWAY_IP:?Defina o IP atual do gateway compartilhado}"
-    networks:
-      identity-global:
-
-networks:
-  identity-global:
-    external: true
-    name: identity-global
+# Obsoleto: identidade e gateway pertencem exclusivamente ao Compose altivy-identity do AKB.
+services: {}

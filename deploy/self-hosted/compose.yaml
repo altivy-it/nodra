@@ -1,42 +1,15 @@
 name: altivy-notes
 
 services:
-  gateway:
-    image: nginxinc/nginx-unprivileged:1.31.6-alpine3.24@sha256:bf9b1863fef5ae7a1faccc43afe01b009bc340b621ac262c4909054933bcacb0
-    restart: unless-stopped
-    init: true
-    read_only: true
-    stop_grace_period: 10s
-    ports:
-      - "${ALTIVY_BIND_ADDRESS:-127.0.0.1}:${ALTIVY_HTTPS_PORT:-8443}:8443"
-    tmpfs:
-      - /tmp:rw,noexec,nosuid,size=16m,uid=101,gid=101,mode=0700
-    volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - ${ALTIVY_TLS_CERTIFICATE_PATH:-${ALTIVY_E2E_TLS_CERTIFICATE_PATH:?Configure ALTIVY_TLS_CERTIFICATE_PATH ou ALTIVY_E2E_TLS_CERTIFICATE_PATH}}:/etc/nginx/certs/tls.crt:ro
-      - ${ALTIVY_TLS_PRIVATE_KEY_PATH:-${ALTIVY_E2E_TLS_KEY_PATH:?Configure ALTIVY_TLS_PRIVATE_KEY_PATH ou ALTIVY_E2E_TLS_KEY_PATH}}:/etc/nginx/certs/tls.key:ro
-    depends_on:
-      - web
-      - bff
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--spider", "http://127.0.0.1:8081/healthz"]
-      interval: 15s
-      timeout: 5s
-      start_period: 10s
-      retries: 4
-    networks:
-      proxy-web:
-      proxy-bff:
-        ipv4_address: ${ALTIVY_GATEWAY_IP:?Configure ALTIVY_GATEWAY_IP}
-
   web:
     build:
       context: ../..
       dockerfile: frontend/web/Dockerfile
       args:
+        IMAGE_VERSION: ${ALTIVY_WEB_VERSION:-0.1.0}
         WEB_CONFIGURATION: production
-        WEB_BASE_HREF: /
-    image: ${ALTIVY_WEB_IMAGE:-altivy-web:local}
+        WEB_BASE_HREF: /notes/
+    image: ${ALTIVY_WEB_IMAGE:-altivy-web:0.1.0}
     pull_policy: missing
     restart: unless-stopped
     init: true
@@ -48,14 +21,20 @@ services:
       - /var/log/nginx:rw,noexec,nosuid,size=16m,uid=101,gid=101,mode=0700
       - /var/run:rw,noexec,nosuid,size=4m,uid=101,gid=101,mode=0700
     networks:
-      proxy-web:
+      identity-global:
+        aliases:
+          - notes-web
 
   bff:
     build:
       context: ../..
       dockerfile: backend/apps/bff/Dockerfile
-    image: ${ALTIVY_BFF_IMAGE:-altivy-bff:local}
+      args:
+        IMAGE_VERSION: ${ALTIVY_BACKEND_VERSION:-0.1.0}
+    image: ${ALTIVY_BFF_IMAGE:-altivy-bff:0.1.0}
     pull_policy: missing
+    extra_hosts:
+      - "localhost:${IDENTITY_GATEWAY_IP:?Configure IDENTITY_GATEWAY_IP}"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
@@ -66,7 +45,7 @@ services:
       SSL_CERT_FILE: /certs/rootCA.pem
       AllowedHosts: ${ALTIVY_PUBLIC_HOST:?Configure ALTIVY_PUBLIC_HOST}
       Security__AllowedOrigins__0: ${ALTIVY_PUBLIC_ORIGIN:?Configure ALTIVY_PUBLIC_ORIGIN}
-      Security__TrustedProxies__0: ${ALTIVY_GATEWAY_IP:?Configure ALTIVY_GATEWAY_IP}
+      Security__TrustedProxies__0: ${IDENTITY_GATEWAY_IP:?Configure IDENTITY_GATEWAY_IP}
       Security__DataProtectionKeysPath: /keys
       Security__DataProtectionCertificatePath: /certs/altivy-data-protection.pfx
       Security__DataProtectionCertificatePassword: ${ALTIVY_DATA_PROTECTION_CERTIFICATE_PASSWORD:?Configure ALTIVY_DATA_PROTECTION_CERTIFICATE_PASSWORD}
@@ -90,14 +69,20 @@ services:
         condition: service_healthy
     networks:
       app:
-      proxy-bff:
+      identity-global:
+        aliases:
+          - notes-bff
 
   api:
     build:
       context: ../..
       dockerfile: backend/apps/api/Dockerfile
-    image: ${ALTIVY_API_IMAGE:-altivy-api:local}
+      args:
+        IMAGE_VERSION: ${ALTIVY_BACKEND_VERSION:-0.1.0}
+    image: ${ALTIVY_API_IMAGE:-altivy-api:0.1.0}
     pull_policy: missing
+    extra_hosts:
+      - "localhost:${IDENTITY_GATEWAY_IP:?Configure IDENTITY_GATEWAY_IP}"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: https://+:8443
@@ -127,18 +112,18 @@ services:
       timeout: 5s
       start_period: 30s
       retries: 4
-    depends_on:
-      postgres:
-        condition: service_healthy
     networks:
       app:
-      data:
+      identity-global:
+      identity-client:
 
   worker:
     build:
       context: ../..
       dockerfile: backend/apps/worker/Dockerfile
-    image: ${ALTIVY_WORKER_IMAGE:-altivy-worker:local}
+      args:
+        IMAGE_VERSION: ${ALTIVY_BACKEND_VERSION:-0.1.0}
+    image: ${ALTIVY_WORKER_IMAGE:-altivy-worker:0.1.0}
     pull_policy: missing
     environment:
       DOTNET_ENVIRONMENT: Production
@@ -160,65 +145,17 @@ services:
       - type: bind
         source: ${ALTIVY_DATA_ROOT:?Configure ALTIVY_DATA_ROOT}/vaults
         target: /vaults
-    depends_on:
-      postgres:
-        condition: service_healthy
     networks:
       app:
-      data:
-
-  postgres:
-    image: lzocateli/postgresql:18.4-pgvector0.8.6-bookworm
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: altivy
-      POSTGRES_USER: ${POSTGRES_ADMIN_USERNAME:?Configure POSTGRES_ADMIN_USERNAME}
-      POSTGRES_PASSWORD: ${POSTGRES_ADMIN_PASSWORD:?Configure POSTGRES_ADMIN_PASSWORD}
-    volumes:
-      - type: bind
-        source: ${ALTIVY_DATA_ROOT:?Configure ALTIVY_DATA_ROOT}/postgres
-        target: /var/lib/postgresql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
-      interval: 10s
-      timeout: 5s
-      start_period: 20s
-      retries: 5
-    stop_grace_period: 60s
-    networks:
-      data:
-
-  migrator:
-    build:
-      context: ../..
-      dockerfile: deploy/production/migrations.Dockerfile
-    image: ${ALTIVY_MIGRATIONS_IMAGE:-altivy-migrations:local}
-    pull_policy: missing
-    environment:
-      ALTIVY_DESIGNTIME_CONNECTION_STRING: ${ALTIVY_POSTGRES_MIGRATOR_CONNECTION_STRING:?Configure ALTIVY_POSTGRES_MIGRATOR_CONNECTION_STRING}
-    entrypoint: ["/app/efbundle"]
-    profiles:
-      - operations
-    restart: "no"
-    read_only: true
-    tmpfs:
-      - /tmp
-    depends_on:
-      postgres:
-        condition: service_healthy
-    networks:
-      data:
+      identity-client:
 
 networks:
   app:
     driver: bridge
-  data:
-    driver: bridge
     internal: true
-  proxy-web:
-    driver: bridge
-  proxy-bff:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: ${ALTIVY_PROXY_BFF_SUBNET:?Configure ALTIVY_PROXY_BFF_SUBNET}
+  identity-global:
+    external: true
+    name: identity-global
+  identity-client:
+    external: true
+    name: identity-client

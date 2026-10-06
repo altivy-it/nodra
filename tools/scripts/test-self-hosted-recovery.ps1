@@ -12,7 +12,7 @@ ID do snapshot. Padrao: metadata mais recente em backups/.
 .PARAMETER PostgresImage
 Imagem PostgreSQL ja presente localmente. Padrao: image ID gravado no metadata.
 .PARAMETER CurrentMigrationImage
-Bundle atual ja presente localmente. Padrao: altivy-migrations:local.
+Bundle atual ja presente localmente. Padrao: altivy-migrations:0.1.0.
 .PARAMETER RemainingArguments
 Aceita literalmente --help.
 .EXAMPLE
@@ -34,7 +34,7 @@ param(
     [string] $DataRoot,
     [ValidatePattern('^[0-9]{8}T[0-9]{6}-[a-f0-9]{32}$')][string] $BackupId,
     [string] $PostgresImage,
-    [string] $CurrentMigrationImage = 'altivy-migrations:local',
+    [string] $CurrentMigrationImage = 'altivy-migrations:0.1.0',
     [Parameter(ValueFromRemainingArguments)][string[]] $RemainingArguments
 )
 if ($RemainingArguments -contains '--help') { Get-Help $PSCommandPath -Full; return }
