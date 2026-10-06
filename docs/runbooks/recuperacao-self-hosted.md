@@ -29,17 +29,34 @@ startup nao prova perda de dados. Nao repita restart nem force encerramento.
 
 ## Backup coordenado
 
-Pre-requisitos: `pg_dump`, `pg_restore`, `tar`, espaco em disco, permissao
-administrativa local e um diretorio externo novo protegido por ACL (Windows)
-ou modo `0700` (Linux). Os artefatos sao privados: nunca os inclua no Git,
-relatorios de CI ou contexto de imagem. Arquivos de backup usam modo `0600`.
+Pre-requisitos: Docker Engine/Desktop, espaco em disco e diretorio de dados
+externo protegido por ACL (Windows) ou modo `0700` (Linux). `pg_dump`,
+`pg_restore`, `tar` e `sha256sum` executam nos containers; nao e necessario
+instalar runtime de aplicacao no host. Os artefatos sao privados: nunca os
+inclua no Git, relatorios de CI ou contexto de imagem. Backups usam modo `0600`.
 
-1. Registre imagem por digest/ID, versao, mounts, baseline de contagens e hashes.
+O boot por `tools/scripts/start-self-hosted.ps1` ja executa o backup coordenado
+antes das migrations, com BFF/API/worker parados graciosamente. Ele gera no
+diretorio externo `backups/` um dump `.dump`, um tar `.tar.gz` contendo `vaults/`
+e `bff-keys/`, metadata JSON com o ID imutavel da imagem PostgreSQL, um
+`.sha256` do dump/archive/metadata e um `.files.sha256` capturado durante a
+mesma janela sem writers. Checksums sao verificados antes de continuar; o script
+imprime apenas o ID do snapshot. Em falha, writers sao retomados.
+
+O PFX de Data Protection nao entra no archive. Guarde-o, sua senha e os demais
+secrets por mecanismo externo aprovado e protegido; restaurar `bff-keys/` exige
+o mesmo PFX. Backups Keycloak/UMA/grants continuam responsabilidade da
+plataforma de identidade e nao fazem parte deste conjunto.
+
+1. O snapshot registra a imagem PostgreSQL por ID; registre tambem versao/digests
+   dos consumidores, mounts e baseline de contagens para rollback da aplicacao.
 2. Pare graciosamente BFF/API/worker; impeça tambem alteracoes externas no vault.
-3. Capture dump custom-format do database dedicado e arquivo tar do vault inteiro.
+3. Capture dump custom-format do database dedicado e arquivo tar de `vaults/` e
+   `bff-keys/` na mesma janela sem writers.
 4. Valide exit codes, integridade dos arquivos e hashes antes de qualquer migration.
 5. Retome os consumidores em `finally` se a captura falhar; nao promova imagens.
-6. Guarde keyring/PFX e secrets por mecanismo separado aprovado, nunca em logs.
+6. Guarde PFX e demais secrets por mecanismo separado aprovado, nunca em logs;
+   o keyring e incluido no archive coordenado.
 
 No laboratorio com database compartilhado, o ensaio exporta apenas `altivy`:
 
@@ -56,26 +73,110 @@ Dump parcial do schema e vault sintetico nao equivalem a backup completo.
 
 ## Restore isolado
 
-Nunca use o container/banco de origem como destino. Prepare um PostgreSQL limpo
-com a mesma imagem por digest/ID, `--network none`, nenhum port publicado e
-bind mount em diretorio novo. No ensaio descartavel, autenticacao local trust
-e permitida somente sem rede e com `listen_addresses` vazio; nao use em runtime.
+Nunca use o container/banco de origem como destino. O comando abaixo monta
+somente o backup em read-only e executa PostgreSQL efemero na camada descartavel
+do container: `--network none`, sem portas publicadas e com listener TCP
+desabilitado. A camada e removida automaticamente. Use a mesma versao/digest
+PostgreSQL da origem, disponivel localmente; o ensaio nao le credenciais.
+
+Na raiz do AltivyNotes, informe o ID emitido pelo boot e execute:
 
 ```powershell
-docker cp $DumpPath "${RestoreContainer}:/tmp/altivy.dump"
-if ($LASTEXITCODE -ne 0) { throw 'Copia para restore falhou.' }
-docker exec $RestoreContainer pg_restore --username=restore_operator --dbname=restore_lab --no-owner --no-privileges --exit-on-error /tmp/altivy.dump
-if ($LASTEXITCODE -ne 0) { throw 'Restore falhou; nao promover destino.' }
+$dataRoot = Join-Path $env:LOCALAPPDATA 'AltivyNotes\Production'
+$backupId = '<id-do-snapshot>'
+$backupDirectory = Join-Path $dataRoot 'backups'
+$metadataName = "$backupId.metadata.json"
+$metadataPath = Join-Path $backupDirectory $metadataName
+$manifestPath = Join-Path $backupDirectory "$backupId.sha256"
+$metadataHash = (Get-FileHash -LiteralPath $metadataPath -Algorithm SHA256).Hash.ToLowerInvariant()
+$manifestLines = Get-Content -LiteralPath $manifestPath
+$expectedMetadataEntry = '{0}  {1}' -f $metadataHash, $metadataName
+if (@($manifestLines) -notcontains $expectedMetadataEntry) { throw 'Metadata nao confere com o manifesto.' }
+$metadata = Get-Content -LiteralPath $metadataPath -Raw | ConvertFrom-Json
+if ($metadata.backupId -ne $backupId -or $metadata.postgresImageId -notmatch '^sha256:[a-f0-9]{64}$') {
+    throw 'Metadata do snapshot invalido.'
+}
+$postgresImageId = $metadata.postgresImageId
+$availableImageId = docker image inspect $postgresImageId --format '{{.Id}}'
+if ($LASTEXITCODE -ne 0 -or $availableImageId -ne $postgresImageId) { throw 'A imagem PostgreSQL original nao esta disponivel localmente.' }
+$restoreCommand = @'
+set -euo pipefail
+mkdir -p /tmp/altivy-recovery/pgdata /tmp/altivy-recovery/files
+chown -R postgres:postgres /tmp/altivy-recovery
+trap 'gosu postgres pg_ctl -D /tmp/altivy-recovery/pgdata -m fast stop >/dev/null 2>&1 || true' EXIT
+cd /backups
+sha256sum --check "$BACKUP_ID.sha256" >/dev/null
+pg_restore --list "$BACKUP_ID.dump" >/tmp/altivy-recovery/toc
+gosu postgres initdb -D /tmp/altivy-recovery/pgdata --auth-local=trust --auth-host=reject --username=restore_operator >/dev/null
+gosu postgres pg_ctl -D /tmp/altivy-recovery/pgdata -o "-c listen_addresses='' -c unix_socket_directories='/tmp/altivy-recovery' -p 55432" -w start >/dev/null
+export PGHOST=/tmp/altivy-recovery PGPORT=55432 PGUSER=restore_operator
+gosu postgres createdb restore_lab
+pg_restore --no-owner --no-privileges --exit-on-error --dbname=restore_lab "/backups/$BACKUP_ID.dump"
+vault_count=$(psql -XAt -d restore_lab -c 'SELECT count(*) FROM altivy.vaults')
+table_count=$(psql -XAt -d restore_lab -c "SELECT count(*) FROM pg_tables WHERE schemaname = 'altivy'")
+tar -xzf "/backups/$BACKUP_ID.tar.gz" -C /tmp/altivy-recovery/files
+cd /tmp/altivy-recovery/files
+sha256sum --check "/backups/$BACKUP_ID.files.sha256" >/dev/null
+tar -tzf "/backups/$BACKUP_ID.tar.gz" | sed 's:/$::' | sort > /tmp/altivy-recovery/archive-tree
+find vaults bff-keys -print | sort > /tmp/altivy-recovery/restored-tree
+cmp /tmp/altivy-recovery/archive-tree /tmp/altivy-recovery/restored-tree
+printf 'Restore isolado aprovado: %s vaults, %s tabelas; arquivos e keyring verificados.\n' "$vault_count" "$table_count"
+'@
+$restoreCommand = $restoreCommand.Replace('$BACKUP_ID', $backupId)
+docker run --rm --pull=never --network none `
+  --volume "${backupDirectory}:/backups:ro" `
+  --entrypoint /bin/bash $postgresImageId -ec $restoreCommand
+if ($LASTEXITCODE -ne 0) { throw 'Restore isolado falhou; nao promover destino.' }
 ```
 
-Restaure o tar somente em diretorio limpo. Compare hashes dos arquivos,
-contagens, jobs e projecoes com o baseline. Teste restart e recriacao do destino
-preservando seu bind mount. `--no-owner --no-privileges` serve ao ensaio: no
-destino operacional, reprovisione roles/grants de menor privilegio e valide
-API/worker pela borda nginx antes de promover. Nao teste com credenciais reais
-no container isolado.
+Em instalações com `-DataRoot` diferente, ajuste `$dataRoot`. Em Linux,
+substitua o default Windows pelo path externo protegido. A imagem é resolvida
+do metadata conferido do snapshot, sem depender do container atual.
+
+O teste prova leitura do dump, restore SQL e integridade/estrutura dos arquivos,
+nao permissões operacionais, PFX, grants Keycloak ou tráfego HTTP. Em produção,
+reprovisione roles/grants de menor privilégio, restaure o PFX pelo mecanismo
+externo aprovado e valide API/worker exclusivamente pela borda nginx antes de
+promover. `--no-owner --no-privileges` e autenticação local trust servem somente
+ao ensaio descartavel; nunca use esses parâmetros em runtime.
+
+Para validar tambem o bootstrap de roles e o acesso de runtime no snapshot, use
+o segundo harness. Ele gera senhas aleatorias dentro do container, aplica o SQL
+versionado, ajusta ownership somente dos objetos `altivy`, executa o bundle
+atual como `altivy_migrator` e comprova que `altivy_runtime` lê o catálogo sem
+superuser nem DDL:
+
+```powershell
+pwsh -NoProfile -File tools/scripts/test-self-hosted-recovery.ps1
+```
+
+O harness continua sem rede, nao lê o arquivo externo de secrets e nao restaura
+PFX, Keycloak ou grants UMA. A credencial sintetica não sobrevive ao container.
 
 ## Upgrade, rollback e escalonamento
+
+### Ensaio de compatibilidade cross-version
+
+Use o harness versionado antes de promover uma migration. Ele cria PostgreSQL
+efêmero sem rede, gera o bundle anterior a partir do commit Git local, aplica
+até `-PreviousMigration`, executa o bundle atual e inicia somente a API anterior
+por digest. O smoke acessa exclusivamente `/health/live` via NGINX; o teste não
+usa Keycloak nem toca na Production.
+
+```powershell
+pwsh -NoProfile -File tools/scripts/test-self-hosted-upgrade.ps1 `
+  -PreviousCommit 69431f03b72703983c3e2ad0df49cf1a9b5385c1 `
+  -PreviousMigration 20260928234000_AddTrashAuditEvents `
+  -PreviousApiImage lzocateli/altivy-api@sha256:1cb3433441b7d8ae98730dba16ff0d2e575177d7aca798ef1e8ac5d0a8d350ee
+```
+
+O harness verifica que o bundle atual avance a history, não altere a assinatura
+do schema esperada neste caso e preserve a linha sintética. A asserção de schema
+inalterado corresponde à migration `ReconcileCurrentModel`, que é no-op; para
+uma migration futura com mudanças esperadas, atualize a comparação para validar
+as alterações expandidas explicitamente. O healthcheck do API é liveness: isso
+não comprova queries autenticadas, compatibilidade de todos os consumidores,
+Keycloak, PFX ou tráfego de escrita.
 
 Mantenha manifestos de imagens anteriores por digest. Apos backup verificado,
 execute migrations compativeis com a versao anterior e promova os consumidores.
@@ -98,6 +199,23 @@ mount e manteve o baseline. Os helpers foram removidos apos o ensaio. Na origem,
 dois testes de escrita/leitura posteriores passaram e o worker concluiu os
 novos jobs, chegando a dez concluidos e cinco projecoes do fixture.
 
-Nao foi validado restore completo de todos os vaults, keyring/PFX, roles/grants,
-identidade ou upgrade/rollback entre versoes diferentes. Esses gates continuam
-abertos no P-04.
+Naquele ensaio de 2026-10-04, nao foi validado restore completo de todos os
+vaults, keyring/PFX, roles/grants, identidade ou upgrade/rollback entre versoes
+diferentes; esses gates permaneciam abertos naquele ponto.
+
+Em 2026-10-05, o snapshot coordenado Production foi restaurado em container
+PostgreSQL efemero sem rede, usando a mesma imagem por ID. O restore passou para
+um vault e 276 tabelas; os manifestos SHA-256 do dump, archive e arquivos foram
+validados sem imprimir nomes ou conteudo. O archive continha os dados de
+`vaults/` e `bff-keys/`. Depois da retomada da origem, cinco jornadas Playwright
+Production passaram 5/5 pelo gateway. Isso nao prova restore do PFX/Keycloak,
+permissoes operacionais, nem upgrade/rollback entre versoes.
+
+Também em 2026-10-05, `test-self-hosted-upgrade.ps1` aplicou o bundle do commit
+`69431f0` até `20260928234000_AddTrashAuditEvents`, inseriu uma linha sintética,
+aplicou a migration atual `20260930123851_ReconcileCurrentModel` e verificou
+11→12 entradas na history, assinatura do schema inalterada e linha preservada.
+A imagem API anterior por digest ficou healthy e respondeu liveness pelo NGINX
+allowlist-only. PostgreSQL/API/NGINX executaram em Compose descartável sem rede;
+o teardown removeu containers e o bundle antigo gerado. Esse smoke não valida
+outros serviços antigos, autenticação, CRUD ou identidade real.

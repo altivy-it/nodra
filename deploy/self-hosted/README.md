@@ -2,7 +2,7 @@
 
 Esta composição executa o Altivy Notes no host escolhido pelo operador. Ela inclui gateway TLS, web, BFF, API, worker e PostgreSQL; publica somente o gateway. O Keycloak continua sendo a autoridade externa obrigatória e deve ser fornecido pelo operador, localmente ou em uma rede alcançável.
 
-Esta é a primeira fatia da distribuição self-hosted, ainda sem validação de uma instalação OIDC real nem de backup/restore. Não a trate como release estável até que os gates do plano sejam concluídos.
+O fluxo de instalação versionado já inicia a stack Production e aguarda os health checks. Isso não certifica uma release: recuperação integral, upgrade e rollback entre versões continuam sendo gates separados no [plano](../../docs/plan/deploy-self-hosted-compose.md).
 
 ## Requisitos
 
@@ -13,6 +13,88 @@ Esta é a primeira fatia da distribuição self-hosted, ainda sem validação de
 - certificado TLS cujo SAN corresponde ao host público escolhido e chave privada correspondente;
 - certificado PKCS#12 dedicado à proteção das chaves do BFF;
 - conta SMTP operacional para alertas do worker.
+
+## Primeiro boot reproduzível
+
+No Windows, mantenha os valores sensíveis em
+`$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env`; o sincronizador de OIDC
+usa também `$env:APPDATA\Microsoft\UserSecrets\Altivy.Identity\.env`. Em outro
+host, passe ambos por `-EnvironmentFile` e `-IdentityEnvironmentFile` usando
+paths externos protegidos. O PostgreSQL é próprio desta instalação; as
+connection strings runtime e migrator podem partir dos aliases de integração,
+mas o script ajusta host e database em memória e valida os nomes das roles.
+
+Para uma autoridade local já instalada e confiável, gere certificados em um
+diretório externo vazio. A CA precisa existir e já ser confiada pelo host; a
+ferramenta não instala nem substitui uma CA:
+
+```powershell
+$certificates = Join-Path $env:APPDATA 'Microsoft\UserSecrets\Altivy.Notes\certs-prd'
+$authority = (mkcert -CAROOT).Trim()
+pwsh -NoProfile -File tools/scripts/new-local-production-certificates.ps1 `
+	-CertificateDirectory $certificates -AuthorityDirectory $authority
+```
+
+O emissor usa OpenSSL em container, recusa sobrescrever qualquer destino e
+gera certificados localhost/API e PFX dedicado. Para validar arquivos já
+existentes sem alterá-los, execute o mesmo script com `-ValidateOnly`. A CA
+local não é adequada a acesso público; nesse caso, forneça certificados e CA
+emitidos para o hostname público.
+
+Com a plataforma de identidade compartilhada já online, execute na raiz do
+AltivyNotes:
+
+```powershell
+pwsh -NoProfile -File tools/scripts/start-self-hosted.ps1 `
+	-IdentityEnvironmentFile "$env:APPDATA\Microsoft\UserSecrets\Altivy.Identity\.env" `
+	-LocalIdentity -SyncOidc
+```
+
+O comando valida certificados e Compose antes de tocar nos serviços; depois
+prepara diretórios/ACLs, inicia PostgreSQL, captura snapshot pré-migration de
+database, vaults e keyring com SHA-256, provisiona roles por stdin, aplica
+migrations, sincroniza callbacks sem remover os existentes, constrói e aguarda
+os serviços. O PFX fica fora do archive e requer backup externo protegido.
+`-ValidateOnly` executa somente os preflights;
+`-NoBuild` reutiliza imagens existentes; `-RecreateConsumers` força a
+recriação de web/BFF/API/worker/gateway sem recriar o PostgreSQL. Para outro
+host, passe explicitamente `-EnvironmentFile`, `-CertificateDirectory`,
+`-DataRoot` e, se necessário,
+`-IdentityScript` apontando para
+`architecture-knowledge-base/platforms/identity/scripts/sync-product-oidc.ps1`.
+Os artefatos compartilhados de Keycloak, PostgreSQL e NGINX pertencem somente
+ao repositório `architecture-knowledge-base`.
+
+`-ValidationVaultId lab-write-e2e` é opcional e destinado a um ensaio sintético.
+Cria somente a projeção e o diretório se ainda não existirem; falha diante de
+colisão com outro vault e nunca cria grants. A autorização precisa já existir
+no Keycloak. Não use essa opção como seed de uma instalação de usuário.
+
+## Imagens de release
+
+Para instalar imagens publicadas, baixe `images.env` e
+`images.env.sha256` da release oficial do GitHub para um diretório externo. Não
+edite o manifesto: o inicializador confere o checksum, exige exatamente as
+cinco referências Altivy com `@sha256` e configura pull obrigatório do GHCR.
+Docker precisa estar autenticado para ler os pacotes; use o credential helper
+aprovado do host, nunca passe tokens como argumentos.
+
+```powershell
+$releaseManifest = 'C:\AltivyNotes\Releases\v1.2.3\images.env'
+pwsh -NoProfile -File tools/scripts/start-self-hosted.ps1 `
+	-IdentityEnvironmentFile "$env:APPDATA\Microsoft\UserSecrets\Altivy.Identity\.env" `
+	-LocalIdentity -SyncOidc -ReleaseImageManifest $releaseManifest -NoBuild
+```
+
+`-ReleaseImageManifest` exige `-NoBuild`; falha fechada se checksum, nomes ou
+digests forem inválidos. As imagens são baixadas antes do backup e de qualquer
+parada de writer; falha de acesso ao GHCR não interrompe a stack ativa. Sem essa
+opção, o fluxo continua construindo e usando imagens `:local`. Cada snapshot
+pré-migration registra o ID da imagem
+PostgreSQL. Para rollback de aplicação, selecione o manifesto da release
+anterior somente após confirmar compatibilidade com o schema atual; o script
+nunca executa migrations `Down`. Se não houver compatibilidade expand-contract,
+recupere o backup em destino limpo conforme o [runbook](../../docs/runbooks/recuperacao-self-hosted.md).
 
 ## Preparar configuração
 
@@ -61,33 +143,40 @@ Reutilizar credenciais exige configurar host/database corretos e provisionar
 as roles separadas no destino. Não reutilize o diretório de dados do banco
 compartilhado como `ALTIVY_DATA_ROOT/postgres`.
 
-Em 2026-10-05, aliases e precedência passaram em validação Compose sintética;
-o preflight real resolveu BFF/TLS, mas ainda bloqueou por PFX/senha, destinatário
-SMTP e configuração específica de rede/origem/diretórios/banco. O PFX não foi
-encontrado no diretório local conhecido de certificados; confirme o path
-configurado antes de iniciar. Nenhum secret externo foi lido ou alterado.
+O preflight valida a existência e a integridade criptográfica da cadeia TLS,
+SANs, correspondência das chaves e senha/validade do PFX antes de iniciar.
+Configure todos os valores necessários no arquivo externo; mensagens do script
+são sanitizadas e não imprimem a configuração resolvida.
 
 `ALTIVY_BIND_ADDRESS` limita a publicação ao localhost por padrão. Para acesso
 pela LAN, configure o endereço de interface pretendido e um certificado com SAN
-compatível; não publique o PostgreSQL, API ou BFF.
+compatível; não publique o PostgreSQL, API ou BFF. `ALTIVY_PROXY_BFF_SUBNET` e
+`ALTIVY_GATEWAY_IP` têm valores de exemplo no arquivo de configuração; escolha
+uma sub-rede privada sem conflito com as redes Docker existentes e um IP nela.
 
-No realm `altivy`, cadastre no client `altivy-bff`:
+No realm `altivy`, o script de sincronização mantido pela plataforma
+`architecture-knowledge-base` acrescenta ao client `altivy-bff` sem remover
+valores existentes:
 
 - redirect URI: `<ALTIVY_PUBLIC_ORIGIN>/signin-oidc`;
 - post-logout redirect URI: `<ALTIVY_PUBLIC_ORIGIN>/signout-callback-oidc`;
 - web origin: `<ALTIVY_PUBLIC_ORIGIN>`.
 
 `ALTIVY_KEYCLOAK_AUTHORITY` precisa usar exatamente o issuer anunciado no
-Discovery Document. Configure a URL de modo que o navegador e os containers
-alcancem o mesmo issuer e validem sua cadeia TLS. Não habilite HTTP inseguro em
-Production.
+Discovery Document. Navegador e containers devem alcançar o mesmo issuer e
+validar sua cadeia TLS. Não habilite HTTP inseguro em Production.
 
-## Primeiro boot
+## Diagnóstico manual
 
-### Desbloquear o preflight
+O procedimento a seguir é referência para diagnóstico de baixo nível. Para
+instalações novas e upgrades, use o script reproduzível acima, que coordena
+backup, migrations, segredos e health checks.
+
+### Referência de configuração manual
 
 A configuração E2E não configura automaticamente esta composição Production.
-O preflight executado em 2026-10-04 identificou valores ausentes nos grupos:
+Um preflight histórico de 2026-10-04 identificou valores ausentes nos grupos
+abaixo. Esse inventário é evidência histórica, não o estado atual da instalação:
 
 - origem e rede: `ALTIVY_PUBLIC_HOST`, `ALTIVY_PUBLIC_ORIGIN`,
 	`ALTIVY_GATEWAY_IP`, `ALTIVY_PROXY_BFF_SUBNET`;
@@ -190,12 +279,13 @@ Reserve um IP de gateway diferente do primeiro endereço atribuído
 automaticamente aos consumidores, como no exemplo. Os tmpfs da web precisam
 preservar UID/GID 101 para NGINX não-root.
 
-O boot em 2026-10-05 passou em PostgreSQL, API, BFF, web e gateway; a sessão
-anônima respondeu por HTTPS com CA validada. Login ainda não foi comprovado:
-as tentativas administrativas de acrescentar callbacks de `localhost:8443`
-receberam HTTP 400, e a borda compartilhada substitui o corpo do erro. O
-cenário anônimo SignalR retornou 500 durante challenge/PAR. Não considere a
-instalação funcionalmente concluída antes de resolver e retestar OIDC.
+O boot Production foi repetido pelo script versionado: PostgreSQL, API, BFF,
+web, worker e gateway ficaram healthy, a sessão anônima respondeu por HTTPS
+com CA validada e o sincronizador confirmou callbacks OIDC. A borda de
+identidade mantém respostas JSON nativas do OAuth. Testes do BFF garantem que
+challenges anônimos de API/SignalR retornem 401 em vez de redirecionar para
+login interativo. Consulte no plano quais jornadas browser e gates de
+recuperação ainda aguardam evidência.
 
 ```powershell
 docker compose --env-file $envFile -f deploy/self-hosted/compose.yaml ps
@@ -213,8 +303,8 @@ O [runbook de recuperacao](../../docs/runbooks/recuperacao-self-hosted.md)
 descreve backup coordenado e restore isolado. O ensaio de laboratorio cobre
 somente o schema Altivy e o vault sintetico, nao a instalacao completa.
 
-O fluxo de bootstrap ainda não possui uma ferramenta dedicada e testada para
-provisionar roles sem expor senhas. Restore completo (todos os vaults, chaves
-BFF e grants), upgrade/rollback entre versões e primeiro boot autenticado
-desta composição isolada permanecem abertos no plano
+Restore integral de todos os vaults, chaves BFF e projeções, além de
+upgrade/rollback entre versões, permanece aberto no plano
 [deploy-self-hosted-compose](../../docs/plan/deploy-self-hosted-compose.md).
+O fluxo de primeiro boot e o bootstrap seguro das roles agora são executados
+por `tools/scripts/start-self-hosted.ps1`.

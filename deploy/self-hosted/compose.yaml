@@ -36,7 +36,8 @@ services:
       args:
         WEB_CONFIGURATION: production
         WEB_BASE_HREF: /
-    image: altivy-web:local
+    image: ${ALTIVY_WEB_IMAGE:-altivy-web:local}
+    pull_policy: missing
     restart: unless-stopped
     init: true
     read_only: true
@@ -53,7 +54,8 @@ services:
     build:
       context: ../..
       dockerfile: backend/apps/bff/Dockerfile
-    image: altivy-bff:local
+    image: ${ALTIVY_BFF_IMAGE:-altivy-bff:local}
+    pull_policy: missing
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
@@ -94,7 +96,8 @@ services:
     build:
       context: ../..
       dockerfile: backend/apps/api/Dockerfile
-    image: altivy-api:local
+    image: ${ALTIVY_API_IMAGE:-altivy-api:local}
+    pull_policy: missing
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: https://+:8443
@@ -135,7 +138,8 @@ services:
     build:
       context: ../..
       dockerfile: backend/apps/worker/Dockerfile
-    image: altivy-worker:local
+    image: ${ALTIVY_WORKER_IMAGE:-altivy-worker:local}
+    pull_policy: missing
     environment:
       DOTNET_ENVIRONMENT: Production
       ConnectionStrings__AltivyPostgres: ${ALTIVY_POSTGRES_RUNTIME_CONNECTION_STRING:?Configure ALTIVY_POSTGRES_RUNTIME_CONNECTION_STRING}
@@ -188,7 +192,8 @@ services:
     build:
       context: ../..
       dockerfile: deploy/production/migrations.Dockerfile
-    image: altivy-migrations:local
+    image: ${ALTIVY_MIGRATIONS_IMAGE:-altivy-migrations:local}
+    pull_policy: missing
     environment:
       ALTIVY_DESIGNTIME_CONNECTION_STRING: ${ALTIVY_POSTGRES_MIGRATOR_CONNECTION_STRING:?Configure ALTIVY_POSTGRES_MIGRATOR_CONNECTION_STRING}
     entrypoint: ["/app/efbundle"]

@@ -23,18 +23,24 @@ Usa o gateway da plataforma compartilhada existente na rede identity-global.
 Sincroniza callbacks por script pertencente a architecture-knowledge-base.
 .PARAMETER IdentityScript
 Caminho do sincronizador compartilhado; pode ser fornecido em qualquer host.
+.PARAMETER ReleaseImageManifest
+images.env e images.env.sha256 de uma release oficial, selecionados por digest.
 .PARAMETER ValidateOnly
 Valida sem iniciar/parar servicos, aplicar SQL ou alterar Keycloak.
 .PARAMETER NoBuild
 Reutiliza imagens locais ja construidas.
 .PARAMETER ValidationVaultId
 Fixture opcional lab-* para ensaio de escrita. Nao cria nem altera grants Keycloak.
+.PARAMETER RecreateConsumers
+Recria web, BFF, API, worker e gateway sem recriar o PostgreSQL.
 .PARAMETER RemainingArguments
 Aceita somente --help.
 .EXAMPLE
 ./tools/scripts/start-self-hosted.ps1 -LocalIdentity -SyncOidc -IdentityEnvironmentFile "$env:APPDATA/Microsoft/UserSecrets/Altivy.Identity/.env"
 .EXAMPLE
 pwsh -NoProfile -File tools/scripts/start-self-hosted.ps1 -EnvironmentFile /secure/altivy.env -CertificateDirectory /secure/certs -DataRoot /srv/altivy -ValidateOnly
+.EXAMPLE
+pwsh -NoProfile -File tools/scripts/start-self-hosted.ps1 -EnvironmentFile /secure/altivy.env -IdentityEnvironmentFile /secure/identity.env -ReleaseImageManifest /secure/release/images.env -NoBuild -SyncOidc
 .INPUTS
 Secrets apenas em arquivos externos ou variaveis injetadas com seguranca.
 .OUTPUTS
@@ -56,9 +62,11 @@ param(
     [switch] $LocalIdentity,
     [switch] $SyncOidc,
     [string] $IdentityScript,
+    [string] $ReleaseImageManifest,
     [switch] $ValidateOnly,
     [switch] $NoBuild,
     [ValidatePattern('^lab-[a-z0-9][a-z0-9-]{0,58}$')][string] $ValidationVaultId,
+    [switch] $RecreateConsumers,
     [Parameter(ValueFromRemainingArguments)][string[]] $RemainingArguments
 )
 if ($RemainingArguments -contains '--help') { Get-Help $PSCommandPath -Full; return }
@@ -184,6 +192,10 @@ try {
         ALTIVY_PUBLIC_HOST=$origin.Host; ALTIVY_PUBLIC_ORIGIN=$origin.GetLeftPart([UriPartial]::Authority)
         ALTIVY_HTTPS_PORT=[string]$origin.Port; ALTIVY_KEYCLOAK_AUTHORITY=$authority.AbsoluteUri.TrimEnd('/')
         ALTIVY_GATEWAY_IP=$source.GATEWAY_IP; ALTIVY_PROXY_BFF_SUBNET=$source.PROXY_SUBNET
+        ALTIVY_WEB_IMAGE=$source.WEB_IMAGE; ALTIVY_BFF_IMAGE=$source.BFF_IMAGE
+        ALTIVY_API_IMAGE=$source.API_IMAGE; ALTIVY_WORKER_IMAGE=$source.WORKER_IMAGE
+        ALTIVY_MIGRATIONS_IMAGE=$source.MIGRATIONS_IMAGE
+        ALTIVY_IMAGE_PULL_POLICY=$source.IMAGE_PULL_POLICY
         ALTIVY_BFF_CLIENT_SECRET=$source.BFF_SECRET; ALTIVY_DATA_PROTECTION_CERTIFICATE_PASSWORD=$source.PFX_PASSWORD
         POSTGRES_ADMIN_USERNAME=$source.POSTGRES_ADMIN_USERNAME; POSTGRES_ADMIN_PASSWORD=$source.POSTGRES_ADMIN_PASSWORD
         ALTIVY_POSTGRES_RUNTIME_CONNECTION_STRING=$runtime.get_ConnectionString()
@@ -192,6 +204,46 @@ try {
         ALTIVY_SMTP_USERNAME=$source.SMTP_USERNAME; ALTIVY_SMTP_PASSWORD=$source.SMTP_PASSWORD
         ALTIVY_SMTP_FROM=$source.SMTP_FROM; ALTIVY_SMTP_TO=$source.SMTP_TO
         ALTIVY_PROVISIONER_CLIENT_SECRET=$source.PROVISIONER_SECRET
+    }
+    if ($ReleaseImageManifest) {
+        if (-not $NoBuild) { throw 'ReleaseImageManifest exige -NoBuild; build local foi bloqueado.' }
+        $manifestPath = [IO.Path]::GetFullPath($ReleaseImageManifest)
+        if ([IO.Path]::GetFileName($manifestPath) -cne 'images.env' -or
+            -not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
+            throw 'Informe o images.env original da release. Use --help.'
+        }
+        $checksumPath = "$manifestPath.sha256"
+        if (-not (Test-Path -LiteralPath $checksumPath -PathType Leaf)) {
+            throw 'images.env.sha256 ausente; release nao verificada. Use --help.'
+        }
+        $manifestBytes = [IO.File]::ReadAllBytes($manifestPath)
+        $manifestHash = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($manifestBytes)).ToLowerInvariant()
+        $checksumText = [IO.File]::ReadAllText($checksumPath)
+        $checksumLines = @($checksumText -split "`r?`n" | Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+        if ($checksumLines.Count -ne 1 -or $checksumLines[0] -cne ("{0}  images.env" -f $manifestHash)) {
+            throw 'Checksum de images.env invalido; release rejeitada.'
+        }
+        try {
+            $manifestText = [Text.UTF8Encoding]::new($false,$true).GetString($manifestBytes)
+            $releaseImages = ConvertFrom-StringData -StringData $manifestText
+        } catch { throw 'Formato de images.env invalido; release rejeitada.' }
+        $expectedImages = @{
+            ALTIVY_WEB_IMAGE='altivy-web'; ALTIVY_API_IMAGE='altivy-api'
+            ALTIVY_BFF_IMAGE='altivy-bff'; ALTIVY_WORKER_IMAGE='altivy-worker'
+            ALTIVY_MIGRATIONS_IMAGE='altivynotes-migrations'
+        }
+        $actualKeys = @($releaseImages.Keys | Sort-Object)
+        $expectedKeys = @($expectedImages.Keys | Sort-Object)
+        if ($actualKeys.Count -ne $expectedKeys.Count -or ($actualKeys -join '|') -cne ($expectedKeys -join '|')) {
+            throw 'images.env deve conter exatamente as cinco imagens Altivy da release.'
+        }
+        foreach ($key in $expectedImages.Keys) {
+            $pattern = '^ghcr\.io/lzocateli/' + [regex]::Escape($expectedImages[$key]) + '@sha256:[a-f0-9]{64}$'
+            if ([string]$releaseImages[$key] -cnotmatch $pattern) { throw "Referencia imutavel invalida para $key." }
+            $settings[$key] = [string]$releaseImages[$key]
+        }
+        $settings.ALTIVY_IMAGE_PULL_POLICY = 'always'
+        $manifestBytes = $null; $manifestText = $null; $checksumText = $null
     }
     foreach ($name in $settings.Keys) { Set-ProcessSetting $name ([string]$settings[$name]) }
     $compose = @('compose','--progress','plain') + $fileArguments + @('-p',$ProjectName,'-f','deploy/self-hosted/compose.yaml')
@@ -215,7 +267,11 @@ try {
     Invoke-Docker -Arguments @('run','--rm','--network','none','--user','0:0','--volume',"${DataRoot}:/data",'--entrypoint','/bin/sh','lzocateli/dotnet-aspnet:10.0.11-noble','-ec','chown 1654:1654 /data/vaults /data/bff-keys; chmod 0700 /data/vaults /data/bff-keys /data/backups') -Quiet
     Invoke-Docker -Arguments ($compose + @('up','-d','--wait','--wait-timeout','240','postgres'))
     $databaseContainer = Invoke-Docker -Arguments ($compose + @('ps','-q','postgres')) -Capture
+    $databaseImageId = Invoke-Docker -Arguments @('inspect','--format','{{.Image}}',$databaseContainer) -Capture
+    if ($databaseImageId -notmatch '^sha256:[a-f0-9]{64}$') { throw 'Imagem PostgreSQL nao resolvida por ID.' }
     $backupId = [DateTimeOffset]::UtcNow.ToString('yyyyMMddTHHmmss') + '-' + [Guid]::NewGuid().ToString('N')
+    $metadataPartialPath = Join-Path $DataRoot "backups/$backupId.metadata.json.partial"
+    $metadataPartialCreated = $false
     $writersStopped = $false
     try {
         Invoke-Docker -Arguments ($compose + @('stop','--timeout','30','bff','api','worker')) -Quiet
@@ -223,14 +279,36 @@ try {
         Invoke-Docker -Arguments @('exec',$databaseContainer,'sh','-c','umask 077; exec pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --format=custom --file=/tmp/pre-migration.dump') -Quiet
         Invoke-Docker -Arguments @('cp',"${databaseContainer}:/tmp/pre-migration.dump",(Join-Path $DataRoot "backups/$backupId.dump")) -Quiet
         Invoke-Docker -Arguments @('exec',$databaseContainer,'rm','/tmp/pre-migration.dump') -Quiet
-        Invoke-Docker -Arguments @('run','--rm','--network','none','--user','0:0','--volume',"${DataRoot}:/data",'--entrypoint','/bin/sh','lzocateli/dotnet-aspnet:10.0.11-noble','-ec',"umask 077; tar -czf /data/backups/$backupId.tar.gz -C /data vaults") -Quiet
+        if (Test-Path -LiteralPath $metadataPartialPath) { throw 'Destino de metadata de backup ja existe.' }
+        $metadata = [ordered]@{
+            backupId = $backupId
+            createdAtUtc = [DateTimeOffset]::UtcNow.ToString('O')
+            projectName = $ProjectName
+            postgresImageId = $databaseImageId
+        } | ConvertTo-Json -Compress
+        $metadataBytes = [Text.Encoding]::UTF8.GetBytes($metadata)
+        $metadataStream = [IO.File]::Open($metadataPartialPath,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write,[IO.FileShare]::None)
+        $metadataPartialCreated = $true
+        try { $metadataStream.Write($metadataBytes,0,$metadataBytes.Length) }
+        finally { $metadataStream.Dispose() }
+        $archiveCommand = "set -eu; umask 077; trap 'rm -f /data/backups/$backupId.tar.gz.partial /data/backups/$backupId.sha256.partial /data/backups/$backupId.files.sha256.partial /data/backups/$backupId.metadata.json.partial' EXIT; cd /data; find vaults bff-keys -type f -print0 | sort -z | xargs -0 -r sha256sum > /data/backups/$backupId.files.sha256.partial; tar -czf /data/backups/$backupId.tar.gz.partial -C /data vaults bff-keys; mv /data/backups/$backupId.tar.gz.partial /data/backups/$backupId.tar.gz; mv /data/backups/$backupId.files.sha256.partial /data/backups/$backupId.files.sha256; mv /data/backups/$backupId.metadata.json.partial /data/backups/$backupId.metadata.json; cd /data/backups; sha256sum $backupId.dump $backupId.tar.gz $backupId.metadata.json > $backupId.sha256.partial; sha256sum --check $backupId.sha256.partial; mv $backupId.sha256.partial $backupId.sha256; cd /data; sha256sum --check backups/$backupId.files.sha256; chmod 0600 backups/$backupId.dump backups/$backupId.tar.gz backups/$backupId.sha256 backups/$backupId.files.sha256 backups/$backupId.metadata.json"
+        Invoke-Docker -Arguments @('run','--rm','--network','none','--user','0:0','--volume',"${DataRoot}:/data",'--entrypoint','/bin/sh','lzocateli/dotnet-aspnet:10.0.11-noble','-ec',$archiveCommand) -Quiet
+        Write-Host "Backup pre-migration verificado (ID $backupId)."
         $bootstrap = "\set altivy_runtime_password '$(ConvertTo-PsqlLiteral $runtime.get_Item('Password'))'`n\set altivy_migrator_password '$(ConvertTo-PsqlLiteral $migrator.get_Item('Password'))'`n"
         $bootstrap += Get-Content -LiteralPath 'backend/libs/infrastructure/data/sql/001-bootstrap-altivy-roles.sql' -Raw
         Invoke-Docker -Arguments @('exec','-i',$databaseContainer,'sh','-c','exec psql -X -q -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1') -InputText $bootstrap -Quiet
         $bootstrap = $null
         if (-not $NoBuild) { Invoke-Docker -Arguments ($compose + @('build','migrator')) }
-        Invoke-Docker -Arguments ($compose + @('--profile','operations','run','--no-deps','--rm','migrator'))
+        $migratorArguments = @('--profile','operations','run','--no-deps','--rm')
+        if ($ReleaseImageManifest) { $migratorArguments += @('--pull','always') }
+        $migratorArguments += 'migrator'
+        Invoke-Docker -Arguments ($compose + $migratorArguments)
         if ($ValidationVaultId) {
+            $fixtureDirectory = Join-Path $DataRoot "vaults/$ValidationVaultId"
+            if ((Test-Path -LiteralPath $fixtureDirectory) -and
+                (Get-Item -LiteralPath $fixtureDirectory).Attributes -band [IO.FileAttributes]::ReparsePoint) {
+                throw 'Diretorio de fixture nao pode ser link simbolico.'
+            }
             $fixtureSql = @"
 BEGIN;
 INSERT INTO altivy.vaults ("Id", "Name", state)
@@ -241,15 +319,11 @@ THEN RAISE EXCEPTION 'Fixture colide com vault existente; nenhum dado foi altera
 END `$fixture`$;
 COMMIT;
 "@
-            $fixtureDirectory = Join-Path $DataRoot "vaults/$ValidationVaultId"
             if (-not (Test-Path -LiteralPath $fixtureDirectory)) {
                 New-Item -ItemType Directory -Path $fixtureDirectory | Out-Null
-            }
-            if ((Get-Item -LiteralPath $fixtureDirectory).Attributes -band [IO.FileAttributes]::ReparsePoint) {
-                throw 'Diretorio de fixture nao pode ser link simbolico.'
+                Invoke-Docker -Arguments @('run','--rm','--network','none','--user','0:0','--volume',"${fixtureDirectory}:/fixture",'--entrypoint','/bin/sh','lzocateli/dotnet-aspnet:10.0.11-noble','-ec','chown 1654:1654 /fixture; chmod 0700 /fixture') -Quiet
             }
             Invoke-Docker -Arguments @('exec','-i',$databaseContainer,'sh','-c','exec psql -X -q -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v ON_ERROR_STOP=1') -InputText $fixtureSql -Quiet
-            Invoke-Docker -Arguments @('run','--rm','--network','none','--user','0:0','--volume',"${fixtureDirectory}:/fixture",'--entrypoint','/bin/sh','lzocateli/dotnet-aspnet:10.0.11-noble','-ec','chown 1654:1654 /fixture; chmod 0700 /fixture') -Quiet
             Write-Host 'Fixture sintetica pronta; autorizacao continua sendo exclusiva do Keycloak.'
         }
         if ($SyncOidc) {
@@ -260,15 +334,24 @@ COMMIT;
         }
         $startArguments = @('up','-d','--wait','--wait-timeout','240')
         if (-not $NoBuild) { $startArguments += '--build' }
-        Invoke-Docker -Arguments ($compose + $startArguments)
+        $startServices = @()
+        if ($RecreateConsumers) {
+            $startArguments += @('--no-deps','--force-recreate')
+            $startServices = @('web','bff','api','worker','gateway')
+        }
+        Invoke-Docker -Arguments ($compose + $startArguments + $startServices)
         $writersStopped = $false
     } finally {
         if ($writersStopped) { Invoke-Docker -Arguments ($compose + @('start','api','worker','bff')) -Quiet }
+        if ($metadataPartialCreated -and (Test-Path -LiteralPath $metadataPartialPath)) {
+            Remove-Item -LiteralPath $metadataPartialPath -Force
+        }
     }
     Invoke-Docker -Arguments @('run','--rm','--network','host','--volume',"${CertificateDirectory}:/certs:ro",'--entrypoint','curl','lzocateli/dotnet-sdk:10.0.400-noble','--cacert','/certs/rootCA.pem','--silent','--show-error','--fail',($origin.GetLeftPart([UriPartial]::Authority) + '/bff/session'))
     Write-Host "Production online em $($origin.GetLeftPart([UriPartial]::Authority))."
 } finally {
     foreach ($name in $savedEnvironment.Keys) { [Environment]::SetEnvironmentVariable($name,$savedEnvironment[$name],'Process') }
     $source = $null; $settings = $null; $resolved = $null; $runtime = $null; $migrator = $null; $bootstrap = $null
+    $metadata = $null; $metadataBytes = $null; $metadataStream = $null
     Pop-Location
 }

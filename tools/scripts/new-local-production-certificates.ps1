@@ -87,18 +87,26 @@ if (-not $ValidateOnly) {
     $arguments += @('--volume',"${authorityPath}:/ca:ro")
     $generate = @'
 umask 077
-trap 'rm -f /tmp/tls.csr /tmp/api.csr /tmp/protection.key /tmp/protection.crt' EXIT
-openssl req -new -newkey rsa:3072 -nodes -keyout /certs/tls.key -out /tmp/tls.csr -subj '/CN=localhost' -addext 'subjectAltName=DNS:localhost,IP:127.0.0.1,IP:::1'
-openssl x509 -req -in /tmp/tls.csr -CA /ca/rootCA.pem -CAkey /ca/rootCA-key.pem -set_serial "0x$(openssl rand -hex 16)" -days 825 -sha256 -copy_extensions copy -out /certs/tls.crt
-openssl req -new -newkey rsa:3072 -nodes -keyout /certs/api.key -out /tmp/api.csr -subj '/CN=api' -addext 'subjectAltName=DNS:api,DNS:localhost,IP:127.0.0.1,IP:::1'
-openssl x509 -req -in /tmp/api.csr -CA /ca/rootCA.pem -CAkey /ca/rootCA-key.pem -set_serial "0x$(openssl rand -hex 16)" -days 825 -sha256 -copy_extensions copy -out /certs/api.crt
-cp /ca/rootCA.pem /certs/rootCA.pem
-openssl req -x509 -newkey rsa:3072 -nodes -keyout /tmp/protection.key -out /tmp/protection.crt -days 730 -sha256 -subj '/CN=Altivy Notes Data Protection'
-openssl pkcs12 -export -inkey /tmp/protection.key -in /tmp/protection.crt -out /certs/altivy-data-protection.pfx -passout env:ALTIVY_DATA_PROTECTION_CERTIFICATE_PASSWORD -keypbe AES-256-CBC -certpbe AES-256-CBC -macalg SHA256 -iter 100000
-chmod 0444 /certs/*.crt /certs/rootCA.pem
-chown 101:101 /certs/tls.key
-chown 1654:1654 /certs/api.key /certs/altivy-data-protection.pfx
-chmod 0400 /certs/*.key /certs/altivy-data-protection.pfx
+mkdir -m 0700 /tmp/generated
+trap 'rm -rf /tmp/generated /tmp/tls.csr /tmp/api.csr /tmp/certificate-public.pem /tmp/key-public.pem /tmp/pfx-certificate-public.pem /tmp/pfx-key-public.pem' EXIT
+for file in tls.crt tls.key rootCA.pem api.crt api.key altivy-data-protection.pfx; do
+    test ! -e "/certs/$file"
+done
+openssl req -new -newkey rsa:3072 -nodes -keyout /tmp/generated/tls.key -out /tmp/tls.csr -subj '/CN=localhost' -addext 'subjectAltName=DNS:localhost,IP:127.0.0.1,IP:::1'
+openssl x509 -req -in /tmp/tls.csr -CA /ca/rootCA.pem -CAkey /ca/rootCA-key.pem -set_serial "0x$(openssl rand -hex 16)" -days 825 -sha256 -copy_extensions copy -out /tmp/generated/tls.crt
+openssl req -new -newkey rsa:3072 -nodes -keyout /tmp/generated/api.key -out /tmp/api.csr -subj '/CN=api' -addext 'subjectAltName=DNS:api,DNS:localhost,IP:127.0.0.1,IP:::1'
+openssl x509 -req -in /tmp/api.csr -CA /ca/rootCA.pem -CAkey /ca/rootCA-key.pem -set_serial "0x$(openssl rand -hex 16)" -days 825 -sha256 -copy_extensions copy -out /tmp/generated/api.crt
+cp /ca/rootCA.pem /tmp/generated/rootCA.pem
+openssl req -x509 -newkey rsa:3072 -nodes -keyout /tmp/generated/protection.key -out /tmp/generated/protection.crt -days 730 -sha256 -subj '/CN=Altivy Notes Data Protection'
+openssl pkcs12 -export -inkey /tmp/generated/protection.key -in /tmp/generated/protection.crt -out /tmp/generated/altivy-data-protection.pfx -passout env:ALTIVY_DATA_PROTECTION_CERTIFICATE_PASSWORD -keypbe AES-256-CBC -certpbe AES-256-CBC -macalg SHA256 -iter 100000
+chmod 0444 /tmp/generated/*.crt /tmp/generated/rootCA.pem
+chown 101:101 /tmp/generated/tls.key
+chown 1654:1654 /tmp/generated/api.key /tmp/generated/altivy-data-protection.pfx
+chmod 0400 /tmp/generated/*.key /tmp/generated/altivy-data-protection.pfx
+for file in tls.crt tls.key rootCA.pem api.crt api.key altivy-data-protection.pfx; do
+    mv -n "/tmp/generated/$file" "/certs/$file"
+    test ! -e "/tmp/generated/$file"
+done
 chmod 0755 /certs
 '@
 }
@@ -114,6 +122,9 @@ for certificate in tls api; do
  done
 openssl pkcs12 -in /certs/altivy-data-protection.pfx -passin env:ALTIVY_DATA_PROTECTION_CERTIFICATE_PASSWORD -noout
 openssl pkcs12 -in /certs/altivy-data-protection.pfx -passin env:ALTIVY_DATA_PROTECTION_CERTIFICATE_PASSWORD -clcerts -nokeys | openssl x509 -checkend 86400 -noout
+openssl pkcs12 -in /certs/altivy-data-protection.pfx -passin env:ALTIVY_DATA_PROTECTION_CERTIFICATE_PASSWORD -clcerts -nokeys | openssl x509 -pubkey -noout > /tmp/pfx-certificate-public.pem
+openssl pkcs12 -in /certs/altivy-data-protection.pfx -passin env:ALTIVY_DATA_PROTECTION_CERTIFICATE_PASSWORD -nocerts -nodes | openssl pkey -pubout > /tmp/pfx-key-public.pem
+cmp /tmp/pfx-certificate-public.pem /tmp/pfx-key-public.pem
 '@
 $script = ': "${ALTIVY_DATA_PROTECTION_CERTIFICATE_PASSWORD:?Senha PFX ausente}"' + "`n" + $generate + "`n" + $validate
 $arguments += @('--entrypoint','/bin/bash','lzocateli/dotnet-sdk:10.0.400-noble','-ec',($script -replace "`r`n","`n"))

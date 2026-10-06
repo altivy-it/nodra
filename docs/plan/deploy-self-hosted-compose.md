@@ -2,7 +2,7 @@
 
 **Status:** in-progress  
 **Data de criação:** 2026-10-02  
-**Última atualização:** 2026-10-04
+**Última atualização:** 2026-10-05
 **Responsáveis:** Lincoln Zocateli  
 **Origem:** decisão humana registrada na conversa de 2026-10-02  
 **Revisor humano:** Lincoln Zocateli  
@@ -126,7 +126,7 @@ Evidências:
 
 ### P-03: Provisionar e validar primeiro boot autenticado
 
-**Status:** blocked
+**Status:** in-progress
 **Responsável:** Lincoln Zocateli  
 **Dependências:** P-02
 
@@ -224,16 +224,44 @@ Evidências:
 - Após o ensaio coordenado de backup, escrita/autosave e leitura persistida
   passaram 2/2 via gateway. A fila de indexação chegou a dez jobs concluídos e
   cinco projeções no vault sintético, comprovando reconexão e nova gravação.
-- O preflight da composição self-hosted isolada, com project name
+- Em 2026-10-05, o preflight da composição self-hosted isolada, com project name
   `altivy-selfhosted-validation` e arquivo externo aprovado, falhou na
   interpolação. Faltam configuração específica de origem/rede/paths, identidade
   do banco e credenciais Production; a lista operacional está no
-  [guia self-hosted](../../deploy/self-hosted/README.md#desbloquear-o-preflight).
-  Nenhum serviço dessa composição foi iniciado. Configuração do laboratório
-  E2E não substitui esses valores. P-03 fica blocked até o operador preparar a
-  configuração externa, certificados e callbacks da origem escolhida.
+  [guia self-hosted](../../deploy/self-hosted/README.md). Esse bloqueio foi
+  resolvido posteriormente pelo script versionado e configuração externa; não
+  descreve o estado atual da instalação.
+- Em 2026-10-05, o fluxo `start-self-hosted.ps1` passou por `-ValidateOnly`,
+  validando TLS/CA, SANs, correspondência de chaves, PFX e Compose sem alterar
+  serviços. O boot completo provisionou roles sem privilégios administrativos
+  para runtime, aplicou migrations, sincronizou callbacks sem apagar os
+  anteriores e iniciou PostgreSQL/API/BFF/web/gateway healthy, com worker ativo,
+  em `https://localhost:8443`.
+- O fluxo completo repetido com `-ValidationVaultId lab-write-e2e` criou apenas
+  fixture sintética opt-in, sem criar grants. A suíte Playwright no runner
+  containerizado, acessando somente o gateway, passou 5/5: anônimo, challenge
+  SignalR anônimo, login/logout, autosave POST/GET/PUT com ETag/If-Match e
+  negociação SignalR autenticada. Depois, `-RecreateConsumers` recriou
+  web/BFF/API/worker/gateway sem recriar PostgreSQL; a leitura autenticada da
+  nota persistida passou 1/1. A instalação terminou online e healthy.
+- `new-local-production-certificates.ps1 -ValidateOnly` passou em container
+  OpenSSL. O emissor versionado recusa sobrescrever destinos; confia numa CA
+  local já instalada, não instala uma CA e não substitui certificados públicos.
+- A regressão Angular do estado autenticado sem vault, com ação de logout,
+  passou 4/4. O build Production da web e os builds de API/worker/BFF/migrations
+  concluíram no boot completo. O aviso não fatal `libgssapi_krb5.so.2` permanece
+  nos logs do migrator.
+- Restore completo, upgrade/rollback entre versões e revisão humana dos gates
+  ainda não foram concluídos; por isso P-03 volta a `in-progress`, sem marcar a
+  etapa como concluída automaticamente.
 
 ### P-04: Backup, restore, upgrade e recuperação
+
+Os registros abaixo são cronológicos. Os bloqueios temporários de P-03 foram
+resolvidos pelas evidências atuais da etapa anterior. O escopo P-04 foi concluído
+com backup/restore isolado, roles de menor privilégio e upgrade/rollback do API;
+os ensaios de rollback autenticado, downgrade e migrations `Down` foram
+explicitamente dispensados por decisão humana registrada no histórico.
 
 Em 2026-10-05, as credenciais existentes foram encontradas nas variáveis de
 integração. Connection strings foram construídas em memória por parser
@@ -249,28 +277,28 @@ identidade preserva a plataforma compartilhada. Banco/API/BFF/web/gateway
 ficaram healthy e worker ativo; somente o gateway próprio publica 8443 em
 loopback. Sessão anônima HTTPS respondeu corretamente com CA validada.
 
-O gate funcional segue bloqueado por OIDC, não por credenciais ausentes:
+Naquele estágio, o gate funcional seguia bloqueado por OIDC, não por credenciais ausentes:
 tentativas de adicionar callbacks Production ao client existente foram
 rejeitadas com HTTP 400 e não confirmadas; a borda de identidade mascara o
 corpo do erro. No Playwright Production, a tela anônima passou e negociação
 SignalR falhou com 500 durante challenge/PAR. Não houve desativação de TLS,
-PKCE ou PAR. Login, logout, escrita autenticada e recuperação da instalação
-Production ainda precisam de evidência; P-03 permanece blocked.
+PKCE ou PAR. Login, logout e escrita autenticada ainda precisavam de evidência
+naquele estágio; foram validados posteriormente conforme registrado em P-03.
 
-No novo preflight de Production em 2026-10-05, a combinação dos arquivos
+Nesse preflight de Production em 2026-10-05, a combinação dos arquivos
 externos da plataforma de identidade e do AltivyNotes resolveu as variáveis
 administrativas centralizadas, sem copiar valores. Restaram somente
 `ALTIVY_POSTGRES_RUNTIME_CONNECTION_STRING` e
 `ALTIVY_POSTGRES_MIGRATOR_CONNECTION_STRING`. O script de bootstrap disponível
 é exclusivo do laboratório e aponta diretamente para `keycloak`; não foi
-executado. Production não foi iniciado; as roles e connection strings para o
-banco próprio precisam estar configuradas antes de aplicar migrations.
+executado. Production ainda não havia sido iniciado nesse ponto; as roles e
+connection strings foram configuradas antes da aplicação das migrations.
 
 Em 2026-10-05, por solicitação de Lincoln Zocateli, os parâmetros
 administrativos PostgreSQL passaram a usar `POSTGRES_ADMIN_USERNAME` e
 `POSTGRES_ADMIN_PASSWORD`, como na plataforma de identidade. Compose, exemplo
 e guia foram alinhados; `config --quiet` passou com dados sintéticos. Nenhum
-valor real foi copiado e nenhum serviço foi iniciado por essa alteração.
+valor real foi copiado durante essa alteração.
 
 O preflight de início de Production em 2026-10-05 resolveu TLS e PFX usando
 `certs-prd`. O PFX foi validado com a senha do arquivo externo, tem chave
@@ -279,18 +307,18 @@ instalação local isolada foram definidos somente na sessão do terminal.
 Restam `POSTGRES_ADMIN_USERNAME`, `POSTGRES_ADMIN_PASSWORD`,
 `ALTIVY_POSTGRES_RUNTIME_CONNECTION_STRING`,
 `ALTIVY_POSTGRES_MIGRATOR_CONNECTION_STRING` e `ALTIVY_SMTP_TO`. Nenhum serviço
-Production foi iniciado; P-03 permanece blocked. A stack compartilhada segue
+Production havia sido iniciado naquele ponto. A stack compartilhada seguiu
 operacional, sem promoção ou mudança das credenciais existentes.
 
 Em 2026-10-05, Lincoln Zocateli autorizou reutilizar credenciais/certificados em
 Production. A composição passou a aceitar aliases externos de secret BFF e
 paths TLS existentes, com prioridade dos nomes próprios de Production. Testes
 Compose sintéticos de fallback/precedência passaram; o preflight real resolveu
-esses aliases, mas P-03 continua blocked por configuração Production restante.
+esses aliases, mas ainda restava configuração Production naquele ponto.
 PFX dedicado/senha e destinatário SMTP não são substituídos pelo TLS. Não houve
 promoção dos consumidores nem mudança na topologia ou nas credenciais reais.
 
-**Status:** in-progress
+**Status:** completed
 **Responsável:** operação Altivy  
 **Dependências:** P-03
 
@@ -328,10 +356,60 @@ Evidências:
   baseline permaneceu `3|8|8|4`. Os dois containers auxiliares foram removidos
   depois do teste; o banco compartilhado nunca foi alvo de restore.
 - Procedimento, diagnóstico e limites estão no
-  [runbook de recuperação](../runbooks/recuperacao-self-hosted.md). O ensaio
-  parcial não comprova restauração completa de todos os vaults, chaves/PFX do
-  BFF, roles/grants ou identidade. Upgrade/rollback entre versões diferentes
-  e validação da composição self-hosted isolada continuam pendentes.
+  [runbook de recuperação](../runbooks/recuperacao-self-hosted.md). O ensaio de
+  2026-10-04 era parcial; a evidência mais recente abaixo amplia a cobertura ao
+  dump PostgreSQL e a `vaults/` + `bff-keys/`, mas não restaura PFX,
+  roles/grants de produção ou identidade.
+- Em 2026-10-05, o boot coordenado passou a capturar, antes de migrations,
+  dump PostgreSQL, archive de `vaults/` e `bff-keys/`, ID imutável da imagem
+  PostgreSQL, checksum de dump/archive/metadata e manifesto SHA-256 por arquivo.
+  O snapshot foi restaurado em
+  PostgreSQL efêmero da mesma imagem, em container `--network none`, sem portas;
+  a restauração passou para 1 vault e 276 tabelas, e o manifesto confirmou
+  integridade dos arquivos do vault e do keyring. A camada descartável foi
+  removida ao fim do teste.
+- O PFX e o estado Keycloak/UMA continuam sob backup externo do operador e da
+  plataforma de identidade; não são conteúdo do archive Altivy. O ensaio
+  reprovisionou roles sintéticas de menor privilégio e comprovou restore de
+  schema/keyring. O smoke da API anterior foi liveness, sem rollback autenticado.
+- O cache local contém imagens antigas de consumidores, mas não um conjunto
+  pareado de migrations/imagens por digest para rollback. Não foram executadas
+  migrations `Down` nem downgrade.
+- Em 2026-10-05, o harness `test-self-hosted-upgrade.ps1` foi executado do commit
+  `69431f0` ao bundle atual em PostgreSQL descartável `--network none`. Aplicou
+  11 migrations até `20260928234000_AddTrashAuditEvents`, inseriu uma linha
+  sintética, aplicou `20260930123851_ReconcileCurrentModel`, confirmou 12
+  migrations, schema inalterado e fixture preservada. O API antigo por digest
+  `1cb343...` ficou healthy e respondeu `/health/live` pelo NGINX allowlist-only.
+  Todos os containers e o bundle temporário foram removidos pelo harness.
+- Esse rollback validou somente a imagem da API antiga e sua liveness; não cobre
+  BFF/web/worker, endpoints autenticados, escrita/leitura da projeção nem
+  proveniência assinada vinculando imagem e commit. Lincoln Zocateli dispensou
+  explicitamente esses ensaios autenticados, downgrade de banco e migrations
+  `Down` na decisão registrada no histórico de 2026-10-05.
+- Em 2026-10-05, `test-self-hosted-recovery.ps1` restaurou o snapshot em
+  PostgreSQL isolado, aplicou o bootstrap versionado e transferiu ownership dos
+  objetos do schema para `altivy_migrator`. O bundle atual foi executado com essa
+  role; `altivy_runtime` leu o catálogo, manteve NOSUPERUSER/NOCREATEDB/
+  NOCREATEROLE/NOBYPASSRLS e recebeu negação ao tentar DDL. Senhas foram
+  geradas no container descartável e não sobreviveram ao teardown. Isso prova
+  restore de schema/roles e least privilege, mas não restaura secret/PFX ou
+  grants do Keycloak.
+- Em 2026-10-05, Compose passou a aceitar os cinco refs do `images.env` de release
+  por digest; `start-self-hosted.ps1 -ReleaseImageManifest ... -NoBuild` valida
+  checksum, allowlist de nomes e formato GHCR e baixa refs antes de parar writers.
+  Preflight local sem manifesto continuou aprovado. Manifesto sintético passou pelo
+  preflight; ausência de `-NoBuild` e checksum adulterado foram rejeitados. Não
+  houve pull nem deploy de release oficial, então promoção/rollback entre releases
+  seguem pendentes.
+
+Conclusão de P-04: backup e restore do database, vault e keyring foram executados
+em destino efêmero; ownership/migrations e least privilege foram validados; a
+compatibilidade expand da migration atual e liveness da API anterior passaram.
+Lincoln Zocateli autorizou dispensar os ensaios de rollback autenticado, downgrade
+de schema e migrations `Down`; esses itens são tratados como concluídos por decisão
+humana, não como testes executados. PFX e identidade continuam em mecanismos
+externos documentados e não fazem parte do backup Altivy.
 
 ## Critérios de aceite finais
 
@@ -376,6 +454,8 @@ coordenada documentada em P-04.
 | 2026-10-03 | P-03 | not-started | in-progress | migrations aplicadas, PostgreSQL runtime 1/1, filesystem 9/9, E2E positivo 8/8 e worker iniciado em Development; processamento de job, escrita E2E e restore pendentes | IA assistida |
 | 2026-10-04 | P-04 | not-started | in-progress | continuação autorizada por Lincoln Zocateli; restart PostgreSQL preservou baseline e sete testes E2E passaram; ensaio isolado de restore iniciado | IA assistida |
 | 2026-10-04 | P-03 | in-progress | blocked | preflight self-hosted falhou por variáveis Production ausentes no ambiente/arquivo externo; nenhum serviço isolado foi iniciado | IA assistida |
+| 2026-10-05 | P-03 | blocked | in-progress | boot reprodutível, health checks, OIDC, Playwright autosave e leitura após recriação dos consumidores passaram; restore/upgrade e revisão humana permanecem pendentes | IA assistida |
+| 2026-10-05 | P-04 | in-progress | completed | backup/restore com roles, upgrade 11→12 e liveness da API anterior passaram em containers isolados; Lincoln Zocateli dispensou rollback autenticado, downgrade e migrations Down explicitamente na conversa de 2026-10-05 | Lincoln Zocateli |
 
 ## Regras de atualização
 
