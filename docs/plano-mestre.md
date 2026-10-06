@@ -411,96 +411,37 @@ Esses documentos detalham a execução. Em caso de divergência sobre visão,
 escopo, princípios ou decisões arquiteturais, este plano mestre prevalece e
 deve ser atualizado por decisão explícita.
 
-### 15.1 Índice dos planos dependentes
+### 15.1 Migração obrigatória para Spec Kit
 
-Todo plano executável do repositório vive em `docs/plan/`. O arquivo do plano é
-a fonte de verdade para seu status geral, status das etapas, responsáveis,
-dependências internas e evidências. A tabela abaixo define a dependência entre
-planos e não substitui as dependências `P-NN` declaradas dentro de cada um.
-
-| Ordem | Plano | Papel | Pré-condições externas ao plano | Regra de execução |
-| ---: | --- | --- | --- | --- |
-| 0 | [Identidade visual e branding](plan/altivy-branding.md) | redirecionamento histórico | nenhuma | não executar; está `superseded` e aponta para a fonte canônica no repositório `Altivy` |
-| 1 | [BFF com Keycloak](plan/bff-keycloak.md) | fundação de identidade, sessão e autorização | decisões da Fase 0 aplicáveis | executar antes de qualquer plano que exponha integração autenticada ou selecione vaults |
-| 2 | [Deploy de produção em VPS](plan/deploy-producao-vps.md) | registro histórico da topologia VPS | nenhuma | `superseded` pelo ADR 2026-0008; não executar |
-| 3 | [Deploy self-hosted por Docker Compose](plan/deploy-self-hosted-compose.md) | iniciar e operar a stack no host escolhido pelo operador | plano BFF concluído; Keycloak, TLS, secrets externos e paths persistentes configurados pelo operador | publicar somente gateway HTTPS; PostgreSQL e serviços da aplicação permanecem privados |
-| 4 | [Plataforma de plugins e plugin Teams](plan/app-altivy-notes-teams-external-push.md) | fundação plugável, importação explícita e API de ingestão | plano do BFF concluído; núcleo de Notes, jobs, filesystem e indexação disponível; gate da Fase 3 atendido; início da Fase 5 aprovado por humano | entregar o Plugin Host e a primeira integração sem leitura do Microsoft Graph |
-| 5 | [Notas de reunião do Teams via Graph](plan/integracao-teams-notas-reuniao.md) | espelhamento automático Loop → Altivy | mesmas pré-condições da ordem 4; gates G1 e G2 próprios; contratos do Plugin Host reconciliados | executar depois de `external-push` na ordem padrão ou em paralelo somente com coordenação explícita |
+`docs/plan/` e seu índice anterior estão congelados e não autorizam desenvolvimento,
+manutenção ou execução de etapas. A fonte versionada de requisitos, desenho e
+tarefas de aplicação é exclusivamente o Spec Kit. Issues e GitHub Projects podem
+acompanhar trabalho, mas não definem escopo nem substituem seus artefatos.
 
 Os planos de Teams são iniciativas da Fase 5. A Fase 5 exige nova descoberta e
-não começa automaticamente após a fase anterior. Uma IA não deve interpretar a
-posição desses planos no índice como aprovação para iniciá-los.
+não começa automaticamente após a fase anterior. Essa condição deve ser
+registrada nos artefatos Spec Kit durante a migração e não autoriza iniciá-los.
 
-### 15.2 Ordem de execução
+Após inicializar o Spec Kit no repositório existente, migre todos os planos não
+decisões, dependências, evidências e estado já registrado, sem declarar trabalho
+autoridade operacional. Atualize ADRs e demais referências que apontavam para o
+concluídos foram convertidos em artefatos Spec Kit em rascunho. A conversão
+ainda aguarda revisão humana; até essa revisão, os originais permanecem
+congelados e nenhuma etapa pode ser executada. Após revisar cada conjunto e
+executar `/speckit-analyze`, substitua o plano original por uma referência
+arquivada sem autoridade operacional. Preserve estados e evidências sem marcar
+tarefas como concluídas por inferência e atualize ADRs/referências ao arquivar.
 
-```mermaid
-flowchart TD
-     Master[Plano mestre] --> Evolution[Evolução do produto]
-     Evolution --> Foundation[Fases 0 a 3 e núcleo operacional]
-     Foundation --> Bff[Plano BFF com Keycloak]
-    Bff --> Production[Deploy self-hosted por Compose]
-    Production --> CorporateGate[Gate de saída da Fase 3]
-     CorporateGate --> HumanGate{Início da Fase 5 aprovado?}
-     HumanGate -->|não| Stop[Manter integrações bloqueadas]
-    HumanGate -->|sim| Shared[Reconciliar ADRs, threat models e Plugin Host]
-    Shared --> Push[Plataforma de plugins, Teams e external-push]
-     Push --> Graph[Notas de reunião via Microsoft Graph]
-     Shared -. execução paralela coordenada .-> Graph
-     Branding[Plano de branding superseded] -. não executar .-> BrandSource[Fonte canônica no repositório Altivy]
-```
+| Plano legado congelado | Artefatos Spec Kit em revisão |
+| --- | --- |
+| [Alternância de vaults](plan/alternancia-vaults.md) | [Alternância](../specs/001-alternancia-vaults/spec.md) e [provisionamento](../specs/002-provisionamento-vaults/spec.md) |
+| [Ambiente de homologação](plan/ambiente-homologacao.md) | [Homologação](../specs/003-ambiente-homologacao/spec.md) |
+| [App Teams external push](plan/app-altivy-notes-teams-external-push.md) | [External push](../specs/004-app-teams-external-push/spec.md) |
+| [Deploy self-hosted por Compose](plan/deploy-self-hosted-compose.md) | [Compose self-hosted](../specs/005-deploy-self-hosted-compose/spec.md) |
+| [Integração de notas de reunião do Teams](plan/integracao-teams-notas-reuniao.md) | [Loop/Teams](../specs/006-teams-loop-notes-sync/spec.md) |
+| [Tema de login Keycloak](plan/tema-login-keycloak.md) | [Tema Keycloak](../specs/007-tema-login-keycloak/spec.md) |
+| [Workspace frontend inspirado no Obsidian](plan/workspace-frontend-inspirado-no-obsidian.md) | [Workspace](../specs/008-workspace-frontend/spec.md) |
 
-A ordem padrão para uma única IA ou um único worktree é:
-
-1. ler este plano mestre e o documento de evolução do produto;
-2. executar o [plano do BFF com Keycloak](plan/bff-keycloak.md) respeitando
-    suas dependências internas;
-3. entregar e validar as capacidades das Fases 0 a 3 necessárias aos planos de
-    integração, incluindo Notes, autorização por vault, jobs duráveis,
-    filesystem seguro, indexação, auditoria e operação;
-4. preparar e validar o deploy self-hosted local por Compose conforme o plano
-    próprio, sem considerar o deploy como conclusão dos gates de release estável;
-5. obter e registrar a decisão humana de entrada na Fase 5;
-6. executar P-01 a P-03 dos dois planos Teams como descoberta arquitetural,
-    sem iniciar implementação posterior aos gates;
-7. reconciliar os ADRs e os contratos do Plugin Host, evitando capabilities,
-    endpoints, migrations e jobs concorrentes ou duplicados;
-8. executar primeiro o plano do app Altivy Notes e `external-push`, seguindo o
-    grafo de dependências das etapas, e concluir sua validação e rollout;
-9. executar o plano de sincronização via Microsoft Graph, reutilizando apenas
-    contratos e infraestrutura já aprovados e compatíveis;
-10. realizar revisão integrada de segurança, contratos, migrations,
-    observabilidade, recuperação e documentação.
-
-As etapas 8 e 9 podem ocorrer em paralelo somente quando houver responsáveis
-distintos, worktrees ou branches isolados, ADR compartilhado e divisão explícita
-de ownership. Sem essas condições, a ordem sequencial é obrigatória para evitar
-conflitos nos contratos do Plugin Host, no OpenAPI e no schema PostgreSQL.
-
-### 15.3 Protocolo de execução para IA
-
-Ao executar trabalho orientado pelos planos, a IA deve:
-
-1. reler o status geral do plano e interromper se estiver `draft`, `proposed`,
-    `blocked`, `cancelled`, `superseded` ou se depender de aprovação ainda não
-    registrada;
-2. confirmar que todas as pré-condições desta seção e todas as dependências
-    `P-NN` da etapa estão satisfeitas;
-3. escolher somente uma etapa desbloqueada por vez por plano e mudar seu status
-    para `in-progress` com entrada correspondente no histórico;
-4. executar as entregas e validações descritas nessa etapa, sem antecipar
-    trabalho de etapas dependentes;
-5. registrar evidências verificáveis no próprio plano e manter `blocked` quando
-    um gate, decisão humana, tenant, credencial ou infraestrutura estiver
-    indisponível;
-6. não marcar etapa como `completed` ou `skipped`, plano como `approved` ou
-    `completed`, nem gate como aprovado sem a evidência e a decisão humana
-    exigidas pelas regras do repositório;
-7. atualizar documentação, ADR, contrato, migration, threat model e runbook no
-    mesmo change set quando a etapa alterar essas superfícies;
-8. voltar a este índice ao concluir ou bloquear um plano para selecionar o
-    próximo plano cujas pré-condições estejam satisfeitas.
-
-Planos novos adicionados a `docs/plan/` devem ser incluídos neste índice no
-mesmo change set, com papel, pré-condições e posição no grafo. Um plano marcado
-como `superseded`, `cancelled` ou `completed` permanece referenciado para
-rastreabilidade, mas não volta à fila de execução sem decisão explícita.
+Planos `completed` permanecem como histórico. Planos `superseded` ou
+`cancelled` não são reativados; qualquer retomada deve começar como novo escopo
+Spec Kit com autorização humana.

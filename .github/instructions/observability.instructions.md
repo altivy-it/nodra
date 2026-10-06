@@ -1,7 +1,7 @@
 ---
 name: "Observabilidade e Telemetria"
 description: "Use ao criar ou alterar logs, métricas, traces, OpenTelemetry, health checks, correlation IDs, dashboards ou alertas no frontend, backend e deployment."
-applyTo: "apps/**/*Telemetry*, apps/**/*Observability*, apps/**/*Health*, libs/**/*Telemetry*, libs/**/*Observability*, deploy/**/*otel*, deploy/**/*prometheus*, deploy/**/*grafana*"
+applyTo: "backend/**/*Telemetry*, backend/**/*Observability*, backend/**/*Health*, frontend/**/*Telemetry*, frontend/**/*Observability*, frontend/**/*Health*, deploy/**/*otel*, deploy/**/*prometheus*, deploy/**/*grafana*"
 ---
 
 # Observabilidade

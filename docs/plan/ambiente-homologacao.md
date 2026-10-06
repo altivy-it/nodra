@@ -1,5 +1,7 @@
 # Plano: Ambiente real de homologação
 
+> REFERÊNCIA LEGADA: escopo convertido para [Spec Kit](../../specs/003-ambiente-homologacao/spec.md), ainda em rascunho e aguardando revisão humana. Este arquivo não tem autoridade operacional; não executar nem atualizar etapas.
+
 **Status:** approved
 **Data de criação:** 2026-09-01
 **Última atualização:** 2026-09-01

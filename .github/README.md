@@ -11,8 +11,8 @@ Se você está começando a usar IA ou GitHub Copilot, leia primeiro o [tutorial
 | `copilot-instructions.md` | regras globais carregadas em todo o workspace |
 | `instructions/*.instructions.md` | regras carregadas por domínio e caminho de arquivo |
 | `agents/*.agent.md` | especialistas com papéis e ferramentas limitados |
-| `prompts/*.prompt.md` | tarefas focadas invocáveis por `/` |
-| `skills/*/SKILL.md` | workflows multi-etapas invocáveis por `/` |
+| `prompts/*.prompt.md` | ferramentas complementares; não definem workflows de desenvolvimento |
+| `skills/*/SKILL.md` | comandos oficiais do Spec Kit e gates complementares de revisão/release |
 | `COPILOT_GUIDE.md` | tutorial de uso com fluxos e exemplos reais |
 | `COMMIT_CONVENTIONS.md` | tipos, escopos e formato obrigatório de Conventional Commits |
 | `SECRET-SCANNING.md` | política, instalação e tratamento de achados do Gitleaks |
@@ -22,29 +22,33 @@ Se você está começando a usar IA ou GitHub Copilot, leia primeiro o [tutorial
 | `PULL_REQUEST_TEMPLATE.md` | evidências mínimas de um pull request |
 | `ISSUE_TEMPLATE/` | entrada estruturada de bugs e features |
 | `ADR_TEMPLATE.md` | estrutura canônica para decisões arquiteturais |
-| `PLAN_TEMPLATE.md` | estrutura canônica para planos e status por etapa |
+| `PLAN_TEMPLATE.md` | legado obsoleto, mantido até a revisão/arquivamento dos planos convertidos |
+| `../specs/` | requisitos, desenho e tarefas Spec Kit por feature |
+| `../.specify/memory/constitution.md` | princípios duradouros do projeto e exigência documental pt-BR |
+| `../.specify/templates/overrides/` | templates locais de saída do Spec Kit em pt-BR |
 | `PERFORMANCE_TESTING_CRITERIA.md` | critérios para testes de carga e desempenho |
 
 ## Como escolher
 
-- Use **Altivy Delivery Lead** ou `/implement-feature` para entrega ponta a ponta.
-- Use **Altivy Angular Engineer** para trabalho isolado em Angular.
-- Use **Altivy .NET Engineer** para trabalho isolado em backend.
+- Use os comandos Spec Kit para todas as mudanças de aplicação: features pelo SDD e defeitos pela extensão oficial Bug Fixing. As skills instaladas expõem esses comandos; não criam um fluxo concorrente.
+- Use os agentes Angular, .NET, Quality e Security somente para executar ou revisar partes de uma tarefa Spec Kit ativa.
 - Use **Altivy Solution Architect** ou `/create-adr` para decisões de arquitetura.
-- Use `/plan-feature` para criar ou atualizar um plano em `docs/plan`.
-- Use `/generate-tests` para aumentar evidência de um comportamento.
-- Use `/review-change` ou `/pull-request-review` para revisão.
-- Use `/release-readiness` antes de publicar uma versão.
+- Use `/generate-tests` e `/review-change` somente em apoio a uma tarefa/artefato Spec Kit existente.
+- Use `/pull-request-review` e `/release-readiness` como gates posteriores, sem alterar requisitos ou tarefas.
 
 ## Hierarquia de autoridade
 
-1. requisitos e decisões aceitas no [plano mestre](../docs/plano-mestre.md) e ADRs;
-2. [instruções globais](copilot-instructions.md);
-3. instruções específicas do caminho alterado;
-4. skill, prompt ou agente selecionado;
-5. convenções observadas no módulo e nos testes próximos.
+As autoridades operam em âmbitos distintos:
 
-Em caso de conflito, preserve integridade e segurança, interrompa alterações irreversíveis e registre a decisão necessária.
+- visão e escopo globais: [plano mestre](../docs/plano-mestre.md) e documentos de domínio;
+- decisões arquiteturais: ADRs aceitos;
+- princípios duradouros de engenharia: `.specify/memory/constitution.md`;
+- regras operacionais e técnicas do repositório: [instruções globais](copilot-instructions.md) e instruções específicas do caminho; elas restringem, mas não substituem ou duplicam o processo Spec Kit;
+- requisitos da feature: `specs/<feature>/spec.md`;
+- desenho e execução da feature: `specs/<feature>/plan.md` e `tasks.md`;
+- revisão e segurança: skills, prompts e agentes locais, subordinados ao escopo Spec Kit.
+
+Uma feature não pode contrariar decisão arquitetural aceita nem regras invariáveis. Em caso de conflito entre fontes, preserve integridade e segurança, interrompa alterações irreversíveis e solicite decisão humana; não mantenha cópias concorrentes do requisito ou do plano.
 
 Decisões sobre colaboração e autoridade seguem a [governança](GOVERNANCE.md).
 Regras detalhadas de CI e supply chain estão em

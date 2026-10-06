@@ -1,5 +1,7 @@
 # Plano: Workspace frontend inspirado no Obsidian
 
+> REFERÊNCIA LEGADA: escopo convertido para [Spec Kit](../../specs/008-workspace-frontend/spec.md), ainda em rascunho e aguardando revisão humana. Este arquivo não tem autoridade operacional; não executar nem atualizar etapas.
+
 **Status:** in-progress  
 **Data de criação:** 2026-09-01  
 **Última atualização:** 2026-09-28

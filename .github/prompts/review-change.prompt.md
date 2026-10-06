@@ -5,7 +5,7 @@ argument-hint: "Diff, branch, PR ou escopo da revisão"
 agent: "Altivy Code Reviewer"
 ---
 
-Revise a mudança indicada contra o requisito, [plano mestre](../../docs/plano-mestre.md) e instruções aplicáveis.
+Revise a mudança contra a spec e a tarefa oficiais do Spec Kit, o [plano mestre](../../docs/plano-mestre.md) e as instruções aplicáveis. Se não houver artefato Spec Kit associado, registre bloqueio de processo e não substitua o requisito por texto da Issue.
 
 - leia o diff completo e os call sites relevantes;
 - priorize perda/exposição de conteúdo, concorrência, autorização, contratos, migrations, desempenho e operação;

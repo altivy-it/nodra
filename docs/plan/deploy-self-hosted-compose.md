@@ -1,5 +1,7 @@
 # Plano: Deploy self-hosted por Docker Compose
 
+> REFERÊNCIA LEGADA: escopo convertido para [Spec Kit](../../specs/005-deploy-self-hosted-compose/spec.md), ainda em rascunho e aguardando revisão humana. Este arquivo não tem autoridade operacional; não executar nem atualizar etapas.
+
 **Status:** in-progress  
 **Data de criação:** 2026-10-02  
 **Última atualização:** 2026-10-06

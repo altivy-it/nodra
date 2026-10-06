@@ -36,12 +36,15 @@ Detalhes sensíveis não entram em issues, discussões, logs ou artifacts públi
 
 ## Processo de decisão
 
-- correções e mudanças locais seguem pull request com testes proporcionais ao risco;
+- mudanças e correções da aplicação seguem o processo Spec Kit aplicável e pull request com testes proporcionais ao risco;
 - alterações arquiteturais usam ADR em `docs/adr` desde o estado `proposed`;
-- iniciativas multi-etapas usam plano em `docs/plan` com status e evidências;
+- todo desenvolvimento e manutenção da aplicação seguem exclusivamente os processos Spec Kit: SDD para features e a extensão oficial Bug Fixing para defeitos;
+- `specs/<feature>/{spec.md,plan.md,tasks.md}` e os artefatos oficiais de bug fixing são as únicas fontes operacionais de escopo e tarefas;
+- `docs/plan` e `.github/PLAN_TEMPLATE.md` estão congelados. Os sete planos legados abertos foram convertidos em oito conjuntos Spec Kit em rascunho e aguardam revisão humana; até essa revisão, não autorizam trabalho nem recebem atualizações;
 - alteração incompatível exige impacto, migração, rollout e recuperação;
 - introdução de datastore, serviço ou dependência estrutural exige decisão explícita;
-- aceite de ADR, aprovação de plano e dispensa de gate são decisões humanas registradas.
+- aceite de ADR, autorização de implementação e dispensa de gate são decisões humanas registradas;
+- checkboxes em `tasks.md` indicam execução comprovada e não substituem aprovação, aceite de produto ou revisão humana.
 
 Quando não houver consenso, o mantenedor responsável decide e registra a
 justificativa no pull request, issue ou ADR correspondente. Decisões podem ser

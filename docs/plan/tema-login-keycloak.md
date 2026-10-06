@@ -1,5 +1,7 @@
 # Plano: Tema personalizado de login do Keycloak
 
+> REFERÊNCIA LEGADA: escopo convertido para [Spec Kit](../../specs/007-tema-login-keycloak/spec.md), ainda em rascunho e aguardando revisão humana. Este arquivo não tem autoridade operacional; não executar nem atualizar etapas.
+
 **Status:** approved
 **Data de criação:** 2026-08-15  
 **Última atualização:** 2026-09-01  

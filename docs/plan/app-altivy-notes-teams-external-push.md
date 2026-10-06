@@ -1,5 +1,7 @@
 # Plano: Plataforma de plugins e plugin Microsoft Teams
 
+> REFERÊNCIA LEGADA: escopo convertido para [Spec Kit](../../specs/004-app-teams-external-push/spec.md), ainda em rascunho e aguardando revisão humana. Este arquivo não tem autoridade operacional; não executar nem atualizar etapas.
+
 **Status:** blocked
 **Data de criação:** 2026-08-15  
 **Última atualização:** 2026-10-05
