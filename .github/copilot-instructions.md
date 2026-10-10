@@ -67,12 +67,19 @@ Para mudanças da aplicação, esse fluxo técnico é executado exclusivamente d
 - Registre origem e revisor humano em ADRs. IA não marca ADR como `accepted` sem decisão ou evidência humana explícita e referenciada.
 - Checkboxes em `specs/<feature>/tasks.md` registram execução, não aprovação humana; só marque uma tarefa concluída após implementar e validar a evidência correspondente.
 
+### Extensões e localização
+
+- As extensões oficiais `assess`, `bug` e `git` apoiam o mesmo processo Spec Kit. `assess` registra descoberta em `.specify/assessments/<slug>/`; seu veredito `go` encaminha para especificação, nunca autoriza implementação ou aprova artefatos em nome de uma pessoa.
+- Use as mesmas configurações Spec Kit do Inventory360Api: `auto_execute_hooks: true`, hooks Git com `enabled: true` e `git-config.yml` igual ao da referência. A invocação de um fluxo Spec Kit autoriza os hooks nele configurados; não autoriza push, publicação, deploy ou implementação de produto fora das tarefas aprovadas.
+- Após instalar, atualizar ou reconciliar componentes, use [localize-speckit](prompts/localize-speckit.prompt.md) para auditar/traduzir textos humanos em pt-BR sem alterar comandos, aliases, IDs, placeholders ou contratos de leitura. Sem modo explícito, somente audite; não invente configuração de idioma ou hooks de instalação.
+- Consulte [o guia de extensões e manutenção](README.md#spec-kit-e-extensões) para versões, comandos e validação. Preserve constituição, specs, overrides e personalizações locais ao atualizar.
+
 ## Commits
 
 - Todo commit criado ou sugerido segue [Conventional Commits](COMMIT_CONVENTIONS.md) e usa os tipos e escopos aprovados pelo projeto.
 - Escreva a descrição em português brasileiro, no imperativo, iniciando com minúscula e sem ponto final.
 - Mudanças incompatíveis usam `!` no cabeçalho e o rodapé `BREAKING CHANGE:` com impacto e migração.
-- Não faça commit, push, publicação ou deploy sem solicitação explícita.
+- Fora dos hooks autorizados pela invocação do fluxo Spec Kit, não faça commit sem solicitação explícita. Push, publicação e deploy sempre exigem solicitação explícita.
 
 ## Scripts e automação
 
