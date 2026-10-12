@@ -130,4 +130,4 @@ vault e PostgreSQL antes da promoção de versões.
 - [Plano self-hosted](../plan/deploy-self-hosted-compose.md)
 - [Plano da VPS supersedido](../plan/deploy-producao-vps.md)
 - [Compose self-hosted](../../deploy/self-hosted/compose.yaml)
-- [Plataforma compartilhada](../../../architecture-knowledge-base/platforms/identity/README.md)
+- [Plataforma compartilhada](https://github.com/altivy-it/architecture-knowledge-base/blob/main/platforms/identity/README.md)

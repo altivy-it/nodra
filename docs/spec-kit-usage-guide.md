@@ -222,7 +222,7 @@ O plano detalha como implementar; ele não deve redefinir os requisitos da spec.
 
 O plano pode revelar uma decisão arquitetural ou transversal que precise ser durável, como uma escolha com impacto em contratos, segurança, dados ou integração. Nesse caso, registre a decisão no fluxo de ADR do projeto e obtenha a revisão humana necessária antes de decompor o trabalho em tarefas. Se o plano não identificar uma decisão desse tipo, não crie um ADR apenas para cumprir uma etapa do fluxo.
 
-Spec e ADR têm papéis diferentes: a spec é a fonte de requisitos e comportamento esperado; o ADR registra a decisão, alternativas, consequências e justificativa. O ADR não substitui a spec nem deve duplicar seus requisitos. Siga a [política de decisões arquiteturais](../instructions/architecture-decisions.instructions.md) para avaliar quando um ADR é necessário.
+Spec e ADR têm papéis diferentes: a spec é a fonte de requisitos e comportamento esperado; o ADR registra a decisão, alternativas, consequências e justificativa. O ADR não substitui a spec nem deve duplicar seus requisitos. Siga as [instruções de arquitetura](../.github/instructions/architecture.instructions.md) para avaliar quando um ADR é necessário.
 
 #### 8. Verifique a qualidade dos requisitos
 
