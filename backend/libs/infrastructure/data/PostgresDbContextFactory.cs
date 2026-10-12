@@ -25,7 +25,10 @@ public sealed class PostgresDbContextFactory : IDesignTimeDbContextFactory<Postg
 
         var options = new DbContextOptionsBuilder<PostgresDbContext>()
             .UseNpgsql(connectionString, npgsqlOptions =>
-                npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "altivy"))
+            {
+                npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "altivy");
+                npgsqlOptions.CommandTimeout(180);
+            })
             .Options;
 
         return new PostgresDbContext(options);

@@ -1,16 +1,6 @@
 <Solution>
     <Folder Name="/backend/" />
     <Folder Name="/backend/apps/" />
-    <Project Path="../dokpod/backend/apps/Dokpod.Agent/Dokpod.Agent.csproj" />
-    <Project Path="../dokpod/backend/libs/Dokpod.Agent.Application/Dokpod.Agent.Application.csproj" />
-    <Project Path="../dokpod/backend/libs/Dokpod.Agent.Contracts/Dokpod.Agent.Contracts.csproj" />
-    <Project Path="../dokpod/backend/libs/Dokpod.Agent.Infrastructure/Dokpod.Agent.Infrastructure.csproj" />
-    <Project Path="../dokpod/backend/libs/Dokpod.ControlPlane.Application/Dokpod.ControlPlane.Application.csproj" />
-    <Project Path="../dokpod/backend/libs/Dokpod.Domain/Dokpod.Domain.csproj" />
-    <Project Path="../dokpod/backend/tests/Dokpod.Agent.Docker.IntegrationTests/Dokpod.Agent.Docker.IntegrationTests.csproj" />
-    <Project Path="../dokpod/backend/tests/Dokpod.Agent.Infrastructure.Tests/Dokpod.Agent.Infrastructure.Tests.csproj" />
-    <Project Path="../dokpod/backend/tests/Dokpod.ControlPlane.Application.Tests/Dokpod.ControlPlane.Application.Tests.csproj" />
-    <Project Path="../dokpod/backend/tests/Dokpod.Domain.Tests/Dokpod.Domain.Tests.csproj" />
     <Project Path="backend/apps/api/Altivy.Notes.Api.csproj" />
     <Project Path="backend/apps/bff/Altivy.Bff.csproj" />
     <Project Path="backend/apps/worker/Altivy.Notes.Worker.csproj" />

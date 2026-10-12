@@ -1,5 +1,7 @@
 # Plano: Workspace frontend inspirado no Obsidian
 
+> REFERÊNCIA LEGADA: escopo convertido para [Spec Kit](../../specs/008-workspace-frontend/spec.md), ainda em rascunho e aguardando revisão humana. Este arquivo não tem autoridade operacional; não executar nem atualizar etapas.
+
 **Status:** in-progress  
 **Data de criação:** 2026-09-01  
 **Última atualização:** 2026-09-28
@@ -303,13 +305,15 @@ não for apropriada ao usuário final.
 - Angular CDK, Lucide Angular, CodeMirror e Cytoscape.js somente entram nas etapas
   que os utilizam, com versão fixada, licença permissiva verificada e SBOM
   atualizado.
-- Em 2026-09-26, a versão publicada consultada de `@po-ui/ng-components` foi
-  `21.31.0` (MIT), com peers `@angular/* ^21`, incompatíveis com o Angular
-  `22.1` deste projeto. Para continuar este plano sem degradar a stack nem
-  introduzir peer dependency inválida, controles nativos locais podem cobrir
-  somente capacidades do workspace sem componente PO UI compatível. Não será
-  adicionada biblioteca visual concorrente; a exceção deve ser reavaliada quando
-  PO UI suportar a major adotada.
+- Em 2026-10-02, `@po-ui/ng-components@21.32.0` (MIT) declara peers
+  `@angular/* ^21`, incompatíveis com o Angular `22.1` deste projeto. Controles
+  nativos locais podem cobrir somente capacidades do workspace sem componente
+  PO UI compatível. A decisão é não adotar PrimeNG como fallback: embora
+  `primeng@22.1.2` declare peers compatíveis com Angular `22.1`, a versão 22
+  está sob o licenciamento PrimeUI, com uso Community sujeito a elegibilidade e
+  renovação anual e licença Comercial paga, incompatível com a política de
+  dependências do repositório. Não será adicionada biblioteca visual concorrente;
+  reavaliar quando PO UI suportar a major Angular adotada.
 
 ## Etapas
 
@@ -664,11 +668,11 @@ Evidências:
   namespaced em `altivy`, flags de classificação/metadados/links no contrato
   de leitura e badges acessíveis no explorador. O teste de domínio passou
   26/26; parser, `NotePath` e resolução de links têm cobertura unitária. O
-  teste de integração do filesystem foi adicionado para validar a resolução
-  contra o vault e a preservação do conteúdo, mas a execução final permanece
-  bloqueada por resíduos/permissões de `obj/bin` no bind mount Windows. O
-  Playwright contra BFF/API/Keycloak reais e a publicação continuam fora desta
-  evidência.
+  teste de integração do filesystem valida a resolução contra o vault e a
+  preservação do conteúdo. Em 2026-10-02, os testes de indicadores de metadados
+  e links não resolvidos passaram `2/2` em container .NET 10, usando filesystem
+  real e sem dependência de PostgreSQL. O Playwright contra BFF/API/Keycloak
+  reais e a publicação continuam fora desta evidência.
 
 ### P-05: Integrar abas, editor e barra de status
 

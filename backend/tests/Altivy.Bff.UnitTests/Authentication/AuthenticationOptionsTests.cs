@@ -76,4 +76,32 @@ public sealed class AuthenticationOptionsTests
         Assert.Equal(TimeSpan.FromHours(8), options.ExpireTimeSpan);
         Assert.False(options.SlidingExpiration);
     }
+
+    [Theory]
+    [InlineData("/api/v1/vaults", true)]
+    [InlineData("/hubs/vaults/negotiate", true)]
+    [InlineData("/bff/login", false)]
+    public async Task OpenIdConnectChallengeOnlyRedirectsInteractiveLogin(string path, bool blocked)
+    {
+        var options = new OpenIdConnectOptions();
+        new ConfigureOpenIdConnectOptions(Options.Create(new KeycloakOptions
+        {
+            Authority = "https://credential.example/realms/altivy",
+            ClientId = "altivy-bff",
+            ClientSecret = "synthetic-test-secret"
+        })).Configure(options);
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Path = path;
+        var context = new Microsoft.AspNetCore.Authentication.OpenIdConnect.RedirectContext(
+            httpContext,
+            new Microsoft.AspNetCore.Authentication.AuthenticationScheme(
+                OpenIdConnectDefaults.AuthenticationScheme, null, typeof(OpenIdConnectHandler)),
+            options,
+            new Microsoft.AspNetCore.Authentication.AuthenticationProperties());
+
+        await options.Events.OnRedirectToIdentityProvider(context);
+
+        Assert.Equal(blocked, context.Handled);
+        Assert.Equal(blocked ? 401 : 200, httpContext.Response.StatusCode);
+    }
 }

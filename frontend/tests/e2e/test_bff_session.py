@@ -1,6 +1,7 @@
 import pytest
 from playwright.sync_api import Page, expect
 from urllib.parse import urlsplit
+from uuid import uuid4
 
 
 @pytest.mark.e2e
@@ -36,6 +37,85 @@ def test_authenticated_can_access_authorized_vault(authenticated_page: Page, bas
     data = response.json()
     assert data["id"] == "lab-0001"
     assert data["scope"] == "vault:read"
+
+
+@pytest.mark.e2e
+@pytest.mark.authenticated
+def test_authenticated_can_create_and_autosave_note_in_write_vault(
+    authenticated_page: Page,
+    base_url: str,
+    pytestconfig: pytest.Config,
+) -> None:
+    vault_id = pytestconfig.getoption("write_vault_id")
+    if not vault_id:
+        pytest.skip("Defina --write-vault-id ou ALTIVY_E2E_WRITE_VAULT_ID para usar um vault isolado.")
+
+    catalog = authenticated_page.request.get(f"{base_url}/api/v1/vaults")
+    assert catalog.status == 200
+    assert vault_id in {item["id"] for item in catalog.json()["items"]}
+
+    authenticated_page.goto(base_url, wait_until="networkidle")
+    selector = authenticated_page.get_by_role("combobox", name="Vault ativo")
+    expect(selector).to_be_visible()
+    selector.select_option(vault_id)
+    expect(authenticated_page).to_have_url(f"{base_url}/workspace/{vault_id}/files")
+    expect(selector).to_have_value(vault_id)
+
+    note_path = f"autosave-{uuid4().hex}.md"
+    note_url = f"{base_url}/api/v1/vaults/{vault_id}/notes/{note_path}"
+    initial_content = "# Autosave E2E\nPrimeira gravação pelo navegador."
+    updated_content = "# Autosave E2E\nAtualização com ETag pelo navegador."
+    authenticated_page.get_by_role("button", name="Nova nota").click()
+    authenticated_page.get_by_role("textbox", name="Caminho da nota").fill(note_path)
+    content = authenticated_page.get_by_role("textbox", name="Conteúdo Markdown")
+
+    with authenticated_page.expect_response(
+        lambda result: result.url == note_url and result.request.method == "GET"
+    ) as read_response:
+        with authenticated_page.expect_response(
+            lambda result: result.url == note_url and result.request.method == "POST"
+        ) as create_response:
+            content.fill(initial_content)
+
+    assert create_response.value.status == 201
+    assert read_response.value.status == 200
+    assert read_response.value.headers.get("etag")
+    assert read_response.value.json()["content"] == initial_content
+
+    authenticated_page.wait_for_load_state("networkidle")
+    with authenticated_page.expect_response(
+        lambda result: result.url == note_url and result.request.method == "PUT"
+    ) as update_response:
+        content.fill(updated_content)
+
+    assert update_response.value.status == 204
+    assert update_response.value.request.headers.get("if-match")
+
+    persisted = authenticated_page.request.get(note_url)
+    assert persisted.status == 200
+    assert persisted.headers.get("etag")
+    assert persisted.json()["content"] == updated_content
+
+
+@pytest.mark.e2e
+@pytest.mark.authenticated
+def test_authenticated_can_read_persisted_note_after_container_recreation(
+    authenticated_page: Page,
+    base_url: str,
+    pytestconfig: pytest.Config,
+) -> None:
+    vault_id = pytestconfig.getoption("write_vault_id")
+    note_path = pytestconfig.getoption("persisted_note_path")
+    if not vault_id or not note_path:
+        pytest.skip("Defina os IDs do vault de escrita e da nota persistida para validar recriação.")
+
+    response = authenticated_page.request.get(
+        f"{base_url}/api/v1/vaults/{vault_id}/notes/{note_path}"
+    )
+
+    assert response.status == 200
+    assert response.headers.get("etag")
+    assert response.json()["content"] == "# Autosave E2E\nAtualização com ETag pelo navegador."
 
 
 @pytest.mark.e2e
@@ -92,12 +172,17 @@ def test_denied_vault_is_not_exposed_through_bff_proxy(
 def test_authenticated_catalog_contains_only_authorized_vaults(
     authenticated_page: Page,
     base_url: str,
+    pytestconfig: pytest.Config,
 ) -> None:
     response = authenticated_page.request.get(f"{base_url}/api/v1/vaults")
 
     assert response.status == 200
     data = response.json()
-    assert all(item["id"] in {"lab-0001", "lab-0002"} for item in data["items"])
+    expected_vaults = {"lab-0001", "lab-0002"}
+    write_vault_id = pytestconfig.getoption("write_vault_id")
+    if write_vault_id:
+        expected_vaults.add(write_vault_id)
+    assert {item["id"] for item in data["items"]} == expected_vaults
     assert all(set(item) == {"id", "name"} for item in data["items"])
 
 

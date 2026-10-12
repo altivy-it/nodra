@@ -1,5 +1,7 @@
 # Plano: Alternância segura entre vaults
 
+> REFERÊNCIA LEGADA: escopo convertido para [alternância](../../specs/001-alternancia-vaults/spec.md) e [provisionamento](../../specs/002-provisionamento-vaults/spec.md), ainda em rascunho e aguardando revisão humana. Este arquivo não tem autoridade operacional; não executar nem atualizar etapas.
+
 **Status:** in-progress
 **Data de criação:** 2026-09-04  
 **Última atualização:** 2026-09-05  

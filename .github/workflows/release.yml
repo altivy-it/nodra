@@ -146,7 +146,7 @@ jobs:
         env:
           RELEASE_TAG: ${{ steps.release.outputs.tag }}
           RELEASE_VERSION: ${{ steps.release.outputs.version }}
-          TARGET_PLATFORM: ${{ vars.ALTIVY_VPS_PLATFORM || 'linux/amd64' }}
+          TARGET_PLATFORM: ${{ vars.ALTIVY_RELEASE_PLATFORM || 'linux/amd64' }}
           TRIVY_IMAGE: aquasec/trivy:0.72.0@sha256:c6e969c5662a546ad5de4a73c2a6b7a7c627f86d916903e175aa623af5b97ada
         shell: bash
         run: |

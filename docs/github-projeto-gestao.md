@@ -6,17 +6,17 @@ Este documento define como usar GitHub Issues e GitHub Projects para gerenciar o
 
 Os formulários em `.github/ISSUE_TEMPLATE/` são versionados neste repositório. O Project, seus campos e suas visualizações são recursos da conta ou organização do GitHub e precisam ser criados na interface do GitHub ou pela API. Este documento é a configuração de referência para evitar divergência entre ambientes.
 
-O Project organiza o fluxo operacional. Os planos em `docs/plan/` continuam sendo a fonte versionada para dependências, decisões, gates e evidências de execução.
+O Project organiza intake, responsáveis e estado de Issues associadas a tarefas Spec Kit. A fonte versionada de requisitos, desenho, dependências e tarefas é exclusivamente o Spec Kit; GitHub Issues/Projects não definem escopo nem autorizam trabalho por conta própria.
 
 ## Tipos de demanda
 
 | Tipo | Formulário | Uso | Label inicial |
 | --- | --- | --- | --- |
-| Bug | `bug-report.yml` | regressão ou comportamento incorreto | `type:bug` |
-| Feature | `feature-request.yml` | necessidade de produto ou melhoria | `type:feature` |
-| Tarefa | `technical-task.yml` | trabalho técnico independente | `type:task` |
-| Slice de plano | `plan-slice.yml` | etapa `P-NN` ou `WP-NN` autorizada | `type:plan-slice` |
-| Spike | `architecture-spike.yml` | investigação ou decisão arquitetural | `type:spike` |
+| Bug | `bug-report.yml` | intake de comportamento incorreto; execução segue Spec Kit Bug Fixing | `type:bug` |
+| Feature | `feature-request.yml` | intake de necessidade; execução segue Spec Kit SDD | `type:feature` |
+| Tarefa Spec Kit | `spec-kit-task.yml` | autorização humana de uma tarefa já existente em artefato Spec Kit | `type:spec-task` |
+| Tarefa técnica | `technical-task.yml` | intake técnico que precisa ser especificado antes da execução | `type:task` |
+| Decisão arquitetural | `architecture-spike.yml` | intake de decisão; ADR é complementar e não cria plano de implementação | `type:spike` |
 
 Vulnerabilidades não devem ser registradas nesses formulários. Use o fluxo de segurança do repositório.
 
@@ -29,12 +29,12 @@ Configure os campos abaixo. `Status` é o campo padrão do Projects; os demais s
 | Campo | Tipo | Valores sugeridos |
 | --- | --- | --- |
 | Status | Single select | Inbox, Triage, Ready, In progress, Blocked, In review, Validation, Done, Cancelled |
-| Type | Single select | Bug, Feature, Task, Plan slice, Spike |
+| Type | Single select | Bug, Feature, Task, Spec task, Architecture decision |
 | Priority | Single select | P0, P1, P2, P3 |
 | Area | Iteration ou texto | Architecture, Backend, Frontend, Database, Security, DevOps, Documentation, Tests |
 | Risk | Single select | Low, Medium, High |
-| Plan | Text | nome ou caminho do plano em `docs/plan/` |
-| Slice | Text | `P-01`, `P-02`, `WP-01` |
+| Spec artifact | Text | caminho do diretório `specs/<feature>/` ou artefato oficial `.specify/bugs/<slug>/` |
+| Task ID | Text | ID de tarefa existente em `tasks.md` ou ação do fluxo oficial Bug Fixing |
 | Iteration | Iteration | sprint ou ciclo de trabalho |
 | Target | Single select | MVP, Fase 3, Fase 5, Post-MVP, Unplanned |
 | Human approval | Single select | Pending, Approved, Not required |
@@ -51,7 +51,7 @@ Crie as seguintes views no mesmo Project:
 - layout: Table;
 - filtro: `status != Done` e `status != Cancelled`;
 - ordenar por: `Priority` e `updated`;
-- colunas: Title, Type, Status, Priority, Area, Plan, Slice, Iteration, Assignee.
+- colunas: Title, Type, Status, Priority, Area, Spec artifact, Task ID, Iteration, Assignee.
 
 ### Kanban
 
@@ -79,15 +79,15 @@ Crie as seguintes views no mesmo Project:
 - layout: Table;
 - filtro: `Risk = High OR Status = Blocked`;
 - ordenar por: Priority e updated;
-- mostrar: Title, Type, Risk, Status, Blocked by, Assignee, Plan.
+- mostrar: Title, Type, Risk, Status, Blocked by, Assignee, Spec artifact, Task ID.
 
-### Entrega de planos
+### Tarefas Spec Kit
 
 - layout: Table;
-- filtro: `Type = Plan slice`;
-- agrupar por: `Plan`;
-- ordenar por: `Slice`;
-- mostrar: Title, Plan, Slice, Status, Human approval, Dependencies, Assignee.
+- filtro: `Type = Spec task`;
+- agrupar por: `Spec artifact`;
+- ordenar por: `Task ID`;
+- mostrar: Title, Spec artifact, Task ID, Status, Human approval, Dependencies, Assignee.
 
 ## Fluxo operacional
 
@@ -95,12 +95,12 @@ Crie as seguintes views no mesmo Project:
 2. A Issue entra no Project com `Status = Inbox`.
 3. A triagem confirma Type, Priority, Area, Risk, responsável e dependências.
 4. Demandas incompletas ficam em `Triage`; demandas prontas passam a `Ready`.
-5. Uma pessoa ou o Copilot executa somente demandas `Ready` e autorizadas.
+5. `Ready` no Project não autoriza execução: uma pessoa ou o Copilot só pode executar uma tarefa que exista em artefato Spec Kit e tenha autorização humana explícita.
 6. O trabalho em execução fica em `In progress`; impedimentos ficam em `Blocked` com causa explícita.
 7. Um Pull Request deve referenciar a Issue, por exemplo `Implements #123`.
 8. Com o PR aberto, a demanda passa a `In review`; após os checks, vai para `Validation`.
 9. A revisão humana confirma os critérios de aceite e move a demanda para `Done`.
-10. O fechamento da Issue não substitui a atualização do plano Markdown quando a demanda for um slice de plano.
+10. O fechamento da Issue não substitui evidências nem atualização dos artefatos oficiais Spec Kit.
 
 ## Automação recomendada
 
@@ -113,15 +113,15 @@ Use os workflows nativos do GitHub Projects para:
 - mover para `Done` quando a Issue for fechada;
 - arquivar itens concluídos após o prazo de retenção definido pela equipe.
 
-A automação nativa não interpreta com segurança todos os campos de texto de um Issue Form. Durante a triagem, copie `Priority`, `Area`, `Risk`, `Plan` e `Slice` para os campos do Project. Uma Action com GitHub App ou token de Project pode automatizar essa sincronização depois, mas deve ser adicionada somente com permissões mínimas e revisão de segurança.
+A automação nativa não interpreta com segurança todos os campos de texto de um Issue Form. Durante a triagem, copie `Priority`, `Area`, `Risk`, `Spec artifact` e `Task ID` para os campos do Project. Uma Action com GitHub App ou token de Project pode automatizar essa sincronização depois, mas deve ser adicionada somente com permissões mínimas e revisão de segurança.
 
 ## Regras de governança
 
-- Uma Issue representa uma demanda operacional; um plano representa uma iniciativa com dependências e gates.
+- Uma Issue representa intake ou rastreamento; artefatos Spec Kit são a única fonte versionada de escopo, plano e tarefas de aplicação.
 - `Done` no Project não autoriza merge, publicação ou deploy por si só.
-- Slices de planos `draft`, `proposed`, `blocked`, `cancelled` ou `superseded` não devem ser executados.
+- Issues sem tarefa Spec Kit associada não devem ser executadas; `docs/plan/` permanece congelado enquanto os oito conjuntos migrados aguardam revisão humana e arquivamento das fontes legadas.
 - Alterações de arquitetura, contrato, migration ou segurança devem atualizar os documentos correspondentes no mesmo change set.
-- Dependências são registradas com links para Issues, ADRs ou etapas do plano, nunca apenas em texto solto.
+- Dependências são registradas nos artefatos Spec Kit e podem ser espelhadas por links para Issues, ADRs ou outras tarefas; Project não é a fonte dessas dependências.
 - Não registre secrets, conteúdo real de vaults ou dados pessoais nas Issues.
 
 ## Checklist de criação do Project

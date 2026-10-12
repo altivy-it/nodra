@@ -1,11 +1,13 @@
 # ADR 2026-0007: Deploy do Altivy Notes em VPS com infraestrutura compartilhada
 
-**Status:** proposed  
+**Status:** superseded  
 **Data:** 2026-09-29  
 **Responsáveis:** equipe Altivy  
 **Origem:** IA assistida  
 **Revisor humano:** Lincoln Zocateli  
 **Relacionado:** [Plano de deploy de produção em VPS](../plan/deploy-producao-vps.md), [CI/CD e segurança](../ci-cd-seguranca.md)
+
+> Supersedido pela decisão humana de distribuição self-hosted local registrada no [ADR 2026-0008](2026-0008-deploy-self-hosted-compose.md).
 
 ## Contexto
 

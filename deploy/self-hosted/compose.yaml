@@ -1,0 +1,161 @@
+name: altivy-notes
+
+services:
+  web:
+    build:
+      context: ../..
+      dockerfile: frontend/web/Dockerfile
+      args:
+        IMAGE_VERSION: ${ALTIVY_WEB_VERSION:-0.1.0}
+        WEB_CONFIGURATION: production
+        WEB_BASE_HREF: /notes/
+    image: ${ALTIVY_WEB_IMAGE:-altivy-web:0.1.0}
+    pull_policy: missing
+    restart: unless-stopped
+    init: true
+    read_only: true
+    stop_grace_period: 10s
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx:rw,noexec,nosuid,size=32m,uid=101,gid=101,mode=0700
+      - /var/log/nginx:rw,noexec,nosuid,size=16m,uid=101,gid=101,mode=0700
+      - /var/run:rw,noexec,nosuid,size=4m,uid=101,gid=101,mode=0700
+    networks:
+      identity-global:
+        aliases:
+          - notes-web
+
+  bff:
+    build:
+      context: ../..
+      dockerfile: backend/apps/bff/Dockerfile
+      args:
+        IMAGE_VERSION: ${ALTIVY_BACKEND_VERSION:-0.1.0}
+    image: ${ALTIVY_BFF_IMAGE:-altivy-bff:0.1.0}
+    pull_policy: missing
+    extra_hosts:
+      - "localhost:${IDENTITY_GATEWAY_IP:?Configure IDENTITY_GATEWAY_IP}"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      Authentication__Keycloak__Authority: ${ALTIVY_KEYCLOAK_AUTHORITY:?Configure ALTIVY_KEYCLOAK_AUTHORITY}
+      Authentication__Keycloak__ClientId: altivy-bff
+      Authentication__Keycloak__ClientSecret: ${ALTIVY_BFF_CLIENT_SECRET:-${ALTIVY_E2E_BFF_CLIENT_SECRET:?Configure ALTIVY_BFF_CLIENT_SECRET ou ALTIVY_E2E_BFF_CLIENT_SECRET}}
+      Downstream__Api__BaseUrl: https://api:8443
+      SSL_CERT_FILE: /certs/rootCA.pem
+      AllowedHosts: ${ALTIVY_PUBLIC_HOST:?Configure ALTIVY_PUBLIC_HOST}
+      Security__AllowedOrigins__0: ${ALTIVY_PUBLIC_ORIGIN:?Configure ALTIVY_PUBLIC_ORIGIN}
+      Security__TrustedProxies__0: ${IDENTITY_GATEWAY_IP:?Configure IDENTITY_GATEWAY_IP}
+      Security__DataProtectionKeysPath: /keys
+      Security__DataProtectionCertificatePath: /certs/altivy-data-protection.pfx
+      Security__DataProtectionCertificatePassword: ${ALTIVY_DATA_PROTECTION_CERTIFICATE_PASSWORD:?Configure ALTIVY_DATA_PROTECTION_CERTIFICATE_PASSWORD}
+    restart: unless-stopped
+    init: true
+    read_only: true
+    stop_grace_period: 20s
+    tmpfs:
+      - /tmp
+    volumes:
+      - type: bind
+        source: ${ALTIVY_DATA_ROOT:?Configure ALTIVY_DATA_ROOT}/bff-keys
+        target: /keys
+      - type: bind
+        source: ${ALTIVY_CONFIG_ROOT:?Configure ALTIVY_CONFIG_ROOT}/altivy-data-protection.pfx
+        target: /certs/altivy-data-protection.pfx
+        read_only: true
+      - ${ALTIVY_TLS_CA_PATH:?Configure ALTIVY_TLS_CA_PATH}:/certs/rootCA.pem:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      app:
+      identity-global:
+        aliases:
+          - notes-bff
+
+  api:
+    build:
+      context: ../..
+      dockerfile: backend/apps/api/Dockerfile
+      args:
+        IMAGE_VERSION: ${ALTIVY_BACKEND_VERSION:-0.1.0}
+    image: ${ALTIVY_API_IMAGE:-altivy-api:0.1.0}
+    pull_policy: missing
+    extra_hosts:
+      - "localhost:${IDENTITY_GATEWAY_IP:?Configure IDENTITY_GATEWAY_IP}"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: https://+:8443
+      Kestrel__Certificates__Default__Path: /certs/api.crt
+      Kestrel__Certificates__Default__KeyPath: /certs/api.key
+      SSL_CERT_FILE: /certs/rootCA.pem
+      Keycloak__Authority: ${ALTIVY_KEYCLOAK_AUTHORITY:?Configure ALTIVY_KEYCLOAK_AUTHORITY}
+      Keycloak__Audience: altivy-api
+      ConnectionStrings__AltivyPostgres: ${ALTIVY_POSTGRES_RUNTIME_CONNECTION_STRING:?Configure ALTIVY_POSTGRES_RUNTIME_CONNECTION_STRING}
+      VaultStorage__Root: /vaults
+    restart: unless-stopped
+    init: true
+    read_only: true
+    stop_grace_period: 30s
+    tmpfs:
+      - /tmp
+    volumes:
+      - type: bind
+        source: ${ALTIVY_DATA_ROOT:?Configure ALTIVY_DATA_ROOT}/vaults
+        target: /vaults
+      - ${ALTIVY_API_TLS_CERTIFICATE_PATH:?Configure ALTIVY_API_TLS_CERTIFICATE_PATH}:/certs/api.crt:ro
+      - ${ALTIVY_API_TLS_PRIVATE_KEY_PATH:?Configure ALTIVY_API_TLS_PRIVATE_KEY_PATH}:/certs/api.key:ro
+      - ${ALTIVY_TLS_CA_PATH:?Configure ALTIVY_TLS_CA_PATH}:/certs/rootCA.pem:ro
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--cacert", "/certs/rootCA.pem", "https://localhost:8443/health/live"]
+      interval: 15s
+      timeout: 5s
+      start_period: 30s
+      retries: 4
+    networks:
+      app:
+      identity-global:
+      identity-client:
+
+  worker:
+    build:
+      context: ../..
+      dockerfile: backend/apps/worker/Dockerfile
+      args:
+        IMAGE_VERSION: ${ALTIVY_BACKEND_VERSION:-0.1.0}
+    image: ${ALTIVY_WORKER_IMAGE:-altivy-worker:0.1.0}
+    pull_policy: missing
+    environment:
+      DOTNET_ENVIRONMENT: Production
+      ConnectionStrings__AltivyPostgres: ${ALTIVY_POSTGRES_RUNTIME_CONNECTION_STRING:?Configure ALTIVY_POSTGRES_RUNTIME_CONNECTION_STRING}
+      VaultStorage__Root: /vaults
+      ResidueAlerts__Smtp__Host: ${ALTIVY_SMTP_HOST:?Configure ALTIVY_SMTP_HOST}
+      ResidueAlerts__Smtp__Port: ${ALTIVY_SMTP_PORT:?Configure ALTIVY_SMTP_PORT}
+      ResidueAlerts__Smtp__Username: ${ALTIVY_SMTP_USERNAME:?Configure ALTIVY_SMTP_USERNAME}
+      ResidueAlerts__Smtp__Password: ${ALTIVY_SMTP_PASSWORD:?Configure ALTIVY_SMTP_PASSWORD}
+      ResidueAlerts__Smtp__From: ${ALTIVY_SMTP_FROM:?Configure ALTIVY_SMTP_FROM}
+      ResidueAlerts__Smtp__To: ${ALTIVY_SMTP_TO:?Configure ALTIVY_SMTP_TO}
+    restart: unless-stopped
+    init: true
+    read_only: true
+    stop_grace_period: 30s
+    tmpfs:
+      - /tmp
+    volumes:
+      - type: bind
+        source: ${ALTIVY_DATA_ROOT:?Configure ALTIVY_DATA_ROOT}/vaults
+        target: /vaults
+    networks:
+      app:
+      identity-client:
+
+networks:
+  app:
+    driver: bridge
+    internal: true
+  identity-global:
+    external: true
+    name: identity-global
+  identity-client:
+    external: true
+    name: identity-client

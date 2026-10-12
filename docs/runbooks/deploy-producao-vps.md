@@ -1,5 +1,8 @@
 # Runbook: Deploy de produção em VPS
 
+> **Supersedido:** este runbook descreve uma topologia VPS que não é mais o
+> caminho de deploy ativo. Consulte o [plano self-hosted por Compose](../plan/deploy-self-hosted-compose.md).
+
 ## Objetivo e limites
 
 Operar `https://notes.altivy.it` em uma VPS dedicada com NGINX, PostgreSQL e

@@ -75,6 +75,8 @@ $gatewayContainer = docker ps --filter 'name=altivy-identity-gateway-1' --format
 if (-not $gatewayContainer) { throw 'Inicie a plataforma global de identidade antes do Compose E2E.' }
 $env:IDENTITY_GATEWAY_IP = docker inspect --format '{{with index .NetworkSettings.Networks "identity-global"}}{{.IPAddress}}{{end}}' $gatewayContainer
 if (-not $env:IDENTITY_GATEWAY_IP) { throw 'O gateway não está conectado à rede identity-global.' }
+$env:IDENTITY_GATEWAY_SUBNET = docker network inspect identity-global --format '{{(index .IPAM.Config 0).Subnet}}'
+if (-not $env:IDENTITY_GATEWAY_SUBNET) { throw 'Não foi possível identificar a sub-rede identity-global.' }
 ```
 
 Confirme que o issuer retornado é o esperado:
@@ -98,6 +100,11 @@ docker compose --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env"
   -f deploy/e2e/docker-compose-altivynotes.yaml up --build --wait
 ```
 
+O IP e a sub-rede são obtidos da rede/container em execução. Não use valores
+fixos: a borda pode receber outro endereço após ser recriada, e os containers
+Altivy precisam confiar no IP/CIDR atual para alcançar localhost e processar
+os forwarded headers.
+
 Neste laboratório, BFF e API usam sempre
 `https://localhost:7443/realms/altivy` pelo gateway global. Não defina
 `ALTIVY_E2E_KEYCLOAK_AUTHORITY`; ela pertence à topologia anterior.
@@ -111,14 +118,24 @@ imprime os valores resolvidos.
 
 Após alterar o arquivo externo
 `$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env`, Dockerfile, proxy ou
-configuração do BFF/API, recrie somente `web`, `bff` e `api`. O comando abaixo
-usa esse arquivo externo, reconstrói as imagens e aguarda os health checks sem
-interromper Keycloak ou PostgreSQL:
+configuração do BFF/API/worker, recrie somente os serviços consumidores
+`web`, `bff`, `api` e `worker`. O comando abaixo usa esse arquivo externo,
+reconstrói as imagens e aguarda os health checks sem interromper Keycloak ou
+PostgreSQL:
 
 ```powershell
+$gatewayContainer = docker ps --filter 'name=altivy-identity-gateway-1' --format '{{.ID}}' | Select-Object -First 1
+if (-not $gatewayContainer) { throw 'Inicie a plataforma global de identidade antes do Compose E2E.' }
+$env:IDENTITY_GATEWAY_IP = docker inspect --format '{{with index .NetworkSettings.Networks "identity-global"}}{{.IPAddress}}{{end}}' $gatewayContainer
+$env:IDENTITY_GATEWAY_SUBNET = docker network inspect identity-global --format '{{(index .IPAM.Config 0).Subnet}}'
+if (-not $env:IDENTITY_GATEWAY_IP -or -not $env:IDENTITY_GATEWAY_SUBNET) { throw 'Não foi possível descobrir a rede identity-global atual.' }
 docker compose --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" `
-  -f deploy/e2e/docker-compose-altivynotes.yaml up --build --force-recreate --wait
+  -f deploy/e2e/docker-compose-altivynotes.yaml up --build --force-recreate --wait web bff api worker
 ```
+
+No perfil `Development`, quando a seção SMTP estiver completamente ausente, o
+worker registra um aviso sanitizado e não envia alertas administrativos. Uma
+configuração SMTP parcial continua falhando; Production sempre exige SMTP válido.
 
 O Compose habilita `Bff__AllowInsecureHttpForDevelopment=true` somente para
 permitir HTTP na rede Docker interna e alcançar o Keycloak local pelo host.

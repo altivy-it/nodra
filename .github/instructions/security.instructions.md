@@ -1,7 +1,7 @@
 ---
 name: "Segurança Altivy"
 description: "Use ao alterar autenticação, autorização, filesystem, Markdown, HTML, uploads, secrets, logs, proxy, dependências ou qualquer superfície de segurança."
-applyTo: "apps/**, libs/**, contracts/**, deploy/**"
+applyTo: "backend/**, frontend/**, contracts/**, deploy/**"
 ---
 
 # Segurança

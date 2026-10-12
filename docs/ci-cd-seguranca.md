@@ -42,8 +42,7 @@ O comportamento reproduzível deve ficar no Git:
 | `.github/workflows/ci.yml` | format, lint, build, testes e contratos |
 | `.github/workflows/gitleaks.yml` | scan do histórico Git por secrets |
 | `.github/workflows/release.yml` | PR de release, SemVer, changelog, imagens, scan, SBOM e proveniência |
-| `.github/workflows/deploy.yml` | deploy/rollback independente da aplicação em `production` |
-| `.github/workflows/deploy-shared-infra.yml` | configuração NGINX e entrega do bootstrap PostgreSQL |
+| `deploy/self-hosted/` | instalação e operação local por Docker Compose no host escolhido pelo operador |
 | `.github/dependabot.yml` | atualizações de npm, NuGet, GitHub Actions e imagens base |
 | `.github/CODEOWNERS` | responsáveis por módulos e arquivos críticos |
 | `.github/SECURITY.md` | política de reporte e resposta a vulnerabilidades |
@@ -54,7 +53,7 @@ Os workflows existentes são a implementação inicial dos nomes e responsabilid
 
 ### 2.2 Estado de implementação
 
-O repositório possui CI de código e workflows de release/deploy versionados:
+O repositório possui workflows versionados de CI e release:
 
 - `.github/workflows/ci.yml` executa baseline documental, testes Angular/.NET, integração PostgreSQL e build das imagens, agregando os resultados em `CI / Result`;
 - `tools/scripts/validate-repository.ps1` verifica arquivos obrigatórios, destinos locais de links e imagens Markdown, referências explícitas, IDs explícitos de headings, status geral e por etapa dos planos e fixação de actions externas por SHA ou digest completo;
@@ -64,12 +63,12 @@ O repositório possui CI de código e workflows de release/deploy versionados:
 - `.github/dependabot.yml` atualiza GitHub Actions semanalmente;
 - `.github/SECURITY.md` prepara a política de reporte responsável e informa que o canal ainda não está operacional;
 - `.github/workflows/release.yml` usa Release Please depois de CI verde, cria PR de versão/changelog e, após merge, constrói imagens por SemVer, anexa digests, CycloneDX, scan Trivy e proveniência BuildKit;
-- `.github/workflows/deploy.yml` promove frontend, backend ou ambos por manifesto de digests em GitHub Environment `production`; migrations precedem o deploy backend;
-- `.github/workflows/deploy-shared-infra.yml` valida/recarrega somente o virtual host Altivy e entrega SQL de bootstrap PostgreSQL sem executá-lo;
-- `deploy/production/` contém Compose da aplicação sem PostgreSQL próprio e operador remoto com rollback;
+- `deploy/self-hosted/` contém a composição inicial operada pelo responsável no host self-hosted; CI e release não iniciam nem alteram instalações;
+- `.github/workflows/deploy.yml` e `deploy-shared-infra.yml` foram removidos ao substituir a implantação remota em VPS pelo Compose self-hosted;
+- `deploy/production/` e o runbook de VPS permanecem como histórico supersedido, sem workflow ativo;
 - um checklist administrativo do mantenedor deve registrar configurações que exigem acesso a **Settings** e evidência manual.
 
-Os workflows foram validados localmente, mas ainda precisam executar no GitHub e na VPS. A primeira implantação permanece bloqueada até configurar GitHub App, Environment `production`, host key/SSH, redes externas, arquivos de ambiente, database/roles, callbacks do realm e include NGINX. O CI atual ainda não executa Sonar, CodeQL, Dependency Review nem E2E autenticado; esses gates devem ser adicionados antes de declarar release estável.
+CI e publicação de imagens ainda precisam executar no GitHub com os secrets da GitHub App. A instalação self-hosted permanece pendente de configuração local, bootstrap seguro das roles, callbacks OIDC, smoke test e validação de backup/restore. O CI atual ainda não executa Sonar, CodeQL, Dependency Review nem E2E autenticado; esses gates devem ser adicionados antes de declarar release estável.
 
 ### 2.3 Configuração administrativa na plataforma GitHub
 
@@ -369,19 +368,14 @@ Criar environments conforme a topologia real:
 | --- | --- |
 | `development` | deploy automático opcional após merge em `main` |
 | `staging` | checks completos e smoke test após implantação |
-| `production` | tag protegida, aprovação, sem autoaprovação e secrets próprios |
+| `production` | não há deploy remoto por GitHub Actions; a promoção local é iniciada pelo operador |
 
-Para `production`:
+Para releases self-hosted:
 
-- permitir somente tags de release ou workflow manual autorizado;
-- exigir revisor quando houver uma segunda pessoa responsável;
-- impedir autoaprovação quando o plano suportar e houver equipe;
-- desabilitar bypass das proteções, salvo procedimento de emergência auditado;
-- usar secrets exclusivos do ambiente;
-- definir `concurrency` para impedir deploys simultâneos;
-- registrar URL e histórico do deployment;
-- executar verificação pós-deploy;
-- manter rollback para o digest anterior.
+- CI constrói, testa e publica artefatos imutáveis com SBOM, scan e proveniência;
+- o responsável configura secrets e executa Compose no host sob seu controle;
+- a instalação usa digest de release, migrations exclusivas e backup antes de upgrade;
+- smoke test, backup, restore e rollback são registrados pelo procedimento operacional.
 
 Environments de repositórios privados e algumas deployment protection rules dependem do plano GitHub.
 
