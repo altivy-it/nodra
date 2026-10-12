@@ -9,8 +9,9 @@ do usuário.
 
 O projeto está em desenvolvimento ativo e ainda não possui uma versão estável.
 Frontend Angular, API, BFF, worker e bibliotecas de domínio já possuem estrutura
-executável, mas a distribuição completa por Docker Compose ainda está em
-construção. Não use o estado atual como implantação de produção.
+executável. A primeira composição self-hosted local está em implementação, mas
+OIDC real, backup/restore e atualização ainda não foram validados. Não use o
+estado atual como implantação de produção.
 
 ## Princípios
 
@@ -61,6 +62,9 @@ tools/         automação do repositório
 - [Arquitetura do backend](docs/backend.md)
 - [CI/CD e segurança](docs/ci-cd-seguranca.md)
 - [Configuração do Keycloak](docs/configuracao-keycloak.md)
+- [Instalação self-hosted](deploy/self-hosted/README.md): pré-requisitos,
+  comando único de subida e sequência automatizada de backup, migrations,
+  configuração OIDC, health checks e smoke test.
 - [Governança do repositório](.github/GOVERNANCE.md)
 - [Guia de contribuição](.github/CONTRIBUTING.md)
 - [Política de segurança](.github/SECURITY.md)

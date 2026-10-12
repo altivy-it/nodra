@@ -1,0 +1,50 @@
+name: Autorizar tarefa Spec Kit
+description: Autorize a execução de uma tarefa já registrada em artefato oficial Spec Kit
+title: "[Spec Kit]: "
+labels: ["enhancement", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Esta Issue autoriza somente a execução e validação da tarefa Spec Kit referenciada.
+        Commit, push, merge, publicação e deploy continuam dependentes de solicitação
+        e aprovação explícitas.
+
+        Secrets locais existem somente em
+        `$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env`. O agente não
+        pode ler, listar, copiar, editar, sobrescrever nem exibir esse arquivo.
+        Ele usa apenas variáveis já injetadas por processo autorizado e falha
+        fechado se alguma variável obrigatória estiver ausente.
+  - type: input
+    id: artifact
+    attributes:
+      label: Artefato e tarefa Spec Kit
+      description: Informe a localização do artefato oficial e o ID da tarefa existente.
+      placeholder: specs/nome-da-feature/tasks.md / T001 ou .specify/bugs/nome-do-defeito / fix
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Resultado esperado
+      description: Referencie o resultado descrito no artefato; não introduza requisitos novos nesta Issue.
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validação
+      description: Referencie os critérios e validações já registrados nos artefatos Spec Kit.
+    validations:
+      required: true
+  - type: checkboxes
+    id: authorization
+    attributes:
+      label: Autorização humana
+      options:
+        - label: O artefato e a tarefa Spec Kit estão revisados e autorizados para execução.
+          required: true
+        - label: O Copilot pode editar arquivos e executar as validações dessa tarefa.
+          required: true
+        - label: Commit, push, merge, publicação e deploy exigem autorização separada.
+          required: true

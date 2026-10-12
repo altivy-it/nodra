@@ -15,7 +15,7 @@ COPY backend/ backend/
 RUN dotnet publish backend/apps/worker/Altivy.Notes.Worker.csproj --configuration Release --no-restore --output /app/publish
 
 FROM lzocateli/dotnet-aspnet:10.0.11-noble AS runtime
-ARG IMAGE_VERSION=0.0.0
+ARG IMAGE_VERSION=0.1.0
 LABEL org.opencontainers.image.title="altivy-worker" \
     org.opencontainers.image.description="Worker interno do Altivy Notes para provisioning durável de vaults." \
     org.opencontainers.image.version="${IMAGE_VERSION}" \

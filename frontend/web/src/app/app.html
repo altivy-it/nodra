@@ -13,6 +13,10 @@
   <p class="eyebrow">ALTIVY NOTES / ACESSO</p>
   <h1 id="no-vault-title">Nenhum vault disponível.</h1>
   <p>Solicite acesso a um vault para abrir seu workspace.</p>
+  <button type="button" class="action" [disabled]="session.loggingOut()" (click)="session.logout()">Encerrar sessão</button>
+  @if (session.logoutError()) {
+  <p role="alert">Não foi possível encerrar a sessão. Tente novamente.</p>
+  }
 </main>
 } @else if (session.session()?.authenticated) {
 <app-workspace-shell [userName]="session.session()?.name ?? null" [notes]="notes.notes()" [selected]="notes.selected()"

@@ -1,7 +1,7 @@
 ---
 name: "Arquitetura Altivy"
 description: "Use ao planejar arquitetura, criar módulos, mover responsabilidades, adicionar dependências, integrar serviços ou escrever ADRs no monorepo Altivy."
-applyTo: "apps/**, libs/**, contracts/**, deploy/**"
+applyTo: "backend/**, frontend/**, contracts/**, deploy/**"
 ---
 
 # Arquitetura

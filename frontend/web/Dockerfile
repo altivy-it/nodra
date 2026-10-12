@@ -11,7 +11,7 @@ ARG WEB_BASE_HREF=/
 RUN npm run build -- --configuration ${WEB_CONFIGURATION} --base-href ${WEB_BASE_HREF}
 
 FROM lzocateli/nginx:1.28.0-bookworm AS runtime
-ARG IMAGE_VERSION=0.0.0
+ARG IMAGE_VERSION=0.1.0
 LABEL org.opencontainers.image.title="altivy-web" \
   org.opencontainers.image.description="Proxy HTTPS e aplicação web estática do Altivy Notes." \
   org.opencontainers.image.version="${IMAGE_VERSION}" \

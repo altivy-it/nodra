@@ -1,5 +1,10 @@
 # Altivy - Instruções globais
 
+Toda documentação produzida ou atualizada para o projeto, inclusive artefatos
+gerados pelo Spec Kit e relatórios de Bug Fixing, deve estar em português
+brasileiro (pt-BR). Preserve em inglês comandos, identificadores, caminhos,
+termos de contrato e marcadores literais exigidos por ferramentas.
+
 ## Contexto obrigatório
 
 - O Altivy é uma aplicação web self-hosted de gestão de conhecimento em Markdown.
@@ -46,20 +51,35 @@ Não crie dependências circulares. `apps/*` compõem e hospedam; regras reutili
 5. Atualize contrato, migração, documentação e observabilidade quando o comportamento exigir.
 6. Não corrija nem reformate código fora do escopo.
 
+Para mudanças da aplicação, esse fluxo técnico é executado exclusivamente dentro dos processos Spec Kit definidos abaixo; ele não autoriza trabalho fora de uma tarefa Spec Kit.
+
 ## ADRs e planos
 
 - Crie ADRs em `docs/adr/AAAA-NNNN-titulo.md` desde o status `proposed`, seguindo `.github/ADR_TEMPLATE.md`.
-- Crie planos em `docs/plan/<tema>.md`, seguindo `.github/PLAN_TEMPLATE.md`; não use `docs/planos` nem mantenha plano apenas no chat.
-- Todo plano possui status geral e status em cada etapa. Atualize o histórico ao mudar qualquer status.
-- Registre `Origem` como humano ou IA assistida e identifique o revisor humano.
-- IA não marca ADR como `accepted`, plano como `approved` ou etapa como `completed` ou `skipped` sem decisão ou evidência humana explícita e referenciada.
+- Spec Kit é o único processo autorizado para desenvolver e manter a aplicação. Não execute features, correções, manutenção ou iniciativas de produto fora de um processo Spec Kit e de seus artefatos/tarefas.
+- Para features e mudanças de produto, use `specs/<feature>/spec.md` para requisitos, `plan.md` para desenho e `tasks.md` para tarefas. Use `/speckit-specify`, `/speckit-clarify`, `/speckit-plan`, `/speckit-tasks`, `/speckit-analyze`, `/speckit-implement` e `/speckit-converge` conforme a etapa.
+- Para correções de defeitos, instale e use a extensão oficial Spec Kit Bug Fixing (`/speckit-bug-assess`, `/speckit-bug-fix`, `/speckit-bug-test`). Não use fluxo de diagnóstico/correção independente.
+- Use `.specify/memory/constitution.md` para princípios duradouros de engenharia; instruções operacionais do Copilot continuam em `.github/` e a constituição não duplica essas regras.
+- O plano mestre e documentos de domínio definem visão e contexto do produto; ADRs aceitos registram decisões arquiteturais. Eles restringem as features, mas não substituem seus requisitos. Se houver conflito, interrompa e peça decisão humana.
+- `docs/plan` está congelado para novos planos, atualizações e execução. Os sete planos legados abertos foram convertidos em oito conjuntos Spec Kit em rascunho e aguardam revisão humana; não retome essas iniciativas até a revisão dos artefatos. Depois, arquive ou substitua os originais por referências sem autoridade operacional.
+- `.github/PLAN_TEMPLATE.md` está obsoleto e não deve ser usado para criar planos. Não crie fluxos locais de planejamento, implementação ou diagnóstico concorrentes; prompts, agentes e skills do repositório só podem apoiar uma tarefa Spec Kit existente.
+- `/speckit-constitution` deve ser usado uma vez após a inicialização, registrando apenas princípios existentes ou explicitamente acordados.
+- Registre origem e revisor humano em ADRs. IA não marca ADR como `accepted` sem decisão ou evidência humana explícita e referenciada.
+- Checkboxes em `specs/<feature>/tasks.md` registram execução, não aprovação humana; só marque uma tarefa concluída após implementar e validar a evidência correspondente.
+
+### Extensões e localização
+
+- As extensões oficiais `assess`, `bug` e `git` apoiam o mesmo processo Spec Kit. `assess` registra descoberta em `.specify/assessments/<slug>/`; seu veredito `go` encaminha para especificação, nunca autoriza implementação ou aprova artefatos em nome de uma pessoa.
+- Use as mesmas configurações Spec Kit do Inventory360Api: `auto_execute_hooks: true`, hooks Git com `enabled: true` e `git-config.yml` igual ao da referência. A invocação de um fluxo Spec Kit autoriza os hooks nele configurados; não autoriza push, publicação, deploy ou implementação de produto fora das tarefas aprovadas.
+- Após instalar, atualizar ou reconciliar componentes, use [localize-speckit](prompts/localize-speckit.prompt.md) para auditar/traduzir textos humanos em pt-BR sem alterar comandos, aliases, IDs, placeholders ou contratos de leitura. Sem modo explícito, somente audite; não invente configuração de idioma ou hooks de instalação.
+- Consulte [o guia de extensões e manutenção](README.md#spec-kit-e-extensões) para versões, comandos e validação. Preserve constituição, specs, overrides e personalizações locais ao atualizar.
 
 ## Commits
 
 - Todo commit criado ou sugerido segue [Conventional Commits](COMMIT_CONVENTIONS.md) e usa os tipos e escopos aprovados pelo projeto.
 - Escreva a descrição em português brasileiro, no imperativo, iniciando com minúscula e sem ponto final.
 - Mudanças incompatíveis usam `!` no cabeçalho e o rodapé `BREAKING CHANGE:` com impacto e migração.
-- Não faça commit, push, publicação ou deploy sem solicitação explícita.
+- Fora dos hooks autorizados pela invocação do fluxo Spec Kit, não faça commit sem solicitação explícita. Push, publicação e deploy sempre exigem solicitação explícita.
 
 ## Scripts e automação
 

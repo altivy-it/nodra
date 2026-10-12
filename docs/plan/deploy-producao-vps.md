@@ -1,12 +1,15 @@
-# Plano: Deploy de produção em VPS
+# Plano supersedido: Deploy de produção em VPS
 
-**Status:** in-progress  
+**Status:** superseded  
 **Data de criação:** 2026-09-29  
-**Última atualização:** 2026-09-30
+**Última atualização:** 2026-10-02
 **Responsáveis:** Lincoln Zocateli  
 **Origem:** IA assistida  
 **Revisor humano:** Lincoln Zocateli  
 **Relacionado:** [ADR 2026-0007](../adr/2026-0007-deploy-altivy-vps-compartilhada.md), [CI/CD e segurança](../ci-cd-seguranca.md)
+
+> Supersedido pela decisão humana registrada no [ADR 2026-0008](../adr/2026-0008-deploy-self-hosted-compose.md).
+> O fluxo vigente é o [plano self-hosted por Docker Compose](deploy-self-hosted-compose.md).
 
 ## Objetivo
 
@@ -262,6 +265,7 @@ configuração e é recarregado somente após `nginx -t` e confirmação de incl
 | 2026-09-29 | plano | approved | in-progress | implementação e validação local iniciadas; deploy remoto permanece pendente | IA assistida |
 | 2026-09-29 | P-01 | not-started | completed | topologia e limites definidos pelo responsável no pedido | Lincoln Zocateli |
 | 2026-09-30 | P-02/P-03/P-04 | in-progress | in-progress | CI da main passou e Compose/operador/workflows foram validados localmente; Release aguarda `RELEASE_APP_ID`/GitHub App e deploy na VPS não foi executado | IA assistida |
+| 2026-10-02 | plano | in-progress | superseded | decisão humana substitui a VPS por uma stack self-hosted local, registrada no ADR 2026-0008 | Lincoln Zocateli |
 
 ## Regras de atualização
 

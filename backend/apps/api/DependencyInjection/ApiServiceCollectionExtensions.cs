@@ -61,6 +61,14 @@ public static class ApiServiceCollectionExtensions
         }
         else
         {
+            var postgresHostOverride = configuration["Database:PostgresHostOverride"];
+            if (environment.IsDevelopment() && !string.IsNullOrWhiteSpace(postgresHostOverride))
+            {
+                postgresConnectionString = PostgresConnectionStringOverrides.WithHost(
+                    postgresConnectionString,
+                    postgresHostOverride);
+            }
+
             _ = services.AddPostgresData(postgresConnectionString);
             _ = services.AddScoped<IVaultReader>(provider =>
                 provider.GetRequiredService<PostgresVaultReader>());

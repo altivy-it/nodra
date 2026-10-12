@@ -1,5 +1,8 @@
 # Plano: Título
 
+> **Obsoleto.** Não crie, atualize nem execute planos com este template. Ele permanece temporariamente para referência durante a migração dos planos legados de `docs/plan` para Spec Kit.
+> **Obsoleto.** Não crie, atualize nem execute planos com este template. Mantenha-o somente até a revisão humana dos artefatos Spec Kit migrados; depois, arquive-o ou remova-o junto das referências legadas.
+
 **Status:** draft  
 **Data de criação:** AAAA-MM-DD  
 **Última atualização:** AAAA-MM-DD  

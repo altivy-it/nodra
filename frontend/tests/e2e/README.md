@@ -74,6 +74,30 @@ docker run --rm --network host `
   --base-url=$env:ALTIVY_E2E_BASE_URL
 ```
 
+### Production self-hosted
+
+O runner em `deploy/self-hosted/compose.e2e.yaml` publica somente as variáveis
+de usuário/senha E2E dentro do container; os demais valores presentes nos
+arquivos externos não são encaminhados. Compose usa os arquivos somente para
+interpolação, sem imprimir a configuração resolvida. Execute a partir da raiz
+do AltivyNotes depois do boot:
+
+```powershell
+$identityEnv = Join-Path $env:APPDATA 'Microsoft\UserSecrets\Altivy.Identity\.env'
+$notesEnv = Join-Path $env:APPDATA 'Microsoft\UserSecrets\Altivy.Notes\.env'
+docker compose --env-file $identityEnv --env-file $notesEnv `
+  -f deploy/self-hosted/compose.e2e.yaml --profile e2e run --rm browser-tests `
+  /app/tests/e2e/test_bff_session.py `
+  --base-url=https://localhost:8443 --write-vault-id=lab-write-e2e `
+  -k 'anonymous or log_out or autosave or negotiate_signalr' -p no:cacheprovider
+```
+
+As credenciais de teste precisam estar disponíveis como
+`ALTIVY_E2E_USERNAME` e `ALTIVY_E2E_PASSWORD` no processo ou nos arquivos
+externos. Sem elas, os casos autenticados são explicitamente marcados como
+skipped. A opção `--write-vault-id` exige um grant já existente no Keycloak;
+o runner não altera autorização.
+
 Para login, logout e autorização negada, defina os valores locais antes de
 executar. Eles não devem ser versionados nem impressos em logs:
 
@@ -81,6 +105,42 @@ executar. Eles não devem ser versionados nem impressos em logs:
 $env:ALTIVY_E2E_USERNAME = '<usuario-do-laboratorio>'
 $env:ALTIVY_E2E_PASSWORD = '<senha-do-laboratorio>'
 $env:ALTIVY_E2E_DENIED_VAULT_ID = '<vault-sem-permissao-de-leitura>'
+```
+
+Para validar gravação e autosave, use um vault sintético isolado previamente
+provisionado no filesystem, no PostgreSQL e no Keycloak. Não use `lab-0001` ou
+`lab-0002`; o teste cria notas com nomes únicos e as mantém nesse vault. Defina
+`ALTIVY_E2E_WRITE_VAULT_ID` e execute somente o cenário autenticado de escrita:
+
+```powershell
+$env:ALTIVY_E2E_WRITE_VAULT_ID = 'lab-write-e2e'
+docker run --rm --network host `
+  --env ALTIVY_E2E_USERNAME --env ALTIVY_E2E_PASSWORD `
+  --env ALTIVY_E2E_WRITE_VAULT_ID `
+  --volume "${PWD}/frontend/tests:/app/tests:ro" `
+  --volume "${PWD}/artifacts/e2e:/app/reports" `
+  lzocateli/playwright-e2e:0.1.0 `
+  /app/tests/e2e/test_bff_session.py `
+  --base-url=https://localhost:7443/notes -m authenticated -k autosave
+```
+
+O teste confirma POST, leitura com ETag, atualização PUT com `If-Match` e
+persistência pelo BFF/gateway. Jobs de indexação são processados pelo worker; a
+limpeza de notas retidas na lixeira exige um procedimento administrativo
+separado.
+
+Para conferir a persistência depois de recriar web/BFF/API/worker, informe o
+caminho de uma nota criada pela jornada anterior:
+
+```powershell
+$env:ALTIVY_E2E_PERSISTED_NOTE_PATH = '<caminho-retornado-pelo-job-de-teste>'
+docker run --rm --network host `
+  --env ALTIVY_E2E_USERNAME --env ALTIVY_E2E_PASSWORD `
+  --env ALTIVY_E2E_WRITE_VAULT_ID --env ALTIVY_E2E_PERSISTED_NOTE_PATH `
+  --volume "${PWD}/frontend/tests:/app/tests:ro" `
+  lzocateli/playwright-e2e:0.1.0 `
+  /app/tests/e2e/test_bff_session.py `
+  --base-url=https://localhost:7443/notes -m authenticated -k persisted_note
 ```
 
 No laboratório atual, `lab-0002` é o recurso de negação usado pelo cenário

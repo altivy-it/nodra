@@ -1,0 +1,92 @@
+services:
+  postgres:
+    image: ${P04_POSTGRES_IMAGE:-lzocateli/postgresql:18.4-pgvector0.8.6-bookworm}
+    pull_policy: never
+    environment:
+      POSTGRES_DB: altivy
+      POSTGRES_USER: ${P04_TEST_USER:-restore_operator}
+      POSTGRES_PASSWORD: ${P04_TEST_PASSWORD:?Generate a disposable test password}
+    command: ["postgres", "-c", "listen_addresses=127.0.0.1"]
+    network_mode: none
+    tmpfs:
+      - /var/lib/postgresql:rw,noexec,nosuid,size=512m,uid=999,gid=999,mode=0700
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 2s
+      timeout: 1s
+      retries: 30
+      start_period: 5s
+
+  migrator:
+    image: ${P04_CURRENT_MIGRATIONS_IMAGE:-altivy-migrations:0.1.0}
+    pull_policy: never
+    environment:
+      ALTIVY_DESIGNTIME_CONNECTION_STRING: "Host=127.0.0.1;Database=altivy;Username=${P04_TEST_USER:-restore_operator};Password=${P04_TEST_PASSWORD:?Generate a disposable test password}"
+    network_mode: service:postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles: [upgrade]
+
+  previous-migrator:
+    image: ${P04_PREVIOUS_MIGRATIONS_IMAGE:-altivy-migrations:0.1.0}
+    pull_policy: never
+    environment:
+      ALTIVY_DESIGNTIME_CONNECTION_STRING: "Host=127.0.0.1;Database=altivy;Username=${P04_TEST_USER:-restore_operator};Password=${P04_TEST_PASSWORD:?Generate a disposable test password}"
+    network_mode: service:postgres
+    entrypoint: ["/app/efbundle"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles: [upgrade]
+
+  rollback-api:
+    image: ${P04_ROLLBACK_API_IMAGE:?Use a previously published API image by digest}
+    pull_policy: never
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      Keycloak__Authority: https://issuer.invalid/realms/altivy
+      Keycloak__Audience: altivy-api
+      ConnectionStrings__AltivyPostgres: "Host=127.0.0.1;Database=altivy;Username=${P04_TEST_USER:-restore_operator};Password=${P04_TEST_PASSWORD:?Generate a disposable test password}"
+      VaultStorage__Root: /vaults
+    network_mode: service:postgres
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /vaults:rw,noexec,nosuid,size=16m,uid=1654,gid=1654,mode=0700
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  gateway:
+    image: nginxinc/nginx-unprivileged:1.31.6-alpine3.24@sha256:bf9b1863fef5ae7a1faccc43afe01b009bc340b621ac262c4909054933bcacb0
+    pull_policy: never
+    network_mode: service:postgres
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=8m,uid=101,gid=101,mode=0700
+      - /var/cache/nginx:rw,noexec,nosuid,size=16m,uid=101,gid=101,mode=0700
+      - /var/run:rw,noexec,nosuid,size=4m,uid=101,gid=101,mode=0700
+    volumes:
+      - ./nginx-api-smoke.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      rollback-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://127.0.0.1:8081/health/live"]
+      interval: 2s
+      timeout: 1s
+      retries: 15
+      start_period: 3s
+
+  smoke:
+    image: ${P04_ROLLBACK_API_IMAGE:?Use a previously published API image by digest}
+    pull_policy: never
+    entrypoint: ["/usr/bin/curl"]
+    command: ["--fail", "--silent", "--show-error", "http://127.0.0.1:8081/health/live"]
+    network_mode: service:postgres
+    depends_on:
+      gateway:
+        condition: service_healthy
+    profiles: [upgrade]

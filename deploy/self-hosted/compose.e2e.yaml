@@ -1,0 +1,10 @@
+services:
+  browser-tests:
+    image: lzocateli/playwright-e2e:0.1.0
+    profiles: [e2e]
+    network_mode: host
+    environment:
+      ALTIVY_E2E_USERNAME: ${ALTIVY_E2E_USERNAME:-}
+      ALTIVY_E2E_PASSWORD: ${ALTIVY_E2E_PASSWORD:-}
+    volumes:
+      - ../../frontend/tests:/app/tests:ro

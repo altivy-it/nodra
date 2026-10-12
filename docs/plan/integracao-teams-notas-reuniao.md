@@ -1,8 +1,10 @@
 # Plano: Integração de notas de reunião do Microsoft Teams
 
-**Status:** approved  
+> REFERÊNCIA LEGADA: escopo convertido para [Spec Kit](../../specs/006-teams-loop-notes-sync/spec.md), ainda em rascunho e aguardando revisão humana. Este arquivo não tem autoridade operacional; não executar nem atualizar etapas.
+
+**Status:** blocked
 **Data de criação:** 2026-08-15  
-**Última atualização:** 2026-08-31
+**Última atualização:** 2026-10-05
 **Responsáveis:** não atribuídos  
 **Origem:** IA assistida  
 **Revisor humano:** Lincoln Zocateli  
@@ -85,6 +87,13 @@ notas e as tarefas de acompanhamento registradas na reunião devem aparecer em u
   Altivy permanece como Policy Enforcement Point.
 - Implementar `polling` como baseline funcional e avaliar `webhook` no gate G2
   somente quando o SLO e a política de exposição da instalação o exigirem.
+
+## Em espera
+
+Lincoln Zocateli determinou em 2026-10-05 que esta integração não deve ser
+executada agora. O plano permanece bloqueado antes de P-01; todas as etapas
+continuam `not-started`. Não iniciar prova de conceito, consentimento Microsoft
+Graph, implementação ou provisionamento até nova autorização humana explícita.
 
 ## Etapas
 
@@ -688,6 +697,7 @@ rotacionada conforme o motivo da reversão.
 | --- | --- | --- | --- | --- | --- |
 | 2026-08-15 | plano | - | proposed | análise do plano mestre, arquitetura do Altivy e documentação oficial Microsoft | IA assistida |
 | 2026-08-31 | plano/P-10/P-12/P-15 | approved/not-started | approved/not-started | polling definido como baseline privada e webhook mantido como aceleração opcional condicionada ao gate G2 | IA assistida |
+| 2026-10-05 | plano | approved | blocked | Lincoln Zocateli colocou a integração Teams/Loop em espera; nenhuma etapa deve ser executada até nova autorização explícita | Lincoln Zocateli |
 
 ## Regras de atualização
 

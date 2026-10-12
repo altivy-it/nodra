@@ -8,10 +8,11 @@ argument-hint: "PR, branch, diff e requisito relacionado"
 
 ## 1. Preparar contexto
 
-1. Leia o requisito, issue, ADR e documentação citados.
-2. Determine base/head e leia o diff completo, incluindo arquivos gerados e migrations.
-3. Liste áreas afetadas: frontend, backend, contratos, dados, segurança, deployment e docs.
-4. Carregue as instruções correspondentes.
+1. Leia os artefatos Spec Kit que autorizam a mudança e a tarefa concluída; sem eles, reporte bloqueio de processo.
+2. Use Issue, ADR e documentação apenas como contexto auxiliar, nunca como substituto dos requisitos/tarefas Spec Kit.
+3. Determine base/head e leia o diff completo, incluindo arquivos gerados e migrations.
+4. Liste áreas afetadas: frontend, backend, contratos, dados, segurança, deployment e docs.
+5. Carregue as instruções correspondentes.
 
 ## 2. Entender comportamento
 

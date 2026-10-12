@@ -1,6 +1,6 @@
 # ADR AAAA-NNNN: Título da decisão
 
-**Status:** approved  
+**Status:** proposed
 **Data:** AAAA-MM-DD  
 **Responsáveis:** nomes ou equipe  
 **Origem:** humano ou IA assistida
@@ -53,4 +53,4 @@ Defina testes, métricas e critérios que podem confirmar ou falsificar a decis�
 
 ## Referências
 
-Crie o ADR diretamente em `docs/adr/AAAA-NNNN-titulo.md` com status `proposed`. A numeração é sequencial por ano (exemplo: `2026-0001`, `2026-0002`); IA não altera o status para `accepted`. Decisões substituídas apontam para o novo ADR e recebem status `superseded` após decisão humana registrada.
+Crie o ADR diretamente em `docs/adr/AAAA-NNNN-titulo.md` com status `proposed`. A numeração é sequencial por ano (exemplo: `2026-0001`, `2026-0002`). Somente o mantenedor pode alterar o status para `accepted` após registrar sua decisão. Decisões substituídas apontam para o novo ADR e recebem status `superseded` após decisão humana registrada.

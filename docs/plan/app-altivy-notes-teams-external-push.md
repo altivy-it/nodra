@@ -1,8 +1,10 @@
 # Plano: Plataforma de plugins e plugin Microsoft Teams
 
-**Status:** approved  
+> REFERÊNCIA LEGADA: escopo convertido para [Spec Kit](../../specs/004-app-teams-external-push/spec.md), ainda em rascunho e aguardando revisão humana. Este arquivo não tem autoridade operacional; não executar nem atualizar etapas.
+
+**Status:** blocked
 **Data de criação:** 2026-08-15  
-**Última atualização:** 2026-08-31
+**Última atualização:** 2026-10-05
 **Responsáveis:** não atribuídos  
 **Origem:** IA assistida  
 **Revisor humano:** Lincoln Zocateli  
@@ -334,11 +336,19 @@ Regras propostas:
 - Definir retenção de payload da inbox e de versões em conflito com aprovação
   de segurança e privacidade.
 
+## Em espera
+
+Lincoln Zocateli determinou em 2026-10-05 que este trabalho não deve ser
+executado até decisão posterior. P-01 (threat model/ADR) passa a `blocked`; as
+etapas P-02 a P-16 permanecem `not-started`. Não iniciar tenant POC, registro
+de app/bot, consentimento, dependências, contratos ou implementação até nova
+autorização humana explícita.
+
 ## Etapas
 
 ### P-01: Registrar arquitetura e threat model
 
-**Status:** in-progress  
+**Status:** blocked
 **Responsável:** IA assistida  
 **Dependências:** nenhuma
 
@@ -1005,6 +1015,8 @@ preservados conforme retenção. Nenhum rollback exclui arquivo automaticamente.
 | 2026-08-30 | plano/P-01 | in-progress | in-progress | escopo revisado por solicitação humana para plataforma plugável; ADR atualizado com Plugin Host e Teams como primeiro plugin | IA assistida |
 | 2026-08-31 | plano/P-01 | in-progress | in-progress | capacidades neutras e perfis privado por polling e público por callback documentados para preservar operação local-first | IA assistida |
 | 2026-08-31 | P-01 | in-progress | in-progress | threat model verificável e gates sem Graph/Loop registrados no ADR; revisão humana do ADR e da mensagem de produto permanece pendente | IA assistida |
+| 2026-10-05 | plano | approved | blocked | Lincoln Zocateli colocou toda a iniciativa external-push em espera até decisão posterior; nenhuma etapa deve ser executada | Lincoln Zocateli |
+| 2026-10-05 | P-01 | in-progress | blocked | threat model e ADR pausados conforme instrução explícita; retomada exige nova autorização humana | Lincoln Zocateli |
 
 ## Regras de atualização
 

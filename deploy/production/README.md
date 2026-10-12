@@ -1,5 +1,9 @@
 # Deploy de produção
 
+> **Legado supersedido:** esta composição depende de NGINX/PostgreSQL/Keycloak
+> compartilhados e de uma VPS. A instalação self-hosted ativa está em
+> [`deploy/self-hosted`](../self-hosted/README.md).
+
 Esta composição executa apenas web, BFF, API, worker e migrations. PostgreSQL,
 NGINX e Keycloak são serviços compartilhados e não são iniciados por este
 Compose.
@@ -20,7 +24,7 @@ Build local containerizado da web de produção:
 ```powershell
 docker build --build-arg WEB_CONFIGURATION=production `
   --build-arg WEB_BASE_HREF=/ `
-  --file frontend/web/Dockerfile --tag altivy-web:local .
+  --file frontend/web/Dockerfile --tag altivy-web:0.1.0 .
 ```
 
 O workflow de release publica imagens identificadas por digest; não use a tag

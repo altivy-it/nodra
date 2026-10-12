@@ -4,7 +4,7 @@
 
 1. Leia o [plano mestre](../docs/plano-mestre.md) e o documento da área afetada.
 2. Procure issue, ADR e implementação relacionada.
-3. Para mudanças relevantes, registre critérios de aceite e riscos antes do código.
+3. Para mudanças da aplicação, registre critérios de aceite e riscos nos artefatos Spec Kit antes do código; não mantenha requisitos paralelos em issues ou prompts.
 4. Não inclua conteúdo real de vault, dados pessoais, tokens ou secrets em issues, fixtures ou logs.
 5. No Windows, armazene secrets locais exclusivamente em
    `$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env`. Nunca crie `.env`,
@@ -36,12 +36,14 @@ Mudanças devem começar no módulo proprietário do comportamento. Não mova re
 ## Fluxo de desenvolvimento
 
 1. Crie uma branch curta a partir de `main`.
-2. Faça commits coesos conforme [Conventional Commits](COMMIT_CONVENTIONS.md).
-3. Implemente slices pequenos e valide cada recorte.
-4. Atualize testes, contrato, migration, documentação e telemetria junto da mudança.
-5. Execute os gates aplicáveis antes do pull request.
-6. Preencha o template do PR com evidências e riscos.
-7. Resolva achados por causa raiz e reexecute validações afetadas.
+2. Para features, siga Spec Kit: `/speckit-specify`, `/speckit-clarify` quando necessário, `/speckit-plan`, `/speckit-tasks`, `/speckit-analyze`, `/speckit-implement` e `/speckit-converge`.
+3. Para defeitos, use a extensão oficial Spec Kit Bug Fixing (`/speckit-bug-assess`, `/speckit-bug-fix`, `/speckit-bug-test`). Não implemente mudanças de aplicação sem tarefa/artefato ativo do fluxo correspondente.
+4. Não crie, atualize ou execute planos em `docs/plan`; os planos legados abertos foram convertidos em oito conjuntos Spec Kit em rascunho e aguardam revisão humana antes de qualquer execução.
+5. Faça commits coesos conforme [Conventional Commits](COMMIT_CONVENTIONS.md).
+6. Atualize testes, contrato, migration, documentação e telemetria junto da tarefa Spec Kit.
+7. Execute os gates aplicáveis antes do pull request.
+8. Preencha o template do PR com evidências e riscos.
+9. Resolva achados por causa raiz e reexecute validações afetadas.
 
 ## Contrato de comandos
 

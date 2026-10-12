@@ -14,7 +14,7 @@ As customizações cumprem funções diferentes:
 | Instrução específica | regras de um domínio ou caminho | carregada quando a tarefa ou arquivo corresponde | regras Angular para `frontend/web` |
 | Agente | profissional especializado com ferramentas e responsabilidades | selecionado no chat ou chamado por outro agente | `Altivy .NET Engineer` |
 | Prompt | comando curto para uma tarefa focada | digitado com `/` no chat | `/generate-tests` |
-| Skill | workflow completo com várias etapas e gates | digitado com `/` ou descoberto automaticamente | `/feature-delivery` |
+| Skill | gate complementar de revisão ou release | digitado com `/` ou descoberto automaticamente | `/pull-request-review` |
 | Documento | fonte humana de arquitetura, processo ou política | lido pelo Copilot quando referenciado | plano mestre, ADR, segurança |
 | Template | estrutura mínima de um artefato | preenchido por pessoa ou Copilot | pull request e ADR |
 
@@ -166,32 +166,21 @@ Agentes são especialistas. Selecione o agente no topo do chat antes de enviar o
 
 ### 6.2 Delivery Lead
 
-Use para uma entrega ponta a ponta. Ele pode coordenar os demais especialistas.
+Use para coordenar uma entrega ponta a ponta depois da autorização humana dos artefatos Spec Kit. Ele não cria requisitos, critérios de aceite ou tarefas.
 
 Exemplo:
 
 ```text
-Implemente favoritos de notas.
-
-Critérios de aceite:
-- o usuário pode favoritar e desfavoritar uma nota;
-- favoritos aparecem em uma seção própria da navegação;
-- a ordenação é pela ação mais recente;
-- a permissão é por usuário e vault;
-- excluir uma nota remove sua referência dos favoritos;
-- inclua contrato, backend, frontend e testes.
-
-Fora do escopo: pastas favoritas e compartilhamento de favoritos.
+Implemente as tarefas autorizadas em `specs/<feature>/tasks.md` para favoritos de notas. Preserve os requisitos e limites aprovados; não crie nem altere tarefas.
 ```
 
 O esperado é que o agente:
 
-1. refine critérios e riscos;
-2. identifique contrato e modelo de dados;
-3. delegue backend e frontend;
-4. solicite testes e reviews;
-5. execute validações;
-6. relate o que foi feito sem commit ou deploy automático.
+1. confirme o diretório da feature, a autorização humana e a análise Spec Kit;
+2. execute `/speckit-implement` sobre as tarefas aprovadas, sem ampliar o escopo;
+3. delegue somente fatias técnicas já definidas nas tarefas;
+4. execute validações e use `/speckit-converge` para verificar lacunas;
+5. relate evidências sem commit ou deploy automático.
 
 ### 6.3 Solution Architect
 
@@ -207,26 +196,26 @@ O agente deve comparar opções e recomendar uma decisão. Ele não deve adicion
 
 ### 6.4 Angular Engineer
 
-Use para tarefa isolada no frontend.
+Use para uma tarefa frontend já definida e autorizada, normalmente delegada por `/speckit-implement`.
 
 ```text
-No explorador de arquivos, implemente navegação completa por teclado: setas movem o foco, direita expande, esquerda recolhe e Enter abre a nota. Preserve virtualização e adicione testes de componente. Não altere o contrato da API.
+Tarefa autorizada: `specs/<feature>/tasks.md`, T###. Implemente a navegação por teclado descrita nessa tarefa. Preserve virtualização e o contrato aprovado.
 ```
 
 ### 6.5 .NET Engineer
 
-Use para tarefa isolada no backend.
+Use para uma tarefa backend já definida e autorizada, normalmente delegada por `/speckit-implement`.
 
 ```text
-Implemente a reconciliação incremental de notas alteradas externamente. Use hash para confirmar mudança, jobs idempotentes e PostgreSQL real nos testes. Não implemente embeddings e não confie apenas em FileSystemWatcher.
+Tarefa autorizada: `specs/<feature>/tasks.md`, T###. Implemente somente a reconciliação descrita nessa tarefa, usando as decisões e validações aprovadas no plano.
 ```
 
 ### 6.6 Quality Engineer
 
-Use quando a implementação existe, mas você precisa de evidência melhor.
+Use para produzir evidência de uma tarefa de teste já definida e autorizada pelo Spec Kit.
 
 ```text
-Crie uma matriz de testes para rename de nota. Cubra atualização de catálogo, links resolvidos, links não resolvidos, conflito concorrente, falha entre filesystem e banco e paths Unicode. Implemente os testes de maior risco e execute-os.
+Tarefa autorizada: `specs/<feature>/tasks.md`, T###. Implemente e execute os testes definidos para rename de nota; reporte lacunas ao Spec Kit sem acrescentar critérios.
 ```
 
 ### 6.7 Reviewers
@@ -259,90 +248,118 @@ Prompts são comandos focados. No chat, digite `/` e selecione o prompt. Depois 
 
 ### 7.1 Prompts disponíveis
 
-| Comando | Uso |
-| --- | --- |
-| `/plan-feature` | transformar necessidade em plano sem implementar |
-| `/implement-feature` | implementar uma feature vertical |
-| `/create-adr` | analisar e estruturar uma decisão arquitetural |
-| `/generate-tests` | criar testes para um comportamento ou diff |
-| `/diagnose-problem` | reproduzir, encontrar causa e corrigir um problema |
-| `/review-change` | revisar diff, branch ou pull request |
-| `/continuar-plano` | executar o próximo slice aprovado e desbloqueado do plano |
+| Comando | Quando usar | O que você faz |
+| --- | --- | --- |
+| `/speckit-constitution` | Uma vez após instalar/inicializar o Spec Kit | Confirma princípios já verdadeiros para o projeto; revisa a constituição gerada |
+| `/speckit-specify` | Iniciar ou alterar uma feature | Descreve problema, usuários, resultado e limites; depois revisa `spec.md` |
+| `/speckit-clarify` | A spec ainda contém ambiguidades relevantes | Responde às perguntas do Copilot; revise as alterações em `spec.md` |
+| `/speckit-plan` | A spec está compreendida e pronta para desenho | Informa restrições técnicas e decisões pendentes; decide trade-offs de produto/arquitetura |
+| `/speckit-tasks` | O desenho técnico está revisado | Revisa cobertura, dependências, testes e caminhos de cada tarefa |
+| `/speckit-analyze` | Após gerar tarefas e antes de implementar | Lê o relatório; direciona correções ao artefato dono de cada problema |
+| `/speckit-checklist` | Gate opcional de qualidade dos requisitos | Define foco da revisão e decide quais critérios estão satisfeitos; não marca implementação concluída |
+| `/speckit-implement` | Só após autorização humana explícita | Autoriza o escopo/tarefas; responde a gates e revisa mudanças por etapa |
+| `/speckit-converge` | Depois da implementação | Revisa lacunas e tarefas acrescentadas; autoriza nova rodada de implementação |
+| `/speckit-bug-assess`, `/speckit-bug-fix`, `/speckit-bug-test` | Defeitos, após instalar a extensão Bug Fixing | Confirma diagnóstico/remediação e revisa evidências da correção |
+| `/create-adr` | Prompt auxiliar, somente quando `/speckit-plan` ou uma tarefa Spec Kit justificar ADR | Revisa a proposta; aceita a decisão explicitamente; não é comando nativo do Spec Kit |
+| `/generate-tests`, `/review-change` | Apoio a artefato/tarefa Spec Kit existente | Fornece alvo de validação ou diff; não cria critérios paralelos |
+| `/pull-request-review`, `/release-readiness` | Gates posteriores | Revisa achados e decide aceite/release; não substituem os artefatos da feature |
 
-### 7.2 Executar o próximo slice
+### 7.2 Processo obrigatório para features
 
-Use `/continuar-plano` em um chat novo para aplicar a autorização operacional
-versionada sem redigitar seus limites. O prompt seleciona o `Altivy Delivery
-Lead`, trabalha em um único slice aprovado e executa as validações proporcionais
-ao risco.
-
-O fluxo não libera commit, push, merge, publicação ou deploy automaticamente,
-porque essas operações exigem solicitação explícita pelas regras do repositório.
-No GitHub, use o formulário `Executar slice do plano` para registrar critérios,
-dependências, limites e a autorização humana antes de atribuir a Issue ao
-Copilot.
-
-Secrets locais permanecem exclusivamente em
-`$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env`, conforme a
-[configuração do Keycloak](../docs/configuracao-keycloak.md#5-parte-a-laboratorio-local-descartavel).
-O agente não lê esse arquivo; um processo autorizado injeta somente as
-variáveis necessárias e falha fechado quando alguma estiver ausente.
-
-### 7.3 Planejar sem implementar
+Cada feature tem um diretório em `specs/<número>-<slug>/`. `/speckit-specify` escolhe o próximo número sequencial e cria os artefatos conforme as necessidades:
 
 ```text
-/plan-feature
-
-Adicionar lixeira por vault. Uma nota excluída deve poder ser restaurada por 30 dias. O usuário Reader não pode excluir ou restaurar. A solução deve funcionar em NAS e não pode depender de serviço externo.
+specs/NNN-nome-da-feature/
+├── spec.md             # problema, cenários, requisitos e critérios de sucesso
+├── plan.md             # desenho técnico, pesquisa e decisões de implementação
+├── tasks.md            # tarefas executáveis, ordenadas e rastreáveis
+├── checklists/         # checklists opcionais de qualidade dos requisitos
+├── research.md         # pesquisa técnica, quando gerada
+├── data-model.md       # modelo de dados, quando aplicável
+├── contracts/          # contratos novos/alterados, quando aplicável
+└── quickstart.md       # passos de validação, quando aplicável
 ```
 
-Use esse prompt quando ainda quer discutir escopo e desenho. O agente não deve editar arquivos.
+O fluxo abaixo concentra as etapas e os gates humanos em um único lugar:
 
-### 7.4 Implementar uma feature
+```mermaid
+flowchart TD
+specify["/speckit-specify<br/>Definir problema e resultado"] --> reviewSpec["Revisar spec.md"]
+reviewSpec --> ambiguity{"Há ambiguidades relevantes?"}
+ambiguity -->|Sim| clarify["/speckit-clarify"]
+clarify --> reviewSpec
+ambiguity -->|Não| plan["/speckit-plan"]
+plan --> reviewPlan["Revisar plan.md e decisões"]
+reviewPlan --> useChecklist{"Checklist de requisitos é útil?"}
+useChecklist -->|Sim| checklist["/speckit-checklist<br/>Revisão humana da checklist"]
+checklist --> tasks["/speckit-tasks"]
+useChecklist -->|Não| tasks
+tasks --> analyze["/speckit-analyze"]
+analyze --> findings{"Há inconsistências bloqueantes?"}
+findings -->|Sim| fixOwner["Corrigir o artefato proprietário"]
+fixOwner --> analyze
+findings -->|Não| authorize["Revisar tasks.md e autorizar implementação"]
+authorize --> implement["/speckit-implement<br/>Executar tarefas autorizadas"]
+implement --> converge["/speckit-converge"]
+converge --> gaps{"Restam lacunas ou novas tarefas?"}
+gaps -->|Sim| reviewNewTasks["Revisar escopo e tarefas novas"]
+reviewNewTasks --> authorize
+gaps -->|Não| done["Revisar evidências e concluir"]
+tasks -. "espelhamento opcional" .-> issues["/speckit-taskstoissues<br/>Issue não é fonte de escopo"]
+```
+
+`clarify` e `checklist` dependem das ambiguidades e dos riscos dos requisitos. Se `analyze` encontrar problemas, corrija o artefato que os originou e execute a análise novamente. A autorização humana é obrigatória antes de implementar; tarefas novas encontradas na convergência também precisam ser revisadas e autorizadas antes da próxima execução.
+
+Agentes e prompts locais podem ajudar em partes técnicas, mas não criam requisitos, planos ou tarefas substitutos. Sem tarefa ativa em `specs/<feature>/`, interrompa a implementação.
+
+### 7.3 Processo obrigatório para defeitos
+
+Após instalar a extensão oficial Bug Fixing, use os comandos nesta ordem. O desenvolvedor fornece a reprodução e valida o diagnóstico antes de autorizar a correção:
+
+1. `/speckit-bug-assess`: informe sintoma, esperado/observado e evidência; revise `assessment.md` e confirme se a causa/remediação fazem sentido.
+2. `/speckit-bug-fix`: somente após autorizar a remediação; revise código, testes e `fix.md`.
+3. `/speckit-bug-test`: execute/acompanhe a validação; revise `test.md` e confirme se o resultado pode ser considerado verificado.
+
+Não use os comandos de bug fixing antes da instalação da extensão; não substitua a extensão por um prompt local ou correção avulsa.
+
+### 7.4 Criar um ADR
+
+ADR não substitui nem duplica os artefatos da feature: `spec.md` registra o que/por quê, `plan.md` e `research.md` registram como a feature será desenhada e as alternativas locais, e `tasks.md` organiza o trabalho. ADR preserva uma decisão arquitetural duradoura para orientar outras features e revisões futuras.
+
+Crie ADR somente quando a decisão for transversal ou duradoura, mudar uma fronteira/contrato importante, ou exigir registro formal por segurança, compatibilidade, operação ou migração. Uma escolha local, reversível e já justificada no plano não precisa de ADR.
+
+Fluxo:
+
+1. Inicie a feature com `/speckit-specify` e esclareça dúvidas com `/speckit-clarify`, se necessário.
+2. Em `/speckit-plan`, peça para comparar opções e declarar se a decisão atende aos critérios de ADR. Sem justificativa, mantenha-a em `plan.md` ou `research.md` e não crie ADR.
+3. Se o plano justificar ADR, execute `/create-adr`. Este é um prompt auxiliar do repositório, não um comando nativo do Spec Kit; ele gera `docs/adr/AAAA-NNNN-titulo.md` com status `proposed`.
+4. Revise o ADR e aponte a decisão em `plan.md`; `/speckit-tasks` deve incluir sua revisão/registro e qualquer gate dependente. Use `/speckit-analyze` para verificar consistência.
+5. O mantenedor decide explicitamente se aceita, rejeita ou pede revisão. Se a implementação depender da decisão, ela fica bloqueada até essa decisão humana. IA nunca muda o status para `accepted`.
+6. Só então siga o gate normal de autorização e `/speckit-implement`; mantenha o ADR referenciado no PR e nos artefatos afetados.
 
 ```text
-/implement-feature
+/speckit-plan
 
-Adicionar aliases no frontmatter e usá-los na resolução de [[wiki links]].
-
-Critérios:
-- aliases aceitam uma lista de strings;
-- busca por alias encontra a nota;
-- link por alias resolve para a nota correta;
-- colisão entre aliases gera estado ambíguo explícito;
-- preserve o frontmatter original;
-- inclua testes de parser, PostgreSQL, API e jornada no browser.
+Para esta feature, compare UUID no frontmatter, identidade somente no PostgreSQL e inferência por hash/path. Avalie compatibilidade, edição externa, privacidade e recuperação. Diga se a escolha é local à feature ou uma decisão duradoura que requer ADR; se exigir ADR, registre a justificativa e o gate humano no plano.
 ```
 
-### 7.5 Criar um ADR
+Quando `/speckit-plan` justificar o ADR, use o prompt auxiliar:
 
 ```text
 /create-adr
 
-Decidir como identificar notas após rename: UUID persistido no frontmatter, identidade somente no PostgreSQL ou inferência por hash/path. Considere compatibilidade com vaults existentes, edição externa, privacidade e recuperação.
+Decisão identificada em specs/NNN-feature/plan.md: [resuma a decisão e o impacto transversal]. Compare opções, preserve o vínculo com a feature e gere somente um ADR em status proposed. Não implemente nem aceite a decisão.
 ```
 
-O resultado deve ser criado em `docs/adr/AAAA-NNNN-titulo.md`, com status `proposed`, seguindo [ADR_TEMPLATE.md](ADR_TEMPLATE.md). Use sequência anual (por exemplo, `2026-0001`). Revise a decisão antes de aceitá-la; um ADR não vira verdade apenas porque foi gerado por IA.
-
-### 7.6 Diagnosticar um bug
-
-```text
-/diagnose-problem
-
-Ao renomear uma nota para um nome com acento no Windows, o catálogo cria uma segunda entrada e o backlink antigo permanece. Reproduza com teste mínimo, encontre a causa raiz e corrija sem normalizar conteúdo do usuário.
-```
-
-Forneça mensagens de erro, comando que falhou e ambiente quando disponíveis. Não cole tokens, connection strings ou conteúdo real de notas.
-
-### 7.7 Gerar testes
+### 7.5 Gerar testes
 
 ```text
 /generate-tests
 
-Comportamento: PUT de nota exige If-Match e deve preservar as duas versões em conflito. Crie testes de API e integração com duas atualizações concorrentes usando filesystem e PostgreSQL reais.
+Tarefa autorizada: `specs/<feature>/tasks.md`, T###. Crie os testes previstos para o comportamento dessa tarefa, incluindo concorrência com filesystem e PostgreSQL reais quando aplicável.
 ```
 
-### 7.8 Revisar uma mudança
+### 7.6 Revisar uma mudança
 
 ```text
 /review-change
@@ -352,31 +369,19 @@ Revise a branch atual contra main. O objetivo da mudança é adicionar pesquisa 
 
 ## 8. Skills
 
-Skills são playbooks completos. Use-as quando a tarefa exige uma sequência de fases e gates, não apenas uma ação isolada.
+As skills `speckit-*` expõem os comandos oficiais do ciclo de feature e da extensão Bug Fixing, usando os artefatos e templates de `.specify/`. As skills de revisão e release são gates complementares; nenhuma delas cria requisitos ou substitui os artefatos canônicos.
 
 ### 8.1 Skills disponíveis
 
 | Comando | Quando usar |
 | --- | --- |
-| `/feature-delivery` | entrega complexa do requisito até os reviews |
+| `/speckit-constitution`, `/speckit-specify`, `/speckit-clarify`, `/speckit-plan`, `/speckit-tasks`, `/speckit-analyze`, `/speckit-implement`, `/speckit-converge`, `/speckit-checklist` | ciclo oficial de feature e qualidade dos requisitos |
+| `/speckit-bug-assess`, `/speckit-bug-fix`, `/speckit-bug-test` | fluxo oficial de diagnóstico, correção e validação de defeitos |
+| `/speckit-taskstoissues` | espelhar tarefas Spec Kit em Issues sem transferir a autoridade dos artefatos |
 | `/pull-request-review` | revisão completa de PR em várias dimensões |
 | `/release-readiness` | decisão GO/NO-GO antes de uma release |
 
-### 8.2 Feature delivery
-
-```text
-/feature-delivery
-
-Feature: backlinks no painel contextual.
-Usuário: profissional que navega entre notas relacionadas.
-Resultado: visualizar origem, trecho e navegar para cada backlink.
-Não escopo: grafo global, colaboração e embeddings.
-Aceite: links resolvidos aparecem; links removidos desaparecem após indexação; acesso respeita permissão do vault; fluxo funciona após alteração externa do arquivo.
-```
-
-A skill deve conduzir enquadramento, decisão, slices, implementação, testes, segurança e review.
-
-### 8.3 Pull request review
+### 8.2 Pull request review
 
 ```text
 /pull-request-review
@@ -386,7 +391,7 @@ Revise a branch feature/note-trash contra main. Issue: #27. ADR relacionado: doc
 
 Espere achados por severidade, com cenário, impacto e correção. Um resultado sem achados deve declarar testes não executados e risco residual.
 
-### 8.4 Release readiness
+### 8.3 Release readiness
 
 ```text
 /release-readiness
@@ -411,31 +416,29 @@ Use como fontes de decisão:
 - [backend](../docs/backend.md): implementação .NET, dados e filesystem;
 - [evolução do produto](../docs/evolucao-produto.md): fases, gates e métricas.
 
+Use esses documentos como restrições de contexto ao produzir artefatos Spec Kit; não solicite propostas ou planos de feature fora deles.
+
 Exemplo de pedido com contexto explícito:
 
 ```text
-Leia docs/plano-mestre.md e docs/backend.md. Proponha o modelo mínimo para links não resolvidos sem implementar. A proposta deve permitir reconstrução integral a partir do vault.
+Leia docs/plano-mestre.md e docs/backend.md. Inicie `/speckit-specify` para permitir links não resolvidos. Preserve reconstrução integral a partir do vault e não implemente antes de `spec.md`, `plan.md`, `tasks.md` e análise de consistência estarem revisados.
 ```
 
 ### 9.2 ADR
 
-Use ADR quando a decisão altera arquitetura, fonte canônica, consistência, segurança, infraestrutura, formato ou compatibilidade.
+ADR registra decisão duradoura ou transversal, não uma decisão local de implementação. Use o fluxo Spec Kit descrito em [7.4](#74-criar-um-adr): `/speckit-plan` avalia se há necessidade, `/create-adr` redige quando justificado, e `plan.md`/`tasks.md` mantêm o vínculo e os gates. O prompt escolhe a próxima sequência anual e usa status `proposed`; somente o mantenedor pode aceitar a decisão.
 
-Fluxo recomendado:
+### 9.3 Spec Kit e planos
 
-1. execute `/create-adr`;
-2. revise opções e consequências;
-3. escolha o próximo número em `docs/adr`;
-4. copie a estrutura de [ADR_TEMPLATE.md](ADR_TEMPLATE.md);
-5. mantenha status `proposed` durante discussão;
-6. altere para `accepted` somente após decisão humana;
-7. referencie o ADR no PR e na implementação.
+O Spec Kit foi inicializado na branch `chore/adotar-spec-kit` com CLI `1.0.13` e integração Copilot. A constituição inicial registra somente princípios existentes e a regra documental pt-BR. Em futuras inicializações brownfield, siga o guia oficial de [projetos existentes](https://github.github.io/spec-kit/guides/existing-projects.html): crie uma base revisável, execute o CLI em container e revise o diff, pois `--force` pode substituir caminhos gerenciados.
 
-### 9.3 Planos
+Para cada feature, use os artefatos Spec Kit em `specs/<feature>/`: `spec.md` para requisitos e cenários, `plan.md` para desenho técnico e `tasks.md` para tarefas. Esses arquivos são a fonte específica da feature; não duplique conteúdo em `docs/plan`.
 
-Planos criados por pessoas ou IA vivem em `docs/plan/<tema>.md` e seguem [PLAN_TEMPLATE.md](PLAN_TEMPLATE.md). O arquivo registra origem, revisor humano, status geral e status individual de todas as etapas.
+Os comandos são executados no chat do agente, não no terminal. No Copilot em modo skills, use a forma `/speckit-*`; outras integrações podem expor outra grafia, como `/speckit.specify`. Use o identificador oferecido pelo agente ativo. O desenvolvedor revisa os artefatos e autoriza explicitamente a implementação; a existência dos arquivos não constitui aprovação. Uma tarefa só pode ser marcada como concluída após execução e validação, o que não substitui aceite de produto ou revisão.
 
-Use `/plan-feature` para criar ou atualizar um plano. IA usa no máximo `proposed` até revisão humana e não marca etapa como `completed` ou `skipped` sem evidência explícita. Toda transição registra data, autor e referência no histórico do plano.
+Para a sequência, as revisões e a repetição do ciclo de feature, consulte [o fluxo de features na seção 7.2](#72-processo-obrigatório-para-features). Para referências atualizadas sobre comandos e integrações, consulte a [documentação oficial do Spec Kit](https://github.github.io/spec-kit/reference/agentic-sdd.html), [integrações](https://github.github.io/spec-kit/reference/integrations.html) e [extensões](https://github.github.io/spec-kit/reference/extensions.html).
+
+`docs/plan` e [PLAN_TEMPLATE.md](PLAN_TEMPLATE.md) estão congelados e não autorizam desenvolvimento. Os sete planos legados abertos foram convertidos em oito conjuntos Spec Kit, de `specs/001-alternancia-vaults/` a `specs/008-workspace-frontend/`; o plano de alternância foi dividido entre navegação e provisioning. Todos estão em rascunho e aguardam revisão humana. Os originais permanecem como referência congelada até essa revisão; planos `completed` permanecem históricos e `superseded` não são reativados.
 
 ### 9.4 Issues
 
@@ -563,20 +566,34 @@ Comandos de leitura, build e teste normalmente são esperados. Comandos de migra
 
 ### 13.1 Da ideia à implementação
 
-Primeiro, planeje:
+Primeiro, especifique e planeje a feature:
 
 ```text
-/plan-feature
+/speckit-specify
 
 Quero permitir fixar notas importantes no topo do explorador. O recurso é individual por usuário e vault. Não deve alterar os arquivos Markdown.
 ```
 
-Revise o plano. Se não houver decisão estrutural pendente, implemente:
+Depois revise `spec.md`, gere e revise o desenho e as tarefas:
 
 ```text
-/implement-feature
+/speckit-plan
+/speckit-tasks
+/speckit-analyze
+```
 
-Implemente o plano aprovado para notas fixadas. Preserve o contrato definido, adicione testes e não faça commit.
+Com autorização explícita para implementar, execute:
+
+```text
+/speckit-implement
+
+Execute as tarefas autorizadas para notas fixadas. Preserve o contrato definido, adicione testes e não faça commit.
+```
+
+Depois da implementação, verifique lacunas remanescentes:
+
+```text
+/speckit-converge
 ```
 
 Depois revise:
@@ -590,9 +607,16 @@ Revise o diff da feature de notas fixadas contra os critérios aprovados. Priori
 ### 13.2 De um bug à regressão protegida
 
 ```text
-/diagnose-problem
+/speckit-bug-assess
 
-Ao salvar duas abas da mesma nota, a segunda sobrescreve a primeira sem aviso. Reproduza com duas versões do mesmo ETag, corrija e adicione teste de regressão.
+Ao salvar duas abas da mesma nota, a segunda sobrescreve a primeira sem aviso. Avalie a causa e o impacto de duas versões concorrentes do mesmo ETag.
+```
+
+Depois da avaliação, use a sequência oficial:
+
+```text
+/speckit-bug-fix
+/speckit-bug-test
 ```
 
 Depois peça revisão especializada:
@@ -630,7 +654,7 @@ Não peça ao agente para transformar `NO-GO` em `GO`. Corrija ou aceite formalm
 Crie o Obsidian completo.
 ```
 
-Divida por capacidade e critérios de aceite. Use `/plan-feature` antes da implementação.
+Divida por capacidade e critérios de aceite. Use `/speckit-specify` para criar a fonte de requisitos antes do desenho e da implementação.
 
 ### Pedir tecnologia em vez de problema
 
@@ -662,7 +686,7 @@ Se um teste falha, descubra se é regressão, ambiente ou teste inválido. Não 
 
 ### Misturar planejamento e execução sem intenção
 
-Use `/plan-feature` para discutir sem editar. Use `/implement-feature` quando deseja alterações reais.
+Use os comandos oficiais Spec Kit para todo planejamento e execução. Prompts, agentes e skills locais não iniciam processos alternativos nem autorizam implementação fora de uma tarefa Spec Kit.
 
 ## 15. Checklist rápido
 
@@ -691,13 +715,11 @@ Depois:
 
 ## 16. Caminho recomendado para começar
 
-Para as primeiras tarefas, use esta sequência:
+Para as primeiras tarefas, consulte estas referências:
 
-1. `/plan-feature` para transformar a ideia em critérios claros;
-2. revise e ajuste o plano em linguagem natural;
-3. `/implement-feature` para executar uma entrega pequena;
-4. `/review-change` para revisar o diff;
-5. leia os testes e o resumo antes de criar o pull request;
-6. use `/release-readiness` somente quando houver uma versão candidata real.
+1. Revise a constituição uma única vez após inicializar o Spec Kit; veja [Spec Kit e planos](#93-spec-kit-e-planos).
+2. Para features, siga o fluxo canônico e o diagrama em [Processo obrigatório para features](#72-processo-obrigatório-para-features).
+3. Para defeitos, use [o fluxo oficial Bug Fixing](#73-processo-obrigatório-para-defeitos).
+4. Depois, aplique review e release readiness como gates posteriores.
 
-Com experiência, selecione diretamente Angular Engineer, .NET Engineer ou Quality Engineer para tarefas locais. Para mudanças que cruzam várias áreas, continue preferindo Delivery Lead e os workflows completos.
+Não selecione agentes de engenharia para iniciar trabalho de aplicação independente do Spec Kit. Após a autorização, `/speckit-implement` pode acioná-los para executar subtarefas técnicas já definidas; use Delivery Lead para coordenar tarefas que cruzam áreas.
