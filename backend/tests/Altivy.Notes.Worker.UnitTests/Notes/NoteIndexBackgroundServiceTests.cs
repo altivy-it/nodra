@@ -22,7 +22,7 @@ public sealed class NoteIndexBackgroundServiceTests
         services.AddSingleton<TimeProvider>(TimeProvider.System);
         services.AddScoped<NoteIndexJobProcessor>();
         await using var provider = services.BuildServiceProvider();
-        var service = new NoteIndexBackgroundService(
+        using var service = new NoteIndexBackgroundService(
             provider.GetRequiredService<IServiceScopeFactory>(),
             provider.GetRequiredService<ILogger<NoteIndexBackgroundService>>());
 
