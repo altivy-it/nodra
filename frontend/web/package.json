@@ -23,7 +23,7 @@
     "@angular/router": "^22.2.0",
     "@microsoft/signalr": "^8.0.7",
     "dompurify": "^3.4.16",
-    "katex": "^0.16.47",
+    "katex": "^0.18.2",
     "marked": "^18.0.12",
     "marked-katex-extension": "^5.1.12",
     "mermaid": "^11.17.2",
