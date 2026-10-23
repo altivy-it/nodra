@@ -71,7 +71,12 @@ Para mudanças da aplicação, esse fluxo técnico é executado exclusivamente d
 
 - As extensões oficiais `assess`, `bug` e `git` apoiam o mesmo processo Spec Kit. `assess` registra descoberta em `.specify/assessments/<slug>/`; seu veredito `go` encaminha para especificação, nunca autoriza implementação ou aprova artefatos em nome de uma pessoa.
 - Use as mesmas configurações Spec Kit do Inventory360Api: `auto_execute_hooks: true`, hooks Git com `enabled: true` e `git-config.yml` igual ao da referência. A invocação de um fluxo Spec Kit autoriza os hooks nele configurados; não autoriza push, publicação, deploy ou implementação de produto fora das tarefas aprovadas.
-- Após instalar, atualizar ou reconciliar componentes, use [localize-speckit](prompts/localize-speckit.prompt.md) para auditar/traduzir textos humanos em pt-BR sem alterar comandos, aliases, IDs, placeholders ou contratos de leitura. Sem modo explícito, somente audite; não invente configuração de idioma ou hooks de instalação.
+- Após instalar, atualizar ou reconciliar componentes, use
+  [altivy-notes-localize-speckit](skills/altivy-notes-localize-speckit/SKILL.md)
+  para auditar/traduzir textos humanos em pt-BR sem alterar comandos, aliases,
+  IDs, placeholders ou contratos de leitura. Invoque explicitamente na raiz
+  AltivyNotes; sem modo explícito, somente audite. Não invente configuração de
+  idioma ou hooks de instalação.
 - Consulte [o guia de extensões e manutenção](README.md#spec-kit-e-extensões) para versões, comandos e validação. Preserve constituição, specs, overrides e personalizações locais ao atualizar.
 
 ## Commits

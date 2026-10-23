@@ -8,13 +8,16 @@
 **Revisor humano**: solicitante desta conversa; aprovação explícita dos
 artefatos e tarefas em 2026-10-22 às 17:32 (-03:00), ao invocar
 `/speckit-implement`: “aprovado, registre e siga com a implementação”.
-**Estado**: implementação autorizada; gates de validação permanecem obrigatórios.
+**Estado**: migração concluída; quatro skills criadas e validadas
+estaticamente, gates interativos confirmados pelo solicitante, consumidores
+atualizados e prompts de origem retirados.
 
 ## Resumo
 
 Migrar quatro auxiliares locais para skills explícitas prefixadas, sem pontes
-Local, preservando contratos e agentes. Criar cada destino, compará-lo com
-sua origem, validar estaticamente e no cliente antes de remover a fonte.
+Local, preservando contratos e agentes. Os destinos foram comparados com suas
+origens, validados estaticamente e, conforme confirmação do solicitante,
+interativamente antes da remoção das fontes.
 Não alterar aplicação, agentes indiscriminadamente, hooks ou componentes
 gerenciados. As decisões humanas estão em [research.md](research.md).
 
@@ -89,6 +92,11 @@ mantido como origem histórica com link para esta feature, sem autoridade de
 execução. Agentes existentes serão referenciados, não reconfigurados.
 
 ## Desenho e validação
+
+Após o preflight, o solicitante autorizou explicitamente criação/validação
+estática agora e manutenção dos prompts e consumidores até realizar a validação
+interativa no cliente. T002 pode permanecer parcial durante essa primeira
+etapa; isso não aprova testes nem dispensa o gate de remoção dos passos 6–7.
 
 1. Registrar HEAD e hashes das fontes, agentes e superfícies protegidas,
    sem ler `.vscode/mcp.json` ou secrets; para MCP comparar somente estado
