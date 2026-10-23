@@ -63,6 +63,11 @@ implementação”, ao invocar `/speckit-implement` nesta conversa.
 
 ## Fontes e limites
 
+- Preflight posterior confirmou a raiz AltivyNotes e os metadados dos três
+  agentes, mas não sua disponibilidade para invocação nas ferramentas.
+  A interface não permite comprovar slash nem seleção automática/multi-root.
+  Diante disso, o solicitante autorizou criação/validação estática e adiou
+  os testes interativos sob sua responsabilidade, preservando prompts e consumidores.
 - Inventário dos quatro prompts e três agentes realizado em modo read-only;
   nenhuma alteração de produto ou teste executado.
 - Formato de skills: referência da skill `agent-customization` carregada

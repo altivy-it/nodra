@@ -13,8 +13,8 @@ As customizações cumprem funções diferentes:
 | Instrução global | regras permanentes do repositório | carregada automaticamente | Markdown é a fonte canônica |
 | Instrução específica | regras de um domínio ou caminho | carregada quando a tarefa ou arquivo corresponde | regras Angular para `frontend/web` |
 | Agente | profissional especializado com ferramentas e responsabilidades | selecionado no chat ou chamado por outro agente | `Altivy .NET Engineer` |
-| Prompt | comando curto para uma tarefa focada | digitado com `/` no chat | `/generate-tests` |
-| Skill | gate complementar de revisão ou release | digitado com `/` ou descoberto automaticamente | `/pull-request-review` |
+| Prompt | comando curto para uma tarefa focada | digitado com `/` no chat | `/speckit-plan` |
+| Skill | fluxo especializado acionado explicitamente ou gate complementar | digitado com `/` no chat | `/altivy-notes-generate-tests` |
 | Documento | fonte humana de arquitetura, processo ou política | lido pelo Copilot quando referenciado | plano mestre, ADR, segurança |
 | Template | estrutura mínima de um artefato | preenchido por pessoa ou Copilot | pull request e ADR |
 
@@ -260,8 +260,10 @@ Prompts são comandos focados. No chat, digite `/` e selecione o prompt. Depois 
 | `/speckit-implement` | Só após autorização humana explícita | Autoriza o escopo/tarefas; responde a gates e revisa mudanças por etapa |
 | `/speckit-converge` | Depois da implementação | Revisa lacunas e tarefas acrescentadas; autoriza nova rodada de implementação |
 | `/speckit-bug-assess`, `/speckit-bug-fix`, `/speckit-bug-test` | Defeitos, após instalar a extensão Bug Fixing | Confirma diagnóstico/remediação e revisa evidências da correção |
-| `/create-adr` | Prompt auxiliar, somente quando `/speckit-plan` ou uma tarefa Spec Kit justificar ADR | Revisa a proposta; aceita a decisão explicitamente; não é comando nativo do Spec Kit |
-| `/generate-tests`, `/review-change` | Apoio a artefato/tarefa Spec Kit existente | Fornece alvo de validação ou diff; não cria critérios paralelos |
+| `/altivy-notes-create-adr` | Somente quando `/speckit-plan` ou uma tarefa Spec Kit justificar ADR | Selecione `Altivy Solution Architect`; a skill cria somente ADR justificado, vinculado e `proposed` |
+| `/altivy-notes-generate-tests` | Apoio a tarefa autorizada de Spec Kit | Selecione `Altivy Quality Engineer`; não cria critérios paralelos |
+| `/altivy-notes-review-change` | Revisão de diff vinculado ao Spec Kit | Selecione `Altivy Code Reviewer`; inspeção não edita e validação exige autorização |
+| `/altivy-notes-localize-speckit` | Auditoria/tradução de textos humanos do Spec Kit | Invocação explícita; sem modo, somente audita; sem alvo, inventaria |
 | `/pull-request-review`, `/release-readiness` | Gates posteriores | Revisa achados e decide aceite/release; não substituem os artefatos da feature |
 
 ### 7.2 Processo obrigatório para features
@@ -332,7 +334,7 @@ Fluxo:
 
 1. Inicie a feature com `/speckit-specify` e esclareça dúvidas com `/speckit-clarify`, se necessário.
 2. Em `/speckit-plan`, peça para comparar opções e declarar se a decisão atende aos critérios de ADR. Sem justificativa, mantenha-a em `plan.md` ou `research.md` e não crie ADR.
-3. Se o plano justificar ADR, execute `/create-adr`. Este é um prompt auxiliar do repositório, não um comando nativo do Spec Kit; ele gera `docs/adr/AAAA-NNNN-titulo.md` com status `proposed`.
+3. Se o plano justificar ADR, selecione `Altivy Solution Architect` e invoque `/altivy-notes-create-adr`. A skill gera `docs/adr/AAAA-NNNN-titulo.md` com status `proposed`; não aceita nem implementa a decisão.
 4. Revise o ADR e aponte a decisão em `plan.md`; `/speckit-tasks` deve incluir sua revisão/registro e qualquer gate dependente. Use `/speckit-analyze` para verificar consistência.
 5. O mantenedor decide explicitamente se aceita, rejeita ou pede revisão. Se a implementação depender da decisão, ela fica bloqueada até essa decisão humana. IA nunca muda o status para `accepted`.
 6. Só então siga o gate normal de autorização e `/speckit-implement`; mantenha o ADR referenciado no PR e nos artefatos afetados.
@@ -346,7 +348,7 @@ Para esta feature, compare UUID no frontmatter, identidade somente no PostgreSQL
 Quando `/speckit-plan` justificar o ADR, use o prompt auxiliar:
 
 ```text
-/create-adr
+/altivy-notes-create-adr
 
 Decisão identificada em specs/NNN-feature/plan.md: [resuma a decisão e o impacto transversal]. Compare opções, preserve o vínculo com a feature e gere somente um ADR em status proposed. Não implemente nem aceite a decisão.
 ```
@@ -354,7 +356,7 @@ Decisão identificada em specs/NNN-feature/plan.md: [resuma a decisão e o impac
 ### 7.5 Gerar testes
 
 ```text
-/generate-tests
+/altivy-notes-generate-tests
 
 Tarefa autorizada: `specs/<feature>/tasks.md`, T###. Crie os testes previstos para o comportamento dessa tarefa, incluindo concorrência com filesystem e PostgreSQL reais quando aplicável.
 ```
@@ -362,14 +364,14 @@ Tarefa autorizada: `specs/<feature>/tasks.md`, T###. Crie os testes previstos pa
 ### 7.6 Revisar uma mudança
 
 ```text
-/review-change
+/altivy-notes-review-change
 
 Revise a branch atual contra main. O objetivo da mudança é adicionar pesquisa por tags. Confirme autorização por vault, paginação, índices, contrato OpenAPI e estados de UI.
 ```
 
 ## 8. Skills
 
-As skills `speckit-*` expõem os comandos oficiais do ciclo de feature e da extensão Bug Fixing, usando os artefatos e templates de `.specify/`. As skills de revisão e release são gates complementares; nenhuma delas cria requisitos ou substitui os artefatos canônicos.
+As skills `speckit-*` expõem os comandos oficiais do ciclo de feature e da extensão Bug Fixing, usando os artefatos e templates de `.specify/`. As skills auxiliares de ADR, testes, revisão e localização fornecem fluxos especializados subordinados ao Spec Kit; nenhuma cria requisitos ou substitui os artefatos canônicos.
 
 ### 8.1 Skills disponíveis
 
@@ -378,6 +380,10 @@ As skills `speckit-*` expõem os comandos oficiais do ciclo de feature e da exte
 | `/speckit-constitution`, `/speckit-specify`, `/speckit-clarify`, `/speckit-plan`, `/speckit-tasks`, `/speckit-analyze`, `/speckit-implement`, `/speckit-converge`, `/speckit-checklist` | ciclo oficial de feature e qualidade dos requisitos |
 | `/speckit-bug-assess`, `/speckit-bug-fix`, `/speckit-bug-test` | fluxo oficial de diagnóstico, correção e validação de defeitos |
 | `/speckit-taskstoissues` | espelhar tarefas Spec Kit em Issues sem transferir a autoridade dos artefatos |
+| `/altivy-notes-create-adr` | redigir ADR justificado; selecione `Altivy Solution Architect`; nunca aceita ou implementa decisão |
+| `/altivy-notes-generate-tests` | gerar/validar testes de tarefa autorizada; selecione `Altivy Quality Engineer` |
+| `/altivy-notes-review-change` | revisão read-only vinculada à tarefa; selecione `Altivy Code Reviewer`; validação exige autorização |
+| `/altivy-notes-localize-speckit` | auditar/traduzir explicitamente textos humanos, preservando contratos e exclusões |
 | `/pull-request-review` | revisão completa de PR em várias dimensões |
 | `/release-readiness` | decisão GO/NO-GO antes de uma release |
 
@@ -426,7 +432,7 @@ Leia docs/plano-mestre.md e docs/backend.md. Inicie `/speckit-specify` para perm
 
 ### 9.2 ADR
 
-ADR registra decisão duradoura ou transversal, não uma decisão local de implementação. Use o fluxo Spec Kit descrito em [7.4](#74-criar-um-adr): `/speckit-plan` avalia se há necessidade, `/create-adr` redige quando justificado, e `plan.md`/`tasks.md` mantêm o vínculo e os gates. O prompt escolhe a próxima sequência anual e usa status `proposed`; somente o mantenedor pode aceitar a decisão.
+ADR registra decisão duradoura ou transversal, não uma decisão local de implementação. Use o fluxo Spec Kit descrito em [7.4](#74-criar-um-adr): `/speckit-plan` avalia se há necessidade, `/altivy-notes-create-adr` redige quando justificado, e `plan.md`/`tasks.md` mantêm o vínculo e os gates. A skill escolhe a próxima sequência anual e usa status `proposed`; somente o mantenedor pode aceitar a decisão.
 
 ### 9.3 Spec Kit e planos
 
@@ -599,7 +605,7 @@ Depois da implementação, verifique lacunas remanescentes:
 Depois revise:
 
 ```text
-/review-change
+/altivy-notes-review-change
 
 Revise o diff da feature de notas fixadas contra os critérios aprovados. Priorize autorização por vault e remoção de referências após exclusão de nota.
 ```
@@ -629,12 +635,12 @@ Revise somente a correção de concorrência. Confirme status HTTP, preservaçã
 ### 13.3 De uma decisão a um ADR
 
 ```text
-/create-adr
+/altivy-notes-create-adr
 
 Avaliar histórico de revisões: cópias no vault, tabela PostgreSQL ou Git interno. Considere Markdown como fonte canônica, NAS, retenção, restore e experiência de usuário.
 ```
 
-O prompt cria `docs/adr/AAAA-NNNN-historico-revisoes.md` como `proposed`. Após revisão humana, registre a decisão, altere para `accepted` e use-o como contexto na implementação.
+A skill cria `docs/adr/AAAA-NNNN-historico-revisoes.md` como `proposed`. Somente após decisão humana explícita o mantenedor altera o status para `accepted`; use então o ADR como contexto na implementação.
 
 ### 13.4 Antes de uma release
 

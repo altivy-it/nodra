@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 | --- | --- |
-| Estado | artefatos e tarefas aprovados; implementação iniciada, validação pendente |
+| Estado | migração concluída; quatro skills validadas e prompts substituídos retirados |
 | Origem | IA assistida |
 | Revisor humano | solicitante desta conversa; decisões de escopo confirmadas em 2026-10-22 após a solicitação das 17:22 (-03:00) |
 | Criado em / atualizado em | 2026-10-22 |
@@ -30,8 +30,14 @@ Em 2026-10-22, após a solicitação das 17:22 (-03:00), o solicitante escolheu:
 
 As decisões estão registradas na
 [pesquisa da feature](../specs/009-migracao-prompts-skills/research.md).
-Não houve criação das quatro skills, remoção de prompts ou execução de testes
-interativos. A alteração preexistente em `.vscode/mcp.json` foi preservada.
+Na formalização inicial não houve criação das quatro skills, remoção de
+prompts ou testes interativos. Após a aprovação das 17:32 (-03:00) e o
+preflight do cliente, o solicitante autorizou criar as quatro skills e validar
+estaticamente, mantendo prompts e consumidores até validar os cenários
+interativos. Em 2026-10-22 às 21:30 (-03:00), confirmou todos os gates do
+quickstart nos quatro fluxos. Os consumidores foram atualizados e os prompts
+substituídos foram retirados após revisão estática. A alteração preexistente
+em `.vscode/mcp.json` foi preservada.
 
 ## Compatibilidade e fontes
 
@@ -46,18 +52,20 @@ contratos precisam de tratamento explícito, não de cópia para campos de
 skill presumidos equivalentes. Consultar o
 [formato suportado de skills](https://code.visualstudio.com/docs/agent-customization/agent-skills).
 
-## Inventário e destino proposto
+## Inventário e resultado
 
-Os caminhos são relativos ao projeto; os destinos são propostos, não criados.
+Os caminhos são relativos ao projeto. Os destinos foram criados e as fontes
+substituídas retiradas após os gates interativos e a revisão da integração.
 
-| Prompt atual | Skill proposta | Ação |
+| Prompt de origem retirado | Skill ativa | Resultado |
 | --- | --- | --- |
-| `.github/prompts/create-adr.prompt.md` | `.github/skills/altivy-notes-create-adr/SKILL.md` | migrar auxílio à redação de ADR |
-| `.github/prompts/generate-tests.prompt.md` | `.github/skills/altivy-notes-generate-tests/SKILL.md` | migrar apoio a testes de tarefa oficial |
-| `.github/prompts/review-change.prompt.md` | `.github/skills/altivy-notes-review-change/SKILL.md` | migrar revisão com vínculo a spec/tarefa |
-| `.github/prompts/localize-speckit.prompt.md` | `.github/skills/altivy-notes-localize-speckit/SKILL.md` | migrar auditoria/tradução segura do Spec Kit |
+| `.github/prompts/create-adr.prompt.md` | `.github/skills/altivy-notes-create-adr/SKILL.md` | migrado; ADR justificado e `proposed` |
+| `.github/prompts/generate-tests.prompt.md` | `.github/skills/altivy-notes-generate-tests/SKILL.md` | migrado; tarefa autorizada |
+| `.github/prompts/review-change.prompt.md` | `.github/skills/altivy-notes-review-change/SKILL.md` | migrado; revisão read-only e validação controlada |
+| `.github/prompts/localize-speckit.prompt.md` | `.github/skills/altivy-notes-localize-speckit/SKILL.md` | migrado; auditoria/tradução segura |
 
-Resultado: **quatro skills locais novas**, todas inicialmente explícitas.
+Resultado: **quatro skills locais**, todas invocadas explicitamente e sem
+ativação automática.
 Os prefixos evitam colisões com Dokpod, que possui prompts com os mesmos nomes.
 As 25 skills `speckit-*` existentes não são equivalentes destes quatro
 auxiliares e não serão convertidas, renomeadas ou regeneradas.
@@ -113,14 +121,14 @@ que deva ser alterado na origem de uma extensão.
 
 | Arquivo ou conjunto | Tratamento futuro |
 | --- | --- |
-| quatro prompts da tabela | retirar depois dos testes ou manter apenas ponte Local aprovada |
-| quatro novos destinos da tabela | criar procedimento canônico sem cópia de instruções/templates |
-| `.github/README.md` | atualizar inventário e referências |
-| `.github/COPILOT_GUIDE.md` | atualizar comandos, agentes e exemplos |
-| `.github/copilot-instructions.md` | atualizar link para localização e demais referências pertinentes |
-| `.github/instructions/documentation.instructions.md` | revisar referência literal a `/create-adr` diante do novo nome |
-| `.github/GOVERNANCE.md` | conferir coerência; não mudar processo, autoridade ou status histórico |
-| `.github/agents/` | confirmar agentes correspondentes aos três nomes de exibição e seus contratos; não editar indiscriminadamente |
+| quatro prompts da tabela | retirados após validação interativa informada pelo solicitante e revisão |
+| quatro destinos da tabela | procedimentos canônicos ativos, sem seleção implícita de agente |
+| `.github/README.md` | inventário e referências atualizados |
+| `.github/COPILOT_GUIDE.md` | comandos, agentes e exemplos atualizados |
+| `.github/copilot-instructions.md` | link de localização atualizado |
+| `.github/instructions/documentation.instructions.md` | referência ADR atualizada para `/altivy-notes-create-adr` |
+| `.github/GOVERNANCE.md` | conferido sem mudança de processo, autoridade ou histórico |
+| `.github/agents/` | agentes correspondentes verificados; preservados sem alterações |
 
 Recalcular links relativos a partir da nova profundidade de cada `SKILL.md`.
 Manter o plano mestre e o template de ADR em seus módulos proprietários.
@@ -163,11 +171,18 @@ Aceite:
 - Designar revisor e autorizar tarefas no fluxo oficial.
 
 Os três primeiros pontos foram decididos na formalização acima. O solicitante
-é o revisor humano e aprovou os artefatos e T001–T019 às 17:32 (-03:00);
-os testes e a retirada das fontes continuam sujeitos aos gates da feature.
+é o revisor humano e aprovou os artefatos e T001–T019 às 17:32 (-03:00).
+Em 2026-10-22 às 21:30 (-03:00), confirmou que todos os cenários e gates
+interativos do quickstart passaram; a validação foi informada pelo solicitante
+e não observada independentemente pela IA.
 
 Se falhar qualquer gate, preservar a fonte original e corrigir o recorte antes
 da retirada. Recuperação por diff revisado, sem reset ou regeneração ampla.
 A entrega original adicionou somente este plano. A formalização posterior
-produziu os artefatos Spec Kit vinculados acima, sem executar a migração.
-Descoberta e execução reais das skills propostas: **NOT RUN**.
+produziu os artefatos Spec Kit vinculados acima. A execução autorizada criou
+os quatro destinos, atualizou os consumidores, retirou os prompts de origem e
+validou contratos, frontmatter, links e whitespace, conforme o
+[registro](../specs/009-migracao-prompts-skills/quickstart.md). Os cenários
+interativos foram aprovados por confirmação humana; os caminhos e cleanup das
+fixtures do cliente não foram verificados pela IA. A alteração preexistente
+em `.vscode/mcp.json` foi preservada. Migração concluída sem commit ou push.

@@ -12,7 +12,7 @@ Se você está começando a usar IA ou GitHub Copilot, leia primeiro o [tutorial
 | `instructions/*.instructions.md` | regras carregadas por domínio e caminho de arquivo |
 | `agents/*.agent.md` | especialistas com papéis e ferramentas limitados |
 | `prompts/*.prompt.md` | ferramentas complementares; não definem workflows de desenvolvimento |
-| `skills/*/SKILL.md` | comandos oficiais do Spec Kit e gates complementares de revisão/release |
+| `skills/*/SKILL.md` | comandos oficiais do Spec Kit e fluxos auxiliares invocados explicitamente |
 | `COPILOT_GUIDE.md` | tutorial de uso com fluxos e exemplos reais |
 | `COMMIT_CONVENTIONS.md` | tipos, escopos e formato obrigatório de Conventional Commits |
 | `SECRET-SCANNING.md` | política, instalação e tratamento de achados do Gitleaks |
@@ -53,18 +53,19 @@ não importa decisões de arquitetura ou automações de produto do projeto de r
 ### Localização pt-BR
 
 Os comandos centrais e das extensões usam as mesmas definições localizadas
-do Inventory360Api. O [prompt localize-speckit](prompts/localize-speckit.prompt.md)
-segue o mesmo procedimento da base, adaptado ao nome e à documentação do AltivyNotes:
+do Inventory360Api. Para auditar ou traduzir textos humanos após uma atualização,
+selecione a raiz AltivyNotes e invoque a skill
+[altivy-notes-localize-speckit](skills/altivy-notes-localize-speckit/SKILL.md):
 
 ```text
-/localize-speckit extensão=assess modo=auditar
-/localize-speckit extensão=assess modo=traduzir
+/altivy-notes-localize-speckit extensão=assess modo=auditar
+/altivy-notes-localize-speckit extensão=assess modo=traduzir
 ```
 
-As regras de idioma, preservação de contratos e auditoria após atualização
-são as da referência. Não há mecanismo adicional de tradução ou restrição de
-execução exclusiva do AltivyNotes. Preserve a constituição, as specs e o
-conteúdo específico deste projeto.
+A skill é explícita, não é invocada automaticamente e não seleciona um agente
+por frontmatter. Sem modo explícito, somente audite; sem alvo, apresente um
+inventário. Não instala nem reconcilia componentes. Preserve a constituição,
+as specs e o conteúdo específico deste projeto.
 
 ### Manutenção e validação
 
@@ -90,8 +91,16 @@ apenas para testar o texto de uma skill.
 
 - Use os comandos Spec Kit para todas as mudanças de aplicação: features pelo SDD e defeitos pela extensão oficial Bug Fixing. As skills instaladas expõem esses comandos; não criam um fluxo concorrente.
 - Use os agentes Angular, .NET, Quality e Security somente para executar ou revisar partes de uma tarefa Spec Kit ativa.
-- Use **Altivy Solution Architect** ou `/create-adr` para decisões de arquitetura.
-- Use `/generate-tests` e `/review-change` somente em apoio a uma tarefa/artefato Spec Kit existente.
+- Selecione **Altivy Solution Architect** e invoque `/altivy-notes-create-adr`
+  para redigir um ADR justificado e vinculado a trabalho oficial; a skill não
+  aceita decisões nem implementa o ADR.
+- Selecione **Altivy Quality Engineer** e invoque
+  `/altivy-notes-generate-tests` somente para uma tarefa autorizada.
+- Selecione **Altivy Code Reviewer** e invoque
+  `/altivy-notes-review-change` para revisão read-only; validações estreitas
+  exigem autorização explícita.
+- Use `/altivy-notes-localize-speckit` para auditoria/tradução dentro dos
+  limites de escopo e preservação descritos pela skill.
 - Use `/pull-request-review` e `/release-readiness` como gates posteriores, sem alterar requisitos ou tarefas.
 
 ## Hierarquia de autoridade

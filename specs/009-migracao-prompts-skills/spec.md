@@ -4,7 +4,7 @@
 
 **Criada em**: 2026-10-22
 
-**Status**: aprovado pelo solicitante em 2026-10-22 às 17:32 (-03:00); implementação autorizada, validação pendente
+**Status**: migração concluída em 2026-10-22; gates interativos confirmados pelo solicitante e quatro prompts de origem retirados
 
 **Origem**: IA assistida
 
@@ -16,6 +16,12 @@
 o solicitante declarou “aprovado, registre e siga com a implementação”
 em 2026-10-22 às 17:32 (-03:00), após a apresentação dos artefatos e T001–T019.
 O aceite autoriza as tarefas, não dispensa seus gates nem aprova testes futuros.
+Após o preflight, o solicitante autorizou a criação das quatro skills e a
+validação estática, mantendo prompts e consumidores atuais até ele validar
+os cenários interativos no cliente. Em 2026-10-22 às 21:30 (-03:00), confirmou
+que todos os gates interativos do quickstart passaram nos quatro fluxos. Essa
+evidência é informada pelo solicitante, conforme o registro em [quickstart.md](quickstart.md);
+a IA não observou as sessões do cliente.
 
 ## Cenários de Usuário e Testes *(obrigatório)*
 

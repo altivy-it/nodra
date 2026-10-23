@@ -18,7 +18,7 @@ applyTo: "**/*.md, docs/**, contracts/**/*.yaml, contracts/**/*.json"
 - Documentos de frontend, backend e evolução detalham implementação sem duplicar o plano mestre.
 - ADRs vivem em `docs/adr` desde a criação, usam `AAAA-NNNN-titulo.md` (ano e sequência anual), e status `proposed`, `accepted`, `superseded` ou `deprecated`.
 - `docs/plan` e `.github/PLAN_TEMPLATE.md` são legado congelado: não criar, atualizar ou executar esses planos. Os planos legados abertos já têm artefatos Spec Kit em rascunho; após revisão humana, arquive/substitua os originais por referências sem autoridade operacional.
-- ADRs são documentos de decisão auxiliares, não planos de implementação. Use `/speckit-plan` para identificar e analisar a decisão; quando justificado, `/create-adr` apenas redige o registro dentro da tarefa Spec Kit. IA mantém o status `proposed`; somente decisão humana explícita pode torná-los `accepted`.
+- ADRs são documentos de decisão auxiliares, não planos de implementação. Use `/speckit-plan` para identificar e analisar a decisão; quando justificado, selecione `Altivy Solution Architect` e invoque `/altivy-notes-create-adr` para redigir o registro dentro da tarefa Spec Kit. IA mantém o status `proposed`; somente decisão humana explícita pode torná-los `accepted`.
 - Checkboxes de `specs/<feature>/tasks.md` são progresso de execução, não status de aprovação; IA pode concluí-los somente após implementação e validação verificáveis.
 - Runbooks vivem em `docs/runbooks` e incluem sinais, diagnóstico, mitigação, recuperação e escalonamento.
 - Comandos informam diretório, pré-requisitos, resultado esperado e impacto.

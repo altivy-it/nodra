@@ -1,11 +1,18 @@
 # Guia de validação da migração
 
-**Estado**: implementação autorizada em 2026-10-22 às 17:32 (-03:00);
-referência inicial registrada; testes interativos ainda `NOT RUN`.
+**Estado**: migração concluída em 2026-10-22; quatro skills criadas,
+validadas estaticamente e confirmadas interativamente pelo solicitante;
+prompts de origem retirados.
 
 **Autorização**: o solicitante aprovou os artefatos e T001–T019 nesta conversa,
 invocando `/speckit-implement` com “aprovado, registre e siga com a implementação”.
 Isso não dispensa testes ou autoriza retirada antecipada dos prompts.
+
+Após o preflight, o solicitante escolheu nesta mesma execução: “Autorizar
+criação das quatro skills e validação estática agora; manter prompts e
+consumidores atuais até eu validar os cenários interativos no cliente”.
+Portanto, a primeira etapa pode avançar sem concluir a parte interativa de
+T002; nenhuma fonte será retirada nem consumidor será redirecionado ainda.
 
 ## Referência inicial — T001
 
@@ -15,8 +22,12 @@ Registro observado pela IA em 2026-10-22 durante esta execução:
 - HEAD: `8e1f41df0cc60eb77d4f759f6fffded064b97f13`.
 - Estado inicial: `.vscode/mcp.json` modificado; plano preliminar e feature
   009 não rastreados. Nenhuma outra alteração rastreada.
-- MCP: somente estado ` M .vscode/mcp.json` consultado; conteúdo não lido,
-  hasheado, copiado ou alterado.
+- MCP: no preflight, somente o estado ` M .vscode/mcp.json` foi consultado.
+  Na retomada desta execução, um SHA256 foi calculado inadvertidamente e
+  exibido pela ferramenta; nenhum conteúdo foi exibido ou interpretado, o
+  digest não foi registrado como baseline e o arquivo não foi alterado.
+  Não acessar novamente seu conteúdo; comparações futuras devem limitar-se ao
+  estado Git.
 - Protegidos: `.specify/` (exceto seleção da feature pelo script oficial),
   skills `speckit-*`, agentes, constituição, `backend/`, `frontend/`,
   `contracts/`, `deploy/`, `docs/plan/`, vaults e secrets. Nenhum acesso a
@@ -38,6 +49,69 @@ Registro observado pela IA em 2026-10-22 durante esta execução:
 | `.github/agents/solution-architect.agent.md` | `9C1CBFF63A69E2CBA29A6E734068A93184AC2C7CF70FC2386EB3A885B1729BAF` |
 | `.github/agents/quality-engineer.agent.md` | `71D6F4BCFDFD0F0FED3733295F6BA4DAC80AF4A50104561E88D057FEBB14EDAB` |
 | `.github/agents/code-reviewer.agent.md` | `81B7BC5D83ECB5E35548485D7247A8A58D9C39FA96B558705D1EA13DA0AA608F` |
+
+## Preparação e critérios estáticos — T002/T003
+
+Preflight em sessão nova com diretório efetivo AltivyNotes: instruções e skills
+do projeto presentes no contexto; os três agentes possuem metadados no disco,
+mas não aparecem como invocáveis nas ferramentas do cliente. A interface
+permite carregar skills por ferramenta, mas não comprova invocação por slash
+ou seleção automática em sessões isoladas/multi-root. Resultado: capacidade
+interativa insuficiente, não um `PASS` dos cenários.
+
+T002 permanece parcial. As fixtures com escrita não foram criadas/executadas:
+ficam para a validação manual autorizada, fora do produto e sem secrets;
+quem as executar deve registrar local e remover somente os arquivos
+descartáveis conhecidos. Não há fixture ou automação temporária para limpar
+nesta primeira etapa.
+
+Matriz inicial de T003 (antes da integração); caminhos de origem relativos a
+`.github/prompts/` e destinos relativos a `.github/skills/`:
+
+| Origem preservada | Destino criado | Consumidores atuais a migrar depois dos testes |
+| --- | --- | --- |
+| `create-adr.prompt.md` | [altivy-notes-create-adr](../../.github/skills/altivy-notes-create-adr/SKILL.md) | `.github/README.md`, `.github/COPILOT_GUIDE.md`, `.github/instructions/documentation.instructions.md` |
+| `generate-tests.prompt.md` | [altivy-notes-generate-tests](../../.github/skills/altivy-notes-generate-tests/SKILL.md) | `.github/README.md`, `.github/COPILOT_GUIDE.md` |
+| `review-change.prompt.md` | [altivy-notes-review-change](../../.github/skills/altivy-notes-review-change/SKILL.md) | `.github/README.md`, `.github/COPILOT_GUIDE.md` |
+| `localize-speckit.prompt.md` | [altivy-notes-localize-speckit](../../.github/skills/altivy-notes-localize-speckit/SKILL.md) | `.github/README.md`, `.github/copilot-instructions.md` |
+
+Conferir `.github/GOVERNANCE.md` sem mudar processo/autoridade. A proposta e
+os artefatos desta feature são referências históricas/de execução, não
+consumidores operacionais a redirecionar antes dos testes.
+
+Critérios estáticos e resultado observado pela IA em 2026-10-22:
+
+- `PASS`: nomes iguais aos diretórios; exatamente cinco campos simples,
+  delimitadores corretos, chaves únicas, strings entre aspas e sem aspas
+  internas, descrição dentro do limite, dois booleanos `true`.
+- `PASS`: nenhum campo `agent`, `model` ou `tools`; seleção explícita dos
+  três agentes, bloqueio em indisponibilidade e proibição de ampliar permissões.
+- `PASS`: 13 links locais das quatro skills resolvidos dentro da raiz.
+- `PASS`: comparação semântica fonte/destino/agente: ADR preserva sequência,
+  justificativa, template e `proposed`; testes preservam critérios e autorização;
+  revisão preserva achados/não edição e acrescenta o contrato humano de execução;
+  localização preserva auditoria padrão, exclusões, hashes, overrides e drift.
+- `PASS`: todos os literais inline únicos do procedimento de localização
+  original estão no destino. Os exemplos de invocação usam deliberadamente
+  o novo nome; isso não é teste de execução do procedimento.
+- `PASS`: 494 arquivos protegidos com manifesto SHA256 idêntico ao inicial.
+- `PASS`: whitespace das quatro skills conferido por
+  `git diff --no-index --check -- /dev/null <arquivo>`; código 1 sem diagnósticos
+  é diferença de conteúdo no modo no-index, não falha de whitespace.
+- No preflight, parser YAML geral não estava disponível no PowerShell; a
+  validação estrutural inicial não foi tratada como parser completo. Nesta
+  retomada, PyYAML 6.0.1 já estava disponível e analisou o frontmatter das
+  quatro skills com sucesso; nenhuma ferramenta foi instalada.
+- Configuração de exclusões conferida: `.gitignore` e `.dockerignore` já
+  protegem secrets/artefatos relevantes; nenhuma mudança de runtime,
+  publicação npm ou configuração de linter/build exigida por este escopo.
+
+## Resultado inicial — T004/T007/T010/T013
+
+Antes de criar qualquer destino, uma checagem PowerShell confirmou os quatro
+`SKILL.md` ausentes e os quatro prompts presentes. A ausência inicial é o
+resultado estático da preparação; cenários comportamentais positivos e
+negativos no cliente continuaram `NOT RUN`, sem simulação por leitura textual.
 
 ## Pré-requisitos
 
@@ -93,15 +167,92 @@ de produto, agentes, componentes gerenciados ou MCP deve integrar a entrega.
 Build da aplicação não comprova comportamento de customizações e não é exigido
 por esta migração documental.
 
-## Registro por fluxo
+## Registro inicial por fluxo — antes da confirmação do solicitante
 
-Preencher durante a execução autorizada; incluir comando/pedido, data,
-responsável e origem da evidência. Confirmação humana deve ser identificada
-como tal, sem atribuir observação à IA.
+O quadro registra o estado anterior à validação informada pelo solicitante.
+Confirmações humanas são identificadas como tal, sem atribuir observação à IA.
 
 | Fluxo | Comparação estática | Interativo isolado | Interativo multi-root | Negativos/restrições | Diff revisado e retirada |
 | --- | --- | --- | --- | --- | --- |
-| ADR | NOT RUN | NOT RUN | NOT RUN | NOT RUN | NOT RUN |
-| Testes | NOT RUN | NOT RUN | NOT RUN | NOT RUN | NOT RUN |
-| Revisão | NOT RUN | NOT RUN | NOT RUN | NOT RUN | NOT RUN |
-| Localização | NOT RUN | NOT RUN | NOT RUN | NOT RUN | NOT RUN |
+| ADR | PASS — IA | NOT RUN | NOT RUN | NOT RUN no cliente | Origem preservada |
+| Testes | PASS — IA | NOT RUN | NOT RUN | NOT RUN no cliente | Origem preservada |
+| Revisão | PASS — IA | NOT RUN | NOT RUN | NOT RUN no cliente | Origem preservada |
+| Localização | PASS — IA | NOT RUN | NOT RUN | NOT RUN no cliente | Origem preservada |
+
+## Estado da primeira etapa — antes da validação interativa
+
+- Naquele checkpoint, concluídas: T001, T003, T004, T005, T007, T008, T010,
+  T011, T013, T014. T002 e T006/T009/T012/T015 estavam parciais; T016–T019
+  estavam abertas. O estado foi atualizado após a confirmação do solicitante.
+- Durante a execução, foi observado o commit concorrente
+  `467f6dcffce69f7a374ce7362f38ca9a3b7354a1` com os nove documentos da
+  formalização, já contendo a aprovação e T001. Foi preservado sem reescrita.
+  Esta execução não fez commit ou push.
+- Não houve alteração de aplicação, agentes, hooks, componentes gerenciados
+  ou MCP, nem execução de testes/build da aplicação. Nada foi publicado.
+- Conferência final observada pela IA: 13 documentos da entrega, 37 links
+  locais válidos, whitespace limpo e 19 tarefas sequenciais, sendo 10 concluídas.
+  `git diff --quiet <HEAD-inicial> --` com prompts, agentes e os cinco
+  consumidores atuais confirmou ausência de alterações nessas superfícies.
+  O manifesto dos 494 arquivos protegidos permaneceu idêntico.
+- Hooks de `before_implement` e `after_implement`: `speckit.git.commit`
+  opcional, habilitado no registro de extensões e sem condição; não executado.
+  `auto_commit.before_implement.enabled` e
+  `auto_commit.after_implement.enabled` são `false` na configuração Git.
+  Nenhum hook obrigatório de implementação estava registrado.
+
+## Validação estática anterior aos gates interativos — 2026-10-22
+
+Observado pela IA nesta retomada:
+
+- `PASS`: PyYAML 6.0.1 analisou os quatro frontmatters; nomes correspondem aos
+  diretórios, `description` é válida, flags de invocação estão corretas e não
+  há campos `agent`, `model` ou `tools`.
+- `PASS`: 4 skills e todos os links Markdown relativos encontrados resolvem.
+- `PASS`: `git diff --check` não encontrou whitespace inválido nos arquivos
+  rastreados abrangidos pela validação.
+- `PASS`: hashes SHA256 dos quatro prompts originais e dos três agentes
+  correspondem aos valores de T001. As origens não foram alteradas.
+- Naquele momento, os testes interativos isolados e multi-root estavam
+  `NOT RUN`; T002 era parcial e T006/T009/T012/T015 bloqueavam T016/T017.
+  Esse estado foi superado pela confirmação humana registrada a seguir.
+
+## Validação interativa informada pelo solicitante — 2026-10-22
+
+Às 21:30 (-03:00), o solicitante confirmou que validou a disponibilidade e
+funcionamento das skills. Após esclarecer o escopo, confirmou explicitamente
+que todos os gates interativos do quickstart passaram nos quatro fluxos,
+incluindo sessões isoladas e multi-root, cenários negativos/restrições,
+seleção de agentes e fixtures. Esta é evidência informada pelo solicitante,
+não observada pela IA. O caminho exato das fixtures e sua limpeza não foram
+informados; nenhuma fixture foi criada por esta execução.
+
+| Fluxo | Comparação estática | Interativo isolado | Interativo multi-root | Negativos/restrições | Diff revisado e retirada |
+| --- | --- | --- | --- | --- | --- |
+| ADR | PASS — IA | PASS — solicitante | PASS — solicitante | PASS — solicitante | PASS — IA; prompt removido |
+| Testes | PASS — IA | PASS — solicitante | PASS — solicitante | PASS — solicitante | PASS — IA; prompt removido |
+| Revisão | PASS — IA | PASS — solicitante | PASS — solicitante | PASS — solicitante | PASS — IA; prompt removido |
+| Localização | PASS — IA | PASS — solicitante | PASS — solicitante | PASS — solicitante | PASS — IA; prompt removido |
+
+O solicitante confirma que as fixtures eram descartáveis e externas ao
+produto. O cleanup de workspace cliente não foi executado nem verificado pela
+IA; não há arquivos temporários gerados pela IA para remover. Os prompts foram
+retirados após a confirmação humana e a revisão estática desta integração.
+
+## Fechamento — 2026-10-22
+
+- `PASS` — T016: consumidores atualizados nos quatro documentos previstos;
+  `.github/GOVERNANCE.md` conferido sem alteração.
+- `PASS` — T017: diff dos fluxos revisto; os quatro prompts originais foram
+  removidos depois da confirmação dos gates interativos.
+- `PASS` — T018: 9 documentos alterados verificados quanto a links Markdown
+  locais; `git diff --check` passou; busca não encontrou aliases ou caminhos
+  antigos nos consumidores ativos. Nenhum arquivo protegido listado em T001
+  foi alterado por esta migração. `.vscode/mcp.json` continuou apenas como
+  alteração preexistente, sem leitura do conteúdo.
+- `PASS` — T019: plano histórico atualizado para refletir o resultado real;
+  19/19 tarefas marcadas após validação/evidência registrada.
+- Nenhum build ou teste de produto foi executado, pois a migração altera
+  somente customizações e documentação. Nenhum commit, push ou publicação foi
+  feito. Hook de commit pós-implementação não executado: desabilitado em
+  `.specify/extensions/git/git-config.yml`.
