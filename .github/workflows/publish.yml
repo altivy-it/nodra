@@ -1,0 +1,197 @@
+# Semente do Altivy.Groundwork (componente release): pertence ao projeto.
+# Contrato (ver .github/CI-CD.md): chamado por gw-release.yml com a tag e a versão; publica
+# artefatos imutáveis no Environment "release" e envia artifacts release-entries-* com
+# { kind, name, reference, digest } para o manifesto da release. Em republish, só envia o que falta.
+name: Publish
+
+on:
+  workflow_call:
+    inputs:
+      tag:
+        description: Tag da release (vX.Y.Z)
+        type: string
+        required: true
+      version:
+        description: Versão da release (X.Y.Z)
+        type: string
+        required: true
+      republish:
+        description: Reenvio de artefatos ausentes de uma release existente
+        type: boolean
+        default: false
+      preflight:
+        description: Preparar e testar artefatos sem os publicar; exige suporte implementado no publish.yml do projeto
+        type: boolean
+        default: false
+      publish_only:
+        description: Publicar somente os artefatos previamente preparados no mesmo run
+        type: boolean
+        default: false
+
+permissions: {}
+
+jobs:
+  approvals:
+    name: Verify administrative approvals
+    if: ${{ !inputs.preflight && !inputs.publish_only }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      actions: read
+    steps:
+      - name: Require administrative team on protected environments
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ADMIN_TEAM: ${{ vars.ALTIVY_ADMIN_TEAM }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:ADMIN_TEAM -notmatch '^[a-z0-9][a-z0-9-]{0,99}$') {
+            throw 'Configure ALTIVY_ADMIN_TEAM com o slug da equipe administrativa validada; nenhuma publicacao foi autorizada.'
+          }
+          foreach ($name in @('release', 'distribution', 'quality', 'production')) {
+            $metadata = & gh api "repos/$env:GITHUB_REPOSITORY/environments/$name"
+            if ($LASTEXITCODE -ne 0) { throw "Nao foi possivel verificar o Environment $name." }
+            $environment = $metadata | ConvertFrom-Json
+            $reviewers = @($environment.protection_rules | Where-Object type -eq 'required_reviewers' | ForEach-Object reviewers)
+            $approvedTeam = @($reviewers | Where-Object { $_.type -eq 'Team' -and $_.reviewer.slug -ceq $env:ADMIN_TEAM })
+            if ($approvedTeam.Count -ne 1 -or $reviewers.Count -ne 1) { throw "Environment $name deve aceitar somente a equipe administrativa exigida; publicacao bloqueada." }
+          }
+
+  reject-unsupported-preflight:
+    name: Reject unsupported preflight
+    if: ${{ inputs.preflight || inputs.publish_only }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: Require project-specific preflight implementation
+        shell: bash
+        run: |
+          echo "::error::Este publish.yml não implementa preflight sem publicação; configure o fluxo específico do projeto antes de ativar distributionAfterValidation."
+          exit 1
+
+  containers:
+    name: Containers
+    needs: approvals
+    if: ${{ !inputs.preflight && !inputs.publish_only }}
+    uses: ./.github/workflows/gw-container-images.yml
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+      actions: read
+      checks: read
+      pull-requests: read
+    with:
+      tag: ${{ inputs.tag }}
+      registry: ghcr.io/altivy-it
+      images: >-
+        [{"name":"nodra-api","context":".","dockerfile":"backend/apps/api/Dockerfile"},
+        {"name":"nodra-bff","context":".","dockerfile":"backend/apps/bff/Dockerfile"},
+        {"name":"nodra-worker","context":".","dockerfile":"backend/apps/worker/Dockerfile"},
+        {"name":"nodra-web","context":".","dockerfile":"frontend/web/Dockerfile"},
+        {"name":"nodra-migrations","context":".","dockerfile":"deploy/production/migrations.Dockerfile"}]
+      republish: ${{ inputs.republish }}
+
+  security:
+    name: Published image security
+    needs: containers
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Checkout release
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/${{ inputs.tag }}
+          persist-credentials: false
+      - name: Download canonical image entries
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: release-entries-container-*
+          path: artifacts/image-entries
+          merge-multiple: true
+      - name: Scan immutable published digests
+        shell: pwsh
+        env:
+          TRIVY_USERNAME: ${{ github.actor }}
+          TRIVY_PASSWORD: ${{ github.token }}
+        run: ./tools/scripts/validate-release-images.ps1 -ReleaseEntriesPath artifacts/image-entries
+      - name: Preserve image security reports
+        if: ${{ always() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-image-security
+          path: artifacts/security-local/*.json
+          if-no-files-found: error
+          retention-days: 14
+
+  build-assets:
+    name: Build assets
+    needs: security
+    if: ${{ !inputs.preflight && !inputs.publish_only }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout tag
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: refs/tags/${{ inputs.tag }}
+          persist-credentials: false
+
+      - name: Build release assets
+        shell: bash
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          set -Eeuo pipefail
+          docker run --rm --user 0:0 \
+            --volume "$GITHUB_WORKSPACE:/workspace" --workdir /workspace \
+            --env RELEASE_TAG \
+            --entrypoint bash lzocateli/dotnet-sdk:10.0.403-noble-v1 -lc '
+              set -Eeuo pipefail
+              [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]
+              mkdir -p artifacts/release-assets
+              tar --exclude=".env" --exclude=".env.*" --exclude="*.groundwork-new" \
+                -czf "artifacts/release-assets/nodra-self-hosted-${RELEASE_TAG}.tar.gz" \
+                deploy/self-hosted tools/scripts backend/Directory.Build.props \
+                frontend/web/package.json .github/ci-cd.json LICENSE THIRD-PARTY-NOTICES.md
+              cd artifacts/release-assets
+              sha256sum "nodra-self-hosted-${RELEASE_TAG}.tar.gz" > SHA256SUMS
+            '
+
+      - name: Include SBOM and security reports for published digests
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-image-security
+          path: artifacts/release-assets
+
+      - name: Upload assets
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-assets
+          path: artifacts/release-assets/*
+          if-no-files-found: error
+          retention-days: 7
+
+  assets:
+    name: Assets
+    needs: build-assets
+    uses: ./.github/workflows/gw-github-assets.yml
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+      actions: read
+      checks: read
+      pull-requests: read
+    with:
+      tag: ${{ inputs.tag }}
+      artifact-name: release-assets
+      republish: ${{ inputs.republish }}

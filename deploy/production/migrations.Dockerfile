@@ -22,7 +22,8 @@ RUN ALTIVY_DESIGNTIME_CONNECTION_STRING='Host=127.0.0.1;Database=altivy;Username
       --output /out/efbundle
 
 FROM docker.io/lzocateli/dotnet-aspnet:10.0.11-noble AS runtime
-ARG IMAGE_VERSION=0.1.0
+ARG RELEASE_VERSION=0.1.0
+ARG IMAGE_VERSION=${RELEASE_VERSION}
 LABEL org.opencontainers.image.title="nodra-migrations" \
   org.opencontainers.image.description="Bundle de migrations PostgreSQL do Nodra." \
   org.opencontainers.image.version="${IMAGE_VERSION}" \

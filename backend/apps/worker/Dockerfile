@@ -2,6 +2,7 @@
 FROM docker.io/lzocateli/dotnet-sdk:10.0.400-noble AS build
 USER root
 WORKDIR /src
+ARG RELEASE_VERSION=0.1.0
 
 COPY global.json ./
 COPY backend/Directory.Build.props backend/Directory.Packages.props ./backend/
@@ -12,10 +13,11 @@ COPY backend/apps/worker/Nodra.Notes.Worker.csproj backend/apps/worker/
 RUN dotnet restore backend/apps/worker/Nodra.Notes.Worker.csproj
 
 COPY backend/ backend/
-RUN dotnet publish backend/apps/worker/Nodra.Notes.Worker.csproj --configuration Release --no-restore --output /app/publish
+RUN dotnet publish backend/apps/worker/Nodra.Notes.Worker.csproj --configuration Release --no-restore --output /app/publish -p:Version=${RELEASE_VERSION}
 
 FROM docker.io/lzocateli/dotnet-aspnet:10.0.11-noble AS runtime
-ARG IMAGE_VERSION=0.1.0
+ARG RELEASE_VERSION=0.1.0
+ARG IMAGE_VERSION=${RELEASE_VERSION}
 LABEL org.opencontainers.image.title="nodra-worker" \
     org.opencontainers.image.description="Worker interno do Nodra para provisioning durável de vaults." \
     org.opencontainers.image.version="${IMAGE_VERSION}" \

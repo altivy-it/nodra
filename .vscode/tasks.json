@@ -1,0 +1,21 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Nodra: validar contratos CI/CD em container",
+			"type": "shell",
+			"command": "podman run --rm --user 0:0 --entrypoint pwsh --volume \"$PWD:/workspace:ro,Z\" --workdir /workspace docker.io/lzocateli/dotnet-sdk:10.0.403-noble-v1 -NoProfile -Command '$ErrorActionPreference=\"Stop\"; & ./tools/scripts/test-cicd-contracts.ps1; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; & ./tools/scripts/ci/Test-ManagedFiles.ps1; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; & ./tools/scripts/validate-repository.ps1' && podman run --rm --volume \"$PWD:/repo:ro,Z\" --workdir /repo docker.io/rhysd/actionlint:1.7.12",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Nodra: verificar builds e pre-requisitos",
+			"type": "shell",
+			"command": "podman run --rm --user 0:0 --entrypoint pwsh --volume \"$PWD:/workspace:ro,Z\" --workdir /workspace docker.io/lzocateli/dotnet-sdk:10.0.403-noble-v1 -NoProfile -Command '$ErrorActionPreference=\"Stop\"; foreach ($name in @(\"test-cicd-contracts\", \"convert-release-manifest\", \"validate-release-images\")) { & pwsh -NoProfile -File \"tools/scripts/$name.ps1\" --help | Out-Null; if ($LASTEXITCODE -ne 0) { throw \"Ajuda falhou: $name\" }; Write-Output \"--help aprovado: $name\" }; & ./.specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireSpec -RequireTasks -IncludeTasks; & ./tools/scripts/ci/Test-ManagedFiles.ps1 -Components ci,release,release-preview,publish-containers,publish-github-assets,deploy,dependency-updates,repository-policy' && podman image inspect nodra-api:011-rc-validation nodra-bff:011-rc-validation nodra-worker:011-rc-validation --format '{{.RepoTags}} {{json .Config.Labels}}' && tail -n 8 /tmp/nodra-011-web-build-20261111-1615.log",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		}
+	]
+}

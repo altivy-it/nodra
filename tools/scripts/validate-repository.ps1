@@ -160,7 +160,7 @@ foreach ($markdownFile in $markdownFiles) {
     $relativeFile = [IO.Path]::GetRelativePath($repositoryRoot, $markdownFile.FullName).Replace('\', '/')
     $markdownContent = [regex]::Replace(
         $content,
-        '(?ms)^(?<fence>`{3,}|~{3,})[^\r\n]*\r?\n.*?^\k<fence>\s*$',
+        '(?ms)^(?<indent>[ \t]*)(?<fence>`{3,}|~{3,})[^\r\n]*\r?\n.*?^\k<indent>\k<fence>\s*$',
         ''
     )
     $markdownContent = [regex]::Replace(

@@ -1,0 +1,206 @@
+{
+  "schemaVersion": 1,
+  "toolVersion": "0.11.3",
+  "catalogVersion": "0.11.3",
+  "parameters": {
+    "auto_deploy_environment": "",
+    "commit_scopes": "web,api,worker,frontend,backend,contracts,db,deploy,deps,actions,security,observability,docs,tooling,repo",
+    "default_branch": "main",
+    "dependabot_ecosystems": "github-actions,nuget:/backend,npm:/frontend/web,docker:/frontend/web;/backend/apps/api;/backend/apps/bff;/backend/apps/worker;/deploy/production",
+    "deploy_environments": "quality,production",
+    "deploy_reviewers": "",
+    "distribution_approval_mode": "environment",
+    "dotnet_sdk_image": "docker.io/lzocateli/dotnet-sdk:10.0.403-noble-v1",
+    "dotnet_solution": "Nodra.slnx",
+    "github_owner": "altivy-it",
+    "github_repo": "nodra",
+    "initial_version": "0.1.0",
+    "issue_areas": "Arquitetura,Backend,Frontend,Banco de dados,Seguran\u00E7a,DevOps,Documenta\u00E7\u00E3o,Testes",
+    "legacy_rulesets": "",
+    "license": "MIT",
+    "native_aot_legal_files": "LICENSE,THIRD-PARTY-NOTICES.md",
+    "native_aot_namespace_base_uri": "https://github.com/altivy-it/nodra",
+    "native_aot_package_name": "nodra",
+    "native_aot_project": "",
+    "native_aot_publisher": "Nodra",
+    "native_aot_rids": "linux-x64,linux-arm64,win-x64,win-arm64,osx-arm64,osx-x64",
+    "native_aot_sdk_image": "mcr.microsoft.com/dotnet/sdk:10.0.403-noble@sha256:9c7b6b263d9d4c2e4718e16dae6d75cd8f4b5ccf206f1e7d48a98eb429981b03",
+    "native_aot_smoke_script": "",
+    "nuget_auth": "trusted",
+    "nuget_feed": "github",
+    "nuget_rc_feed": "",
+    "nuget_user": "",
+    "preview_acceptance": "deploy",
+    "project_description": "",
+    "project_name": "Nodra",
+    "project_slug": "nodra",
+    "publish_snapshots": "false",
+    "release_app_id": "",
+    "release_reviewers": "",
+    "release_type": "simple",
+    "require_signed_commits": "false",
+    "required_approvals": "1",
+    "secrets_dir_name": "Altivy.Notes",
+    "version_files": "backend/Directory.Build.props,frontend/web/package.json"
+  },
+  "components": [
+    "ci",
+    "release",
+    "release-preview",
+    "publish-containers",
+    "publish-github-assets",
+    "deploy",
+    "dependency-updates",
+    "repository-policy"
+  ],
+  "files": {
+    ".github/CI-CD.md": {
+      "component": "ci",
+      "sha256": "397e4338d0e46352c2bb4f1f77d1bb8ac575730b1510199b90d3e44f7f168897"
+    },
+    ".github/REPOSITORY-POLICY.md": {
+      "component": "repository-policy",
+      "sha256": "ae62067c94e5f8de194934111220552de725c1d1c80389b65e442d9d38e1ec05"
+    },
+    ".github/instructions/release-integrity.instructions.md": {
+      "component": "release",
+      "sha256": "a56d23176308d3d49eb43b393fba5664bb892f818e37b327f105380feed7998e"
+    },
+    ".github/repository-policy.json": {
+      "component": "repository-policy",
+      "sha256": "0b26a713bb4c1da3de053f5ee531dbd3364b1ff1666c96d42efa21360be31a27"
+    },
+    ".github/workflows/gw-container-images.yml": {
+      "component": "publish-containers",
+      "sha256": "ad21eae37273093f22e950a8b5bb5da670fc7368d8abf8e99267021215296966"
+    },
+    ".github/workflows/gw-deploy.yml": {
+      "component": "deploy",
+      "sha256": "5de195cd8701d2290a5c392e8cee0bee3f6f65a0138118c3494c556ec4b4349d"
+    },
+    ".github/workflows/gw-dotnet.yml": {
+      "component": "ci",
+      "sha256": "cf46f315a266d16ca2aa4d55ae14c3be1cc51cd48e664b99feb0323c928c53d6"
+    },
+    ".github/workflows/gw-github-assets.yml": {
+      "component": "publish-github-assets",
+      "sha256": "0512dda738aa0b72bc4b488b01d60f5ee7da185f9e093b5c41355dcb5777c6c6"
+    },
+    ".github/workflows/gw-gitleaks.yml": {
+      "component": "ci",
+      "sha256": "d0645fd4fe0b3733a976276f55e9e4418fd54c0d240b2091b828baefa6edb2bb"
+    },
+    ".github/workflows/gw-node.yml": {
+      "component": "ci",
+      "sha256": "d1dd2d5eb4b5997fd92d77056ba6355b413717a05c2d693c5d1e1c8f89297546"
+    },
+    ".github/workflows/gw-pr-hygiene.yml": {
+      "component": "ci",
+      "sha256": "686d72ad3b2d5ef3656b8a829393480303af93a7bc58237d2e54627c42687e68"
+    },
+    ".github/workflows/gw-preview.yml": {
+      "component": "release-preview",
+      "sha256": "88967a422d63d2c09310fabd9bd7aba9d144390d02473b18b3dacabb3ca0a4b6"
+    },
+    ".github/workflows/gw-release.yml": {
+      "component": "release",
+      "sha256": "f36588108ed5e8021040cdc79d349523998492ae726f5477940c274a6a46c2c7"
+    },
+    "docs/en/release-integrity.md": {
+      "component": "release",
+      "sha256": "07f64083c92a116ae70724106cd70c44d3bbe60f41e94604109a4fc3bec4eef2"
+    },
+    "docs/es/release-integrity.md": {
+      "component": "release",
+      "sha256": "1c7546d8415fd36487be19d4ef864050e5fd2d741f08f4280243e40552f5cec6"
+    },
+    "docs/estrategia-de-release.md": {
+      "component": "release-preview",
+      "sha256": "de355a439f1d687b8d08385952a95173ffe4f6b78876a335f48d9fa46209159b"
+    },
+    "docs/release-integrity.md": {
+      "component": "release",
+      "sha256": "992ae3b91c77d6e284be39d5f0e0eb9eb1a52ecb35557040f57eaaaac2273e8e"
+    },
+    "docs/runbooks/deploy-e-rollback.md": {
+      "component": "deploy",
+      "sha256": "ad21de52127075cde223d0dc1baae67957c6543f1c447bef1cdf6de7b3db855a"
+    },
+    "docs/runbooks/release-preview.md": {
+      "component": "release-preview",
+      "sha256": "3389ba6a7107a2015ab30e628dd5f2e55bd2683e8336415f3b31818f61d53045"
+    },
+    "docs/runbooks/release.md": {
+      "component": "release",
+      "sha256": "3c47dee4163a35ef0f82db2d433e06af947953c22ad4d7ce96629d5a038fe642"
+    },
+    "tools/scripts/ci/Add-PreviewAcceptance.ps1": {
+      "component": "release-preview",
+      "sha256": "e36797c1bd57e22953df4129334b5e39739dd80cda79f9dc567902a852fdaf95"
+    },
+    "tools/scripts/ci/Assert-ArtifactVersion.ps1": {
+      "component": "release",
+      "sha256": "0fca851b62cfaab991da7367bb94dd5aef3d2d8775f85d37a1442ff0bf40374f"
+    },
+    "tools/scripts/ci/Assert-DeployableRelease.ps1": {
+      "component": "deploy",
+      "sha256": "4ee2535ed407b24684c78f18d4c97578f97e85103e2575d5caf93249a391cab0"
+    },
+    "tools/scripts/ci/Assert-PreviewGate.ps1": {
+      "component": "release-preview",
+      "sha256": "ab70d8fa51fc76c2b0d786028a3fe3d394abbbfac350b52452af931c353386f9"
+    },
+    "tools/scripts/ci/Assert-ReleaseSource.ps1": {
+      "component": "release",
+      "sha256": "25511e7f5e189284e08bba912f2b75cfbb067331d2d97c72a83dee785da4a030"
+    },
+    "tools/scripts/ci/Assert-ReleaseTag.ps1": {
+      "component": "release",
+      "sha256": "eec7d21f227207c0cd88e39148e96961d7d39dd7032858075e4bdb399cd3ccba"
+    },
+    "tools/scripts/ci/Get-BuildVersion.ps1": {
+      "component": "release",
+      "sha256": "4e258f724f5a909ee8db45a6c0763856316c3b5f5f3b12c15f8b40350bd2ba4f"
+    },
+    "tools/scripts/ci/Get-DeployedRelease.ps1": {
+      "component": "deploy",
+      "sha256": "39fe14057ba3c8cde9c85025a31e21a4084311997da119e856c2b702e5c089c2"
+    },
+    "tools/scripts/ci/Get-PreviewVersion.ps1": {
+      "component": "release-preview",
+      "sha256": "b54e64b34b1f9dc8a94893f59e89b722c8168e53377e74e8773b62de212b5d14"
+    },
+    "tools/scripts/ci/Get-ReleaseManifest.ps1": {
+      "component": "deploy",
+      "sha256": "7310533b249076d3b1d80389124bf432fa0b8f84a7cf7ef9ccda66a78395113c"
+    },
+    "tools/scripts/ci/GroundworkRelease.psm1": {
+      "component": "release",
+      "sha256": "44a94259dd338c0d7eeb6a56bde4bbf2d2aef1bb7b452f30b873a57e1f2f5861"
+    },
+    "tools/scripts/ci/New-ReleaseManifest.ps1": {
+      "component": "release",
+      "sha256": "7a175f4edba84cbe33820372bbe249a64e8ca3da0e5e28c3a081eba2a3b4d06e"
+    },
+    "tools/scripts/ci/Publish-ContainerImage.ps1": {
+      "component": "publish-containers",
+      "sha256": "569398aa178e35bd7281d6ecbeb95f5f941709efdba8424e245525abd7a00cee"
+    },
+    "tools/scripts/ci/Publish-ReleaseAssets.ps1": {
+      "component": "publish-github-assets",
+      "sha256": "f053d16d8f0a919cfc7463b52bb444db99a9ba488c0bd7e603dec134471473fa"
+    },
+    "tools/scripts/ci/Test-ManagedFiles.ps1": {
+      "component": "ci",
+      "sha256": "129fedd575c63560ddd734aad804fe24b506a924149f2ae939c71f6dfde8418e"
+    },
+    "tools/scripts/ci/Test-PublishedRelease.ps1": {
+      "component": "release",
+      "sha256": "0b62c567f8d280afb5ecfd11252bad5319d286a8fd4c9810b4d38fefa7bbc57e"
+    },
+    "tools/scripts/ci/Test-PullRequestTitle.ps1": {
+      "component": "ci",
+      "sha256": "bc0273227b343cfa1089a945d4f4ed38963d76e5a99f637b923d9d339bc8f7fa"
+    }
+  }
+}

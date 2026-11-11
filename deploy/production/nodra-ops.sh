@@ -126,7 +126,7 @@ validate_image_reference() {
     ALTIVY_MIGRATIONS_IMAGE) expected_image=nodra-migrations ;;
     *) fail "Nome de imagem não permitido: $name" ;;
   esac
-  [[ "$value" =~ ^ghcr\.io/lzocateli/$expected_image@sha256:[a-f0-9]{64}$ ]] ||
+  [[ "$value" =~ ^ghcr\.io/(altivy-it|lzocateli)/$expected_image@sha256:[a-f0-9]{64}$ ]] ||
     fail "Referência de imagem inválida para $name no manifesto de release."
 }
 

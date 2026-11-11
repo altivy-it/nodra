@@ -1,10 +1,22 @@
 # CI/CD e segurança no GitHub
 
-**Status:** referência arquitetural inicial  
+**Status:** implementação local da feature 011; configuração remota e homologação pendentes
 **Data de referência:** 28 de julho de 2026  
 **Escopo:** recursos do repositório e da plataforma GitHub para integração contínua, entrega, segurança e cadeia de fornecimento do Nodra.
 
 ## 1. Objetivo
+
+O contrato atual é definido pelo [ADR aceito](adr/2026-0009-padronizacao-cicd-groundwork.md)
+e pelo [processo canônico](../.github/CI-CD.md), com Groundwork 0.11.3 MIT.
+Arquivos `gw-*` são gerenciados; `ci.yml`, `publish.yml`, `post-release.yml` e
+`deploy.yml` são sementes do Nodra. Não copiar código do Dokpod AGPL nem editar
+hashes para contornar os checks. As seções de ferramentas futuras abaixo não
+representam integrações instaladas ou autorização de dependências adicionais.
+
+CI não usa secrets, não publica nem implanta. O único check agregador é
+`Result`. Publicação exige a equipe administrativa validada nos quatro
+ambientes protegidos; auto-deploy permanece desativado. Nenhum workflow de
+release ou deploy foi executado como parte desta implementação local.
 
 Este documento descreve como utilizar o GitHub para proteger mudanças, executar validações, publicar imagens de container e promover releases do Nodra. O Sonar faz parte dessa estratégia como gate de qualidade e segurança do código, mas não substitui os controles nativos do GitHub.
 
@@ -40,8 +52,10 @@ O comportamento reproduzível deve ficar no Git:
 | Arquivo ou diretório | Responsabilidade |
 | --- | --- |
 | `.github/workflows/ci.yml` | format, lint, build, testes e contratos |
-| `.github/workflows/gitleaks.yml` | scan do histórico Git por secrets |
-| `.github/workflows/release.yml` | PR de release, SemVer, changelog, imagens, scan, SBOM e proveniência |
+| `.github/workflows/gw-gitleaks.yml` | scan do histórico Git por secrets, chamado pelo CI |
+| `.github/workflows/gw-release.yml` e `gw-preview.yml` | Release PR, candidata, manifesto e gates de origem |
+| `.github/workflows/publish.yml` | cinco imagens Nodra e pacote self-hosted, com aprovação administrativa |
+| `.github/workflows/gw-deploy.yml` e `deploy.yml` | guard na tag e hook externo por manifesto validado |
 | `deploy/self-hosted/` | instalação e operação local por Docker Compose no host escolhido pelo operador |
 | `.github/dependabot.yml` | atualizações de npm, NuGet, GitHub Actions e imagens base |
 | `.github/CODEOWNERS` | responsáveis por módulos e arquivos críticos |
@@ -62,9 +76,9 @@ O repositório possui workflows versionados de CI e release:
 - `.github/CODEOWNERS` registra ownership global e explícito para arquivos críticos;
 - `.github/dependabot.yml` atualiza GitHub Actions semanalmente;
 - `.github/SECURITY.md` prepara a política de reporte responsável e informa que o canal ainda não está operacional;
-- `.github/workflows/release.yml` usa Release Please depois de CI verde, cria PR de versão/changelog e, após merge, constrói imagens por SemVer, anexa digests, CycloneDX, scan Trivy e proveniência BuildKit;
+- os workflows canônicos usam Release Please e GitHub App, candidata em quality e manifesto atestado; a semente publish.yml lista os cinco Dockerfiles e recusa modos preflight/publish_only ainda não implementados;
 - `deploy/self-hosted/` contém a composição inicial operada pelo responsável no host self-hosted; CI e release não iniciam nem alteram instalações;
-- `.github/workflows/deploy.yml` e `deploy-shared-infra.yml` foram removidos ao substituir a implantação remota em VPS pelo Compose self-hosted;
+- deploy-shared-infra.yml permanece fora do fluxo; deploy.yml agora implementa somente o contrato opcional aceito no ADR 0009, sem instalar hook ou reativar VPS automaticamente;
 - `deploy/production/` e o runbook de VPS permanecem como histórico supersedido, sem workflow ativo;
 - um checklist administrativo do mantenedor deve registrar configurações que exigem acesso a **Settings** e evidência manual.
 
@@ -114,7 +128,7 @@ GitHub Actions executa workflows YAML em resposta a eventos como `pull_request`,
 - **Cache:** pacotes npm, NuGet, Playwright e scanner Sonar, sempre derivados de lockfiles.
 - **Artifacts:** cobertura, resultados de testes, traces do Playwright, logs sanitizados e SBOM.
 - **Reusable workflows:** componentes compartilhados para build, scan, publicação e deploy.
-- **Concurrency:** cancela execuções antigas do mesmo pull request e impede deploys simultâneos.
+- **Concurrency:** preserva execuções de PR/merge group e impede deploys simultâneos no mesmo destino.
 - **Path filters:** reduzem trabalho em monorepo, desde que não deixem checks obrigatórios pendentes.
 - **Manual dispatch:** operações controladas, como promoção, rollback ou teste de recuperação.
 
@@ -122,7 +136,7 @@ Caches não são artefatos confiáveis ou assinados. Nunca devem conter tokens, 
 
 ### 3.2 Segurança dos workflows
 
-- declarar `permissions: { contents: read }` como base e ampliar por job;
+- declarar `permissions: {}` globalmente e conceder somente o necessário por job;
 - conceder `packages: write`, `security-events: write`, `attestations: write` ou `id-token: write` apenas onde necessário;
 - fixar actions externas pelo SHA completo do commit;
 - manter o Dependabot atualizando as referências das actions;
@@ -151,19 +165,10 @@ Deve existir um ruleset para `main` com, no mínimo:
 - bypass restrito e auditável;
 - merge queue quando a concorrência de contribuições justificar.
 
-Checks candidatos a obrigatórios:
+Check agregador do contrato atual:
 
 ```text
-CI / Frontend
-CI / Backend
-CI / Integration
-CI / Contracts
-CI / E2E
-SonarQube Code Analysis
-CodeQL
-Dependency Review
-Container Security
-CI / Result
+Result
 ```
 
 Os nomes efetivos devem permanecer estáveis. Um check marcado como obrigatório não pode desaparecer por causa de filtro de path. O job agregador `CI / Result` deve sempre executar e informar claramente quais validações foram executadas, ignoradas de forma válida ou falharam.
@@ -173,13 +178,8 @@ Os nomes efetivos devem permanecer estáveis. Um check marcado como obrigatório
 O arquivo `.github/CODEOWNERS` pode atribuir responsáveis a áreas como:
 
 ```text
-/.github/       @lzocateli
-/frontend/web/      @lzocateli
-/backend/apps/api/      @lzocateli
-/backend/apps/worker/   @lzocateli
-/libs/          @lzocateli
-/contracts/     @lzocateli
-/deploy/        @lzocateli
+# Configurar somente com uma equipe GitHub administrativa real e validada.
+# Não usar identificadores fictícios nem conta pessoal como fallback.
 ```
 
 O próprio arquivo e os workflows devem possuir owner explícito. Em uma equipe de uma pessoa, CODEOWNERS ainda documenta responsabilidade, mas não cria independência de aprovação. A exigência de aprovação deve ser ajustada para não bloquear o trabalho individual sem oferecer ganho real.
@@ -339,9 +339,11 @@ O job de deploy recebe `id-token: write`; os jobs de build não recebem essa per
 As imagens podem ser publicadas no GitHub Container Registry:
 
 ```text
-ghcr.io/lzocateli/nodra-web:1.0.0
-ghcr.io/lzocateli/altivy-api:1.0.0
-ghcr.io/lzocateli/altivy-worker:1.0.0
+ghcr.io/altivy-it/nodra-web:1.0.0
+ghcr.io/altivy-it/nodra-api:1.0.0
+ghcr.io/altivy-it/nodra-bff:1.0.0
+ghcr.io/altivy-it/nodra-worker:1.0.0
+ghcr.io/altivy-it/nodra-migrations:1.0.0
 ```
 
 Cada release deve:
@@ -366,9 +368,45 @@ Criar environments conforme a topologia real:
 
 | Environment | Proteção sugerida |
 | --- | --- |
-| `development` | deploy automático opcional após merge em `main` |
-| `staging` | checks completos e smoke test após implantação |
-| `production` | não há deploy remoto por GitHub Actions; a promoção local é iniciada pelo operador |
+| `ci` | validação sem secrets de release/deploy |
+| `copilot` | automação reservada, sem credenciais operacionais |
+| `quality` | tags v*, equipe administrativa validada e aceite da candidata |
+| `release` | main/tags v*, aprovação administrativa antes de publicar |
+| `distribution` | main/tags v*, autorização de divulgação |
+| `production` | tags v*, implantação explicitamente autorizada; sem auto-deploy |
+
+## Configuração Necessária para a Feature 011
+
+Cadastrar pelo GitHub, nunca pelo chat ou em arquivos do repositório:
+
+| Nome | Tipo | Escopo | Finalidade |
+| --- | --- | --- | --- |
+| `RELEASE_APP_ID` | variável | repositório | identificador do App instalado no Nodra |
+| `RELEASE_APP_PRIVATE_KEY` | secret | repositório/organização com acesso restrito | chave do mesmo App |
+| `ALTIVY_ADMIN_TEAM` | variável | repositório | slug da equipe administrativa validada nos quatro ambientes protegidos |
+| `DEPLOY_SSH_TARGET` | variável | quality/production | usuário e host do Nodra |
+| `DEPLOY_HOOK` | variável | quality/production | caminho absoluto do hook Nodra com apply/check |
+| `DEPLOY_SSH_KEY` | secret | quality/production | chave dedicada de menor privilégio |
+| `DEPLOY_SSH_KNOWN_HOSTS` | secret | quality/production | host key conferida por canal confiável |
+
+O inventário versionado de nomes, escopos e dos seis ambientes está em
+`.github/ci-cd.json` (`repositorySetup`). Ele não contém valores e não cria
+configuração no GitHub. Groundwork 0.11.3 não consegue materializar hoje esse
+contrato: faltam `ci`/`copilot`, variáveis próprias e reviewers de equipe. A
+política remota permanece bloqueada até atualização suportada do catálogo,
+identificação da equipe e revisão do dry-run; não sincronize a política atual.
+
+O nome legado `RELEASE_APP_CLIENT_ID` foi substituído no fluxo por
+`RELEASE_APP_ID`; não copiar nem apagar valores sem conferir a migração.
+A equipe administrativa ainda não foi identificada; não basta usar o papel
+RepositoryRole/5 dos rulesets como reviewer de Environment. A publicação
+verifica uma equipe real nos quatro ambientes e falha fechada se faltar.
+O CODEOWNERS legado aguarda essa equipe, sem inventar destinatário.
+
+As consultas realizadas encontraram ausência de cadastros diretos; herança da
+organização não foi confirmada. Instalar o App e conceder acesso são ações do
+operador. Nenhum PAT, chave SSH ou segredo deve ser enviado ao assistente.
+O CI funciona sem essas configurações; release/deploy permanecem bloqueados.
 
 Para releases self-hosted:
 

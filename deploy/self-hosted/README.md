@@ -70,6 +70,25 @@ Compose e os defaults `IMAGE_VERSION` dos Dockerfiles no mesmo change set.
 Releases publicadas continuam usando referencias imutaveis por digest no
 manifesto `images.env`.
 
+A feature 011 adota `release-manifest.json` atestado e imagens
+`ghcr.io/altivy-it/nodra-*` por digest. Depois de verificar a release e a
+atestação pelo guard canônico, o operador pode converter o manifesto:
+
+```powershell
+pwsh -NoProfile -File tools/scripts/convert-release-manifest.ps1 -ManifestPath /secure/release/release-manifest.json -OutputPath /secure/release/images.env
+$hash = (Get-FileHash /secure/release/images.env -Algorithm SHA256).Hash.ToLowerInvariant()
+"$hash  images.env" | Out-File /secure/release/images.env.sha256 -Encoding utf8NoBOM -NoClobber
+```
+
+Execute na raiz extraída do pacote, com PowerShell 7.4+, após validar origem
+e atestação. O diretório `/secure/release` deve existir e os dois destinos devem
+ser novos. Nenhum comando acima inicia containers. A conversão e o checksum
+não autenticam a origem por si; nunca use manifesto de origem não verificada.
+O inicializador continua exigindo `-NoBuild`, `images.env.sha256` e exatamente
+cinco imagens por digest. Referências pessoais legadas são aceitas apenas para
+compatibilidade/recuperação; novas releases usam o namespace institucional.
+Nenhuma configuração, dado ou imagem instalada é migrada automaticamente.
+
 ## Pre-requisitos
 
 - Docker Engine ou Docker Desktop com Compose v2 e containers Linux;

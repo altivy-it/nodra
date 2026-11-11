@@ -13,7 +13,8 @@ RUN npm run build -- --configuration ${WEB_CONFIGURATION} --base-href ${WEB_BASE
 
 FROM docker.io/lzocateli/nginx:1.28.0-bookworm AS runtime
 USER root
-ARG IMAGE_VERSION=0.1.0
+ARG RELEASE_VERSION=0.1.0
+ARG IMAGE_VERSION=${RELEASE_VERSION}
 LABEL org.opencontainers.image.title="nodra-web" \
   org.opencontainers.image.description="Proxy HTTPS e aplicação web estática do Nodra." \
   org.opencontainers.image.version="${IMAGE_VERSION}" \
