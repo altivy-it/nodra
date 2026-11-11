@@ -1,8 +1,8 @@
 using System.Net;
-using Nodra.Bff.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
+using Nodra.Bff.Authentication;
 
 namespace Nodra.Bff.UnitTests.Authentication;
 

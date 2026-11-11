@@ -1,6 +1,6 @@
-using Nodra.Bff.Observability;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Nodra.Bff.Observability;
 using OpenTelemetry.Context.Propagation;
 
 namespace Nodra.Bff.UnitTests.Observability;
@@ -14,7 +14,7 @@ public sealed class OpenTelemetrySetupTests
         var services = new ServiceCollection();
         var configuration = new ConfigurationBuilder().Build();
 
-        services.AddBffOpenTelemetry(configuration);
+        _ = services.AddBffOpenTelemetry(configuration);
 
         var fields = Propagators.DefaultTextMapPropagator.Fields;
         Assert.NotNull(fields);

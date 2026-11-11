@@ -1,7 +1,7 @@
 using System.Net.WebSockets;
-using Nodra.Bff.Authentication;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Options;
+using Nodra.Bff.Authentication;
 
 namespace Nodra.Bff.UnitTests.Authentication;
 

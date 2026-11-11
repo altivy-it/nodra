@@ -1,8 +1,5 @@
 using Nodra.Bff.Authentication;
 using Nodra.Bff.Relay;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 
 namespace Nodra.Bff.Configuration;
 
@@ -18,25 +15,25 @@ public static class BffConfigurationExtensions
     /// <returns>O mesmo builder, permitindo encadear outras extensões de composição.</returns>
     public static WebApplicationBuilder AddBffConfiguration(this WebApplicationBuilder builder)
     {
-        builder.Services
+        _ = builder.Services
             .AddOptions<KeycloakOptions>()
             .BindConfiguration(KeycloakOptions.SectionName)
             .ValidateOnStart();
-        builder.Services
+        _ = builder.Services
             .AddOptions<BffSecurityOptions>()
             .BindConfiguration(BffSecurityOptions.SectionName)
             .ValidateOnStart();
-        builder.Services
+        _ = builder.Services
             .AddOptions<DownstreamApiOptions>()
             .BindConfiguration(DownstreamApiOptions.SectionName)
             .ValidateOnStart();
-        builder.Services
+        _ = builder.Services
             .AddOptions<BffRuntimeOptions>()
             .BindConfiguration(BffRuntimeOptions.SectionName)
             .ValidateOnStart();
-        builder.Services.AddSingleton<IValidateOptions<KeycloakOptions>, KeycloakOptionsValidator>();
-        builder.Services.AddSingleton<IValidateOptions<BffSecurityOptions>, BffSecurityOptionsValidator>();
-        builder.Services.AddSingleton<IValidateOptions<DownstreamApiOptions>, DownstreamApiOptionsValidator>();
+        _ = builder.Services.AddSingleton<IValidateOptions<KeycloakOptions>, KeycloakOptionsValidator>();
+        _ = builder.Services.AddSingleton<IValidateOptions<BffSecurityOptions>, BffSecurityOptionsValidator>();
+        _ = builder.Services.AddSingleton<IValidateOptions<DownstreamApiOptions>, DownstreamApiOptionsValidator>();
 
         return builder;
     }

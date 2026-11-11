@@ -9,9 +9,9 @@ namespace Nodra.Backend.Domain.Notes;
 /// </summary>
 public static partial class MarkdownDocumentParser
 {
-    private static readonly Regex HeadingLine = HeadingLineRegex();
-    private static readonly Regex WikiLink = WikiLinkRegex();
-    private static readonly Regex MarkdownLink = MarkdownLinkRegex();
+    private static readonly Regex s_headingLine = HeadingLineRegex();
+    private static readonly Regex s_wikiLink = WikiLinkRegex();
+    private static readonly Regex s_markdownLink = MarkdownLinkRegex();
 
     /// <summary>
     /// Analisa frontmatter e referências estruturais da nota.
@@ -46,17 +46,17 @@ public static partial class MarkdownDocumentParser
         }
 
         var tags = frontmatter is null ? [] : ExtractTags(frontmatter);
-        var headings = HeadingLine.Matches(body)
+        var headings = s_headingLine.Matches(body)
             .Select(match => match.Groups["text"].Value.Trim())
             .Where(value => value.Length > 0)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
-        var wikiLinks = WikiLink.Matches(body)
+        var wikiLinks = s_wikiLink.Matches(body)
             .Select(match => match.Groups["target"].Value.Trim())
             .Where(value => value.Length > 0)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
-        var markdownLinks = MarkdownLink.Matches(body)
+        var markdownLinks = s_markdownLink.Matches(body)
             .Select(match => match.Groups["target"].Value.Trim())
             .Where(value => value.Length > 0 && !value.StartsWith("javascript:", StringComparison.OrdinalIgnoreCase))
             .Distinct(StringComparer.OrdinalIgnoreCase)

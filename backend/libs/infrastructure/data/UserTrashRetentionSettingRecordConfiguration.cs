@@ -10,12 +10,12 @@ public sealed class UserTrashRetentionSettingRecordConfiguration : IEntityTypeCo
 {
     public void Configure(EntityTypeBuilder<UserTrashRetentionSettingRecord> builder)
     {
-        builder.ToTable("user_trash_retention_settings");
-        builder.HasKey(record => record.Subject);
-        builder.Property(record => record.Subject).HasColumnName("subject").HasMaxLength(512);
-        builder.Property(record => record.RetentionDays).HasColumnName("retention_days");
-        builder.Property(record => record.UpdatedAtUtc).HasColumnName("updated_at_utc").IsRequired();
-        builder.ToTable(table => table.HasCheckConstraint(
+        _ = builder.ToTable("user_trash_retention_settings");
+        _ = builder.HasKey(record => record.Subject);
+        _ = builder.Property(record => record.Subject).HasColumnName("subject").HasMaxLength(512);
+        _ = builder.Property(record => record.RetentionDays).HasColumnName("retention_days");
+        _ = builder.Property(record => record.UpdatedAtUtc).HasColumnName("updated_at_utc").IsRequired();
+        _ = builder.ToTable(table => table.HasCheckConstraint(
             "ck_user_trash_retention_settings_days",
             "retention_days IS NULL OR (retention_days >= 1 AND retention_days <= 3650)"));
     }

@@ -1,10 +1,8 @@
 using System.Net.Http.Headers;
-using Nodra.Bff.Relay;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
-using Xunit;
+using Nodra.Bff.Relay;
 
 namespace Nodra.Bff.UnitTests.Relay;
 
@@ -45,9 +43,9 @@ public sealed class BffProxyRouteBuilderExtensionsTests
     public void MapBffApiProxyAcceptsQueryMethod()
     {
         var builder = WebApplication.CreateSlimBuilder();
-        builder.Services.AddHttpClient();
+        _ = builder.Services.AddHttpClient();
         using var app = builder.Build();
-        app.MapBffApiProxy();
+        _ = app.MapBffApiProxy();
         var endpoint = Assert.Single(
             ((IEndpointRouteBuilder)app).DataSources.SelectMany(source => source.Endpoints).OfType<RouteEndpoint>(),
             candidate => candidate.RoutePattern.RawText == "/api/v1/{**path}");

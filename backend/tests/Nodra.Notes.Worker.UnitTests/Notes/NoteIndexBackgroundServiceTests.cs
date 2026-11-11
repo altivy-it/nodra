@@ -1,8 +1,8 @@
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Nodra.Backend.Application.Notes;
 using Nodra.Backend.Domain.Notes;
 using Nodra.Notes.Worker.Notes;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Xunit;
 
 namespace Nodra.Notes.Worker.UnitTests.Notes;
@@ -15,12 +15,12 @@ public sealed class NoteIndexBackgroundServiceTests
     {
         var jobStore = new TransientOnceJobStore();
         var services = new ServiceCollection();
-        services.AddLogging();
-        services.AddSingleton<INoteIndexJobStore>(jobStore);
-        services.AddSingleton<INoteStore, UnusedNoteStore>();
-        services.AddSingleton<INoteProjectionStore, UnusedProjectionStore>();
-        services.AddSingleton<TimeProvider>(TimeProvider.System);
-        services.AddScoped<NoteIndexJobProcessor>();
+        _ = services.AddLogging();
+        _ = services.AddSingleton<INoteIndexJobStore>(jobStore);
+        _ = services.AddSingleton<INoteStore, UnusedNoteStore>();
+        _ = services.AddSingleton<INoteProjectionStore, UnusedProjectionStore>();
+        _ = services.AddSingleton<TimeProvider>(TimeProvider.System);
+        _ = services.AddScoped<NoteIndexJobProcessor>();
         await using var provider = services.BuildServiceProvider();
         using var service = new NoteIndexBackgroundService(
             provider.GetRequiredService<IServiceScopeFactory>(),
@@ -61,11 +61,11 @@ public sealed class NoteIndexBackgroundServiceTests
 
             if (attempt == 2)
             {
-                RetryObserved.TrySetResult();
+                _ = RetryObserved.TrySetResult();
                 return null;
             }
 
-            StopObserved.TrySetResult();
+            _ = StopObserved.TrySetResult();
             await Task.Delay(Timeout.Infinite, cancellationToken);
             return null;
         }

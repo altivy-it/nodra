@@ -36,7 +36,7 @@ public sealed class VaultProvisioningProcessorTests
         Assert.True(processed);
         Assert.NotNull(store.CompletedWorkItem);
         Assert.Equal(VaultLifecycleState.Degraded, store.CompletedWorkItem.Operation.State);
-        Assert.NotNull(store.NextAttemptAt);
+        _ = Assert.NotNull(store.NextAttemptAt);
         Assert.Equal("filesystem-provisioning-failed", store.LastError);
     }
 

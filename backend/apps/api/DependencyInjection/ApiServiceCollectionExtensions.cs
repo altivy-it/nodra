@@ -1,10 +1,10 @@
-using Nodra.Notes.Api.Authorization;
-using Nodra.Notes.Api.Vaults;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using Nodra.Backend.Application.Notes;
 using Nodra.Backend.Application.Vaults;
 using Nodra.Backend.Infra.Data.Postgres;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
+using Nodra.Notes.Api.Authorization;
+using Nodra.Notes.Api.Vaults;
 
 namespace Nodra.Notes.Api.DependencyInjection;
 

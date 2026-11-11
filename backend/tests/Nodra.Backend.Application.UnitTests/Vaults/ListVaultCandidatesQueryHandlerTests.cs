@@ -33,7 +33,7 @@ public sealed class ListVaultCandidatesQueryHandlerTests
         var handler = new ListVaultCandidatesQueryHandler(
             new StubVaultReader(new VaultCandidatePage([], null)));
 
-        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
+        _ = await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
             handler.HandleAsync(
                 new ListVaultCandidatesQuery(null, limit),
                 CancellationToken.None));

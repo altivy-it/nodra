@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Options;
 using System.Net;
 
 namespace Nodra.Bff.Authentication;

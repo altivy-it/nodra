@@ -1,6 +1,6 @@
+using Microsoft.EntityFrameworkCore;
 using Nodra.Backend.Application.Vaults;
 using Nodra.Backend.Domain.Vaults;
-using Microsoft.EntityFrameworkCore;
 
 namespace Nodra.Backend.Infra.Data.Postgres;
 
@@ -30,7 +30,7 @@ public sealed class PostgresVaultProvisioningStore(PostgresDbContext dbContext) 
         string idempotencyKey,
         CancellationToken cancellationToken)
     {
-        dbContext.VaultProvisioningOperations.Add(new VaultProvisioningOperationRecord
+        _ = dbContext.VaultProvisioningOperations.Add(new VaultProvisioningOperationRecord
         {
             OperationId = operation.OperationId,
             CreatedAtUtc = DateTimeOffset.UtcNow,
@@ -41,7 +41,7 @@ public sealed class PostgresVaultProvisioningStore(PostgresDbContext dbContext) 
             State = (int)operation.State,
             AttemptCount = 0
         });
-        await dbContext.SaveChangesAsync(cancellationToken);
+        _ = await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     /// <inheritdoc />
@@ -125,19 +125,19 @@ public sealed class PostgresVaultProvisioningStore(PostgresDbContext dbContext) 
             cancellationToken);
         if (vault is null && workItem.Operation.State == VaultLifecycleState.Ready)
         {
-            dbContext.Vaults.Add(new VaultRecord
+            _ = dbContext.Vaults.Add(new VaultRecord
             {
                 Id = workItem.Operation.VaultId,
                 Name = workItem.Operation.Name,
                 State = VaultLifecycleState.Ready
             });
         }
-        else if (vault is not null)
+        else
         {
-            vault.State = workItem.Operation.State;
+            vault?.State = workItem.Operation.State;
         }
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        _ = await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
         return true;
     }
@@ -170,7 +170,7 @@ public sealed class PostgresVaultProvisioningStore(PostgresDbContext dbContext) 
             cancellationToken);
         if (occurrence is null)
         {
-            dbContext.VaultResidueOccurrences.Add(new VaultResidueOccurrenceRecord
+            _ = dbContext.VaultResidueOccurrences.Add(new VaultResidueOccurrenceRecord
             {
                 OccurrenceId = Guid.NewGuid(),
                 VaultId = vaultId,
@@ -192,7 +192,7 @@ public sealed class PostgresVaultProvisioningStore(PostgresDbContext dbContext) 
             occurrence.RetentionWarningScheduledAt = null;
         }
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        _ = await dbContext.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
     }
 
@@ -219,7 +219,7 @@ public sealed class PostgresVaultProvisioningStore(PostgresDbContext dbContext) 
             cancellationToken);
         if (occurrence is null)
         {
-            dbContext.VaultResidueOccurrences.Add(new VaultResidueOccurrenceRecord
+            _ = dbContext.VaultResidueOccurrences.Add(new VaultResidueOccurrenceRecord
             {
                 OccurrenceId = Guid.NewGuid(),
                 VaultId = vaultId,
@@ -241,7 +241,7 @@ public sealed class PostgresVaultProvisioningStore(PostgresDbContext dbContext) 
             occurrence.RetentionWarningScheduledAt = null;
         }
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        _ = await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     /// <inheritdoc />

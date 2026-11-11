@@ -1,7 +1,7 @@
 using System.Net;
 using System.Text;
-using Nodra.Notes.Api.Authorization;
 using Microsoft.Extensions.Logging.Abstractions;
+using Nodra.Notes.Api.Authorization;
 using Xunit;
 
 namespace Nodra.Notes.Api.UnitTests.Authorization;

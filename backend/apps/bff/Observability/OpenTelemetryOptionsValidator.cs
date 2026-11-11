@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Options;
-
 namespace Nodra.Bff.Observability;
 
 /// <summary>

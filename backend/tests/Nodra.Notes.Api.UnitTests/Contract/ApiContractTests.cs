@@ -2,17 +2,17 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Security.Claims;
-using Nodra.Backend.Application.Vaults;
-using Nodra.Backend.Application.Notes;
-using Nodra.Backend.Domain.Notes;
-using Nodra.Backend.Domain.Vaults;
-using Nodra.Notes.Api.Authorization;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Nodra.Backend.Application.Notes;
+using Nodra.Backend.Application.Vaults;
+using Nodra.Backend.Domain.Notes;
+using Nodra.Backend.Domain.Vaults;
+using Nodra.Notes.Api.Authorization;
 using Xunit;
 
 namespace Nodra.Notes.Api.UnitTests.Contract;
@@ -600,7 +600,7 @@ public sealed class ApiContractTests : IClassFixture<ApiFactory>
 
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
         Assert.Equal(1, factory.FolderStore.CallCount);
-        Assert.Single(factory.AuditStore.Events);
+        _ = Assert.Single(factory.AuditStore.Events);
         Assert.Equal("empty-trash-intent", factory.AuditStore.Events[0].Action);
     }
 
@@ -666,7 +666,7 @@ public sealed class ApiContractTests : IClassFixture<ApiFactory>
     public async Task MoveNoteWithWriteGrantChangesPathAndRequiresCurrentEtag()
     {
         factory.DecisionService.Decision = new AuthorizationDecision(true, true, 200);
-        await factory.Services.GetRequiredService<INoteStore>().TryCreateAsync(
+        _ = await factory.Services.GetRequiredService<INoteStore>().TryCreateAsync(
             "lab-0001", NotePath.Create("rascunho.md"), "# Rascunho", CancellationToken.None);
         using var client = factory.CreateClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
@@ -692,8 +692,8 @@ public sealed class ApiContractTests : IClassFixture<ApiFactory>
     {
         factory.DecisionService.Decision = new AuthorizationDecision(true, true, 200);
         var store = factory.Services.GetRequiredService<INoteStore>();
-        await store.TryCreateAsync("lab-0001", NotePath.Create("a.md"), "# A", CancellationToken.None);
-        await store.TryCreateAsync("lab-0001", NotePath.Create("b.md"), "# B", CancellationToken.None);
+        _ = await store.TryCreateAsync("lab-0001", NotePath.Create("a.md"), "# A", CancellationToken.None);
+        _ = await store.TryCreateAsync("lab-0001", NotePath.Create("b.md"), "# B", CancellationToken.None);
         using var client = factory.CreateClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
 
@@ -708,7 +708,7 @@ public sealed class ApiContractTests : IClassFixture<ApiFactory>
     public async Task MoveNoteWithDeniedGrantDoesNotMoveTheNote()
     {
         var store = factory.Services.GetRequiredService<INoteStore>();
-        await store.TryCreateAsync("lab-0001", NotePath.Create("a.md"), "# A", CancellationToken.None);
+        _ = await store.TryCreateAsync("lab-0001", NotePath.Create("a.md"), "# A", CancellationToken.None);
         factory.DecisionService.Decision = new AuthorizationDecision(false, true, 403);
         using var client = factory.CreateClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
@@ -771,21 +771,21 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        builder.ConfigureServices(services =>
+        _ = builder.ConfigureServices(services =>
         {
-            services.RemoveAll<IAuthorizationDecisionService>();
-            services.AddSingleton<IAuthorizationDecisionService>(DecisionService);
-            services.RemoveAll<IVaultReader>();
-            services.AddSingleton<IVaultReader>(VaultReader);
-            services.RemoveAll<INoteStore>();
-            services.AddSingleton<INoteStore>(NoteStore);
-            services.RemoveAll<IFolderStore>();
-            services.AddSingleton<IFolderStore>(FolderStore);
-            services.RemoveAll<ITrashRetentionSettingsStore>();
-            if (RegisterRetentionStore) services.AddSingleton<ITrashRetentionSettingsStore>(RetentionStore);
-            services.RemoveAll<ITrashAuditStore>();
-            if (RegisterAuditStore) services.AddSingleton<ITrashAuditStore>(AuditStore);
-            services.AddAuthentication(options =>
+            _ = services.RemoveAll<IAuthorizationDecisionService>();
+            _ = services.AddSingleton<IAuthorizationDecisionService>(DecisionService);
+            _ = services.RemoveAll<IVaultReader>();
+            _ = services.AddSingleton<IVaultReader>(VaultReader);
+            _ = services.RemoveAll<INoteStore>();
+            _ = services.AddSingleton<INoteStore>(NoteStore);
+            _ = services.RemoveAll<IFolderStore>();
+            _ = services.AddSingleton<IFolderStore>(FolderStore);
+            _ = services.RemoveAll<ITrashRetentionSettingsStore>();
+            if (RegisterRetentionStore) _ = services.AddSingleton<ITrashRetentionSettingsStore>(RetentionStore);
+            _ = services.RemoveAll<ITrashAuditStore>();
+            if (RegisterAuditStore) _ = services.AddSingleton<ITrashAuditStore>(AuditStore);
+            _ = services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = "Test";
                 options.DefaultChallengeScheme = "Test";
@@ -1016,7 +1016,7 @@ public sealed class FakeNoteStore : INoteStore
         if (!notes.TryGetValue(source.Value, out var note)) return Task.FromResult(NoteMoveResult.NotFound);
         if (note.ETag != expectedETag) return Task.FromResult(NoteMoveResult.VersionConflict);
         if (notes.ContainsKey(destination.Value)) return Task.FromResult(NoteMoveResult.DestinationExists);
-        notes.Remove(source.Value);
+        _ = notes.Remove(source.Value);
         notes[destination.Value] = note with { Path = destination };
         return Task.FromResult(NoteMoveResult.Moved);
     }

@@ -1,6 +1,4 @@
 using System.Net;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Options;
 using Nodra.Bff.Authentication;
 
 namespace Nodra.Bff.Middleware;
@@ -15,7 +13,7 @@ public sealed class ForwardedPrefixMiddleware(
     public async Task InvokeAsync(HttpContext context)
     {
         var prefix = context.Request.Headers["X-Forwarded-Prefix"].ToString();
-        context.Request.Headers.Remove("X-Forwarded-Prefix");
+        _ = context.Request.Headers.Remove("X-Forwarded-Prefix");
 
         if (IsTrustedProxy(context.Connection.RemoteIpAddress) &&
             string.Equals(prefix, "/notes", StringComparison.Ordinal))

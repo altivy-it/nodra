@@ -1,10 +1,8 @@
 using System.Collections.Concurrent;
-using System.Net.Http.Json;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Options;
 
 namespace Nodra.Bff.Authentication;
 
@@ -21,7 +19,7 @@ public sealed class AccessTokenRefreshCoordinator(
     /// Nome do cliente HTTP usado para chamadas de renovação ao Keycloak.
     /// </summary>
     public const string HttpClientName = "KeycloakTokenRefresh";
-    private static readonly TimeSpan ResultLifetime = TimeSpan.FromMinutes(1);
+    private static readonly TimeSpan s_resultLifetime = TimeSpan.FromMinutes(1);
     private readonly ConcurrentDictionary<string, Lazy<Task<AccessTokenRefreshResult>>> inFlight = new();
 
     /// <summary>
@@ -100,11 +98,11 @@ public sealed class AccessTokenRefreshCoordinator(
             payload.AccessToken,
             string.IsNullOrWhiteSpace(payload.RefreshToken) ? refreshToken : payload.RefreshToken,
             timeProvider.GetUtcNow().AddSeconds(payload.ExpiresIn));
-        cache.Set(GetCacheKey(refreshToken), result, new MemoryCacheEntryOptions
+        _ = cache.Set(GetCacheKey(refreshToken), result, new MemoryCacheEntryOptions
         {
-            AbsoluteExpiration = result.ExpiresAt < timeProvider.GetUtcNow().Add(ResultLifetime)
+            AbsoluteExpiration = result.ExpiresAt < timeProvider.GetUtcNow().Add(s_resultLifetime)
                 ? result.ExpiresAt
-                : timeProvider.GetUtcNow().Add(ResultLifetime),
+                : timeProvider.GetUtcNow().Add(s_resultLifetime),
             Size = 1
         });
 

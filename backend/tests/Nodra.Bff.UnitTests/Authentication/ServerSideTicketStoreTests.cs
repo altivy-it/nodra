@@ -1,7 +1,7 @@
 using System.Security.Claims;
-using Nodra.Bff.Authentication;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Caching.Memory;
+using Nodra.Bff.Authentication;
 
 namespace Nodra.Bff.UnitTests.Authentication;
 

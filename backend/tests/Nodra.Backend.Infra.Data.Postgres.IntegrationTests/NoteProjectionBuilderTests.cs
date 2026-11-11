@@ -1,7 +1,6 @@
 using System.Globalization;
 using Nodra.Backend.Application.Notes;
 using Nodra.Backend.Domain.Notes;
-using Nodra.Backend.Infra.Data.Postgres;
 using Xunit;
 
 namespace Nodra.Backend.Infra.Data.Postgres.IntegrationTests;

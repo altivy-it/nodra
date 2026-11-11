@@ -36,7 +36,7 @@ public sealed class BearerTokenRelayHandlerTests
         };
         using var client = new HttpClient(relay);
 
-        await Assert.ThrowsAsync<UnauthorizedAccessException>(
+        _ = await Assert.ThrowsAsync<UnauthorizedAccessException>(
             () => client.GetAsync("https://api.example/v1/vaults"));
     }
 

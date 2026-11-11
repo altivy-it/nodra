@@ -85,6 +85,6 @@ public sealed class MarkdownDocumentParserTests
     [InlineData("---\ntitle: um")]
     public void ParseRejectsInvalidFrontmatter(string content)
     {
-        Assert.Throws<ArgumentException>(() => MarkdownDocumentParser.Parse(content));
+        _ = Assert.Throws<ArgumentException>(() => MarkdownDocumentParser.Parse(content));
     }
 }

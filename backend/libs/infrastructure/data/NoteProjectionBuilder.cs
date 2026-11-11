@@ -23,7 +23,7 @@ public static class NoteProjectionBuilder
         ArgumentNullException.ThrowIfNull(note);
 
         var metadata = note.Metadata;
-        metadata.Properties.TryGetValue("title", out var title);
+        _ = metadata.Properties.TryGetValue("title", out var title);
 
         return new NoteProjectionRecord
         {

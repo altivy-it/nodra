@@ -1,5 +1,5 @@
-using Nodra.Bff.Authentication;
 using Microsoft.Extensions.FileProviders;
+using Nodra.Bff.Authentication;
 
 namespace Nodra.Bff.UnitTests.Authentication;
 

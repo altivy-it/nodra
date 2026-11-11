@@ -58,7 +58,7 @@ public sealed record ReauthenticationEvidence(string Subject, DateTimeOffset Aut
     {
         evidence = null;
         var subject = principal.FindFirst("sub")?.Value;
-        properties.Items.TryGetValue(AuthenticatedAtItem, out var value);
+        _ = properties.Items.TryGetValue(AuthenticatedAtItem, out var value);
         if (string.IsNullOrWhiteSpace(subject) || !DateTimeOffset.TryParse(
                 value,
                 CultureInfo.InvariantCulture,

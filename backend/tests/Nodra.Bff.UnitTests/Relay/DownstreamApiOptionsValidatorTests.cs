@@ -1,7 +1,7 @@
-using Nodra.Bff.Configuration;
-using Nodra.Bff.Relay;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
+using Nodra.Bff.Configuration;
+using Nodra.Bff.Relay;
 
 namespace Nodra.Bff.UnitTests.Relay;
 

@@ -8,7 +8,7 @@ namespace Nodra.Bff.Relay;
 /// </summary>
 internal static class ProxyHeaders
 {
-    private static readonly HashSet<string> HopByHopHeaders = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> s_hopByHopHeaders = new(StringComparer.OrdinalIgnoreCase)
     {
         "Authorization",
         "Connection",
@@ -28,7 +28,7 @@ internal static class ProxyHeaders
     /// </summary>
     /// <param name="headerName">Nome do header HTTP.</param>
     /// <returns><see langword="true"/> para headers controlados pelo transporte ou pelo BFF.</returns>
-    public static bool IsHopByHop(string headerName) => HopByHopHeaders.Contains(headerName);
+    public static bool IsHopByHop(string headerName) => s_hopByHopHeaders.Contains(headerName);
 
     /// <summary>
     /// Copia headers da requisição recebida para a requisição downstream, excluindo hop-by-hop.
@@ -39,12 +39,12 @@ internal static class ProxyHeaders
     {
         foreach (var header in source)
         {
-            if (HopByHopHeaders.Contains(header.Key))
+            if (s_hopByHopHeaders.Contains(header.Key))
             {
                 continue;
             }
 
-            destination.Headers.TryAddWithoutValidation(header.Key, header.Value.ToArray());
+            _ = destination.Headers.TryAddWithoutValidation(header.Key, header.Value.ToArray());
         }
     }
 
@@ -61,7 +61,7 @@ internal static class ProxyHeaders
     {
         foreach (var header in responseHeaders)
         {
-            if (!HopByHopHeaders.Contains(header.Key))
+            if (!s_hopByHopHeaders.Contains(header.Key))
             {
                 destination[header.Key] = header.Value.ToArray();
             }
@@ -69,7 +69,7 @@ internal static class ProxyHeaders
 
         foreach (var header in contentHeaders)
         {
-            if (!HopByHopHeaders.Contains(header.Key))
+            if (!s_hopByHopHeaders.Contains(header.Key))
             {
                 destination[header.Key] = header.Value.ToArray();
             }

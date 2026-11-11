@@ -1,6 +1,5 @@
 using System.Net;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.Extensions.Options;
 
 namespace Nodra.Bff.Authentication;
 

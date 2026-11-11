@@ -1,7 +1,6 @@
+using Microsoft.EntityFrameworkCore;
 using Nodra.Backend.Application.Vaults;
 using Nodra.Backend.Domain.Vaults;
-using Nodra.Backend.Infra.Data.Postgres;
-using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Xunit;
 
@@ -30,20 +29,20 @@ public sealed class PostgresVaultReaderIntegrationTests : IAsyncLifetime
     {
         await using var context = CreateContext(migratorConnectionString);
         await context.Database.MigrateAsync();
-        await context.Database.ExecuteSqlRawAsync(
+        _ = await context.Database.ExecuteSqlRawAsync(
             "GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA altivy TO altivy_runtime");
     }
 
     public async Task DisposeAsync()
     {
         await using var context = CreateContext(migratorConnectionString);
-        await context.VaultResidueOccurrences
+        _ = await context.VaultResidueOccurrences
             .Where(occurrence => occurrence.VaultId == testVaultId)
             .ExecuteDeleteAsync();
-        await context.Vaults
+        _ = await context.Vaults
             .Where(vault => vault.Id == testVaultId || vault.Id.StartsWith(pageVaultPrefix))
             .ExecuteDeleteAsync();
-        await context.VaultProvisioningOperations
+        _ = await context.VaultProvisioningOperations
             .Where(operation => operation.Subject == operationSubject)
             .ExecuteDeleteAsync();
     }
@@ -53,12 +52,12 @@ public sealed class PostgresVaultReaderIntegrationTests : IAsyncLifetime
     {
         await using (var migratorContext = CreateContext(migratorConnectionString))
         {
-            migratorContext.Vaults.Add(new VaultRecord
+            _ = migratorContext.Vaults.Add(new VaultRecord
             {
                 Id = testVaultId,
                 Name = "Integração PostgreSQL"
             });
-            await migratorContext.SaveChangesAsync();
+            _ = await migratorContext.SaveChangesAsync();
         }
 
         await using var runtimeContext = CreateContext(runtimeConnectionString);
@@ -87,7 +86,7 @@ public sealed class PostgresVaultReaderIntegrationTests : IAsyncLifetime
                 Id = id,
                 Name = $"Vault {index}"
             }));
-            await migratorContext.SaveChangesAsync();
+            _ = await migratorContext.SaveChangesAsync();
         }
 
         await using var runtimeContext = CreateContext(runtimeConnectionString);
@@ -112,7 +111,7 @@ public sealed class PostgresVaultReaderIntegrationTests : IAsyncLifetime
         await using var runtimeContext = CreateContext(runtimeConnectionString);
         var reader = new PostgresVaultReader(runtimeContext);
 
-        await Assert.ThrowsAsync<InvalidVaultCursorException>(() =>
+        _ = await Assert.ThrowsAsync<InvalidVaultCursorException>(() =>
             reader.ReadCandidatesAsync("not-a-cursor", 20, CancellationToken.None));
     }
 
@@ -167,13 +166,13 @@ public sealed class PostgresVaultReaderIntegrationTests : IAsyncLifetime
     {
         await using (var migratorContext = CreateContext(migratorConnectionString))
         {
-            migratorContext.Vaults.Add(new VaultRecord
+            _ = migratorContext.Vaults.Add(new VaultRecord
             {
                 Id = testVaultId,
                 Name = "Vault de integração",
                 State = VaultLifecycleState.Ready
             });
-            await migratorContext.SaveChangesAsync();
+            _ = await migratorContext.SaveChangesAsync();
         }
 
         await using var runtimeContext = CreateContext(runtimeConnectionString);
@@ -201,13 +200,13 @@ public sealed class PostgresVaultReaderIntegrationTests : IAsyncLifetime
     {
         await using (var migratorContext = CreateContext(migratorConnectionString))
         {
-            migratorContext.Vaults.Add(new VaultRecord
+            _ = migratorContext.Vaults.Add(new VaultRecord
             {
                 Id = testVaultId,
                 Name = "Vault de integração",
                 State = VaultLifecycleState.Ready
             });
-            await migratorContext.SaveChangesAsync();
+            _ = await migratorContext.SaveChangesAsync();
         }
 
         await using var runtimeContext = CreateContext(runtimeConnectionString);

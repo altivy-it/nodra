@@ -27,7 +27,7 @@ public sealed class VaultProvisioningOperationTests
         operation.TransitionTo(VaultLifecycleState.Ready);
         operation.TransitionTo(VaultLifecycleState.Archived);
 
-        Assert.Throws<InvalidOperationException>(() =>
+        _ = Assert.Throws<InvalidOperationException>(() =>
             operation.TransitionTo(VaultLifecycleState.Provisioning));
     }
 }

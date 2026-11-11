@@ -1,7 +1,7 @@
-using Nodra.Bff.Authentication;
-using Nodra.Bff.Configuration;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Options;
+using Nodra.Bff.Authentication;
+using Nodra.Bff.Configuration;
 
 namespace Nodra.Bff.UnitTests.Authentication;
 

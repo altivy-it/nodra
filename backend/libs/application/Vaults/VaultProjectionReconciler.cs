@@ -1,5 +1,3 @@
-using Nodra.Backend.Domain.Vaults;
-
 namespace Nodra.Backend.Application.Vaults;
 
 /// <summary>

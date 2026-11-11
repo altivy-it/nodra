@@ -13,7 +13,7 @@ public sealed class MigrationSqlScriptLoaderTests
             "20260906193000_AddVaultResidueAlertDelivery/Up/01-BackfillNextAlertAttempt.sql");
 
         Assert.Contains("next_alert_attempt_at = last_detected_at", script, StringComparison.Ordinal);
-        Assert.Throws<InvalidOperationException>(() =>
+        _ = Assert.Throws<InvalidOperationException>(() =>
             MigrationSqlScriptLoader.Load("missing/Up/01-Missing.sql"));
     }
 }

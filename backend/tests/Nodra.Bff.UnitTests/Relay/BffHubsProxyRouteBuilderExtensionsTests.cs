@@ -1,6 +1,4 @@
 using Nodra.Bff.Relay;
-using Microsoft.AspNetCore.Http;
-using Xunit;
 
 namespace Nodra.Bff.UnitTests.Relay;
 
@@ -21,7 +19,7 @@ public sealed class BffHubsProxyRouteBuilderExtensionsTests
     [Fact]
     public void BuildDownstreamUriThrowsWhenBaseAddressMissing()
     {
-        Assert.Throws<InvalidOperationException>(() =>
+        _ = Assert.Throws<InvalidOperationException>(() =>
             BffHubsProxyRouteBuilderExtensions.BuildDownstreamUri(null, "vaults", QueryString.Empty));
     }
 

@@ -1,8 +1,7 @@
 using System.Net;
+using Microsoft.Extensions.Options;
 using Nodra.Bff.Authentication;
 using Nodra.Bff.Middleware;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Options;
 
 namespace Nodra.Bff.UnitTests.Authentication;
 
@@ -37,7 +36,7 @@ public sealed class ForwardedPrefixMiddlewareTests
 
         await middleware.InvokeAsync(context);
 
-        Assert.True(context.Request.PathBase.HasValue is false);
+        Assert.True(!context.Request.PathBase.HasValue);
         Assert.False(context.Request.Headers.ContainsKey("X-Forwarded-Prefix"));
     }
 }

@@ -15,7 +15,7 @@ public sealed class FileSystemVaultProvisioner(string vaultRoot) : IVaultFileSys
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        Directory.CreateDirectory(vaultRoot);
+        _ = Directory.CreateDirectory(vaultRoot);
         EnsureNotReparsePoint(vaultRoot);
 
         var vaultPath = GetVaultPath(vaultId);
@@ -26,7 +26,7 @@ public sealed class FileSystemVaultProvisioner(string vaultRoot) : IVaultFileSys
             return Task.CompletedTask;
         }
 
-        Directory.CreateDirectory(vaultPath);
+        _ = Directory.CreateDirectory(vaultPath);
         EnsureNotReparsePoint(vaultPath);
         return Task.CompletedTask;
     }
@@ -105,7 +105,7 @@ public sealed class FileSystemVaultProvisioner(string vaultRoot) : IVaultFileSys
 
         EnsureNotReparsePoint(vaultPath);
         var quarantineRoot = Path.Combine(vaultRoot, ".quarantine");
-        Directory.CreateDirectory(quarantineRoot);
+        _ = Directory.CreateDirectory(quarantineRoot);
         EnsureNotReparsePoint(quarantineRoot);
         var destination = Path.Combine(
             quarantineRoot,

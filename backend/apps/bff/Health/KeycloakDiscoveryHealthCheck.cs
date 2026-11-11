@@ -1,7 +1,6 @@
 using System.Text.Json;
-using Nodra.Bff.Authentication;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Options;
+using Nodra.Bff.Authentication;
 
 namespace Nodra.Bff.Health;
 

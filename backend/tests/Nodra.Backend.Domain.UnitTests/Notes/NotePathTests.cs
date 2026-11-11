@@ -24,7 +24,7 @@ public sealed class NotePathTests
     [InlineData("Projetos/.ALTIVY-TRASH/nota.md")]
     public void CreateWithUnsafeOrNonMarkdownPathThrowsArgumentException(string value)
     {
-        Assert.Throws<ArgumentException>(() => NotePath.Create(value));
+        _ = Assert.Throws<ArgumentException>(() => NotePath.Create(value));
     }
 
 }

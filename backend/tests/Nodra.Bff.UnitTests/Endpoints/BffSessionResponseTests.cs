@@ -1,6 +1,5 @@
 using System.Security.Claims;
 using Nodra.Bff.Endpoints;
-using Xunit;
 
 namespace Nodra.Bff.UnitTests.Endpoints;
 

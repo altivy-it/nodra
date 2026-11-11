@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Options;
 using OpenTelemetry;
 using OpenTelemetry.Context.Propagation;
 using OpenTelemetry.Metrics;
@@ -25,37 +24,37 @@ public static class OpenTelemetrySetup
         Sdk.SetDefaultTextMapPropagator(new TraceContextPropagator());
 
         var section = configuration.GetSection(OpenTelemetryOptions.SectionName);
-        services.AddOptions<OpenTelemetryOptions>()
+        _ = services.AddOptions<OpenTelemetryOptions>()
             .Bind(section)
             .ValidateOnStart();
-        services.AddSingleton<IValidateOptions<OpenTelemetryOptions>, OpenTelemetryOptionsValidator>();
-        services.AddSingleton<BffTelemetry>();
+        _ = services.AddSingleton<IValidateOptions<OpenTelemetryOptions>, OpenTelemetryOptionsValidator>();
+        _ = services.AddSingleton<BffTelemetry>();
 
         var options = section.Get<OpenTelemetryOptions>() ?? new OpenTelemetryOptions();
-        services.AddOpenTelemetry()
+        _ = services.AddOpenTelemetry()
             .ConfigureResource(resource => resource.AddService("altivy-bff"))
             .WithTracing(tracing =>
             {
-                tracing
+                _ = tracing
                     .AddAspNetCoreInstrumentation(instrumentation =>
                         instrumentation.Filter = context =>
                             !context.Request.Path.StartsWithSegments("/health"))
                     .AddHttpClientInstrumentation();
                 if (TryGetEndpoint(options, out var endpoint))
                 {
-                    tracing.AddOtlpExporter(exporter => exporter.Endpoint = endpoint);
+                    _ = tracing.AddOtlpExporter(exporter => exporter.Endpoint = endpoint);
                 }
             })
             .WithMetrics(metrics =>
             {
-                metrics
+                _ = metrics
                     .AddMeter(BffTelemetry.MeterName)
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
                     .AddRuntimeInstrumentation();
                 if (TryGetEndpoint(options, out var endpoint))
                 {
-                    metrics.AddOtlpExporter(exporter => exporter.Endpoint = endpoint);
+                    _ = metrics.AddOtlpExporter(exporter => exporter.Endpoint = endpoint);
                 }
             });
 

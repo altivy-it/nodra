@@ -1,7 +1,6 @@
+using System.Diagnostics;
 using Nodra.Backend.Application.Notes;
 using Nodra.Backend.Domain.Notes;
-using Nodra.Backend.Infra.Data.Postgres;
-using System.Diagnostics;
 using Xunit;
 
 namespace Nodra.Backend.Infra.Data.Postgres.IntegrationTests;
@@ -13,7 +12,7 @@ public sealed class FileSystemNoteStoreIntegrationTests : IAsyncLifetime
 
     public Task InitializeAsync()
     {
-        Directory.CreateDirectory(root);
+        _ = Directory.CreateDirectory(root);
         return Task.CompletedTask;
     }
 
@@ -59,9 +58,9 @@ public sealed class FileSystemNoteStoreIntegrationTests : IAsyncLifetime
         var store = new FileSystemNoteStore(root);
         var source = NotePath.Create("rascunho.md");
         var destination = NotePath.Create("projetos/plano.md");
-        Directory.CreateDirectory(Path.Combine(root, "lab-0001", "projetos"));
-        await store.TryCreateAsync("lab-0001", source, "# Rascunho", CancellationToken.None);
-        await store.TryCreateAsync("lab-0001", NotePath.Create("ocupado.md"), "# Outra", CancellationToken.None);
+        _ = Directory.CreateDirectory(Path.Combine(root, "lab-0001", "projetos"));
+        _ = await store.TryCreateAsync("lab-0001", source, "# Rascunho", CancellationToken.None);
+        _ = await store.TryCreateAsync("lab-0001", NotePath.Create("ocupado.md"), "# Outra", CancellationToken.None);
         var current = await store.FindAsync("lab-0001", source, CancellationToken.None);
 
         var stale = await store.MoveAsync("lab-0001", source, destination, "desatualizado", CancellationToken.None);
@@ -108,9 +107,9 @@ public sealed class FileSystemNoteStoreIntegrationTests : IAsyncLifetime
     public async Task QuarantineMovesOnlyValidVaultDirectoryUnderConfinedQuarantineRoot()
     {
         const string orphanVaultId = "vault-orphan";
-        Directory.CreateDirectory(Path.Combine(root, orphanVaultId));
-        Directory.CreateDirectory(Path.Combine(root, "not a vault"));
-        Directory.CreateDirectory(Path.Combine(root, ".quarantine"));
+        _ = Directory.CreateDirectory(Path.Combine(root, orphanVaultId));
+        _ = Directory.CreateDirectory(Path.Combine(root, "not a vault"));
+        _ = Directory.CreateDirectory(Path.Combine(root, ".quarantine"));
         var provisioner = new FileSystemVaultProvisioner(root);
 
         var vaultIds = await provisioner.ListVaultIdsAsync(CancellationToken.None);
@@ -122,7 +121,7 @@ public sealed class FileSystemNoteStoreIntegrationTests : IAsyncLifetime
         Assert.Equal([orphanVaultId], vaultIds);
         Assert.True(quarantined);
         Assert.False(Directory.Exists(Path.Combine(root, orphanVaultId)));
-        Assert.Single(Directory.EnumerateDirectories(Path.Combine(root, ".quarantine")));
+        _ = Assert.Single(Directory.EnumerateDirectories(Path.Combine(root, ".quarantine")));
     }
 
     [Theory]
@@ -132,7 +131,7 @@ public sealed class FileSystemNoteStoreIntegrationTests : IAsyncLifetime
     {
         var provisioner = new FileSystemVaultProvisioner(root);
 
-        await Assert.ThrowsAsync<ArgumentException>(
+        _ = await Assert.ThrowsAsync<ArgumentException>(
             () => provisioner.ProvisionAsync(vaultId, CancellationToken.None));
     }
 
@@ -141,11 +140,11 @@ public sealed class FileSystemNoteStoreIntegrationTests : IAsyncLifetime
     {
         const string vaultId = "vault-0002";
         var target = Path.Combine(root, "target");
-        Directory.CreateDirectory(target);
+        _ = Directory.CreateDirectory(target);
         CreateDirectoryReparsePoint(Path.Combine(root, vaultId), target);
         var provisioner = new FileSystemVaultProvisioner(root);
 
-        await Assert.ThrowsAsync<UnauthorizedAccessException>(
+        _ = await Assert.ThrowsAsync<UnauthorizedAccessException>(
             () => provisioner.ProvisionAsync(vaultId, CancellationToken.None));
     }
 
@@ -154,11 +153,11 @@ public sealed class FileSystemNoteStoreIntegrationTests : IAsyncLifetime
     {
         var target = Path.Combine(root, "target-root");
         var configuredRoot = Path.Combine(root, "vaults");
-        Directory.CreateDirectory(target);
+        _ = Directory.CreateDirectory(target);
         CreateDirectoryReparsePoint(configuredRoot, target);
         var provisioner = new FileSystemVaultProvisioner(configuredRoot);
 
-        await Assert.ThrowsAsync<UnauthorizedAccessException>(
+        _ = await Assert.ThrowsAsync<UnauthorizedAccessException>(
             () => provisioner.ProvisionAsync("vault-0003", CancellationToken.None));
     }
 
@@ -166,7 +165,7 @@ public sealed class FileSystemNoteStoreIntegrationTests : IAsyncLifetime
     {
         if (!OperatingSystem.IsWindows())
         {
-            Directory.CreateSymbolicLink(path, target);
+            _ = Directory.CreateSymbolicLink(path, target);
             return;
         }
 

@@ -10,17 +10,17 @@ public sealed class TrashAuditRecordConfiguration : IEntityTypeConfiguration<Tra
 {
     public void Configure(EntityTypeBuilder<TrashAuditRecord> builder)
     {
-        builder.ToTable("trash_audit_events");
-        builder.HasKey(record => record.AuditId);
-        builder.Property(record => record.AuditId).HasColumnName("audit_id");
-        builder.Property(record => record.OperationId).HasColumnName("operation_id").IsRequired();
-        builder.Property(record => record.VaultId).HasColumnName("vault_id").HasMaxLength(64).IsRequired();
-        builder.Property(record => record.Subject).HasColumnName("subject").HasMaxLength(512).IsRequired();
-        builder.Property(record => record.Action).HasColumnName("action").HasMaxLength(64).IsRequired();
-        builder.Property(record => record.Outcome).HasColumnName("outcome").HasMaxLength(64).IsRequired();
-        builder.Property(record => record.OccurredAtUtc).HasColumnName("occurred_at_utc").IsRequired();
-        builder.Property(record => record.ReauthenticatedAtUtc).HasColumnName("reauthenticated_at_utc");
-        builder.HasIndex(record => new { record.VaultId, record.OccurredAtUtc });
-        builder.HasIndex(record => new { record.Subject, record.OccurredAtUtc });
+        _ = builder.ToTable("trash_audit_events");
+        _ = builder.HasKey(record => record.AuditId);
+        _ = builder.Property(record => record.AuditId).HasColumnName("audit_id");
+        _ = builder.Property(record => record.OperationId).HasColumnName("operation_id").IsRequired();
+        _ = builder.Property(record => record.VaultId).HasColumnName("vault_id").HasMaxLength(64).IsRequired();
+        _ = builder.Property(record => record.Subject).HasColumnName("subject").HasMaxLength(512).IsRequired();
+        _ = builder.Property(record => record.Action).HasColumnName("action").HasMaxLength(64).IsRequired();
+        _ = builder.Property(record => record.Outcome).HasColumnName("outcome").HasMaxLength(64).IsRequired();
+        _ = builder.Property(record => record.OccurredAtUtc).HasColumnName("occurred_at_utc").IsRequired();
+        _ = builder.Property(record => record.ReauthenticatedAtUtc).HasColumnName("reauthenticated_at_utc");
+        _ = builder.HasIndex(record => new { record.VaultId, record.OccurredAtUtc });
+        _ = builder.HasIndex(record => new { record.Subject, record.OccurredAtUtc });
     }
 }

@@ -1,4 +1,3 @@
-using Nodra.Backend.Infra.Data.Postgres;
 using Npgsql;
 using Xunit;
 

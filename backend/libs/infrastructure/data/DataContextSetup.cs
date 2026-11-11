@@ -1,6 +1,6 @@
-using Nodra.Backend.Application.Notes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Nodra.Backend.Application.Notes;
 
 namespace Nodra.Backend.Infra.Data.Postgres;
 
@@ -19,15 +19,15 @@ public static class DataContextSetup
         this IServiceCollection services,
         string connectionString)
     {
-        services.AddDbContextPool<PostgresDbContext>(options =>
+        _ = services.AddDbContextPool<PostgresDbContext>(options =>
         {
-            options.UseNpgsql(connectionString, npgsqlOptions =>
+            _ = options.UseNpgsql(connectionString, npgsqlOptions =>
                 npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "altivy"));
         });
 
-        services.AddScoped<INoteProjectionStore, PostgresNoteProjectionStore>();
-        services.AddScoped<INoteIndexJobStore, PostgresNoteIndexJobStore>();
-        services.AddScoped<PostgresVaultReader>();
+        _ = services.AddScoped<INoteProjectionStore, PostgresNoteProjectionStore>();
+        _ = services.AddScoped<INoteIndexJobStore, PostgresNoteIndexJobStore>();
+        _ = services.AddScoped<PostgresVaultReader>();
         return services;
     }
 }

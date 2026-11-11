@@ -74,7 +74,7 @@ public sealed class NoteMutationIndexingTests
     {
         var handler = new MoveNoteCommandHandler(new MutableNoteStore(), new RecordingJobStore());
 
-        await Assert.ThrowsAsync<ArgumentException>(() =>
+        _ = await Assert.ThrowsAsync<ArgumentException>(() =>
             handler.HandleAsync("lab-0001", "plano.md", "plano.md", "etag", CancellationToken.None));
     }
 
@@ -84,8 +84,8 @@ public sealed class NoteMutationIndexingTests
         var queue = new RecordingJobStore();
         var handler = new MoveNoteCommandHandler(new MutableNoteStore { MoveResult = NoteMoveResult.Moved }, queue);
 
-        await handler.HandleAsync("lab-0001", "a.md", "b.md", "etag", CancellationToken.None);
-        await handler.HandleAsync("lab-0001", "a.md", "b.md", "etag", CancellationToken.None);
+        _ = await handler.HandleAsync("lab-0001", "a.md", "b.md", "etag", CancellationToken.None);
+        _ = await handler.HandleAsync("lab-0001", "a.md", "b.md", "etag", CancellationToken.None);
 
         Assert.Equal(4, queue.Jobs.Select(job => job.Key).Distinct().Count());
     }
@@ -117,7 +117,7 @@ public sealed class NoteMutationIndexingTests
         var store = new MovingFolderStore(new FolderMoveOutcome(FolderMoveResult.Moved, []));
         var handler = new MoveFolderCommandHandler(store, new RecordingJobStore());
 
-        await Assert.ThrowsAsync<ArgumentException>(() =>
+        _ = await Assert.ThrowsAsync<ArgumentException>(() =>
             handler.HandleAsync("lab-0001", source, destination, CancellationToken.None));
         Assert.False(store.Called);
     }

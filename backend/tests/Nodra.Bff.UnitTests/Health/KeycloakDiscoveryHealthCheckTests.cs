@@ -1,8 +1,8 @@
 using System.Net;
-using Nodra.Bff.Authentication;
-using Nodra.Bff.Health;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
+using Nodra.Bff.Authentication;
+using Nodra.Bff.Health;
 
 namespace Nodra.Bff.UnitTests.Health;
 

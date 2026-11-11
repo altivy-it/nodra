@@ -1,17 +1,16 @@
+using System.Diagnostics.Metrics;
+using System.Globalization;
 using System.Net;
 using System.Security.Claims;
 using System.Text;
-using System.Globalization;
-using System.Diagnostics.Metrics;
-using Nodra.Bff.Authentication;
-using Nodra.Bff.Observability;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Nodra.Bff.Authentication;
+using Nodra.Bff.Observability;
 
 namespace Nodra.Bff.UnitTests.Authentication;
 
@@ -151,7 +150,7 @@ public sealed class TokenRefreshTests : IDisposable
             telemetry,
             NullLogger<CookieTokenRefreshEvents>.Instance);
 
-        await Assert.ThrowsAsync<TaskCanceledException>(() => events.ValidatePrincipal(context));
+        _ = await Assert.ThrowsAsync<TaskCanceledException>(() => events.ValidatePrincipal(context));
     }
 
     [Fact]
@@ -211,7 +210,7 @@ public sealed class TokenRefreshTests : IDisposable
         var first = coordinator.RefreshAsync("old-refresh", CancellationToken.None);
         await handler.Started.Task;
         var second = coordinator.RefreshAsync("old-refresh", CancellationToken.None);
-        handler.Release.TrySetResult();
+        _ = handler.Release.TrySetResult();
         var results = await Task.WhenAll(first, second);
 
         Assert.Equal(1, handler.CallCount);
@@ -348,7 +347,7 @@ public sealed class TokenRefreshTests : IDisposable
             CancellationToken cancellationToken)
         {
             CallCount++;
-            Started.TrySetResult();
+            _ = Started.TrySetResult();
             await Release.Task.WaitAsync(cancellationToken);
             return new HttpResponseMessage(HttpStatusCode.OK)
             {

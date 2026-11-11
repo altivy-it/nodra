@@ -22,7 +22,7 @@ public sealed class VaultTests
     [InlineData("lab_0001")]
     public void CreateWithInvalidIdThrowsArgumentException(string id)
     {
-        Assert.Throws<ArgumentException>(() => Vault.Create(id, "Laboratório"));
+        _ = Assert.Throws<ArgumentException>(() => Vault.Create(id, "Laboratório"));
     }
 
     [Theory]
@@ -30,6 +30,6 @@ public sealed class VaultTests
     [InlineData("   ")]
     public void CreateWithInvalidNameThrowsArgumentException(string name)
     {
-        Assert.Throws<ArgumentException>(() => Vault.Create("lab-0001", name));
+        _ = Assert.Throws<ArgumentException>(() => Vault.Create("lab-0001", name));
     }
 }

@@ -1,14 +1,14 @@
-using Nodra.Backend.Application.Vaults;
-using Nodra.Backend.Application.Notes;
-using Nodra.Backend.Infra.Data.Postgres;
-using Nodra.Notes.Worker.Notifications;
-using Nodra.Notes.Worker.Notes;
-using Nodra.Notes.Worker.Observability;
-using Nodra.Notes.Worker.Vaults;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
+using Nodra.Backend.Application.Notes;
+using Nodra.Backend.Application.Vaults;
+using Nodra.Backend.Infra.Data.Postgres;
+using Nodra.Notes.Worker.Notes;
+using Nodra.Notes.Worker.Notifications;
+using Nodra.Notes.Worker.Observability;
+using Nodra.Notes.Worker.Vaults;
 
 namespace Nodra.Notes.Worker.DependencyInjection;
 
@@ -17,7 +17,7 @@ namespace Nodra.Notes.Worker.DependencyInjection;
 /// </summary>
 public static class WorkerServiceCollectionExtensions
 {
-    private static readonly string[] SmtpConfigurationKeys = ["Host", "Username", "Password", "From", "To"];
+    private static readonly string[] s_smtpConfigurationKeys = ["Host", "Username", "Password", "From", "To"];
 
     /// <summary>
     /// Adiciona persistência, filesystem e o worker de operações de vault.
@@ -59,7 +59,7 @@ public static class WorkerServiceCollectionExtensions
         _ = services.AddSingleton<INoteStore>(new FileSystemNoteStore(vaultRoot));
         _ = services.AddScoped<NoteIndexJobProcessor>();
         var smtpSection = configuration.GetSection(AdministrativeSmtpOptions.SectionName);
-        var smtpIsConfigured = SmtpConfigurationKeys.Any(key => !string.IsNullOrWhiteSpace(smtpSection[key]));
+        var smtpIsConfigured = s_smtpConfigurationKeys.Any(key => !string.IsNullOrWhiteSpace(smtpSection[key]));
         if (environment.IsDevelopment() && !smtpIsConfigured)
         {
             _ = services.AddSingleton<IAdministrativeNotifier, DevelopmentAdministrativeNotifier>();

@@ -10,8 +10,8 @@ public sealed class VaultProvisioningProcessor(
     IVaultFileSystemProvisioner fileSystemProvisioner,
     TimeProvider timeProvider)
 {
-    private static readonly TimeSpan LeaseDuration = TimeSpan.FromMinutes(5);
-    private static readonly TimeSpan RetryDelay = TimeSpan.FromMinutes(1);
+    private static readonly TimeSpan s_leaseDuration = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan s_retryDelay = TimeSpan.FromMinutes(1);
 
     /// <summary>
     /// Reivindica e processa uma operação pendente ou degradada.
@@ -21,7 +21,7 @@ public sealed class VaultProvisioningProcessor(
     public async Task<bool> ProcessNextAsync(CancellationToken cancellationToken)
     {
         var now = timeProvider.GetUtcNow();
-        var workItem = await provisioningStore.ClaimNextAsync(now, LeaseDuration, cancellationToken);
+        var workItem = await provisioningStore.ClaimNextAsync(now, s_leaseDuration, cancellationToken);
         if (workItem is null)
         {
             return false;
@@ -31,19 +31,19 @@ public sealed class VaultProvisioningProcessor(
         {
             await fileSystemProvisioner.ProvisionAsync(workItem.Operation.VaultId, cancellationToken);
             workItem.Operation.TransitionTo(VaultLifecycleState.Ready);
-            await provisioningStore.CompleteAsync(workItem, null, null, cancellationToken);
+            _ = await provisioningStore.CompleteAsync(workItem, null, null, cancellationToken);
         }
         catch (UnauthorizedAccessException)
         {
             workItem.Operation.TransitionTo(VaultLifecycleState.Failed);
-            await provisioningStore.CompleteAsync(workItem, null, "filesystem-access-denied", cancellationToken);
+            _ = await provisioningStore.CompleteAsync(workItem, null, "filesystem-access-denied", cancellationToken);
         }
         catch (IOException)
         {
             workItem.Operation.TransitionTo(VaultLifecycleState.Degraded);
-            await provisioningStore.CompleteAsync(
+            _ = await provisioningStore.CompleteAsync(
                 workItem,
-                now.Add(RetryDelay),
+                now.Add(s_retryDelay),
                 "filesystem-provisioning-failed",
                 cancellationToken);
         }

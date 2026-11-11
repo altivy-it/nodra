@@ -1,11 +1,11 @@
 using System.Security.Claims;
-using Nodra.Notes.Api.Authorization;
-using Nodra.Notes.Api.Realtime;
-using Nodra.Notes.Api.UnitTests.Contract;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Connections.Features;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.SignalR;
+using Nodra.Notes.Api.Authorization;
+using Nodra.Notes.Api.Realtime;
+using Nodra.Notes.Api.UnitTests.Contract;
 using Xunit;
 
 namespace Nodra.Notes.Api.UnitTests.Realtime;
@@ -18,7 +18,7 @@ public sealed class VaultHubTests
     {
         using var hub = CreateHub(new FakeAuthorizationDecisionService(), out _, authorizationHeader: "Bearer synthetic-token");
 
-        await Assert.ThrowsAsync<HubException>(() => hub.JoinVaultAsync("invalid_id"));
+        _ = await Assert.ThrowsAsync<HubException>(() => hub.JoinVaultAsync("invalid_id"));
     }
 
     [Fact]
@@ -26,7 +26,7 @@ public sealed class VaultHubTests
     {
         using var hub = CreateHub(new FakeAuthorizationDecisionService(), out _, authorizationHeader: null);
 
-        await Assert.ThrowsAsync<HubException>(() => hub.JoinVaultAsync("lab-0001"));
+        _ = await Assert.ThrowsAsync<HubException>(() => hub.JoinVaultAsync("lab-0001"));
     }
 
     [Fact]
@@ -38,7 +38,7 @@ public sealed class VaultHubTests
         };
         using var hub = CreateHub(decisionService, out var groups, authorizationHeader: "Bearer synthetic-token");
 
-        await Assert.ThrowsAsync<HubException>(() => hub.JoinVaultAsync("lab-0001"));
+        _ = await Assert.ThrowsAsync<HubException>(() => hub.JoinVaultAsync("lab-0001"));
         Assert.Empty(groups.Added);
     }
 
@@ -54,7 +54,7 @@ public sealed class VaultHubTests
         await hub.JoinVaultAsync("lab-0001");
 
         Assert.Equal("vault-lab-0001", decisionService.Resource);
-        Assert.Single(groups.Added);
+        _ = Assert.Single(groups.Added);
         Assert.Equal("vault-lab-0001", groups.Added[0].GroupName);
         Assert.Equal("vault:read", decisionService.Scope);
     }

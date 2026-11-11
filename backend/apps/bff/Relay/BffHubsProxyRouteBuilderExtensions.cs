@@ -16,7 +16,7 @@ public static class BffHubsProxyRouteBuilderExtensions
     /// <returns>O mesmo construtor para composição adicional.</returns>
     public static IEndpointRouteBuilder MapBffHubsProxy(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapMethods(
+        _ = endpoints.MapMethods(
             "/hubs/{**path}",
             ["GET", "POST"],
             ForwardAsync)
@@ -105,7 +105,7 @@ public static class BffHubsProxyRouteBuilderExtensions
 
         var toDownstream = PumpAsync(localSocket, downstreamSocket, cancellationToken);
         var toLocal = PumpAsync(downstreamSocket, localSocket, cancellationToken);
-        await Task.WhenAny(toDownstream, toLocal);
+        _ = await Task.WhenAny(toDownstream, toLocal);
     }
 
     private static async Task PumpAsync(WebSocket source, WebSocket destination, CancellationToken cancellationToken)

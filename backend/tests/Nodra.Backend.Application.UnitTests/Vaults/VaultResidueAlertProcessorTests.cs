@@ -31,7 +31,7 @@ public sealed class VaultResidueAlertProcessorTests
         var processed = await processor.ProcessNextAsync(CancellationToken.None);
 
         Assert.True(processed);
-        Assert.NotNull(store.NextAttemptAt);
+        _ = Assert.NotNull(store.NextAttemptAt);
         Assert.Equal("administrative-notification-delivery-failed", store.LastError);
     }
 

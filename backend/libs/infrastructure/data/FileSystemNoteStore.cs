@@ -54,7 +54,7 @@ public sealed class FileSystemNoteStore(string vaultRoot) : INoteStore
     public async Task<bool> TryCreateAsync(string vaultId, NotePath path, string content, CancellationToken cancellationToken)
     {
         var filePath = GetFilePath(vaultId, path);
-        Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
+        _ = Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
 
         try
         {

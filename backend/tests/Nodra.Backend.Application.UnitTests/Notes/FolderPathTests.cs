@@ -25,6 +25,6 @@ public sealed class FolderPathTests
     [InlineData("pasta/nome?")]
     public void CreateWithUnsafePathThrowsArgumentException(string value)
     {
-        Assert.Throws<ArgumentException>(() => FolderPath.Create(value));
+        _ = Assert.Throws<ArgumentException>(() => FolderPath.Create(value));
     }
 }

@@ -1,9 +1,8 @@
-using Nodra.Backend.Application.Notes;
-using Nodra.Backend.Domain.Notes;
-using Nodra.Backend.Infra.Data.Postgres;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json.Nodes;
+using Nodra.Backend.Application.Notes;
+using Nodra.Backend.Domain.Notes;
 using Xunit;
 
 namespace Nodra.Backend.Infra.Data.Postgres.IntegrationTests;
@@ -15,7 +14,7 @@ public sealed class FileSystemFolderStoreIntegrationTests : IAsyncLifetime
 
     public Task InitializeAsync()
     {
-        Directory.CreateDirectory(Path.Combine(root, "vault-0001"));
+        _ = Directory.CreateDirectory(Path.Combine(root, "vault-0001"));
         return Task.CompletedTask;
     }
 
@@ -29,7 +28,7 @@ public sealed class FileSystemFolderStoreIntegrationTests : IAsyncLifetime
     public async Task ListChildrenReturnsOnlyImmediateFoldersAndMarkdownNotes()
     {
         var vault = Path.Combine(root, "vault-0001");
-        Directory.CreateDirectory(Path.Combine(vault, "projetos", "interno"));
+        _ = Directory.CreateDirectory(Path.Combine(vault, "projetos", "interno"));
         await File.WriteAllTextAsync(Path.Combine(vault, "raiz.md"), "# Raiz");
         await File.WriteAllTextAsync(Path.Combine(vault, "ignorado.txt"), "texto");
         await File.WriteAllTextAsync(Path.Combine(vault, "projetos", "plano.md"), "# Plano");
@@ -85,8 +84,8 @@ public sealed class FileSystemFolderStoreIntegrationTests : IAsyncLifetime
         const string canonicalContent = "# Plano\n\nVeja [[Arquitetura]] e [guia](docs/guia.md).\n";
         var vault = Path.Combine(root, "vault-0001");
         var notePath = Path.Combine(vault, "notas", "plano.md");
-        Directory.CreateDirectory(Path.Combine(vault, "notas"));
-        Directory.CreateDirectory(Path.Combine(vault, "docs"));
+        _ = Directory.CreateDirectory(Path.Combine(vault, "notas"));
+        _ = Directory.CreateDirectory(Path.Combine(vault, "docs"));
         await File.WriteAllTextAsync(notePath, canonicalContent);
         await File.WriteAllTextAsync(Path.Combine(vault, "notas", "Arquitetura.md"), "# Arquitetura\n");
         await File.WriteAllTextAsync(Path.Combine(vault, "docs", "guia.md"), "# Guia\n");
@@ -118,7 +117,7 @@ public sealed class FileSystemFolderStoreIntegrationTests : IAsyncLifetime
             "vault-0001",
             FolderPath.Create("projetos"),
             CancellationToken.None));
-        await Assert.ThrowsAsync<DirectoryNotFoundException>(() => store.EnsureCreatedAsync(
+        _ = await Assert.ThrowsAsync<DirectoryNotFoundException>(() => store.EnsureCreatedAsync(
             "vault-0001",
             FolderPath.Create("ausente/filha"),
             CancellationToken.None));
@@ -142,7 +141,7 @@ public sealed class FileSystemFolderStoreIntegrationTests : IAsyncLifetime
     public async Task DeleteEmptyFolderIsIdempotentAndPreservesItsParent()
     {
         var vault = Path.Combine(root, "vault-0001");
-        Directory.CreateDirectory(Path.Combine(vault, "projetos", "rascunhos"));
+        _ = Directory.CreateDirectory(Path.Combine(vault, "projetos", "rascunhos"));
         var store = new FileSystemFolderStore(root);
 
         var deleted = await store.DeleteEmptyAsync(
@@ -164,7 +163,7 @@ public sealed class FileSystemFolderStoreIntegrationTests : IAsyncLifetime
     {
         var vault = Path.Combine(root, "vault-0001");
         var folder = Path.Combine(vault, "projetos");
-        Directory.CreateDirectory(folder);
+        _ = Directory.CreateDirectory(folder);
         var notePath = Path.Combine(folder, "plano.md");
         await File.WriteAllTextAsync(notePath, "# Plano");
         var store = new FileSystemFolderStore(root);
@@ -183,11 +182,11 @@ public sealed class FileSystemFolderStoreIntegrationTests : IAsyncLifetime
     {
         var vault = Path.Combine(root, "vault-0001");
         var external = Path.Combine(root, "external");
-        Directory.CreateDirectory(external);
-        Directory.CreateSymbolicLink(Path.Combine(vault, "link"), external);
+        _ = Directory.CreateDirectory(external);
+        _ = Directory.CreateSymbolicLink(Path.Combine(vault, "link"), external);
         var store = new FileSystemFolderStore(root);
 
-        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => store.ListChildrenAsync(
+        _ = await Assert.ThrowsAsync<UnauthorizedAccessException>(() => store.ListChildrenAsync(
             "vault-0001",
             FolderPath.Create("link"),
             CancellationToken.None));
@@ -197,8 +196,8 @@ public sealed class FileSystemFolderStoreIntegrationTests : IAsyncLifetime
     public async Task MoveFolderMovesContentsAndReportsNestedNotes()
     {
         var vault = Path.Combine(root, "vault-0001");
-        Directory.CreateDirectory(Path.Combine(vault, "projetos", "interno"));
-        Directory.CreateDirectory(Path.Combine(vault, "arquivo"));
+        _ = Directory.CreateDirectory(Path.Combine(vault, "projetos", "interno"));
+        _ = Directory.CreateDirectory(Path.Combine(vault, "arquivo"));
         await File.WriteAllTextAsync(Path.Combine(vault, "projetos", "plano.md"), "# Plano");
         await File.WriteAllTextAsync(Path.Combine(vault, "projetos", "interno", "nota.md"), "# Nota");
         await File.WriteAllTextAsync(Path.Combine(vault, "projetos", "anexo.txt"), "texto");
@@ -223,8 +222,8 @@ public sealed class FileSystemFolderStoreIntegrationTests : IAsyncLifetime
     public async Task MoveFolderNeverOverwritesOrCreatesParents()
     {
         var vault = Path.Combine(root, "vault-0001");
-        Directory.CreateDirectory(Path.Combine(vault, "projetos"));
-        Directory.CreateDirectory(Path.Combine(vault, "arquivo"));
+        _ = Directory.CreateDirectory(Path.Combine(vault, "projetos"));
+        _ = Directory.CreateDirectory(Path.Combine(vault, "arquivo"));
         var store = new FileSystemFolderStore(root);
 
         var exists = await store.MoveAsync(
@@ -245,12 +244,12 @@ public sealed class FileSystemFolderStoreIntegrationTests : IAsyncLifetime
     {
         var vault = Path.Combine(root, "vault-0001");
         var external = Path.Combine(root, "external");
-        Directory.CreateDirectory(external);
-        Directory.CreateDirectory(Path.Combine(vault, "projetos"));
-        Directory.CreateSymbolicLink(Path.Combine(vault, "projetos", "link"), external);
+        _ = Directory.CreateDirectory(external);
+        _ = Directory.CreateDirectory(Path.Combine(vault, "projetos"));
+        _ = Directory.CreateSymbolicLink(Path.Combine(vault, "projetos", "link"), external);
         var store = new FileSystemFolderStore(root);
 
-        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => store.MoveAsync(
+        _ = await Assert.ThrowsAsync<UnauthorizedAccessException>(() => store.MoveAsync(
             "vault-0001", FolderPath.Create("projetos"), FolderPath.Create("movida"), CancellationToken.None));
         Assert.True(Directory.Exists(Path.Combine(vault, "projetos")));
     }
@@ -259,8 +258,8 @@ public sealed class FileSystemFolderStoreIntegrationTests : IAsyncLifetime
     public async Task TrashMovesFolderIntoSubjectInventoryAndRestoresWithoutOverwriting()
     {
         var vault = Path.Combine(root, "vault-0001");
-        Directory.CreateDirectory(Path.Combine(vault, "projetos", "interno"));
-        Directory.CreateDirectory(Path.Combine(vault, "arquivo", "projetos"));
+        _ = Directory.CreateDirectory(Path.Combine(vault, "projetos", "interno"));
+        _ = Directory.CreateDirectory(Path.Combine(vault, "arquivo", "projetos"));
         await File.WriteAllTextAsync(Path.Combine(vault, "projetos", "plano.md"), "# Plano");
         var store = new FileSystemFolderStore(root);
 
@@ -270,7 +269,7 @@ public sealed class FileSystemFolderStoreIntegrationTests : IAsyncLifetime
         Assert.Equal(TrashMoveResult.Moved, moved.Result);
         Assert.NotNull(moved.Entry);
         Assert.False(Directory.Exists(Path.Combine(vault, "projetos")));
-        Assert.Single(await store.ListTrashAsync("vault-0001", "subject-a", CancellationToken.None));
+        _ = Assert.Single(await store.ListTrashAsync("vault-0001", "subject-a", CancellationToken.None));
         Assert.Empty(await store.ListTrashAsync("vault-0001", "subject-b", CancellationToken.None));
         Assert.Empty(await new FileSystemNoteStore(root).ListAsync("vault-0001", CancellationToken.None));
         Assert.DoesNotContain(await store.ListChildrenAsync("vault-0001", null, CancellationToken.None),
@@ -279,7 +278,7 @@ public sealed class FileSystemFolderStoreIntegrationTests : IAsyncLifetime
         var collision = await store.RestoreFromTrashAsync(
             "vault-0001", "subject-a", moved.Entry.Id, FolderPath.Create("arquivo/projetos"), CancellationToken.None);
         Assert.Equal(TrashRestoreResult.DestinationExists, collision.Result);
-        Assert.Single(await store.ListTrashAsync("vault-0001", "subject-a", CancellationToken.None));
+        _ = Assert.Single(await store.ListTrashAsync("vault-0001", "subject-a", CancellationToken.None));
 
         var restored = await store.RestoreFromTrashAsync(
             "vault-0001", "subject-a", moved.Entry.Id, FolderPath.Create("arquivo/restaurado"), CancellationToken.None);
@@ -295,14 +294,14 @@ public sealed class FileSystemFolderStoreIntegrationTests : IAsyncLifetime
     {
         var vault = Path.Combine(root, "vault-0001");
         var legacyFolder = Path.Combine(vault, ".altivy-trash");
-        Directory.CreateDirectory(legacyFolder);
+        _ = Directory.CreateDirectory(legacyFolder);
         await File.WriteAllTextAsync(Path.Combine(legacyFolder, "legado.md"), "# Preservar");
         await File.WriteAllTextAsync(Path.Combine(vault, "nota.md"), "# Nota");
         var store = new FileSystemFolderStore(root);
         var etag = (await new FileSystemNoteStore(root).FindAsync(
             "vault-0001", NotePath.Create("nota.md"), CancellationToken.None))!.ETag;
 
-        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => store.MoveToTrashAsync(
+        _ = await Assert.ThrowsAsync<UnauthorizedAccessException>(() => store.MoveToTrashAsync(
             "vault-0001", "subject-a", FolderPath.Create("nota.md"), etag, CancellationToken.None));
         Assert.Equal("# Preservar", await File.ReadAllTextAsync(Path.Combine(legacyFolder, "legado.md")));
         Assert.Contains(await store.ListChildrenAsync("vault-0001", null, CancellationToken.None),
@@ -328,7 +327,7 @@ public sealed class FileSystemFolderStoreIntegrationTests : IAsyncLifetime
 
         Assert.Equal(new TrashEmptyOutcome(1, 0), outcome);
         Assert.Empty(await store.ListTrashAsync("vault-0001", "subject-a", CancellationToken.None));
-        Assert.Single(await store.ListTrashAsync("vault-0001", "subject-b", CancellationToken.None));
+        _ = Assert.Single(await store.ListTrashAsync("vault-0001", "subject-b", CancellationToken.None));
         Assert.True(File.Exists(Path.Combine(vault, ".altivy-trash",
             Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes("subject-b"))),
             movedB.Entry!.Id.ToString("N"), "payload")));

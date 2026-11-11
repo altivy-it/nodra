@@ -1,5 +1,5 @@
-using Nodra.Backend.Application.Notes;
 using Microsoft.EntityFrameworkCore;
+using Nodra.Backend.Application.Notes;
 
 namespace Nodra.Backend.Infra.Data.Postgres;
 
@@ -21,7 +21,7 @@ public sealed class PostgresTrashRetentionSettingsStore(PostgresDbContext db) : 
             .SingleOrDefaultAsync(record => record.Subject == subject, cancellationToken);
         if (current is null)
         {
-            db.UserTrashRetentionSettings.Add(new UserTrashRetentionSettingRecord
+            _ = db.UserTrashRetentionSettings.Add(new UserTrashRetentionSettingRecord
             {
                 Subject = subject,
                 RetentionDays = retentionDays,
@@ -34,6 +34,6 @@ public sealed class PostgresTrashRetentionSettingsStore(PostgresDbContext db) : 
             current.UpdatedAtUtc = DateTimeOffset.UtcNow;
         }
 
-        await db.SaveChangesAsync(cancellationToken);
+        _ = await db.SaveChangesAsync(cancellationToken);
     }
 }

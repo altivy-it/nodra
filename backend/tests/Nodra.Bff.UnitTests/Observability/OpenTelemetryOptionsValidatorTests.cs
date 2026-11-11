@@ -1,5 +1,5 @@
-using Nodra.Bff.Observability;
 using Microsoft.Extensions.FileProviders;
+using Nodra.Bff.Observability;
 
 namespace Nodra.Bff.UnitTests.Observability;
 

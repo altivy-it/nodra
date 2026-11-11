@@ -1,11 +1,11 @@
-using Nodra.Backend.Infra.Data.Postgres;
-using Nodra.Backend.Application.Vaults;
-using Nodra.Notes.Worker.DependencyInjection;
-using Nodra.Notes.Worker.Notifications;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Nodra.Backend.Application.Vaults;
+using Nodra.Backend.Infra.Data.Postgres;
+using Nodra.Notes.Worker.DependencyInjection;
+using Nodra.Notes.Worker.Notifications;
 using Xunit;
 
 namespace Nodra.Notes.Worker.UnitTests.DependencyInjection;
@@ -38,7 +38,7 @@ public sealed class WorkerPostgresHostOverrideTests
     {
         using var host = CreateWorkerHost(Environments.Development, configureSmtp: false);
 
-        Assert.IsType<DevelopmentAdministrativeNotifier>(
+        _ = Assert.IsType<DevelopmentAdministrativeNotifier>(
             host.Services.GetRequiredService<IAdministrativeNotifier>());
     }
 
@@ -47,7 +47,7 @@ public sealed class WorkerPostgresHostOverrideTests
     {
         using var host = CreateWorkerHost(Environments.Production);
 
-        Assert.IsType<AdministrativeSmtpNotifier>(
+        _ = Assert.IsType<AdministrativeSmtpNotifier>(
             host.Services.GetRequiredService<IAdministrativeNotifier>());
     }
 
@@ -74,8 +74,8 @@ public sealed class WorkerPostgresHostOverrideTests
             settings["ResidueAlerts:Smtp:To"] = "operator@example.test";
         }
 
-        builder.Configuration.AddInMemoryCollection(settings);
-        builder.Services.AddVaultProvisioningWorker(builder.Configuration, builder.Environment);
+        _ = builder.Configuration.AddInMemoryCollection(settings);
+        _ = builder.Services.AddVaultProvisioningWorker(builder.Configuration, builder.Environment);
 
         return builder.Build();
     }

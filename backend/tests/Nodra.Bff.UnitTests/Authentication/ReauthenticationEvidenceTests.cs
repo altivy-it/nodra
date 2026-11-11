@@ -1,6 +1,6 @@
 using System.Security.Claims;
-using Nodra.Bff.Authentication;
 using Microsoft.AspNetCore.Authentication;
+using Nodra.Bff.Authentication;
 
 namespace Nodra.Bff.UnitTests.Authentication;
 

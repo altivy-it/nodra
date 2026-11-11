@@ -10,7 +10,7 @@ namespace Nodra.Bff.Authentication;
 /// </summary>
 public sealed class ServerSideTicketStore(IMemoryCache cache) : ITicketStore
 {
-    private static readonly TimeSpan DefaultLifetime = TimeSpan.FromHours(8);
+    private static readonly TimeSpan s_defaultLifetime = TimeSpan.FromHours(8);
 
     /// <summary>
     /// Persiste um ticket e gera uma chave opaca para referenciá-lo.
@@ -79,9 +79,9 @@ public sealed class ServerSideTicketStore(IMemoryCache cache) : ITicketStore
             {
                 entry.Removed = true;
                 entry.Ticket = null;
-                cache.Set(key, entry, new MemoryCacheEntryOptions
+                _ = cache.Set(key, entry, new MemoryCacheEntryOptions
                 {
-                    AbsoluteExpirationRelativeToNow = DefaultLifetime,
+                    AbsoluteExpirationRelativeToNow = s_defaultLifetime,
                     Size = 1
                 });
             }
@@ -92,8 +92,8 @@ public sealed class ServerSideTicketStore(IMemoryCache cache) : ITicketStore
 
     private void SaveToCache(string key, TicketEntry entry, AuthenticationTicket ticket)
     {
-        var expiration = ticket.Properties.ExpiresUtc ?? DateTimeOffset.UtcNow.Add(DefaultLifetime);
-        cache.Set(key, entry, new MemoryCacheEntryOptions
+        var expiration = ticket.Properties.ExpiresUtc ?? DateTimeOffset.UtcNow.Add(s_defaultLifetime);
+        _ = cache.Set(key, entry, new MemoryCacheEntryOptions
         {
             AbsoluteExpiration = expiration,
             Size = 1

@@ -11,6 +11,6 @@ public sealed class FolderPathTests
     [InlineData("projetos/.ALTIVY-TRASH")]
     public void CreateRejectsReservedTrashDirectory(string value)
     {
-        Assert.Throws<ArgumentException>(() => FolderPath.Create(value));
+        _ = Assert.Throws<ArgumentException>(() => FolderPath.Create(value));
     }
 }

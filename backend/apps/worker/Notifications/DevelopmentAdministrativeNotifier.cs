@@ -1,5 +1,5 @@
-using Nodra.Backend.Application.Vaults;
 using Microsoft.Extensions.Logging;
+using Nodra.Backend.Application.Vaults;
 
 namespace Nodra.Notes.Worker.Notifications;
 

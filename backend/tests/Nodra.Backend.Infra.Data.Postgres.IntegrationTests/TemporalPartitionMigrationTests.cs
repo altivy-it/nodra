@@ -1,4 +1,3 @@
-using Nodra.Backend.Infra.Data.Postgres;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Xunit;
@@ -54,13 +53,13 @@ public sealed class TemporalPartitionMigrationTests
         var monthlyOperationId = Guid.NewGuid();
         var defaultOperationId = Guid.NewGuid();
 
-        await InsertNoteJobAsync(context, monthlyJobId, new DateTimeOffset(2036, 12, 1, 0, 0, 0, TimeSpan.Zero));
-        await InsertNoteJobAsync(context, defaultJobId, new DateTimeOffset(2041, 1, 1, 0, 0, 0, TimeSpan.Zero));
-        await InsertProvisioningOperationAsync(
+        _ = await InsertNoteJobAsync(context, monthlyJobId, new DateTimeOffset(2036, 12, 1, 0, 0, 0, TimeSpan.Zero));
+        _ = await InsertNoteJobAsync(context, defaultJobId, new DateTimeOffset(2041, 1, 1, 0, 0, 0, TimeSpan.Zero));
+        _ = await InsertProvisioningOperationAsync(
             context,
             monthlyOperationId,
             new DateTimeOffset(2036, 12, 1, 0, 0, 0, TimeSpan.Zero));
-        await InsertProvisioningOperationAsync(
+        _ = await InsertProvisioningOperationAsync(
             context,
             defaultOperationId,
             new DateTimeOffset(2041, 1, 1, 0, 0, 0, TimeSpan.Zero));
@@ -177,6 +176,6 @@ public sealed class TemporalPartitionMigrationTests
         var parameter = command.CreateParameter();
         parameter.ParameterName = "id";
         parameter.Value = id;
-        command.Parameters.Add(parameter);
+        _ = command.Parameters.Add(parameter);
     }
 }
