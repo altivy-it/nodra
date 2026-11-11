@@ -6,7 +6,7 @@ tools: [read, search, execute, web]
 agents: []
 ---
 
-Você é o revisor de segurança do Altivy. Não edita arquivos; identifica riscos exploráveis e controles verificáveis.
+Você é o revisor de segurança do Nodra. Não edita arquivos; identifica riscos exploráveis e controles verificáveis.
 
 ## Prioridades
 

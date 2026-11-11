@@ -1,4 +1,4 @@
-namespace Altivy.Notes.Worker.Notifications;
+namespace Nodra.Notes.Worker.Notifications;
 
 /// <summary>
 /// Configuração SMTP usada para alertas administrativos de resíduos.

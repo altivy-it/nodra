@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Executa os testes funcionais do validador do Altivy.
+Executa os testes funcionais do validador do Nodra.
 
 .DESCRIPTION
 Cria fixtures temporárias para verificar cenários válidos e falhas de links,
@@ -186,6 +186,23 @@ try {
 **Status:** unknown
 '@
     Invoke-FixtureValidation -FixtureRoot $invalidSecondStepFixture -ShouldPass $false
+
+    $validSolutionFixture = New-ValidationFixture
+    $fixtures.Add($validSolutionFixture)
+    Set-Content -LiteralPath (Join-Path $validSolutionFixture 'Nodra.slnx') -Value '<Solution />'
+    Invoke-FixtureValidation -FixtureRoot $validSolutionFixture -ShouldPass $true
+
+    $brokenProjectFixture = New-ValidationFixture
+    $fixtures.Add($brokenProjectFixture)
+    Set-Content -LiteralPath (Join-Path $brokenProjectFixture 'Nodra.slnx') -Value '<Solution><Project Path="missing.csproj" /></Solution>'
+    Invoke-FixtureValidation -FixtureRoot $brokenProjectFixture -ShouldPass $false
+
+    $changedProtectionFixture = New-ValidationFixture
+    $fixtures.Add($changedProtectionFixture)
+    $settingsDirectory = Join-Path $changedProtectionFixture 'backend/apps/bff'
+    New-Item -ItemType Directory -Path $settingsDirectory -Force | Out-Null
+    Set-Content -LiteralPath (Join-Path $settingsDirectory 'appsettings.json') -Value '{"Bff":{"DataProtectionApplicationName":"Nodra.Bff","AntiforgeryCookieName":"__Host-Altivy.Antiforgery","AntiforgeryHeaderName":"X-Altivy-Antiforgery"}}'
+    Invoke-FixtureValidation -FixtureRoot $changedProtectionFixture -ShouldPass $false
 }
 finally {
     foreach ($fixture in $fixtures) {
@@ -193,5 +210,5 @@ finally {
     }
 }
 
-Write-Output 'Testes do validador concluídos: 7 cenários aprovados.'
+Write-Output 'Testes do validador concluídos: 10 cenários aprovados.'
 exit 0

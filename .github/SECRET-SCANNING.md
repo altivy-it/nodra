@@ -1,6 +1,6 @@
 # Detecção de secrets
 
-O Altivy bloqueia secrets em duas camadas complementares: um hook local para o
+O Nodra bloqueia secrets em duas camadas complementares: um hook local para o
 diff staged e o check obrigatório `Gitleaks / Full History` para todo o histórico
 Git alcançável no runner. Ambos executam exclusivamente a imagem fixada
 `lzocateli/gitleaks:8.30.1` por Docker.

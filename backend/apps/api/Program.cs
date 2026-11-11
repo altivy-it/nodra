@@ -1,5 +1,5 @@
-using Altivy.Notes.Api.DependencyInjection;
-using Altivy.Notes.Api.Endpoints;
+using Nodra.Notes.Api.DependencyInjection;
+using Nodra.Notes.Api.Endpoints;
 
 var builder = WebApplication.CreateBuilder(args);
 

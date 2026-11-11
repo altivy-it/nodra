@@ -1,4 +1,4 @@
-namespace Altivy.Backend.Application.Vaults;
+namespace Nodra.Backend.Application.Vaults;
 
 /// <summary>
 /// Porta para reivindicar e concluir alertas administrativos de resíduos.

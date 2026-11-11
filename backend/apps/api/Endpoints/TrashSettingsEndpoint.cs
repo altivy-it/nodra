@@ -1,7 +1,7 @@
-using Altivy.Backend.Application.Notes;
-using Altivy.Notes.Api.Notes;
+using Nodra.Backend.Application.Notes;
+using Nodra.Notes.Api.Notes;
 
-namespace Altivy.Notes.Api.Endpoints;
+namespace Nodra.Notes.Api.Endpoints;
 
 internal static class TrashSettingsEndpoint
 {

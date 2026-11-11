@@ -1,4 +1,4 @@
-namespace Altivy.Notes.Api.Vaults;
+namespace Nodra.Notes.Api.Vaults;
 
 public readonly record struct VaultId
 {

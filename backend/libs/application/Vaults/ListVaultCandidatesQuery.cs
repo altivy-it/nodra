@@ -1,4 +1,4 @@
-namespace Altivy.Backend.Application.Vaults;
+namespace Nodra.Backend.Application.Vaults;
 
 /// <summary>
 /// Solicita uma página de candidatos a vault.

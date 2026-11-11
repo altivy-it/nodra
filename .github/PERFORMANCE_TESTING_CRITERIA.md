@@ -1,6 +1,6 @@
 # Criterios corporativos de testes de carga e performance
 
-Este documento padroniza criterios minimos para testes de carga e performance no Altivy. Os valores abaixo seguem praticas de mercado para APIs web e devem ser ajustados por dominio quando houver justificativa tecnica documentada.
+Este documento padroniza criterios minimos para testes de carga e performance no Nodra. Os valores abaixo seguem praticas de mercado para APIs web e devem ser ajustados por dominio quando houver justificativa tecnica documentada.
 
 ## Objetivo
 

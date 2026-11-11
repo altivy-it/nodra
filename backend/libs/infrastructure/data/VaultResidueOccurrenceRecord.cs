@@ -1,4 +1,4 @@
-namespace Altivy.Backend.Infra.Data.Postgres;
+namespace Nodra.Backend.Infra.Data.Postgres;
 
 /// <summary>
 /// Registra uma divergência operacional que requer alerta e recuperação administrativa.

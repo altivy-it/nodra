@@ -1,4 +1,4 @@
-namespace Altivy.Backend.Domain.Notes;
+namespace Nodra.Backend.Domain.Notes;
 
 /// <summary>
 /// Representa os elementos estruturais extraídos de uma nota Markdown.

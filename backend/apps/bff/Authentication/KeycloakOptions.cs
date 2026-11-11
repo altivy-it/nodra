@@ -1,4 +1,4 @@
-namespace Altivy.Bff.Authentication;
+namespace Nodra.Bff.Authentication;
 
 /// <summary>
 /// Define as configurações do cliente OIDC do BFF no Keycloak.

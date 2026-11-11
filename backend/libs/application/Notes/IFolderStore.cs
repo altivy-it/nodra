@@ -1,6 +1,6 @@
-using Altivy.Backend.Domain.Notes;
+using Nodra.Backend.Domain.Notes;
 
-namespace Altivy.Backend.Application.Notes;
+namespace Nodra.Backend.Application.Notes;
 
 /// <summary>
 /// Define operações de leitura e criação de pastas e entradas imediatas do vault.

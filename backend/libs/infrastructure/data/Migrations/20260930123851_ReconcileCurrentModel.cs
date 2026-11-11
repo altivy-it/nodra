@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Altivy.Backend.Infra.Data.Postgres.Migrations
+namespace Nodra.Backend.Infra.Data.Postgres.Migrations
 {
     /// <summary>
     /// Registra o modelo atual no snapshot após as migrations anteriores aplicarem o schema.

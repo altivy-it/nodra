@@ -10,7 +10,7 @@ def test_anonymous_browser_does_not_receive_tokens(page: Page, base_url: str) ->
 
     expect(page.get_by_role("heading", name="Seu conhecimento, em um só lugar.")).to_be_visible()
     login_path = f"{urlsplit(base_url).path.rstrip('/')}/bff/login"
-    expect(page.get_by_role("link", name="Entrar no Altivy Notes")).to_have_attribute(
+    expect(page.get_by_role("link", name="Entrar no Nodra")).to_have_attribute(
         "href", login_path)
     assert page.evaluate("Object.keys(localStorage).length") == 0
     assert page.evaluate("Object.keys(sessionStorage).length") == 0
@@ -139,7 +139,7 @@ def test_authenticated_browser_can_log_out(authenticated_page: Page, base_url: s
 
     expect(authenticated_page.get_by_role("heading", name="Seu conhecimento, em um só lugar.")).to_be_visible()
     login_path = f"{urlsplit(base_url).path.rstrip('/')}/bff/login"
-    expect(authenticated_page.get_by_role("link", name="Entrar no Altivy Notes")).to_have_attribute(
+    expect(authenticated_page.get_by_role("link", name="Entrar no Nodra")).to_have_attribute(
         "href", login_path)
     assert not authenticated_page.evaluate("""() => {
         const entries = [...Object.entries(localStorage), ...Object.entries(sessionStorage)];

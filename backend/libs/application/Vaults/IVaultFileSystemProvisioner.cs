@@ -1,4 +1,4 @@
-namespace Altivy.Backend.Application.Vaults;
+namespace Nodra.Backend.Application.Vaults;
 
 /// <summary>
 /// Provisiona o diretório canônico de um vault em armazenamento local confiável.

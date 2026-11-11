@@ -7,7 +7,7 @@
   },
   "newProjectRoot": "projects",
   "projects": {
-    "altivy-web": {
+    "nodra-web": {
       "projectType": "application",
       "schematics": {},
       "root": "",
@@ -82,10 +82,10 @@
           "builder": "@angular/build:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "altivy-web:build:production"
+              "buildTarget": "nodra-web:build:production"
             },
             "development": {
-              "buildTarget": "altivy-web:build:development"
+              "buildTarget": "nodra-web:build:development"
             }
           },
           "defaultConfiguration": "development"

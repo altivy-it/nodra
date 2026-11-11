@@ -1,6 +1,6 @@
 ---
 name: "Docker Compose"
-description: "Use ao criar ou alterar Docker Compose do Altivy. Cobre serviços, redes, health dependencies, bind mounts, secrets, restart e perfis."
+description: "Use ao criar ou alterar Docker Compose do Nodra. Cobre serviços, redes, health dependencies, bind mounts, secrets, restart e perfis."
 applyTo: "**/compose*.yml, **/compose*.yaml"
 ---
 

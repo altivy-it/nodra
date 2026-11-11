@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 
-namespace Altivy.Bff.Authentication;
+namespace Nodra.Bff.Authentication;
 
 /// <summary>
 /// Evidência server-side de uma autenticação OIDC solicitada como step-up.

@@ -6,7 +6,7 @@ Playwright ou browsers no host.
 
 ## Pré-requisitos
 
-- `altivy-web`, BFF, API e Keycloak acessíveis pela URL pública do ambiente;
+- `nodra-web`, BFF, API e Keycloak acessíveis pela URL pública do ambiente;
 - Docker Desktop com containers Linux;
 - para cenários autenticados, credenciais de laboratório somente em variáveis
   de ambiente locais.
@@ -24,7 +24,7 @@ volume de `node_modules` são os mesmos usados pelo alias `ng` do profile.
 Não use credenciais ou dados reais nesta suíte.
 
 ```powershell
-Set-Location $env:USERPROFILE\projetos\AltivyNotes
+Set-Location $env:USERPROFILE\projetos\nodra
 docker network inspect altivy-mocked-e2e *> $null
 if ($LASTEXITCODE -ne 0) { docker network create altivy-mocked-e2e }
 $webPath = (Resolve-Path frontend/web).Path
@@ -80,7 +80,7 @@ O runner em `deploy/self-hosted/compose.e2e.yaml` publica somente as variáveis
 de usuário/senha E2E dentro do container; os demais valores presentes nos
 arquivos externos não são encaminhados. Compose usa os arquivos somente para
 interpolação, sem imprimir a configuração resolvida. Execute a partir da raiz
-do AltivyNotes depois do boot:
+do Nodra depois do boot:
 
 ```powershell
 $identityEnv = Join-Path $env:APPDATA 'Microsoft\UserSecrets\Altivy.Identity\.env'

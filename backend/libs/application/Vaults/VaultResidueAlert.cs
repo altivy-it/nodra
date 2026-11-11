@@ -1,4 +1,4 @@
-namespace Altivy.Backend.Application.Vaults;
+namespace Nodra.Backend.Application.Vaults;
 
 /// <summary>
 /// Conteúdo mínimo e não sensível de um alerta administrativo de resíduo.

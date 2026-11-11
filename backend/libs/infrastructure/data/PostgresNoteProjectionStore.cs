@@ -1,8 +1,8 @@
-using Altivy.Backend.Application.Notes;
-using Altivy.Backend.Domain.Notes;
+using Nodra.Backend.Application.Notes;
+using Nodra.Backend.Domain.Notes;
 using Microsoft.EntityFrameworkCore;
 
-namespace Altivy.Backend.Infra.Data.Postgres;
+namespace Nodra.Backend.Infra.Data.Postgres;
 
 /// <summary>
 /// Persiste a projeção derivada sem substituir o filesystem como fonte canônica.

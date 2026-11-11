@@ -1,8 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-    <PropertyGroup>
-        <RootNamespace>Altivy.Backend.Domain</RootNamespace>
-    </PropertyGroup>
-    <ItemGroup>
-        <PackageReference Include="YamlDotNet" />
-    </ItemGroup>
-</Project>

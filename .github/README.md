@@ -1,6 +1,6 @@
 # Engenharia assistida por GitHub Copilot
 
-Este diretório define como pessoas e GitHub Copilot devem arquitetar, implementar, testar, revisar e preparar releases do Altivy.
+Este diretório define como pessoas e GitHub Copilot devem arquitetar, implementar, testar, revisar e preparar releases do Nodra.
 
 Se você está começando a usar IA ou GitHub Copilot, leia primeiro o [tutorial prático](COPILOT_GUIDE.md).
 
@@ -34,7 +34,7 @@ O projeto mantém Spec Kit `1.0.13` com integração Copilot em modo skills e
 scripts PowerShell. As extensões `assess`, `bug` e `git` estão em `1.0.1`,
 instaladas pelo CLI a partir das fontes locais do Inventory360Api. A adaptação
 usa os mesmos comandos e modelos da base, ajustando exemplos à stack e aos
-diretórios do AltivyNotes. Preserva a constituição vigente e as specs existentes;
+diretórios do Nodra. Preserva a constituição vigente e as specs existentes;
 não importa decisões de arquitetura ou automações de produto do projeto de referência.
 
 | Extensão | Comandos no chat | Artefatos e limites |
@@ -54,7 +54,7 @@ não importa decisões de arquitetura ou automações de produto do projeto de r
 
 Os comandos centrais e das extensões usam as mesmas definições localizadas
 do Inventory360Api. Para auditar ou traduzir textos humanos após uma atualização,
-selecione a raiz AltivyNotes e invoque a skill
+selecione a raiz Nodra e invoque a skill
 [altivy-notes-localize-speckit](skills/altivy-notes-localize-speckit/SKILL.md):
 
 ```text
@@ -69,7 +69,7 @@ as specs e o conteúdo específico deste projeto.
 
 ### Manutenção e validação
 
-Na raiz do AltivyNotes, com Git e `uv` disponíveis:
+Na raiz do Nodra, com Git e `uv` disponíveis:
 
 ```powershell
 uv tool run --from git+https://github.com/github/spec-kit.git@v1.0.13 specify extension list

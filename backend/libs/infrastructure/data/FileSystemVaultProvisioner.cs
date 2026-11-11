@@ -1,7 +1,7 @@
-using Altivy.Backend.Application.Vaults;
-using Altivy.Backend.Domain.Vaults;
+using Nodra.Backend.Application.Vaults;
+using Nodra.Backend.Domain.Vaults;
 
-namespace Altivy.Backend.Infra.Data.Postgres;
+namespace Nodra.Backend.Infra.Data.Postgres;
 
 /// <summary>
 /// Provisiona diretórios de vault sem permitir escape da raiz configurada.

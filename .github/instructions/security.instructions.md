@@ -32,7 +32,7 @@ applyTo: "backend/**, frontend/**, contracts/**, deploy/**"
 ## Identidade e dados
 
 - Keycloak é a autoridade externa para usuários, credenciais, MFA, federação, SSO, sessões, grupos, roles, recursos, scopes e políticas de autorização.
-- Use um realm dedicado ao Altivy; nunca use o realm administrativo `master` nem conceda privilégios administrativos globais à aplicação.
+- Use um realm dedicado ao Nodra; nunca use o realm administrativo `master` nem conceda privilégios administrativos globais à aplicação.
 - A solução não armazena senha, conta local, membership de vault ou cópia de política de autorização. Referências técnicas ao `sub` podem existir somente onde forem necessárias para auditoria e rastreabilidade.
 - O BFF usa Authorization Code com PKCE como cliente confidencial, mantém tokens fora do browser e propaga logout e revogação conforme os recursos do Keycloak.
 - A API valida assinatura, issuer, audience, expiração e permissões do token e falha fechada quando a decisão de acesso estiver ausente, inválida, expirada ou indisponível.

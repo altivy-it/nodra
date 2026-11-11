@@ -1,7 +1,7 @@
 using System.Net.Http.Headers;
 using System.Net.WebSockets;
 
-namespace Altivy.Bff.Relay;
+namespace Nodra.Bff.Relay;
 
 /// <summary>
 /// Registra o encaminhamento server-side entre o BFF e os hubs SignalR da API Altivy.
@@ -32,7 +32,7 @@ public static class BffHubsProxyRouteBuilderExtensions
         string? path,
         CancellationToken cancellationToken)
     {
-        var client = httpClientFactory.CreateClient("AltivyApi");
+        var client = httpClientFactory.CreateClient("NodraApi");
 
         if (context.WebSockets.IsWebSocketRequest)
         {

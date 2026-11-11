@@ -1,4 +1,4 @@
-namespace Altivy.Bff.Authentication;
+namespace Nodra.Bff.Authentication;
 
 /// <summary>
 /// Cria handlers HTTP para chamadas ao Keycloak com política de redirecionamento controlada.

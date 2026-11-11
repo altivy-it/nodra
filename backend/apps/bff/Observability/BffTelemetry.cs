@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 
-namespace Altivy.Bff.Observability;
+namespace Nodra.Bff.Observability;
 
 /// <summary>
 /// Publica métricas operacionais do BFF com atributos de cardinalidade limitada.

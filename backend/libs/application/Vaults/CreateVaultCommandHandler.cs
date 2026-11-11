@@ -1,6 +1,6 @@
-using Altivy.Backend.Domain.Vaults;
+using Nodra.Backend.Domain.Vaults;
 
-namespace Altivy.Backend.Application.Vaults;
+namespace Nodra.Backend.Application.Vaults;
 
 /// <summary>
 /// Inicia o provisioning idempotente de um vault pessoal.

@@ -1,4 +1,4 @@
-namespace Altivy.Backend.Application.Notes;
+namespace Nodra.Backend.Application.Notes;
 
 /// <summary>
 /// Define o resultado de uma alteração condicional de nota.

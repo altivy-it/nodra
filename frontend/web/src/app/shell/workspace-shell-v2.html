@@ -1,6 +1,6 @@
 <div class="workspace" [attr.data-theme]="workspace.theme()" [attr.data-density]="workspace.density()">
     <header class="topbar">
-        <div class="context"><span class="brand-mark" aria-hidden="true">A/</span><app-vault-selector [vaults]="vaults"
+        <div class="context"><span class="brand-mark" aria-hidden="true">N/</span><app-vault-selector [vaults]="vaults"
                 [currentVaultId]="currentVaultId" [loading]="vaultsLoading"
                 (vaultSelected)="vaultSelected.emit($event)" /></div>
         <div class="topbar-actions"><button type="button" class="icon-button" aria-label="Recolher explorador"
@@ -69,7 +69,7 @@
             </div>
             <div class="editor-actions"><span class="muted" aria-live="polite">Markdown · salvamento
                     automático</span><button type="button" (click)="noteRemoved.emit()">Excluir</button></div>
-        </section> } @else { <section class="empty"><span class="empty-code">A/</span>
+        </section> } @else { <section class="empty"><span class="empty-code">N/</span>
             <h1>Abra uma nota para começar.</h1>
             <p>Seu vault permanece organizado ao redor do documento atual.</p>
         </section> } } @else if (isModule('settings')) { <section class="module-page"><span class="empty-code">06 /
@@ -119,7 +119,5 @@
                 detalhes.' }}</p>
         </div>
     </aside> }
-    <footer class="statusbar"><span>vault: {{ currentVaultId }}</span><span class="status-spacer"></span><span>Altivy
-            Notes
-            Workspace</span></footer>
+    <footer class="statusbar"><span>vault: {{ currentVaultId }}</span><span class="status-spacer"></span><span>Altivy Nodra</span></footer>
 </div>

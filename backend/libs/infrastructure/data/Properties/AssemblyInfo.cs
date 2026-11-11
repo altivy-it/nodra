@@ -1,3 +1,3 @@
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("Altivy.Backend.Infra.Data.Postgres.IntegrationTests")]
+[assembly: InternalsVisibleTo("Nodra.Backend.Infra.Data.Postgres.IntegrationTests")]

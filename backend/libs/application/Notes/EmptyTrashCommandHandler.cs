@@ -1,4 +1,4 @@
-namespace Altivy.Backend.Application.Notes;
+namespace Nodra.Backend.Application.Notes;
 
 /// <summary>
 /// Esvazia a lixeira depois que a API validou autorização e step-up OIDC recente.

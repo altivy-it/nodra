@@ -4,7 +4,7 @@ using OpenTelemetry.Trace;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Altivy.Notes.Worker.Observability;
+namespace Nodra.Notes.Worker.Observability;
 
 /// <summary>
 /// Registra métricas e traces OpenTelemetry opcionais do worker.

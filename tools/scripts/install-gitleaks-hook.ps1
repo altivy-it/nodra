@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Instala o hook pre-commit obrigatorio de deteccao de secrets do Altivy.
+Instala o hook pre-commit obrigatorio de deteccao de secrets do Nodra.
 
 .DESCRIPTION
 Configura core.hooksPath como .githooks no clone Git informado e confirma que o
@@ -17,7 +17,7 @@ Argumentos literais remanescentes. Aceita somente --help; outros valores retorna
 ./tools/scripts/install-gitleaks-hook.ps1
 
 .EXAMPLE
-./tools/scripts/install-gitleaks-hook.ps1 -RepositoryRoot C:\src\AltivyNotes
+./tools/scripts/install-gitleaks-hook.ps1 -RepositoryRoot C:\src\Nodra
 
 .INPUTS
 Nenhum.

@@ -1,9 +1,9 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using Altivy.Backend.Application.Notes;
+using Nodra.Backend.Application.Notes;
 
-namespace Altivy.Backend.Infra.Data.Postgres;
+namespace Nodra.Backend.Infra.Data.Postgres;
 
 /// <summary>
 /// Constrói a projeção reconstruível de uma nota canônica.

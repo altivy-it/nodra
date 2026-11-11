@@ -1,4 +1,4 @@
-using Altivy.Notes.Worker.DependencyInjection;
+using Nodra.Notes.Worker.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 var builder = Host.CreateApplicationBuilder(args);

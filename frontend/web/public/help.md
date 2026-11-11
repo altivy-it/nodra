@@ -1,4 +1,4 @@
-# Ajuda do Altivy Notes
+# Ajuda do Nodra
 
 ## Abrir e organizar notas
 
@@ -32,4 +32,4 @@ mas não conceda `vault:read` ao usuário de teste.
 ## Conta e segurança
 
 Autenticação, perfil, sessões e MFA pertencem ao provedor de identidade
-configurado pelo operador. O Altivy Notes não reproduz esses fluxos.
+configurado pelo operador. O Nodra não reproduz esses fluxos.

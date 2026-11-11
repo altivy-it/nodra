@@ -1,4 +1,4 @@
-namespace Altivy.Backend.Application.Notes;
+namespace Nodra.Backend.Application.Notes;
 
 /// <summary>
 /// Representa um filho direto de uma pasta do vault.

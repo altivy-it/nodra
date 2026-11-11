@@ -1,6 +1,6 @@
 using System.Net.Http.Headers;
 
-namespace Altivy.Bff.Relay;
+namespace Nodra.Bff.Relay;
 
 /// <summary>
 /// Centraliza a lista de headers hop-by-hop e a cópia de headers entre requisições

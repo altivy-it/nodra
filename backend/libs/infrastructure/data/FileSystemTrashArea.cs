@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace Altivy.Backend.Infra.Data.Postgres;
+namespace Nodra.Backend.Infra.Data.Postgres;
 
 internal static class FileSystemTrashArea
 {

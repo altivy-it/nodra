@@ -1,6 +1,6 @@
 <div class="workspace" [attr.data-theme]="workspace.theme()" [attr.data-density]="workspace.density()">
   <header class="topbar">
-    <div class="context"><span class="brand-mark" aria-hidden="true">A/</span><app-vault-selector [vaults]="vaults"
+    <div class="context"><span class="brand-mark" aria-hidden="true">N/</span><app-vault-selector [vaults]="vaults"
         [currentVaultId]="currentVaultId" [loading]="vaultsLoading" (vaultSelected)="vaultSelected.emit($event)" />
     </div>
     <div class="topbar-actions"><button type="button" class="icon-button" aria-label="Recolher explorador"
@@ -37,7 +37,7 @@
       <div class="editor-actions"><span class="muted">Markdown · fonte canônica</span><button type="button"
           (click)="save(path.value, content.value)">Salvar</button><button type="button"
           (click)="noteRemoved.emit()">Excluir</button></div>
-    </section> } @else { <section class="empty"><span class="empty-code">A/</span>
+    </section> } @else { <section class="empty"><span class="empty-code">N/</span>
       <h1>Abra uma nota para começar.</h1>
       <p>Seu vault permanece organizado ao redor do documento atual.</p>
     </section> } } @else if (isModule('settings')) { <section class="module-page"><span class="empty-code">06 /
@@ -56,7 +56,7 @@
         locais</button>
     </section> } @else if (isModule('help')) { <article class="module-page help-page"><span class="empty-code">05 /
         AJUDA</span>
-      <h1>Como trabalhar no Altivy Notes</h1>
+      <h1>Como trabalhar no Nodra</h1>
       <h2>Abrir e organizar notas</h2>
       <p>Use Arquivos para abrir uma nota ou criar um documento rápido. O Markdown continua sendo a fonte canônica do
         seu vault.</p>
@@ -83,6 +83,6 @@
     </div>
   </aside> }
   <footer class="statusbar"><span>● sessão ativa</span><span>vault: {{ currentVaultId }}</span><span
-      class="status-spacer"></span><span>Altivy Notes Workspace</span><button type="button" class="logout"
+      class="status-spacer"></span><span>Nodra Workspace</span><button type="button" class="logout"
       (click)="loggedOut.emit()">Sair</button></footer>
 </div>

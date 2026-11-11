@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authentication;
 
-namespace Altivy.Bff.Relay;
+namespace Nodra.Bff.Relay;
 
 /// <summary>
 /// Obtém o token de acesso armazenado na sessão HTTP autenticada do BFF.

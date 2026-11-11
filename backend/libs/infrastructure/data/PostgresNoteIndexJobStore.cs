@@ -1,8 +1,8 @@
-using Altivy.Backend.Application.Notes;
+using Nodra.Backend.Application.Notes;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 
-namespace Altivy.Backend.Infra.Data.Postgres;
+namespace Nodra.Backend.Infra.Data.Postgres;
 
 /// <summary>
 /// Implementa a fila de indexação com atualização condicional por lease.

@@ -1,4 +1,4 @@
-namespace Altivy.Bff.Authentication;
+namespace Nodra.Bff.Authentication;
 
 /// <summary>
 /// Normaliza URLs de retorno para impedir redirecionamentos externos.

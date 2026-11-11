@@ -1,4 +1,4 @@
-namespace Altivy.Backend.Domain.Notes;
+namespace Nodra.Backend.Domain.Notes;
 
 /// <summary>
 /// Representa o caminho relativo e seguro de uma pasta dentro de um vault.

@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Altivy.Bff.Authentication;
+namespace Nodra.Bff.Authentication;
 
 /// <summary>
 /// Configura o cliente OpenID Connect do BFF para integração com o Keycloak.

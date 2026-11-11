@@ -1,6 +1,6 @@
 ---
 name: pull-request-review
-description: "Executa revisão rigorosa de branch, diff ou pull request do Altivy. Use para code review, security review, revisão arquitetural, contratos, migrations, testes e risco de release."
+description: "Executa revisão rigorosa de branch, diff ou pull request do Nodra. Use para code review, security review, revisão arquitetural, contratos, migrations, testes e risco de release."
 argument-hint: "PR, branch, diff e requisito relacionado"
 ---
 

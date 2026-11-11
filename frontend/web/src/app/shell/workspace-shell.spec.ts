@@ -7,6 +7,21 @@ import { routes } from '../app.routes';
 import { WorkspaceShell } from './workspace-shell';
 
 describe('WorkspaceShell', () => {
+    it('apresenta a marca Altivy Nodra e titulos de rota Nodra', async () => {
+        await TestBed.configureTestingModule({
+            imports: [WorkspaceShell],
+            providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter(routes)]
+        }).compileComponents();
+        const fixture = TestBed.createComponent(WorkspaceShell);
+        fixture.componentInstance.userName = 'Pessoa';
+        fixture.detectChanges();
+
+        expect(fixture.nativeElement.querySelector('footer')?.textContent).toContain('Altivy Nodra');
+        expect(fixture.nativeElement.querySelector('.brand-mark')?.textContent).toBe('N/');
+        expect(routes[0].title).toBe('Nodra');
+        expect(routes[1].title).toBe('Nodra Workspace');
+    });
+
     it('redimensiona os painéis por teclado respeitando os limites', async () => {
         await TestBed.configureTestingModule({
             imports: [WorkspaceShell],

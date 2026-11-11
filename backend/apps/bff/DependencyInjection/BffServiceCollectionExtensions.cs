@@ -1,8 +1,8 @@
-using Altivy.Bff.Authentication;
-using Altivy.Bff.Configuration;
-using Altivy.Bff.Health;
-using Altivy.Bff.Observability;
-using Altivy.Bff.Relay;
+using Nodra.Bff.Authentication;
+using Nodra.Bff.Configuration;
+using Nodra.Bff.Health;
+using Nodra.Bff.Observability;
+using Nodra.Bff.Relay;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
@@ -14,7 +14,7 @@ using Microsoft.Extensions.Options;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.RateLimiting;
 
-namespace Altivy.Bff.DependencyInjection;
+namespace Nodra.Bff.DependencyInjection;
 
 /// <summary>
 /// Fornece métodos para registrar os serviços e integrações usados pelo BFF.
@@ -138,7 +138,7 @@ public static class BffServiceCollectionExtensions
                 var keycloak = provider.GetRequiredService<IOptions<KeycloakOptions>>().Value;
                 return KeycloakHttpMessageHandlerFactory.Create(keycloak.Authority);
             });
-        services.AddHttpClient("AltivyApi", (provider, client) =>
+        services.AddHttpClient("NodraApi", (provider, client) =>
             {
                 var api = provider.GetRequiredService<IOptions<DownstreamApiOptions>>().Value;
                 client.BaseAddress = new Uri(api.BaseUrl, UriKind.Absolute);

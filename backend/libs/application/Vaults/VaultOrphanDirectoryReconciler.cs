@@ -1,4 +1,4 @@
-namespace Altivy.Backend.Application.Vaults;
+namespace Nodra.Backend.Application.Vaults;
 
 /// <summary>
 /// Isola diretórios válidos que não pertencem a um vault ou provisioning conhecido.

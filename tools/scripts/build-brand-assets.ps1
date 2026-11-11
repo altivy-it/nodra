@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Produz os assets de marca do Altivy a partir dos SVGs aprovados.
+Produz os assets de marca do Nodra a partir dos SVGs aprovados.
 
 .DESCRIPTION
 Executa SVGO 3.3.2 e sharp 0.33.5 em uma imagem Node fixa para otimizar SVGs,

@@ -1,9 +1,9 @@
-using Altivy.Backend.Application.Vaults;
-using Altivy.Backend.Domain.Vaults;
+using Nodra.Backend.Application.Vaults;
+using Nodra.Backend.Domain.Vaults;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
 
-namespace Altivy.Backend.Infra.Data.Postgres;
+namespace Nodra.Backend.Infra.Data.Postgres;
 
 /// <summary>
 /// Lê vaults da projeção PostgreSQL sem expor modelos de persistência.

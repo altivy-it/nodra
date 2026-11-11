@@ -1,4 +1,4 @@
-namespace Altivy.Bff.Authentication;
+namespace Nodra.Bff.Authentication;
 
 /// <summary>
 /// Define o contrato para renovação coordenada de tokens de acesso.

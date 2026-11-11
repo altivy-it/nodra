@@ -1,4 +1,4 @@
-namespace Altivy.Backend.Application.Notes;
+namespace Nodra.Backend.Application.Notes;
 
 /// <summary>
 /// Persiste o parâmetro não autorizativo de retenção por sujeito.

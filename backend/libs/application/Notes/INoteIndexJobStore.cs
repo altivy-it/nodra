@@ -1,4 +1,4 @@
-namespace Altivy.Backend.Application.Notes;
+namespace Nodra.Backend.Application.Notes;
 
 /// <summary>
 /// Porta da fila PostgreSQL de indexação de notas.

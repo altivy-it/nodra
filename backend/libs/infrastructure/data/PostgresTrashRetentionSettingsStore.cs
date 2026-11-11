@@ -1,7 +1,7 @@
-using Altivy.Backend.Application.Notes;
+using Nodra.Backend.Application.Notes;
 using Microsoft.EntityFrameworkCore;
 
-namespace Altivy.Backend.Infra.Data.Postgres;
+namespace Nodra.Backend.Infra.Data.Postgres;
 
 /// <summary>
 /// Implementa o parâmetro de retenção por sujeito no PostgreSQL.

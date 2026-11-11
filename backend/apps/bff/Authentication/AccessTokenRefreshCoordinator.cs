@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 
-namespace Altivy.Bff.Authentication;
+namespace Nodra.Bff.Authentication;
 
 /// <summary>
 /// Coordena a renovação de tokens de acesso no Keycloak, evitando chamadas duplicadas concorrentes.

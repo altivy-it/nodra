@@ -1,8 +1,8 @@
-using Altivy.Backend.Application.Vaults;
-using Altivy.Backend.Domain.Vaults;
+using Nodra.Backend.Application.Vaults;
+using Nodra.Backend.Domain.Vaults;
 using Microsoft.EntityFrameworkCore;
 
-namespace Altivy.Backend.Infra.Data.Postgres;
+namespace Nodra.Backend.Infra.Data.Postgres;
 
 /// <summary>
 /// Persiste operações de provisioning no PostgreSQL sem copiar autorização local.

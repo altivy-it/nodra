@@ -2,7 +2,7 @@
 
 O Keycloak, PostgreSQL e gateway TLS são operados pela plataforma central em
 `architecture-knowledge-base/platforms/identity`. Este runbook cobre o impacto
-no AltivyNotes; não há uma stack local de Keycloak para reiniciar.
+no Nodra; não há uma stack local de Keycloak para reiniciar.
 
 ## Sinais
 
@@ -14,11 +14,11 @@ no AltivyNotes; não há uma stack local de Keycloak para reiniciar.
 
 ## Diagnóstico
 
-Na raiz do AltivyNotes, confirme o estado da aplicação e o discovery público:
+Na raiz do Nodra, confirme o estado da aplicação e o discovery público:
 
 ```powershell
 docker compose --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" `
-  -f deploy/e2e/docker-compose-altivynotes.yaml ps
+  -f deploy/e2e/docker-compose-nodra.yaml ps
 curl.exe --noproxy "*" --insecure --silent --include `
   https://localhost:7443/realms/altivy/.well-known/openid-configuration
 ```
@@ -42,7 +42,7 @@ as verificações de token para contornar a indisponibilidade.
 O responsável pela plataforma central deve executar os procedimentos de
 recuperação e restore documentados em
 `architecture-knowledge-base/platforms/identity/docs/operations.md`. Depois da
-recuperação, reconcilie os clients do AltivyNotes com credenciais restritas ao
+recuperação, reconcilie os clients do Nodra com credenciais restritas ao
 realm `altivy`, valide discovery e faça um login completo.
 
 ## Escalonamento
@@ -55,7 +55,7 @@ incluir tokens, credenciais ou conteúdo de notas.
 
 O Keycloak, PostgreSQL e gateway TLS são operados pela plataforma central em
 `architecture-knowledge-base/platforms/identity`. Este runbook cobre o impacto
-no AltivyNotes; não há uma stack `altivy-keycloak-lab` para reiniciar.
+no Nodra; não há uma stack `altivy-keycloak-lab` para reiniciar.
 
 ## Sinais
 
@@ -67,11 +67,11 @@ no AltivyNotes; não há uma stack `altivy-keycloak-lab` para reiniciar.
 
 ## Diagnóstico
 
-Na raiz do AltivyNotes, confirme o estado da aplicação e o discovery público:
+Na raiz do Nodra, confirme o estado da aplicação e o discovery público:
 
 ```powershell
 docker compose --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" `
-  -f deploy/e2e/docker-compose-altivynotes.yaml ps
+  -f deploy/e2e/docker-compose-nodra.yaml ps
 curl.exe --noproxy "*" --insecure --silent --include `
   https://localhost:7443/realms/altivy/.well-known/openid-configuration
 ```
@@ -95,7 +95,7 @@ as verificações de token para contornar a indisponibilidade.
 O responsável pela plataforma central deve executar os procedimentos de
 recuperação e restore documentados em
 `architecture-knowledge-base/platforms/identity/docs/operations.md`. Depois da
-recuperação, reconcilie os clients do AltivyNotes com credenciais restritas ao
+recuperação, reconcilie os clients do Nodra com credenciais restritas ao
 realm `altivy`, valide discovery e faça um login completo.
 
 ## Escalonamento
@@ -129,7 +129,7 @@ Execute a partir da raiz do repositório em um terminal PowerShell:
 ```powershell
 # 1. Verificar status dos containers
 docker compose -f deploy/keycloak/docker-compose-keycloak.yaml ps
-docker compose --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" -f deploy/e2e/docker-compose-altivynotes.yaml ps
+docker compose --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" -f deploy/e2e/docker-compose-nodra.yaml ps
 
 # 2. Verificar logs recentes do Keycloak e do PostgreSQL
 docker logs --tail 50 keycloak-altivy
@@ -144,13 +144,13 @@ curl.exe --noproxy "*" --insecure --silent --include https://localhost:7443/real
 ### 2.2 Verificar logs da aplicação
 
 ```powershell
-docker logs --tail 50 altivy-notes-bff-1
-docker logs --tail 50 altivy-notes-api-1
+docker logs --tail 50 nodra-bff-1
+docker logs --tail 50 nodra-api-1
 ```
 
 ## 3. Mitigação e Comportamento de Falha Fechada
 
-A arquitetura do Altivy foi desenhada com o princípio de **falhar fechada**:
+A arquitetura do Nodra foi desenhada com o princípio de **falhar fechada**:
 - A API rejeita qualquer tentativa de acesso ao domínio ou leitura de vaults se
   o Keycloak estiver inacessível (retornando HTTP 503 estruturado).
 - Nenhuma autorização local sintética ou permissão paralela temporária deve ser

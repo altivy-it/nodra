@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Options;
-using Altivy.Bff.Configuration;
+using Nodra.Bff.Configuration;
 
-namespace Altivy.Bff.Authentication;
+namespace Nodra.Bff.Authentication;
 
 /// <summary>
 /// Valida as configurações do cliente OIDC e do realm Keycloak usado pelo BFF.

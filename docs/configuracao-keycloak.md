@@ -1,4 +1,4 @@
-# Tutorial de configuração do Keycloak para o Altivy
+# Tutorial de configuração do Keycloak para o Nodra
 
 ## 1. Objetivo e estado atual
 
@@ -26,13 +26,13 @@ O [plano do BFF com Keycloak](plan/bff-keycloak.md) está com status `accepted`.
 
 ```mermaid
 flowchart LR
-    Browser[Browser] -->|HTTPS e cookie HttpOnly| Web[altivy-web]
+    Browser[Browser] -->|HTTPS e cookie HttpOnly| Web[nodra-web]
     Web -->|/bff, /api/v1 e /hubs| BFF[altivy-bff]
     BFF -->|Authorization Code + PKCE| KC[Keycloak]
     BFF -->|Bearer ou RPT| API[altivy-api]
     API -->|decisão e Protection API| KC
     KC --> KCDB[(PostgreSQL do Keycloak)]
-    API --> APPDB[(PostgreSQL do Altivy)]
+    API --> APPDB[(PostgreSQL do Nodra)]
 ```
 
 | Componente | Responsabilidade |
@@ -42,7 +42,7 @@ flowchart LR
 | `altivy-api` | Validação do token e aplicação da decisão antes do domínio. |
 | Angular | Interface; nunca recebe access token ou refresh token. |
 | PostgreSQL do Keycloak | Estado operacional do Keycloak; exige backup próprio. |
-| PostgreSQL do Altivy | Projeções; não armazena usuários, memberships ou políticas. |
+| PostgreSQL do Nodra | Projeções; não armazena usuários, memberships ou políticas. |
 
 Os bancos devem usar bancos, roles, senhas, backups e ciclos de vida distintos. Recomenda-se separá-los também por instância em produção.
 
@@ -108,14 +108,14 @@ canônicos de `Altivy/docs/brand` sem alterar essa fonte.
 
 O Keycloak, PostgreSQL e gateway são operados exclusivamente pela plataforma
 central `architecture-knowledge-base/platforms/identity`. Gere o tema no
-AltivyNotes e publique-o no bind mount central antes de iniciar a plataforma:
+Nodra e publique-o no bind mount central antes de iniciar a plataforma:
 
 ```powershell
 ./deploy/keycloak/build-theme.ps1
 Set-Location ../architecture-knowledge-base/platforms/identity
 ./scripts/publish-product-theme.ps1 `
   -Product altivynotes `
-  -SourcePath ../../AltivyNotes/deploy/keycloak/.build/keycloak-theme/altivy
+  -SourcePath ../../Nodra/deploy/keycloak/.build/keycloak-theme/altivy
 ./scripts/initialize-local-platform.ps1
 ./scripts/start-platform.ps1
 ./scripts/test-platform.ps1
@@ -123,7 +123,7 @@ Set-Location ../architecture-knowledge-base/platforms/identity
 
 O bind mount PostgreSQL permanece em
 `$env:APPDATA\keycloak\postgres-data`; a plataforma não o remove. Os realms e
-clients do AltivyNotes devem ser reconciliados por credenciais restritas ao
+clients do Nodra devem ser reconciliados por credenciais restritas ao
 realm `altivy`.
 
 ### 5.3 Validar o laboratório
@@ -141,7 +141,7 @@ O script `test-platform.ps1` deve concluir com sucesso e o issuer deve ser
 
 O ciclo de vida da infraestrutura é responsabilidade da plataforma central.
 Use seus scripts de operação; nunca remova
-`$env:APPDATA\keycloak\postgres-data` a partir do AltivyNotes, pois o bind
+`$env:APPDATA\keycloak\postgres-data` a partir do Nodra, pois o bind
 mount é compartilhado com outros realms.
 
 ### 5.5 Entrar no console
@@ -239,7 +239,7 @@ do BFF persiste sempre o refresh token mais recente.
   recovery codes, guarde-os fora do dispositivo do segundo fator e teste a
   recuperação antes de tornar MFA obrigatório.
 
-MFA, cadastro e recuperação pertencem ao Keycloak ou IdP federado, nunca ao Altivy.
+MFA, cadastro e recuperação pertencem ao Keycloak ou IdP federado, nunca ao Nodra.
 
 ### 6.4 Criar o tema visual personalizado
 
@@ -413,7 +413,7 @@ O script administra:
 
 O script não cria Authorization Services por recurso/vault, políticas de
 permissão finais, mappers de claims específicos nem fluxos de autenticação
-customizados. Essas estruturas dependem do modelo definitivo do Altivy e devem
+customizados. Essas estruturas dependem do modelo definitivo do Nodra e devem
 ser adicionadas ao reconciliador somente com testes de contrato. Ele também não
 testa SMTP, login social ou callbacks; execute os checklists da seção 16.
 
@@ -665,7 +665,7 @@ recurso, uma política e uma permissão padrão. Antes de continuar:
 4. mantenha somente os itens explícitos criados neste laboratório.
 
 Sem essa limpeza, a avaliação pode permitir acesso por causa da configuração
-padrão e mascarar erros nas políticas do Altivy.
+padrão e mascarar erros nas políticas do Nodra.
 
 Em **Clients > altivy-api > Authorization > Authorization scopes**, crie:
 
@@ -740,7 +740,7 @@ O endpoint e o fluxo de proteção permanecem no backend; a listagem de vaults u
 
 ### 11.1 Atribuir o primeiro Owner real
 
-O Altivy não possui bootstrap de usuário. Para a primeira implantação:
+O Nodra não possui bootstrap de usuário. Para a primeira implantação:
 
 1. um administrador autorizado cria ou localiza o usuário no Keycloak;
 2. exige MFA e confirma que a identidade não é uma conta compartilhada;
@@ -870,7 +870,7 @@ Use este baseline em **Identity Providers > Add provider**:
 | Stored tokens readable | desligado |
 | Trust email | ligado somente quando o provedor comprova `email_verified` e a política foi validada |
 | First login flow | cópia controlada de `first broker login` |
-| Post login flow | fluxo de MFA do Altivy, quando MFA local for obrigatório |
+| Post login flow | fluxo de MFA do Nodra, quando MFA local for obrigatório |
 | Sync mode | `IMPORT`; use `FORCE` somente para atributos que o provedor realmente governa |
 
 Não use **Automatically Set Existing User** nem outro auto-link por e-mail. Um
@@ -878,7 +878,7 @@ atacante pode controlar no provedor um endereço não verificado ou reciclado. O
 fluxo deve exigir reautenticação da conta existente ou confirmação por e-mail
 enviada pelo Keycloak. O e-mail é dado de perfil, não autorização.
 
-O cadastro fechado recomendado para o Altivy é:
+O cadastro fechado recomendado para o Nodra é:
 
 1. manter **User registration** desligado;
 2. pré-criar o usuário, como `lzocateli`, ou exigir aprovação após o primeiro
@@ -932,7 +932,7 @@ ativação, compare a documentação oficial do provedor e a tela exibida.
 4. Use `read:user user:email` para recuperar perfil e e-mail, inclusive quando
   o e-mail público estiver oculto. Não solicite `repo`, `org` ou escrita.
 5. Habilite **JSON Format** somente se houver necessidade de refresh ou leitura
-  técnica do token externo; para o Altivy, mantenha armazenamento de tokens
+  técnica do token externo; para o Nodra, mantenha armazenamento de tokens
   desligado.
 
 #### Google
@@ -1018,7 +1018,7 @@ Duplique os fluxos built-in antes de alterá-los. No fluxo de primeiro login:
 
 1. mantenha **Review Profile** quando algum provedor puder omitir nome ou e-mail;
 2. para cadastro aprovado, mantenha **Create User If Unique**, mas o usuário
-  nasce sem grupo do Altivy;
+  nasce sem grupo do Nodra;
 3. para cadastro fechado, desabilite criação e exija conta preexistente;
 4. para conta existente, exija **Verify Existing Account By Email** ou
   **Verify Existing Account By Re-authentication**;
@@ -1058,7 +1058,7 @@ Backup, restauração e administração do PostgreSQL do Keycloak são operados
 pela plataforma central. Execute esses procedimentos a partir de
 `architecture-knowledge-base/platforms/identity` com o arquivo externo
 `$env:APPDATA\Microsoft\UserSecrets\Altivy.Identity\.env`; nunca leia nem
-copie esse arquivo para o AltivyNotes.
+copie esse arquivo para o Nodra.
 
 O bind mount persistente é `$env:APPDATA\keycloak\postgres-data`. Preserve-o
 durante a transição e siga `docs/operations.md` da plataforma para backup e
@@ -1128,7 +1128,7 @@ Teste logout atual, todas as sessões, remoção de grupo/role/permissão, desab
 - [ ] Usuário social novo não recebe grupo ou role automaticamente.
 - [ ] Colisão de e-mail exige verificação ou reautenticação; auto-link está desligado.
 - [ ] Primeiro login, vínculo, desvínculo, cancelamento e falha do IdP foram testados.
-- [ ] MFA pós-broker foi testado quando exigido pela política do Altivy.
+- [ ] MFA pós-broker foi testado quando exigido pela política do Nodra.
 - [ ] Rotação e revogação de cada secret social foram ensaiadas.
 - [ ] Eventos de broker são auditados sem tokens ou perfil completo.
 
@@ -1155,7 +1155,7 @@ Teste logout atual, todas as sessões, remoção de grupo/role/permissão, desab
 
 ## 18. Limpar o laboratório
 
-O AltivyNotes não possui mais laboratório de infraestrutura próprio. Para
+O Nodra não possui mais laboratório de infraestrutura próprio. Para
 limpar somente o artefato local do tema, execute:
 
 ```powershell
@@ -1195,7 +1195,7 @@ Fontes consultadas em 29 de julho de 2026:
 - [LinkedIn: Sign In with LinkedIn using OpenID Connect](https://learn.microsoft.com/linkedin/consumer/integrations/self-serve/sign-in-with-linkedin-v2)
 - [X: OAuth 2.0 Authorization Code Flow with PKCE](https://docs.x.com/fundamentals/authentication/oauth-2-0/authorization-code)
 
-Referências do Altivy:
+Referências do Nodra:
 
 - [Plano mestre](plano-mestre.md)
 - [Plano do BFF com Keycloak](plan/bff-keycloak.md)

@@ -1,14 +1,14 @@
-using Altivy.Notes.Api.Authorization;
-using Altivy.Notes.Api.Notes;
-using Altivy.Notes.Api.Vaults;
-using Altivy.Backend.Application.Notes;
-using Altivy.Backend.Application.Vaults;
-using Altivy.Notes.Api.Realtime;
+using Nodra.Notes.Api.Authorization;
+using Nodra.Notes.Api.Notes;
+using Nodra.Notes.Api.Vaults;
+using Nodra.Backend.Application.Notes;
+using Nodra.Backend.Application.Vaults;
+using Nodra.Notes.Api.Realtime;
 
-namespace Altivy.Notes.Api.Endpoints;
+namespace Nodra.Notes.Api.Endpoints;
 
 /// <summary>
-/// Registra os endpoints públicos da API Altivy Notes.
+/// Registra os endpoints públicos da API Nodra.
 /// </summary>
 public static class ApiEndpointRouteBuilderExtensions
 {

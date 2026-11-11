@@ -2,7 +2,7 @@ using System.Net;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
 
-namespace Altivy.Bff.Authentication;
+namespace Nodra.Bff.Authentication;
 
 /// <summary>
 /// Configura o processamento seguro de headers encaminhados por proxies confiáveis.

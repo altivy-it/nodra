@@ -1,8 +1,8 @@
-using Altivy.Backend.Application.Notes;
+using Nodra.Backend.Application.Notes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Altivy.Backend.Infra.Data.Postgres;
+namespace Nodra.Backend.Infra.Data.Postgres;
 
 /// <summary>
 /// Configura o acesso PostgreSQL da infraestrutura de dados.

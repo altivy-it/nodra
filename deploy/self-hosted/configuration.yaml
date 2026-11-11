@@ -11,10 +11,10 @@ services:
       ORIGIN: ${ALTIVY_PUBLIC_ORIGIN:-https://localhost:7443/notes}
       DATA_ROOT: ${ALTIVY_DATA_ROOT:-}
       CONFIG_ROOT: ${ALTIVY_CONFIG_ROOT:-}
-      WEB_IMAGE: ${ALTIVY_WEB_IMAGE:-altivy-web:0.1.0}
-      BFF_IMAGE: ${ALTIVY_BFF_IMAGE:-altivy-bff:0.1.0}
-      API_IMAGE: ${ALTIVY_API_IMAGE:-altivy-api:0.1.0}
-      WORKER_IMAGE: ${ALTIVY_WORKER_IMAGE:-altivy-worker:0.1.0}
+      WEB_IMAGE: ${ALTIVY_WEB_IMAGE:-nodra-web:0.1.0}
+      BFF_IMAGE: ${ALTIVY_BFF_IMAGE:-nodra-bff:0.1.0}
+      API_IMAGE: ${ALTIVY_API_IMAGE:-nodra-api:0.1.0}
+      WORKER_IMAGE: ${ALTIVY_WORKER_IMAGE:-nodra-worker:0.1.0}
       MIGRATIONS_IMAGE: ${ALTIVY_MIGRATIONS_IMAGE:-altivy-migrations:0.1.0}
       BACKEND_VERSION: ${ALTIVY_BACKEND_VERSION:-0.1.0}
       WEB_VERSION: ${ALTIVY_WEB_VERSION:-0.1.0}

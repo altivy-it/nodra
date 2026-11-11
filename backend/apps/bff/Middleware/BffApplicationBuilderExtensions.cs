@@ -1,7 +1,7 @@
-using Altivy.Bff.Authentication;
+using Nodra.Bff.Authentication;
 using Microsoft.AspNetCore.Builder;
 
-namespace Altivy.Bff.Middleware;
+namespace Nodra.Bff.Middleware;
 
 /// <summary>
 /// Fornece métodos para compor o pipeline HTTP do BFF.

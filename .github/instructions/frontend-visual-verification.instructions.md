@@ -1,6 +1,6 @@
 ---
 name: "Verificação Visual Frontend"
-description: "Use ao criar, alterar ou substituir uma tela ou componente Angular do Altivy; define o loop obrigatório de screenshot, análise e ajuste até a UI/UX estar correta."
+description: "Use ao criar, alterar ou substituir uma tela ou componente Angular do Nodra; define o loop obrigatório de screenshot, análise e ajuste até a UI/UX estar correta."
 applyTo: "frontend/web/**, frontend/libs/frontend/**"
 ---
 
@@ -18,7 +18,7 @@ applyTo: "frontend/web/**, frontend/libs/frontend/**"
   - fora do editor Markdown e do grafo de notas, usa exclusivamente componentes PO UI, conforme `frontend-po-ui.instructions.md`; nenhum elemento parece reimplementado ou de outra biblioteca;
   - no editor Markdown e no grafo de notas, o comportamento e o layout seguem `frontend-design-system.instructions.md` para essas duas superfícies dedicadas;
   - layout sem sobreposição, corte de texto, quebra inesperada ou espaçamento inconsistente em nenhum dos viewports capturados;
-  - hierarquia visual, contraste, temas (claro/escuro/alto contraste) e densidade coerentes com os tokens do Altivy;
+  - hierarquia visual, contraste, temas (claro/escuro/alto contraste) e densidade coerentes com os tokens do Nodra;
   - estados de loading, vazio, erro, forbidden, offline e conflito são visualmente distintos e legíveis quando aplicáveis;
   - foco visível e ordem de navegação plausível, cruzando a captura com `read_page`;
   - console e rede sem erro novo introduzido pela mudança.

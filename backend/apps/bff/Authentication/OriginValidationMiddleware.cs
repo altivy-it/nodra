@@ -1,4 +1,4 @@
-namespace Altivy.Bff.Authentication;
+namespace Nodra.Bff.Authentication;
 
 /// <summary>
 /// Bloqueia requisições mutáveis cuja origem não esteja autorizada pelo BFF.

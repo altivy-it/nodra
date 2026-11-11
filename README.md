@@ -1,9 +1,27 @@
-# Altivy
+# Altivy Nodra
 
-Altivy é uma aplicação web self-hosted para gestão de conhecimento em Markdown.
+Nodra é uma aplicação web self-hosted para gestão de conhecimento em Markdown.
 Ela combina edição, organização, links entre notas, backlinks, propriedades,
 pesquisa e visualização em grafo sem exigir um aplicativo instalado no computador
 do usuário.
+
+**Your connected knowledge workspace.**
+
+## Identidade e posicionamento
+
+- **Empresa:** Altivy.
+- **Produto e aplicativo:** Nodra.
+- **Marca completa:** Altivy Nodra.
+- **Repositório:** [altivy-it/nodra](https://github.com/altivy-it/nodra).
+- **CLI futura:** `nodra`; ainda não implementada.
+
+> Altivy Nodra is an AI-powered knowledge workspace that connects your notes, documents, ideas, and conversations into a searchable personal knowledge graph.
+
+O nome Nodra remete a *node*: notas interligadas, grafo de conhecimento e IA.
+A sequência conceitual da marca é **Notes → Nodes → Connections → Knowledge → AI**.
+O posicionamento expressa a direção do produto, não uma promessa de capacidades
+de IA já entregues. IA é opcional; o núcleo de notas, edição, persistência e
+busca não depende de nuvem, embeddings ou internet.
 
 ## Estado do projeto
 
@@ -25,7 +43,7 @@ estado atual como implantação de produção.
 
 ## Arquitetura
 
-O Altivy adota um monólito modular com hosts separados para web, BFF, API e
+O Nodra adota um monólito modular com hosts separados para web, BFF, API e
 worker. O BFF mantém tokens fora do navegador, a API aplica as decisões de
 autorização do Keycloak e o worker processa reconciliação e indexação duráveis.
 
@@ -76,6 +94,6 @@ e o documento da área afetada. Não publique vulnerabilidades, tokens, dados
 pessoais ou conteúdo real de vault em issues; siga a
 [política de segurança](.github/SECURITY.md).
 
-O núcleo open source do Altivy é disponibilizado sob a [licença MIT](LICENSE).
+O núcleo open source do Nodra é disponibilizado sob a [licença MIT](LICENSE).
 Funcionalidades comerciais futuras serão extensões opcionais e não retirarão
 direitos já concedidos sobre código publicado sob MIT.

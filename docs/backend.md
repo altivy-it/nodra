@@ -1,8 +1,8 @@
-# Altivy - Implementação do Backend
+# Nodra - Implementação do Backend
 
 ## 1. Objetivo
 
-Definir a implementação da API, worker, persistência e integrações do Altivy. As decisões globais permanecem no [Plano Mestre](plano-mestre.md).
+Definir a implementação da API, worker, persistência e integrações do Nodra. As decisões globais permanecem no [Plano Mestre](plano-mestre.md).
 
 ## 2. Estrutura da solução .NET
 
@@ -25,7 +25,7 @@ tests/
 └── backend/                      # testes unitários, integração, arquitetura e desempenho
 ```
 
-A convenção de assemblies e namespaces do backend fica documentada nas instruções do Copilot em [.github/instructions/architecture.instructions.md](../.github/instructions/architecture.instructions.md); a camada de infraestrutura usa o prefixo `Infra.<nome>` e os hosts mantêm namespaces próprios em `Altivy.Notes.Api` e `Altivy.Worker`, sem concentrar código reutilizável de domínio.
+A convenção de assemblies e namespaces do backend fica documentada nas instruções do Copilot em [.github/instructions/architecture.instructions.md](../.github/instructions/architecture.instructions.md); a camada de infraestrutura usa o prefixo `Infra.<nome>` e os hosts mantêm namespaces próprios em `Nodra.Notes.Api` e `Altivy.Worker`, sem concentrar código reutilizável de domínio.
 
 Usar monólito modular orientado a domínio, Clean Architecture pragmática e Ports and Adapters. Regras de domínio não dependem de ASP.NET Core, EF Core ou filesystem. API e worker são composition roots e não contêm regras reutilizáveis. Não criar interfaces para classes sem fronteira ou substituição real.
 
@@ -53,7 +53,7 @@ flowchart LR
 
 ### 2.2 Padrões obrigatórios
 
-| Padrão | Uso no Altivy |
+| Padrão | Uso no Nodra |
 | --- | --- |
 | DDD estratégico | módulos, linguagem ubíqua e limites de negócio explícitos |
 | Aggregate e Value Object | invariantes de `Vault`, `Note`, jobs, paths, hashes, versões e ETags |
@@ -112,7 +112,7 @@ dotnet tool run reportgenerator --version
 Exemplo de cobertura para os testes .NET:
 
 ```powershell
-dotnet test Altivy.slnx --configuration Release --collect:"XPlat Code Coverage"
+dotnet test Nodra.slnx --configuration Release --collect:"XPlat Code Coverage"
 dotnet tool run reportgenerator `
   -reports:"tests/**/TestResults/**/coverage.cobertura.xml" `
   -targetdir:"artifacts/coverage" `
@@ -145,7 +145,7 @@ Código publicamente acessível ou pacote gratuito não significa licença permi
 
 ### 3.1 Integração com Keycloak
 
-- nenhum cadastro, senha, recuperação de conta, usuário, membership ou política de autorização é mantido pelo Altivy;
+- nenhum cadastro, senha, recuperação de conta, usuário, membership ou política de autorização é mantido pelo Nodra;
 - o BFF usa OIDC Authorization Code com PKCE e mantém tokens fora do browser;
 - Keycloak administra usuários, credenciais, MFA, federação, SSO, sessões, grupos e roles;
 - Keycloak Authorization Services mantém recursos, scopes, políticas e decisões de acesso;

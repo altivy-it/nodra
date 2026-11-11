@@ -1,22 +1,22 @@
 <#
 .SYNOPSIS
-Valida, provisiona e inicia Altivy Notes em Production por Docker Compose.
+Valida, provisiona e inicia Nodra em Production por Docker Compose.
 .DESCRIPTION
 Consome arquivos externos via Compose, resolve aliases em memoria, valida
 certificados, faz backup coordenado, provisiona roles por stdin e aplica migrations.
 Nao grava secrets, nao remove dados e nao depende de um profile PowerShell.
 .PARAMETER EnvironmentFile
-Arquivo externo AltivyNotes. No Windows usa o caminho aprovado em APPDATA.
+Arquivo externo Nodra. No Windows usa o caminho aprovado em APPDATA.
 .PARAMETER IdentityEnvironmentFile
 Arquivo externo opcional com credenciais administrativas centralizadas.
 .PARAMETER CertificateDirectory
 Diretorio externo com TLS, CA, certificado API e PFX Data Protection.
 .PARAMETER DataRoot
-Diretorio persistente externo. Padrao: LOCALAPPDATA/AltivyNotes/Production no Windows.
+Diretorio persistente externo. Padrao: LOCALAPPDATA/Nodra/Production no Windows.
 .PARAMETER PublicOrigin
 Origem HTTPS opcional, sobrepondo a configuracao externa.
 .PARAMETER ProjectName
-Nome Compose. Padrao: altivy-notes.
+Nome Compose. Padrao: nodra.
 .PARAMETER SyncOidc
 Sincroniza callbacks por script pertencente a architecture-knowledge-base.
 .PARAMETER IdentityScript
@@ -56,7 +56,7 @@ param(
     [string] $CertificateDirectory,
     [string] $DataRoot,
     [string] $PublicOrigin,
-    [ValidatePattern('^[a-z0-9][a-z0-9_-]+$')][string] $ProjectName = 'altivy-notes',
+    [ValidatePattern('^[a-z0-9][a-z0-9_-]+$')][string] $ProjectName = 'nodra',
     [switch] $SyncOidc,
     [string] $IdentityScript,
     [string] $ReleaseImageManifest,
@@ -153,7 +153,7 @@ try {
     if (-not $DataRoot) { $DataRoot = $source.DATA_ROOT }
     if (-not $DataRoot) {
         $baseData = if ($IsWindows) { $env:LOCALAPPDATA } else { Join-Path $HOME '.local/share' }
-        $DataRoot = Join-Path $baseData 'AltivyNotes/Production'
+        $DataRoot = Join-Path $baseData 'Nodra/Production'
     }
     if (-not $CertificateDirectory) { $CertificateDirectory = $source.CONFIG_ROOT }
     if (-not $CertificateDirectory -and $IsWindows) {
@@ -217,9 +217,9 @@ try {
             $releaseImages = ConvertFrom-StringData -StringData $manifestText
         } catch { throw 'Formato de images.env invalido; release rejeitada.' }
         $expectedImages = @{
-            ALTIVY_WEB_IMAGE='altivy-web'; ALTIVY_API_IMAGE='altivy-api'
+            ALTIVY_WEB_IMAGE='nodra-web'; ALTIVY_API_IMAGE='altivy-api'
             ALTIVY_BFF_IMAGE='altivy-bff'; ALTIVY_WORKER_IMAGE='altivy-worker'
-            ALTIVY_MIGRATIONS_IMAGE='altivynotes-migrations'
+            ALTIVY_MIGRATIONS_IMAGE='nodra-migrations'
         }
         $actualKeys = @($releaseImages.Keys | Sort-Object)
         $expectedKeys = @($expectedImages.Keys | Sort-Object)

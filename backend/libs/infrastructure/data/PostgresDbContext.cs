@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace Altivy.Backend.Infra.Data.Postgres;
+namespace Nodra.Backend.Infra.Data.Postgres;
 
 /// <summary>
 /// Contexto EF Core da projeção PostgreSQL do Altivy.

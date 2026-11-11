@@ -6,7 +6,7 @@ Provisiona autorização UMA de proprietário para um vault específico.
 Cria ou reutiliza o recurso vault-{VaultId}, uma policy de usuário para o
 proprietário e permissions de vault:read, vault:write, vault:manage e
 vault:delete no Authorization Services do client altivy-api. Deve ser executado
-por administrador do Keycloak; o runtime do Altivy permanece com uma_protection.
+por administrador do Keycloak; o runtime do Nodra permanece com uma_protection.
 
 .PARAMETER VaultId
 Identificador opaco e estável do vault, com letras minúsculas, números e hífen.

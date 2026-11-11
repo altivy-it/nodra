@@ -69,11 +69,11 @@ jobs:
         run: |
           set -Eeuo pipefail
           projects=(
-            backend/tests/Altivy.Notes.Api.UnitTests/Altivy.Notes.Api.UnitTests.csproj
-            backend/tests/Altivy.Backend.Application.UnitTests/Altivy.Backend.Application.UnitTests.csproj
-            backend/tests/Altivy.Backend.Domain.UnitTests/Altivy.Backend.Domain.UnitTests.csproj
-            backend/tests/Altivy.Bff.UnitTests/Altivy.Bff.UnitTests.csproj
-            backend/tests/Altivy.Notes.Worker.UnitTests/Altivy.Notes.Worker.UnitTests.csproj
+            backend/tests/Nodra.Notes.Api.UnitTests/Nodra.Notes.Api.UnitTests.csproj
+            backend/tests/Nodra.Backend.Application.UnitTests/Nodra.Backend.Application.UnitTests.csproj
+            backend/tests/Nodra.Backend.Domain.UnitTests/Nodra.Backend.Domain.UnitTests.csproj
+            backend/tests/Nodra.Bff.UnitTests/Nodra.Bff.UnitTests.csproj
+            backend/tests/Nodra.Notes.Worker.UnitTests/Nodra.Notes.Worker.UnitTests.csproj
           )
           for project in "${projects[@]}"; do
             docker run --rm \
@@ -140,7 +140,7 @@ jobs:
             --env 'ALTIVY_INTEGRATION_MIGRATOR_CONNECTION_STRING=Host=127.0.0.1;Port=5432;Database=altivy;Username=altivy_migrator;Password=ci-migrator-only' \
             --env 'ALTIVY_INTEGRATION_RUNTIME_CONNECTION_STRING=Host=127.0.0.1;Port=5432;Database=altivy;Username=altivy_runtime;Password=ci-runtime-only' \
             lzocateli/dotnet-sdk:10.0.400-noble \
-            dotnet test backend/tests/Altivy.Backend.Infra.Data.Postgres.IntegrationTests/Altivy.Backend.Infra.Data.Postgres.IntegrationTests.csproj \
+            dotnet test backend/tests/Nodra.Backend.Infra.Data.Postgres.IntegrationTests/Nodra.Backend.Infra.Data.Postgres.IntegrationTests.csproj \
               --configuration Release --verbosity minimal
 
   images:
@@ -160,7 +160,7 @@ jobs:
           docker buildx inspect --bootstrap
           docker buildx build --load --build-arg IMAGE_VERSION=0.0.0-ci \
             --build-arg WEB_CONFIGURATION=production --build-arg WEB_BASE_HREF=/ \
-            --file frontend/web/Dockerfile --tag altivy-web:ci .
+            --file frontend/web/Dockerfile --tag nodra-web:ci .
           docker buildx build --load --build-arg IMAGE_VERSION=0.0.0-ci \
             --file backend/apps/api/Dockerfile --tag altivy-api:ci .
           docker buildx build --load --build-arg IMAGE_VERSION=0.0.0-ci \
@@ -168,7 +168,7 @@ jobs:
           docker buildx build --load --build-arg IMAGE_VERSION=0.0.0-ci \
             --file backend/apps/worker/Dockerfile --tag altivy-worker:ci .
           docker buildx build --load --build-arg IMAGE_VERSION=0.0.0-ci \
-            --file deploy/production/migrations.Dockerfile --tag altivynotes-migrations:ci .
+            --file deploy/production/migrations.Dockerfile --tag nodra-migrations:ci .
 
   result:
     name: Result

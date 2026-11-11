@@ -1,8 +1,8 @@
-using Altivy.Backend.Application.Vaults;
-using Altivy.Backend.Domain.Vaults;
+using Nodra.Backend.Application.Vaults;
+using Nodra.Backend.Domain.Vaults;
 using System.Text;
 
-namespace Altivy.Notes.Api.Vaults;
+namespace Nodra.Notes.Api.Vaults;
 
 /// <summary>
 /// Reader temporário para o vault sintético do laboratório.

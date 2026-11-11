@@ -2,7 +2,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using YamlDotNet.RepresentationModel;
 
-namespace Altivy.Backend.Domain.Notes;
+namespace Nodra.Backend.Domain.Notes;
 
 /// <summary>
 /// Extrai metadados determinísticos sem renderizar Markdown como HTML.

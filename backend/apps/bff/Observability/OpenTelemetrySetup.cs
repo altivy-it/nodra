@@ -5,7 +5,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
-namespace Altivy.Bff.Observability;
+namespace Nodra.Bff.Observability;
 
 /// <summary>
 /// Registra instrumentação e exportação OpenTelemetry do BFF.

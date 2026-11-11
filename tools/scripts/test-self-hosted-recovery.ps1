@@ -6,13 +6,13 @@ Restaura PostgreSQL e o archive em container efemero sem rede, reprovisiona role
 com senhas sinteticas, executa o bootstrap real e valida o bundle atual.
 Secrets externos, PFX e identidade nao sao lidos nem copiados.
 .PARAMETER DataRoot
-Raiz externa persistente. Padrao Windows: LOCALAPPDATA/AltivyNotes/Production.
+Raiz externa persistente. Padrao Windows: LOCALAPPDATA/Nodra/Production.
 .PARAMETER BackupId
 ID do snapshot. Padrao: metadata mais recente em backups/.
 .PARAMETER PostgresImage
 Imagem PostgreSQL ja presente localmente. Padrao: image ID gravado no metadata.
 .PARAMETER CurrentMigrationImage
-Bundle atual ja presente localmente. Padrao: altivy-migrations:0.1.0.
+Bundle atual ja presente localmente. Padrao: nodra-migrations:0.1.0.
 .PARAMETER RemainingArguments
 Aceita literalmente --help.
 .EXAMPLE
@@ -34,7 +34,7 @@ param(
     [string] $DataRoot,
     [ValidatePattern('^[0-9]{8}T[0-9]{6}-[a-f0-9]{32}$')][string] $BackupId,
     [string] $PostgresImage,
-    [string] $CurrentMigrationImage = 'altivy-migrations:0.1.0',
+    [string] $CurrentMigrationImage = 'nodra-migrations:0.1.0',
     [Parameter(ValueFromRemainingArguments)][string[]] $RemainingArguments
 )
 if ($RemainingArguments -contains '--help') { Get-Help $PSCommandPath -Full; return }
@@ -43,7 +43,7 @@ $ErrorActionPreference = 'Stop'
 $repository = Split-Path (Split-Path $PSScriptRoot)
 if (-not $DataRoot) {
     if (-not $IsWindows) { throw 'Informe -DataRoot externo neste host. Use --help.' }
-    $DataRoot = Join-Path $env:LOCALAPPDATA 'AltivyNotes/Production'
+    $DataRoot = Join-Path $env:LOCALAPPDATA 'Nodra/Production'
 }
 $DataRoot = [IO.Path]::GetFullPath($DataRoot)
 if ($DataRoot.StartsWith($repository + [IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)) {

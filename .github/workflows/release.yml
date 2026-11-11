@@ -161,7 +161,7 @@ jobs:
             metadata="$RUNNER_TEMP/${name}-metadata.json"
             candidate_ref="$image_namespace/$image:candidate-$GITHUB_SHA"
             build_args=(--build-arg "IMAGE_VERSION=$RELEASE_VERSION")
-            if [[ "$image" == "altivy-web" ]]; then
+            if [[ "$image" == "nodra-web" ]]; then
               build_args+=(--build-arg WEB_CONFIGURATION=production --build-arg WEB_BASE_HREF=/)
             fi
 
@@ -194,25 +194,25 @@ jobs:
               --format cyclonedx --output "/reports/${name}.cdx.json" "$immutable_ref"
 
             case "$image" in
-              altivy-web) key=ALTIVY_WEB_IMAGE ;;
-              altivy-api) key=ALTIVY_API_IMAGE ;;
-              altivy-bff) key=ALTIVY_BFF_IMAGE ;;
-              altivy-worker) key=ALTIVY_WORKER_IMAGE ;;
-              altivynotes-migrations) key=ALTIVY_MIGRATIONS_IMAGE ;;
+              nodra-web) key=ALTIVY_WEB_IMAGE ;;
+              nodra-api) key=ALTIVY_API_IMAGE ;;
+              nodra-bff) key=ALTIVY_BFF_IMAGE ;;
+              nodra-worker) key=ALTIVY_WORKER_IMAGE ;;
+              nodra-migrations) key=ALTIVY_MIGRATIONS_IMAGE ;;
               *) echo "Imagem não permitida: $image" >&2; exit 1 ;;
             esac
             printf '%s=%s\n' "$key" "$immutable_ref" >> "$manifest"
             release_images["$image"]="$immutable_ref"
             printf '%s  %s\n' "${digest#sha256:}" "${name}.cdx.json" >> "$RUNNER_TEMP/sbom-checksums.txt"
           done <<'IMAGES'
-          altivy-web|frontend/web/Dockerfile|web
-          altivy-api|backend/apps/api/Dockerfile|api
-          altivy-bff|backend/apps/bff/Dockerfile|bff
-          altivy-worker|backend/apps/worker/Dockerfile|worker
-          altivynotes-migrations|deploy/production/migrations.Dockerfile|migrations
+          nodra-web|frontend/web/Dockerfile|web
+          nodra-api|backend/apps/api/Dockerfile|api
+          nodra-bff|backend/apps/bff/Dockerfile|bff
+          nodra-worker|backend/apps/worker/Dockerfile|worker
+          nodra-migrations|deploy/production/migrations.Dockerfile|migrations
           IMAGES
 
-          for image in altivy-web altivy-api altivy-bff altivy-worker altivynotes-migrations; do
+          for image in nodra-web nodra-api nodra-bff nodra-worker nodra-migrations; do
             release_ref="$image_namespace/$image:$RELEASE_TAG"
             expected_digest="${release_images[$image]##*@}"
             if existing_info="$(docker buildx imagetools inspect "$release_ref" 2>/dev/null)"; then

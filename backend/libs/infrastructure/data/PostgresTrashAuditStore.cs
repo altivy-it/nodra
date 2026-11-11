@@ -1,6 +1,6 @@
-using Altivy.Backend.Application.Notes;
+using Nodra.Backend.Application.Notes;
 
-namespace Altivy.Backend.Infra.Data.Postgres;
+namespace Nodra.Backend.Infra.Data.Postgres;
 
 /// <summary>
 /// Persiste eventos de lixeira sem atualizar ou excluir eventos existentes.

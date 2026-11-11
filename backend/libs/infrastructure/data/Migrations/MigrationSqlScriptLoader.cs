@@ -1,7 +1,7 @@
 using System.Reflection;
 using System.Text;
 
-namespace Altivy.Backend.Infra.Data.Postgres.Migrations;
+namespace Nodra.Backend.Infra.Data.Postgres.Migrations;
 
 internal static class MigrationSqlScriptLoader
 {

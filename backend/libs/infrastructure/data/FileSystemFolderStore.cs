@@ -1,11 +1,11 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using Altivy.Backend.Application.Notes;
-using Altivy.Backend.Domain.Notes;
-using Altivy.Backend.Domain.Vaults;
+using Nodra.Backend.Application.Notes;
+using Nodra.Backend.Domain.Notes;
+using Nodra.Backend.Domain.Vaults;
 
-namespace Altivy.Backend.Infra.Data.Postgres;
+namespace Nodra.Backend.Infra.Data.Postgres;
 
 /// <summary>
 /// Lista filhos imediatos e cria pastas dentro da raiz local de vaults.

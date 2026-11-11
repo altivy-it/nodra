@@ -1,4 +1,4 @@
-# Tema Keycloak do AltivyNotes
+# Tema Keycloak do Nodra
 
 Este diretório é proprietário apenas do tema versionado do realm `altivy` e
 do script que gera seu artefato local. A infraestrutura de Keycloak,
@@ -12,7 +12,7 @@ paralela: o PostgreSQL central preserva o bind mount legado
 
 ## Gerar e publicar o tema
 
-Na raiz do AltivyNotes, gere o artefato a partir dos assets canônicos:
+Na raiz do Nodra, gere o artefato a partir dos assets canônicos:
 
 ```powershell
 ./deploy/keycloak/build-theme.ps1
@@ -25,7 +25,7 @@ comando a partir de `architecture-knowledge-base/platforms/identity`, com
 ```powershell
 ./scripts/publish-product-theme.ps1 `
   -Product altivynotes `
-  -SourcePath ../../AltivyNotes/deploy/keycloak/.build/keycloak-theme/altivy
+  -SourcePath ../../Nodra/deploy/keycloak/.build/keycloak-theme/altivy
 ```
 
 Use `-DryRun` para validar a origem e o destino sem alterar arquivos. O script
@@ -45,11 +45,11 @@ e valide a stack a partir do diretório da plataforma:
 
 O gateway central publica Keycloak em `https://localhost:7443`. Use esse
 endpoint para discovery OIDC, console administrativo e scripts de
-reconciliação do AltivyNotes. Consulte a documentação de operação da
+reconciliação do Nodra. Consulte a documentação de operação da
 plataforma antes de fazer backup, restauração, reinicialização ou alteração de
 credenciais.
 
 O realm, clients, roles, policies, usuários e o manifesto
-`realm/altivy-realm.json` continuam pertencendo ao AltivyNotes. A
+`realm/altivy-realm.json` continuam pertencendo ao Nodra. A
 reconciliação deve usar credenciais de client restritas ao realm `altivy`;
 runtimes e scripts cotidianos não recebem a credencial do realm `master`.

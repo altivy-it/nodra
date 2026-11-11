@@ -1,9 +1,9 @@
 using System.Globalization;
-using Altivy.Bff.Observability;
+using Nodra.Bff.Observability;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
-namespace Altivy.Bff.Authentication;
+namespace Nodra.Bff.Authentication;
 
 /// <summary>
 /// Valida a sessão do cookie e renova tokens próximos da expiração.

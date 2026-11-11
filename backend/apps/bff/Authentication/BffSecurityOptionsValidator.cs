@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Options;
 using System.Net;
 
-namespace Altivy.Bff.Authentication;
+namespace Nodra.Bff.Authentication;
 
 /// <summary>
 /// Valida as configurações de segurança do BFF antes da aplicação iniciar.

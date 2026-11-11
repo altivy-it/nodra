@@ -1,7 +1,7 @@
 using System.Net.Mail;
 using Microsoft.Extensions.Options;
 
-namespace Altivy.Notes.Worker.Notifications;
+namespace Nodra.Notes.Worker.Notifications;
 
 /// <summary>
 /// Valida a configuração SMTP antes de iniciar o worker.

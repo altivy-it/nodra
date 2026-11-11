@@ -6,7 +6,7 @@ para o ecossistema Altivy.
 
 ## 1. Política de Licenciamento
 
-Conforme estabelecido nas regras arquiteturais e de segurança do Altivy:
+Conforme estabelecido nas regras arquiteturais e de segurança do Nodra:
 - **Licenças Permitidas:** Somente dependências externas com licenças altamente permissivas e gratuitas para todos os usos previstos são autorizadas:
   - MIT
   - Apache-2.0
@@ -74,7 +74,7 @@ Todas as dependências declaradas em `frontend/web/package.json`:
 
 ## 3. Padrão e Geração de SBOM
 
-O Altivy adota o padrão **CycloneDX (JSON)** e **SPDX** para emissão automatizada
+O Nodra adota o padrão **CycloneDX (JSON)** e **SPDX** para emissão automatizada
 de SBOM em pipelines de publicação de imagens e release, padronizando o **Trivy**
 como ferramenta oficial tanto para geração de SBOM quanto para escaneamento de
 vulnerabilidades.

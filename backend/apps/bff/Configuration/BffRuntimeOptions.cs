@@ -1,4 +1,4 @@
-namespace Altivy.Bff.Configuration;
+namespace Nodra.Bff.Configuration;
 
 /// <summary>
 /// Define parâmetros operacionais configuráveis do BFF.

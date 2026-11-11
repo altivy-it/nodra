@@ -2,7 +2,7 @@
 
 Este documento define os objetivos de nível de serviço (SLOs), indicadores-chave
 de nível de serviço (SLIs), métricas OpenTelemetry e políticas de alertas para a
-integração entre o Altivy BFF, Altivy API e Keycloak.
+integração entre o Nodra BFF, Altivy API e Keycloak.
 
 ## 1. Indicadores e Objetivos de Nível de Serviço (SLIs e SLOs)
 
@@ -22,7 +22,7 @@ integração entre o Altivy BFF, Altivy API e Keycloak.
 - `bff.token_refresh.duration`: histograma de duração das renovações de token no backchannel do Keycloak.
 - `bff.token_refresh.result`: contador de resultados das renovações (`success`, `rejected`, `timeout`, `failure`).
 
-### 2.2 Métricas da API (`altivy-notes-api`)
+### 2.2 Métricas da API (`nodra-api`)
 
 - `api.authorization.decision.duration`: histograma do tempo de avaliação de permissão pelo Keycloak.
 - `api.authorization.decision.status`: contador com tags `result` (`granted`, `denied`), `scope` (`vault:read`, `vault:write`, etc.) e `recurso`.

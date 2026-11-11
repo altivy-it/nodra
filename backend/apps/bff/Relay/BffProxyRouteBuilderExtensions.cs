@@ -1,9 +1,9 @@
 using System.Net.Http.Headers;
-using Altivy.Bff.Authentication;
+using Nodra.Bff.Authentication;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 
-namespace Altivy.Bff.Relay;
+namespace Nodra.Bff.Relay;
 
 /// <summary>
 /// Registra o encaminhamento server-side entre o BFF e a API Altivy.
@@ -39,7 +39,7 @@ public static class BffProxyRouteBuilderExtensions
         string? path,
         CancellationToken cancellationToken)
     {
-        var client = httpClientFactory.CreateClient("AltivyApi");
+        var client = httpClientFactory.CreateClient("NodraApi");
         var downstreamUri = BuildDownstreamUri(client.BaseAddress, path, context.Request.QueryString);
         using var request = new HttpRequestMessage(new HttpMethod(context.Request.Method), downstreamUri);
 

@@ -5,10 +5,10 @@
 Este guia prepara um ambiente isolado para a POC da etapa P-02 do
 [plano de plugins e Teams](plan/app-altivy-notes-teams-external-push.md).
 O ambiente permite provar uma action command do Teams que envia conteúdo
-selecionado ou digitado ao Altivy, sem Microsoft Graph na primeira versão.
+selecionado ou digitado ao Nodra, sem Microsoft Graph na primeira versão.
 
 Use somente usuários, mensagens, reuniões, arquivos e nomes sintéticos. O
-tenant de teste não substitui o laboratório local do Altivy nem deve receber
+tenant de teste não substitui o laboratório local do Nodra nem deve receber
 o vault, credenciais ou dados de produção.
 
 ## Resultado esperado
@@ -41,7 +41,7 @@ Antes de começar, providencie:
 
 Não versionar senhas, client secrets, certificados, tokens, IDs reais de
 tenant, app ou bot. Use variáveis de ambiente ou um cofre/arquivo de segredo
-montado, conforme as regras do Altivy.
+montado, conforme as regras do Nodra.
 
 ## Caminho A: sandbox do Microsoft 365 Developer Program
 
@@ -155,7 +155,7 @@ Altivy e não substitui a autorização do Keycloak.
    inevitável na POC, use validade curta, guarde-o apenas no secret store e
    planeje sua revogação.
 7. No recurso **Azure Bot**, abra **Settings > Configuration** e informe a
-   URL de mensagens pública do Altivy, por exemplo
+   URL de mensagens pública do Nodra, por exemplo
    `https://teams-poc.example.test/plugins/teams/messages`. Esta é apenas uma
    forma de URL; o endpoint definitivo depende da P-09.
 8. Em **Channels**, habilite o canal **Microsoft Teams** e aceite somente as
@@ -203,7 +203,7 @@ Use o [Developer Portal for Teams](https://dev.teams.microsoft.com) com
 3. Em **App features > Bot**, vincule o bot criado no Azure e habilite apenas
    os escopos comprovados na POC: `personal`, `team` e/ou `groupChat`.
 4. Em **App features > Messaging extension**, adicione uma command baseada em
-   ação com o nome `Salvar no Altivy Notes`. A forma final depende do gate G1;
+   ação com o nome `Salvar no Nodra`. A forma final depende do gate G1;
    não publique como produto enquanto ela não estiver aprovada.
 5. Em **Domains**, adicione somente o hostname público de teste. Não use URLs
    de loopback, IPs privados ou domínios internos.

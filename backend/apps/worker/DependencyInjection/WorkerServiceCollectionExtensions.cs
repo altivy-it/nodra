@@ -1,16 +1,16 @@
-using Altivy.Backend.Application.Vaults;
-using Altivy.Backend.Application.Notes;
-using Altivy.Backend.Infra.Data.Postgres;
-using Altivy.Notes.Worker.Notifications;
-using Altivy.Notes.Worker.Notes;
-using Altivy.Notes.Worker.Observability;
-using Altivy.Notes.Worker.Vaults;
+using Nodra.Backend.Application.Vaults;
+using Nodra.Backend.Application.Notes;
+using Nodra.Backend.Infra.Data.Postgres;
+using Nodra.Notes.Worker.Notifications;
+using Nodra.Notes.Worker.Notes;
+using Nodra.Notes.Worker.Observability;
+using Nodra.Notes.Worker.Vaults;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 
-namespace Altivy.Notes.Worker.DependencyInjection;
+namespace Nodra.Notes.Worker.DependencyInjection;
 
 /// <summary>
 /// Registra os serviços necessários ao processamento de provisioning de vaults.

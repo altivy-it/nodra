@@ -1,4 +1,4 @@
-# Contribuindo com o Altivy
+# Contribuindo com o Nodra
 
 ## Antes de começar
 
@@ -60,10 +60,10 @@ npm run build
 npm run e2e
 
 # Backend
-dotnet restore Altivy.slnx --locked-mode
-dotnet format Altivy.slnx --verify-no-changes
-dotnet build Altivy.slnx --no-restore
-dotnet test Altivy.slnx --no-build
+dotnet restore Nodra.slnx --locked-mode
+dotnet format Nodra.slnx --verify-no-changes
+dotnet build Nodra.slnx --no-restore
+dotnet test Nodra.slnx --no-build
 ```
 
 Testes de integração podem exigir Docker para PostgreSQL/Testcontainers. Scripts adicionais devem compor esses comandos, não substituí-los silenciosamente.

@@ -1,6 +1,6 @@
 ---
 name: "Backend .NET"
-description: "Use ao criar ou alterar C#, .NET 10, ASP.NET Core, API, worker, domínio, aplicação, infraestrutura, SignalR ou serviços backend do Altivy."
+description: "Use ao criar ou alterar C#, .NET 10, ASP.NET Core, API, worker, domínio, aplicação, infraestrutura, SignalR ou serviços backend do Nodra."
 applyTo: "backend/apps/**, backend/libs/**"
 ---
 
@@ -49,7 +49,7 @@ applyTo: "backend/apps/**, backend/libs/**"
 - Quando o padrão Mediator for necessário, use `Nuuvify.CommonPack.Mediator`, registre-o nos composition roots e centralize a versão. Não use a biblioteca MediatR por restrição de licenciamento.
 - Behaviors de pipeline não ocultam autorização contextual, fronteiras transacionais, idempotência ou efeitos externos; esses aspectos permanecem explícitos e testáveis.
 - Use somente pacotes com licença permissiva, gratuita e verificada conforme as instruções de arquitetura; licença comercial, restritiva, ambígua ou ausente bloqueia a inclusão.
-- Para projetos .NET do Altivy, os namespaces de pacotes pré-aprovados são: `Azure.*`, `Microsoft.*`, `SonarAnalyzer.CSharp.*` e `Nuuvify.*`.
+- Para projetos .NET do Nodra, os namespaces de pacotes pré-aprovados são: `Azure.*`, `Microsoft.*`, `SonarAnalyzer.CSharp.*` e `Nuuvify.*`.
 - Pacotes fora dessa lista exigem justificativa técnica, validação de licença e avaliação de impacto antes da adoção.
 
 ## ASP.NET Core

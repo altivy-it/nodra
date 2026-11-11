@@ -1,10 +1,10 @@
-using Altivy.Bff.Authentication;
-using Altivy.Bff.Relay;
+using Nodra.Bff.Authentication;
+using Nodra.Bff.Relay;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
-namespace Altivy.Bff.Configuration;
+namespace Nodra.Bff.Configuration;
 
 /// <summary>
 /// Fornece métodos para registrar a configuração tipada do BFF.

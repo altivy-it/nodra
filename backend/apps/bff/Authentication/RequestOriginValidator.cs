@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
 
-namespace Altivy.Bff.Authentication;
+namespace Nodra.Bff.Authentication;
 
 /// <summary>
 /// Verifica se uma origem HTTP está configurada como permitida para o BFF.

@@ -1,7 +1,7 @@
-using Altivy.Backend.Application.Vaults;
+using Nodra.Backend.Application.Vaults;
 using Microsoft.Extensions.Logging;
 
-namespace Altivy.Notes.Worker.Notifications;
+namespace Nodra.Notes.Worker.Notifications;
 
 /// <summary>
 /// Registra alertas administrativos sem enviá-los quando SMTP não está configurado em Development.

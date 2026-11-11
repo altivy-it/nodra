@@ -1,4 +1,4 @@
-namespace Altivy.Backend.Domain.Vaults;
+namespace Nodra.Backend.Domain.Vaults;
 
 /// <summary>
 /// Representa um vault lógico do Altivy, independente de seu armazenamento físico.

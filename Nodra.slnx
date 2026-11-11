@@ -1,0 +1,23 @@
+<Solution>
+    <Folder Name="/backend/" />
+    <Folder Name="/backend/apps/" />
+    <Project Path="backend/apps/api/Nodra.Notes.Api.csproj" />
+    <Project Path="backend/apps/bff/Nodra.Bff.csproj" />
+    <Project Path="backend/apps/worker/Nodra.Notes.Worker.csproj" />
+    <Folder Name="/backend/apps/worker/" />
+    <Folder Name="/backend/libs/" />
+    <Folder Name="/backend/libs/application/" />
+    <Project Path="backend/libs/application/Nodra.Backend.Application.csproj" />
+    <Folder Name="/backend/libs/domain/" />
+    <Project Path="backend/libs/domain/Nodra.Backend.Domain.csproj" />
+    <Folder Name="/backend/libs/infrastructure/" />
+    <Folder Name="/backend/libs/infrastructure/data/" />
+    <Project Path="backend/libs/infrastructure/data/Nodra.Backend.Infra.Data.Postgres.csproj" />
+    <Folder Name="/backend/tests/" />
+    <Project Path="backend/tests/Nodra.Notes.Api.UnitTests/Nodra.Notes.Api.UnitTests.csproj" />
+    <Project Path="backend/tests/Nodra.Backend.Application.UnitTests/Nodra.Backend.Application.UnitTests.csproj" />
+    <Project Path="backend/tests/Nodra.Backend.Domain.UnitTests/Nodra.Backend.Domain.UnitTests.csproj" />
+    <Project Path="backend/tests/Nodra.Backend.Infra.Data.Postgres.IntegrationTests/Nodra.Backend.Infra.Data.Postgres.IntegrationTests.csproj" />
+    <Project Path="backend/tests/Nodra.Bff.UnitTests/Nodra.Bff.UnitTests.csproj" />
+    <Project Path="backend/tests/Nodra.Notes.Worker.UnitTests/Nodra.Notes.Worker.UnitTests.csproj" />
+</Solution>

@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Propor uma capacidade ou melhoria para o Altivy
+about: Propor uma capacidade ou melhoria para o Nodra
 title: "[Feature] "
 labels: enhancement
 assignees: ""

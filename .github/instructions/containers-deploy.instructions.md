@@ -1,6 +1,6 @@
 ---
 name: "Containers e Deploy"
-description: "Use ao criar ou alterar Dockerfile, Compose, proxy reverso, entrypoint, health check, bind mount, configuração de runtime ou arquivos de deploy do Altivy."
+description: "Use ao criar ou alterar Dockerfile, Compose, proxy reverso, entrypoint, health check, bind mount, configuração de runtime ou arquivos de deploy do Nodra."
 applyTo: "deploy/**, **/Dockerfile*, **/compose*.yml, **/compose*.yaml, **/.dockerignore"
 ---
 

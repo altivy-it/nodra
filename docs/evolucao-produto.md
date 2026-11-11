@@ -1,8 +1,8 @@
-# Altivy - Evolução do Produto
+# Nodra - Evolução do Produto
 
 ## 1. Objetivo
 
-Organizar a evolução do Altivy em resultados verificáveis, evitando que a busca por paridade total com ferramentas existentes impeça entregas utilizáveis. A visão e as restrições arquiteturais estão no [Plano Mestre](plano-mestre.md).
+Organizar a evolução do Nodra em resultados verificáveis, evitando que a busca por paridade total com ferramentas existentes impeça entregas utilizáveis. A visão e as restrições arquiteturais estão no [Plano Mestre](plano-mestre.md).
 
 ## 2. Método de planejamento
 
@@ -61,7 +61,7 @@ Arquitetura validada e riscos técnicos mais relevantes testados antes da constr
 
 ### Hipótese
 
-Um profissional consegue usar o Altivy diariamente para criar e encontrar conhecimento sem instalar aplicativo nativo.
+Um profissional consegue usar o Nodra diariamente para criar e encontrar conhecimento sem instalar aplicativo nativo.
 
 ### Entregas
 
@@ -80,8 +80,8 @@ Um profissional consegue usar o Altivy diariamente para criar e encontrar conhec
 
 ### Não inclui
 
-- cadastro, senha ou recuperação de conta dentro do Altivy;
-- administração de usuários ou políticas na interface do Altivy;
+- cadastro, senha ou recuperação de conta dentro do Nodra;
+- administração de usuários ou políticas na interface do Nodra;
 - colaboração;
 - embeddings;
 - grafo global avançado;
@@ -272,7 +272,7 @@ Não coletar conteúdo de notas, consultas integrais ou dados pessoais desnecess
 
 ## 12. Política de compatibilidade
 
-- Markdown e anexos permanecem acessíveis sem o Altivy;
+- Markdown e anexos permanecem acessíveis sem o Nodra;
 - extensões próprias de sintaxe devem degradar para texto legível;
 - mudanças de resolução de links exigem migração ou modo compatível;
 - importadores não alteram a origem sem confirmação;

@@ -1,6 +1,6 @@
 ---
 name: "Arquitetura Altivy"
-description: "Use ao planejar arquitetura, criar módulos, mover responsabilidades, adicionar dependências, integrar serviços ou escrever ADRs no monorepo Altivy."
+description: "Use ao planejar arquitetura, criar módulos, mover responsabilidades, adicionar dependências, integrar serviços ou escrever ADRs no monorepo Nodra."
 applyTo: "backend/**, frontend/**, contracts/**, deploy/**"
 ---
 
@@ -13,7 +13,7 @@ applyTo: "backend/**, frontend/**, contracts/**, deploy/**"
 - `backend/libs/domain` não depende de infraestrutura, ASP.NET Core ou EF Core.
 - `backend/libs/application` orquestra casos de uso e depende do domínio e de portas explícitas.
 - `backend/libs/infrastructure` é uma família de projetos por responsabilidade estável; `data` concentra PostgreSQL, filesystem e projeções, `http` concentra integrações HTTP e `bus` concentra mediator, jobs duráveis e plumbing assíncrono.
-- A estrutura alvo do backend usa `Altivy.Backend.Domain`, `Altivy.Backend.Application`, `Altivy.Backend.Infra.Data`, `Altivy.Backend.Infra.Http` e `Altivy.Backend.Infra.Bus`; hosts usam namespaces próprios e não hospedam código reutilizável de domínio.
+- A estrutura alvo do backend usa `Nodra.Backend.Domain`, `Nodra.Backend.Application`, `Nodra.Backend.Infra.Data`, `Nodra.Backend.Infra.Http` e `Nodra.Backend.Infra.Bus`; hosts usam namespaces próprios e não hospedam código reutilizável de domínio.
 - Keycloak é a plataforma externa obrigatória de identidade e decisão de autorização; a solução não implementa cadastro local, senha, recuperação de conta, MFA, diretório de usuários, memberships ou políticas próprias de acesso.
 - O BFF atua somente como cliente OIDC confidencial, gerenciador da sessão técnica do browser e relay de tokens; ele não se torna um provedor de identidade ou motor de autorização.
 - A API atua como Policy Enforcement Point: valida o token e exige as permissões emitidas pelo Keycloak antes de acessar qualquer recurso, sem reproduzir localmente a decisão da política.

@@ -1,6 +1,6 @@
-using Altivy.Backend.Domain.Notes;
+using Nodra.Backend.Domain.Notes;
 
-namespace Altivy.Backend.Application.Notes;
+namespace Nodra.Backend.Application.Notes;
 
 /// <summary>
 /// Coordena o movimento ou renomeação condicional de uma nota e a reconciliação da projeção.

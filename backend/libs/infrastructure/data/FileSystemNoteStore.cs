@@ -1,9 +1,9 @@
 using System.Security.Cryptography;
 using System.Text;
-using Altivy.Backend.Application.Notes;
-using Altivy.Backend.Domain.Notes;
+using Nodra.Backend.Application.Notes;
+using Nodra.Backend.Domain.Notes;
 
-namespace Altivy.Backend.Infra.Data.Postgres;
+namespace Nodra.Backend.Infra.Data.Postgres;
 
 /// <summary>
 /// Persiste as notas canônicas em um diretório local montado para os vaults.

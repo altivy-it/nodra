@@ -1,4 +1,4 @@
-using Altivy.Bff.Authentication;
+using Nodra.Bff.Authentication;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -7,9 +7,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
-using Altivy.Bff.Relay;
+using Nodra.Bff.Relay;
 
-namespace Altivy.Bff.Endpoints;
+namespace Nodra.Bff.Endpoints;
 
 /// <summary>
 /// Fornece métodos para registrar os endpoints públicos do BFF.

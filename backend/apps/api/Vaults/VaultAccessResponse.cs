@@ -1,6 +1,6 @@
-using Altivy.Backend.Application.Vaults;
+using Nodra.Backend.Application.Vaults;
 
-namespace Altivy.Notes.Api.Vaults;
+namespace Nodra.Notes.Api.Vaults;
 
 /// <summary>
 /// Representa os dados mínimos de um vault após autorização de leitura.

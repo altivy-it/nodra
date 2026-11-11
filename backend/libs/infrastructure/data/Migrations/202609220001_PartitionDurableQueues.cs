@@ -1,10 +1,10 @@
-using Altivy.Backend.Infra.Data.Postgres;
+using Nodra.Backend.Infra.Data.Postgres;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Altivy.Backend.Infra.Data.Postgres.Migrations;
+namespace Nodra.Backend.Infra.Data.Postgres.Migrations;
 
 [DbContext(typeof(PostgresDbContext))]
 [Migration("202609220001_PartitionDurableQueues")]

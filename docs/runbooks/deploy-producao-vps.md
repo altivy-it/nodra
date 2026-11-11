@@ -118,10 +118,10 @@ Configure uma GitHub App instalada somente neste repositório:
 - registre a App em `altivy-it > Settings > Developer settings > GitHub Apps`;
 - em `General`, copie o **Client ID** da App (não o App ID numérico) para a
   Actions variable `RELEASE_APP_CLIENT_ID`; pode ser repository variable ou
-  organization variable com acesso limitado a `AltivyNotes`;
+  organization variable com acesso limitado a `Nodra`;
 - gere uma chave em `Private keys` e salve o PEM como Actions secret
   `RELEASE_APP_PRIVATE_KEY`, no repositório ou como organization secret com
-  acesso permitido somente a `AltivyNotes`;
+  acesso permitido somente a `Nodra`;
 - habilite a App no repositório para que release PRs e tags criados por ela
   disparem os workflows normais.
 
@@ -131,7 +131,7 @@ aplicar, ele copia somente variables não secretas do Environment
 `Altivy/production` para Organization variables com acesso `selected` conforme
 `github-organization-policy.json`. `VPS_DEPLOY_PATH`, `VPS_DOMAIN` e os paths de
 TLS ficam limitados ao repo `Altivy`; `VPS_SSH_PORT` pode ser compartilhada por
-`Altivy` e `AltivyNotes`.
+`Altivy` e `Nodra`.
 
 O script não lê nem cria valores de secrets. Ele apenas informa se os nomes
 `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY`, `VPS_SSH_KNOWN_HOSTS` e
@@ -139,7 +139,7 @@ O script não lê nem cria valores de secrets. Ele apenas informa se os nomes
 ou atualize os valores manualmente em **Organization settings > Secrets and
 variables > Actions**, usando visibilidade `Selected repositories`; secrets
 vazios não existem no GitHub. Cadastre `RELEASE_APP_CLIENT_ID` como variable
-selecionada para `AltivyNotes`.
+selecionada para `Nodra`.
 
 Variables no Environment têm precedência sobre Organization variables para
 aquele Environment. O script não remove nem modifica as variables atuais de
@@ -161,27 +161,27 @@ Crie o Environment `production`, restrinja branches/tags autorizadas e exija
 revisor humano. Configure as variables não secretas da organization com acesso
 selecionado, usando a policy versionada; as variables de domínio/path/TLS do
 workflow Altivy são limitadas a esse repositório. `VPS_SSH_PORT` pode ser
-compartilhada com `AltivyNotes` quando ambas usam a mesma porta. O script copia
+compartilhada com `Nodra` quando ambas usam a mesma porta. O script copia
 os valores atuais do Environment `production` do repo `Altivy` e não imprime
 esses valores.
 
 Configure os secrets da organization com visibilidade `selected`:
 
 - `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` e `VPS_SSH_KNOWN_HOSTS` para `Altivy` e
-  `AltivyNotes`;
-- `RELEASE_APP_PRIVATE_KEY` somente para `AltivyNotes`.
+  `Nodra`;
+- `RELEASE_APP_PRIVATE_KEY` somente para `Nodra`.
 
 A chave SSH é dedicada, rotacionável e restrita ao host. O script lista somente
 nomes e escopos dos secrets; ele nunca lê, cria vazio, grava ou imprime valores.
 Cadastre os valores manualmente na Organization settings ou nos Environments.
 `RELEASE_APP_CLIENT_ID` também precisa ser cadastrado como organization/repo
-variable selecionada para `AltivyNotes`; o script audita sua presença.
+variable selecionada para `Nodra`; o script audita sua presença.
 `ALTIVY_VPS_PLATFORM` pode ser definido como `linux/amd64` ou a plataforma
-efetiva do build e fica selecionado para `AltivyNotes`. Habilite
+efetiva do build e fica selecionado para `Nodra`. Habilite
 publicação/consulta de pacotes GHCR pelo `GITHUB_TOKEN`.
 
 `VPS_DEPLOY_PATH` e `VPS_DOMAIN` configuram o workflow do repo `Altivy`; os
-workflows AltivyNotes mantêm `/userapps/altivynotes` e `notes.altivy.it` fixos,
+workflows Nodra mantêm `/userapps/altivynotes` e `notes.altivy.it` fixos,
 conforme a topologia aprovada. Por isso a policy restringe domínio/path ao repo
 `Altivy`, evitando sobrescrever o endpoint de outro produto na mesma VPS.
 `VPS_SSH_PORT` é variable; `VPS_HOST`, `VPS_USER`, `VPS_SSH_KEY` e
@@ -191,7 +191,7 @@ conforme a topologia aprovada. Por isso a policy restringe domínio/path ao repo
 `VPS_KNOWN_HOSTS` deve conter a chave pública do host coletada e conferida por
 canal confiável; o workflow não usa `ssh-keyscan` nem desativa
 `StrictHostKeyChecking`. Não use agent forwarding. O usuário SSH precisa gravar
-somente os caminhos do Altivy e executar Docker Compose. Acesso ao Docker daemon
+somente os caminhos do Nodra e executar Docker Compose. Acesso ao Docker daemon
 é equivalente a root no host e, nesta VPS, pode afetar containers compartilhados;
 proteja o Environment, limite os revisores e trate a chave como credencial
 privilegiada.

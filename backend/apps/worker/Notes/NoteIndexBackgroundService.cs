@@ -1,10 +1,10 @@
-using Altivy.Backend.Application.Notes;
+using Nodra.Backend.Application.Notes;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Npgsql;
 
-namespace Altivy.Notes.Worker.Notes;
+namespace Nodra.Notes.Worker.Notes;
 
 /// <summary>
 /// Consome jobs duráveis de indexação de notas.

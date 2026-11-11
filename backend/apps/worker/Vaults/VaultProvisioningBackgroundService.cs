@@ -1,11 +1,11 @@
-using Altivy.Backend.Application.Vaults;
-using Altivy.Notes.Worker.Observability;
+using Nodra.Backend.Application.Vaults;
+using Nodra.Notes.Worker.Observability;
 using System.Data.Common;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace Altivy.Notes.Worker.Vaults;
+namespace Nodra.Notes.Worker.Vaults;
 
 /// <summary>
 /// Consome operações de provisioning de vault persistidas no PostgreSQL.

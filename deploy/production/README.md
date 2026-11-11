@@ -1,5 +1,17 @@
 # Deploy de produção
 
+## Nomenclatura e compatibilidade
+
+O produto e **Altivy Nodra** e o script operacional passa a se chamar
+`nodra-ops.sh`. Imagens de produto usam o prefixo `nodra-`; variaveis
+`ALTIVY_*`, namespace Compose `altivynotes`, caminhos externos, banco,
+identidade e secrets existentes permanecem preservados. Nao mova nem recrie
+dados ou recursos de identidade para acompanhar uma troca de marca.
+
+O rollback usa o manifesto de imagens anterior aprovado e os mesmos bind
+mounts, conforme o runbook existente. Nao requer reverter schema. A troca de
+nome no GitHub nao publica imagens nem executa rollout.
+
 > **Legado supersedido:** esta composição depende de NGINX/PostgreSQL/Keycloak
 > compartilhados e de uma VPS. A instalação self-hosted ativa está em
 > [`deploy/self-hosted`](../self-hosted/README.md).
@@ -24,7 +36,7 @@ Build local containerizado da web de produção:
 ```powershell
 docker build --build-arg WEB_CONFIGURATION=production `
   --build-arg WEB_BASE_HREF=/ `
-  --file frontend/web/Dockerfile --tag altivy-web:0.1.0 .
+  --file frontend/web/Dockerfile --tag nodra-web:0.1.0 .
 ```
 
 O workflow de release publica imagens identificadas por digest; não use a tag

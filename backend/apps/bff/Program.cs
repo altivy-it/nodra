@@ -1,7 +1,7 @@
-using Altivy.Bff.Configuration;
-using Altivy.Bff.DependencyInjection;
-using Altivy.Bff.Endpoints;
-using Altivy.Bff.Middleware;
+using Nodra.Bff.Configuration;
+using Nodra.Bff.DependencyInjection;
+using Nodra.Bff.Endpoints;
+using Nodra.Bff.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 

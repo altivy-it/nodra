@@ -1,10 +1,10 @@
-using Altivy.Backend.Application.Vaults;
-using Altivy.Notes.Api.Authorization;
-using Altivy.Notes.Api.Vaults;
+using Nodra.Backend.Application.Vaults;
+using Nodra.Notes.Api.Authorization;
+using Nodra.Notes.Api.Vaults;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
-namespace Altivy.Notes.Api.Realtime;
+namespace Nodra.Notes.Api.Realtime;
 
 /// <summary>
 /// Hub SignalR que publica atualizações de um vault autorizado pelo Keycloak.
