@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM lzocateli/dotnet-sdk:10.0.400-noble AS build
+FROM docker.io/lzocateli/dotnet-sdk:10.0.400-noble AS build
 USER root
 WORKDIR /src
 
@@ -21,7 +21,7 @@ RUN ALTIVY_DESIGNTIME_CONNECTION_STRING='Host=127.0.0.1;Database=altivy;Username
       --target-runtime linux-x64 \
       --output /out/efbundle
 
-FROM lzocateli/dotnet-aspnet:10.0.11-noble AS runtime
+FROM docker.io/lzocateli/dotnet-aspnet:10.0.11-noble AS runtime
 ARG IMAGE_VERSION=0.1.0
 LABEL org.opencontainers.image.title="nodra-migrations" \
   org.opencontainers.image.description="Bundle de migrations PostgreSQL do Nodra." \

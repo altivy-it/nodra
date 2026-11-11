@@ -197,6 +197,20 @@ docker compose -f deploy/e2e/docker-compose-nodra.yaml down
 
 ## Executar E2E
 
+### Condição Temporal dos Testes PostgreSQL
+
+Os testes de roteamento mensal validam instantes em UTC. Nas conexões
+**sintéticas e descartáveis** de integração, configure `Timezone=UTC`, como
+nas duas connection strings do job `backend-integration` em
+`.github/workflows/ci.yml`. O parâmetro fixa o timezone da sessão Npgsql,
+inclusive quando a imagem PostgreSQL usa `America/Sao_Paulo` por padrão.
+
+Essa condição foi validada com PostgreSQL real e a suíte backend completa.
+Não exige `ALTER DATABASE`, alteração de migrations/SQL já publicados, leitura
+de secrets ou mudança na configuração de ambientes existentes. Não aplique uma
+migração operacional de timezone em produção por causa deste teste; qualquer
+impacto nesses ambientes exige decisão humana específica.
+
 Com o laboratório ativo, execute a imagem de testes a partir da raiz:
 
 ```powershell

@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:1
-FROM lzocateli/dotnet-sdk:10.0.400-noble AS build
+FROM docker.io/lzocateli/dotnet-sdk:10.0.400-noble AS build
 USER root
 WORKDIR /src
 
@@ -11,7 +11,7 @@ RUN dotnet restore backend/apps/bff/Nodra.Bff.csproj
 COPY backend/apps/bff/ backend/apps/bff/
 RUN dotnet publish backend/apps/bff/Nodra.Bff.csproj --configuration Release --no-restore --output /app/publish
 
-FROM lzocateli/dotnet-aspnet:10.0.11-noble AS runtime
+FROM docker.io/lzocateli/dotnet-aspnet:10.0.11-noble AS runtime
 ARG IMAGE_VERSION=0.1.0
 LABEL org.opencontainers.image.title="nodra-bff" \
     org.opencontainers.image.description="BFF interno do Nodra para sessão OIDC e relay autenticado." \

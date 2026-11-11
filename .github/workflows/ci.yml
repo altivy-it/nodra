@@ -137,8 +137,8 @@ jobs:
             --env HOME=/tmp \
             --env DOTNET_CLI_HOME=/tmp \
             --env NUGET_PACKAGES=/tmp/nuget-packages \
-            --env 'ALTIVY_INTEGRATION_MIGRATOR_CONNECTION_STRING=Host=127.0.0.1;Port=5432;Database=altivy;Username=altivy_migrator;Password=ci-migrator-only' \
-            --env 'ALTIVY_INTEGRATION_RUNTIME_CONNECTION_STRING=Host=127.0.0.1;Port=5432;Database=altivy;Username=altivy_runtime;Password=ci-runtime-only' \
+            --env 'ALTIVY_INTEGRATION_MIGRATOR_CONNECTION_STRING=Host=127.0.0.1;Port=5432;Database=altivy;Username=altivy_migrator;Password=ci-migrator-only;Timezone=UTC' \
+            --env 'ALTIVY_INTEGRATION_RUNTIME_CONNECTION_STRING=Host=127.0.0.1;Port=5432;Database=altivy;Username=altivy_runtime;Password=ci-runtime-only;Timezone=UTC' \
             lzocateli/dotnet-sdk:10.0.400-noble \
             dotnet test backend/tests/Nodra.Backend.Infra.Data.Postgres.IntegrationTests/Nodra.Backend.Infra.Data.Postgres.IntegrationTests.csproj \
               --configuration Release --verbosity minimal

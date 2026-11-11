@@ -50,7 +50,7 @@ Manter `backend/apps`, `backend/libs`, `backend/tests`, `frontend/web`, `fronten
 - [x] T015 [US2] Atualizar .github/workflows/ci.yml, .github/workflows/release.yml e referencias ativas ao repositorio para altivy-it/nodra e aos artefatos Nodra; manter namespace do registry existente salvo decisao explicita, imagens base fixadas e nenhuma publicacao como validacao.
 - [x] T016 [US2] Atualizar instrucoes, agentes e auxiliares locais em .github, ferramentas em tools/scripts e referencias de solucao/projetos; preservar tokens e componentes oficiais do Spec Kit e executar auditoria de localizacao somente se esses componentes forem alterados.
 - [x] T017 [US2] Atualizar documentacao vigente em docs/backend.md, docs/frontend.md e demais documentos ativos afetados, incluindo links para arquivos renomeados; registrar a preservacao de specs anteriores, ADRs historicos e docs/plan em specs/010-renomeacao-nodra/research.md.
-- [ ] T018 [US2] Executar formatador/analisadores, build e suites backend renomeadas em container, com PostgreSQL real quando necessario; registrar evidencia em specs/010-renomeacao-nodra/quickstart.md.
+- [x] T018 [US2] Executar formatador/analisadores, build e suites backend renomeadas em container, com PostgreSQL real quando necessario; registrar evidencia em specs/010-renomeacao-nodra/quickstart.md.
 - [x] T019 [US2] Executar instalacao reproduzivel, testes e build frontend em container conforme .github/workflows/ci.yml, sem flags permissivas; registrar falhas preexistentes separadamente em specs/010-renomeacao-nodra/quickstart.md.
 
 ## Fase 5: US3 - Compatibilidade operacional (P1)
@@ -97,6 +97,15 @@ funcionais aprovados conforme quickstart.md. As lacunas abaixo sao de
 qualificacao e nao autorizam correcoes alheias, alteracao de infraestrutura,
 publicacao ou deploy sem os gates e decisoes humanas correspondentes.
 
-- [ ] T030 Revisar as pendencias IDE0005/IDE0058 em backend/tests e o formato dos quatro arquivos frontend registrados em specs/010-renomeacao-nodra/quickstart.md; delimitar eventual correcao no fluxo autorizado e repetir dotnet format e Prettier sem supressoes indevidas, conforme FR-013, SC-006 e T018/T026 (partial).
+- [x] T030 Revisar as pendencias IDE0005/IDE0058 em backend/tests e o formato dos quatro arquivos frontend registrados em specs/010-renomeacao-nodra/quickstart.md; delimitar eventual correcao no fluxo autorizado e repetir dotnet format e Prettier sem supressoes indevidas, conforme FR-013, SC-006 e T018/T026 (partial).
 - [ ] T031 Qualificar os Dockerfiles renomeados, boot limpo, upgrade/recuperacao e OIDC real usando deploy/e2e, deploy/self-hosted e o laboratorio autorizado, sem ler secrets ou publicar imagens; registrar evidencia em specs/010-renomeacao-nodra/quickstart.md conforme FR-010, FR-013, SC-003, SC-006 e T025/T026 (partial).
-- [ ] T032 Qualificar a condicao UTC em .github/workflows/ci.yml, deploy/e2e e backend/tests/Nodra.Backend.Infra.Data.Postgres.IntegrationTests/TemporalPartitionMigrationTests.cs antes de propor mudancas de ambiente; preservar SQL publicado e registrar decisao humana para qualquer impacto operacional, conforme FR-010, SC-006 e o contrato de compatibilidade (partial).
+- [x] T032 Qualificar a condicao UTC em .github/workflows/ci.yml, deploy/e2e e backend/tests/Nodra.Backend.Infra.Data.Postgres.IntegrationTests/TemporalPartitionMigrationTests.cs antes de propor mudancas de ambiente; preservar SQL publicado e registrar decisao humana para qualquer impacto operacional, conforme FR-010, SC-006 e o contrato de compatibilidade (partial).
+
+### Evidencias da retomada aprovada
+
+- Design aprovado explicitamente pelo usuario em 2026-11-11; nenhuma alteracao intencional de layout ou CSS.
+- T018/T030: dotnet format completo sem supressoes; build e 266 testes backend aprovados em containers, incluindo PostgreSQL real; Prettier, 101 testes frontend, build e 2 jornadas de marca aprovados.
+- T032: conexoes sinteticas do CI explicitam Timezone=UTC; a suite completa passou com o servidor no timezone padrao da imagem e UTC apenas na sessao do cliente. Nenhum SQL ou banco instalado foi alterado.
+- T025/T031: redes externas identity-global/identity-data ausentes neste host. Homologacao OIDC, upgrade e recuperacao continuam abertas; builds locais nao substituem esses gates.
+- T031 parcial: cinco imagens construidas localmente, usuarios/entrypoints conferidos, API validada por nginx, web estatico validado e bundle aplicado em banco vazio. Defeito EACCES web corrigido pelo fluxo oficial; aviso GSSAPI e limites da qualificacao registrados em quickstart.md.
+- T025 parcial: sintaxe Compose E2E validada com configuracao sintetica; provedor local podman-compose 1.0.6 nao foi certificado como substituto do Compose v2 exigido pelos scripts operacionais. Boot integrado, OIDC e upgrade dependem do laboratorio externo.

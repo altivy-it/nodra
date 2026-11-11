@@ -6,6 +6,11 @@
 
 **Status**: Aprovado pelo usuario nesta conversa em 2026-11-11 para implementacao conforme plano e compatibilidade. O usuario tambem autorizou o fluxo Bug Fixing para o bloqueio Angular e a renomeacao remota ao final das verificacoes.
 
+**Retomada autorizada**: Em 2026-11-11 o usuario aprovou explicitamente o design
+apresentado e solicitou continuar o plano. A interface aprovada deve ser
+preservada; a retomada trata formato, testes e qualificacao das tarefas abertas,
+sem deploy, publicacao de imagens ou mudanca de infraestrutura compartilhada.
+
 ## Resumo
 
 Adotar Nodra como nome do produto, preservando Altivy como empresa e Altivy Nodra como marca completa. Renomear o repositorio existente, a solucao, os projetos, o codigo e a documentacao ativa em uma branch derivada da main consolidada em a9546a5. Nao recriar repositorio nem perder commits.

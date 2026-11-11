@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1
-FROM lzocateli/angular-cli:22.1.0-node24.15.0-bookworm AS build
+FROM docker.io/lzocateli/angular-cli:22.1.0-node24.15.0-bookworm AS build
+USER root
 WORKDIR /src
 
 COPY frontend/web/package.json frontend/web/package-lock.json ./
@@ -10,7 +11,8 @@ ARG WEB_CONFIGURATION=production
 ARG WEB_BASE_HREF=/
 RUN npm run build -- --configuration ${WEB_CONFIGURATION} --base-href ${WEB_BASE_HREF}
 
-FROM lzocateli/nginx:1.28.0-bookworm AS runtime
+FROM docker.io/lzocateli/nginx:1.28.0-bookworm AS runtime
+USER root
 ARG IMAGE_VERSION=0.1.0
 LABEL org.opencontainers.image.title="nodra-web" \
   org.opencontainers.image.description="Proxy HTTPS e aplicação web estática do Nodra." \

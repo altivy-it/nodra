@@ -99,3 +99,65 @@ A resolucao preserva a arvore compativel, em vez de reaplicar o conflito.
 O usuario tambem autorizou criar commits e enviar a feature para origin,
 sem merge na main, publicacao de imagens ou deploy. A qualificacao pendente
 continua explicita nos artefatos e nao e aprovada como release por esse push.
+
+## Retomada apos aprovacao do design
+
+Em 2026-11-11 o usuario aprovou o design e solicitou continuar o plano. A
+retomada preservou as quebras de linha locais existentes e nao alterou CSS,
+textos ou layout intencionalmente.
+
+| Recorte | Resultado atualizado | Evidencia |
+| --- | --- | --- |
+| Formato .NET | pass | dotnet format Nodra.slnx --verify-no-changes, sem supressoes; imports, descartes, parenteses e nomes privados alinhados as regras existentes |
+| Backend completo | pass | 266 testes: dominio 26, aplicacao 43, BFF 90, API 61, infraestrutura 39 e worker 7; build com analisadores em container |
+| Formato frontend | pass | Prettier nos quatro arquivos previstos em T030 |
+| Frontend | pass | 101 testes em 18 arquivos e build de producao |
+| Marca/visual | pass | 2 jornadas Playwright via nginx, capturas 1440x900 e 390x844 reanalisadas apos formato |
+| UTC do CI | pass | Timezone=UTC somente nas duas conexoes sinteticas; 266 testes passaram sem ALTER DATABASE ou alteracao de SQL |
+| Plataforma externa | blocked | Redes identity-global e identity-data nao existem neste host; nenhuma credencial externa foi lida |
+
+O formato completo exigiu code fixes de regras ja configuradas, alem dos dois
+diagnosticos inicialmente visiveis: nomes privados estaticos com prefixo s_,
+parenteses de clareza, null checks e remocao de membro privado nao utilizado.
+As renomeacoes privadas foram semanticas, sem alterar valores, configuracao
+publica ou contratos persistidos.
+
+O primeiro build local de Dockerfile foi bloqueado por referencias FROM sem
+registry no Podman rootless. Os cinco Dockerfiles passaram a explicitar
+docker.io/, mantendo o mesmo fornecedor e as mesmas versoes. A qualificacao
+das imagens em andamento nao autoriza push, rollout ou homologacao ficticia de
+OIDC. T025/T031 permanecem abertas ate evidencia do laboratorio autorizado.
+
+### Resultado da Qualificacao Local de Imagens
+
+As cinco imagens `nodra-{api,bff,worker,migrations,web}:qualification-010`
+foram construidas localmente a partir dos Dockerfiles do projeto. Nao houve
+publicacao em registry. API, BFF, worker e bundle usam UID 1654; web usa nginx.
+Entrypoints referenciam os assemblies Nodra ou o efbundle esperado.
+
+- API: liveness retornou `{"status":"ok"}` exclusivamente por nginx, usando
+	`deploy/e2e/nginx-api-smoke.conf`; a porta interna da API nao foi publicada.
+- Web: build revelou EACCES em /src/node_modules; o fluxo oficial em
+	`.specify/bugs/web-container-permissions/` corrigiu somente usuarios de
+	preparacao, preservando nginx nao-root no runtime. HTTP retornou o titulo
+	Nodra pela imagem nginx final.
+- Bundle: aplicou as 12 migrations existentes em banco sintetico vazio com
+	sessao UTC, sem modificar scripts publicados ou ambientes instalados.
+- Limitacao do bundle: runtime emitiu aviso de libgssapi_krb5.so.2 ausente;
+	a execucao com senha sintetica terminou. Autenticacao Kerberos nao esta
+	qualificada por este smoke.
+
+A ausencia das redes externas identity-global/identity-data e de baseline de
+upgrade aprovado impede concluir OIDC real, atualizacao e recuperacao de uma
+instalacao existente neste host. Nao criar substitutos de identidade nem pedir
+secrets pelo chat para contornar o gate. T025/T026/T031 continuam abertas.
+
+A sintaxe de `deploy/e2e/docker-compose-nodra.yaml` foi validada com
+podman-compose 1.0.6 e valores inteiramente sinteticos, sem arquivo .env ou
+leitura de secrets externos. Essa verificacao nao certifica o provedor como
+substituto do Docker Compose v2 exigido pelos scripts de upgrade/recuperacao.
+
+Para continuar a homologacao restante, disponibilizar a plataforma externa
+identity-global/identity-data, os acessos seguros ja configurados no ambiente
+e a imagem anterior aprovada por digest para upgrade/rollback. Credenciais
+devem permanecer no mecanismo externo previsto; nao envia-las pelo chat.
