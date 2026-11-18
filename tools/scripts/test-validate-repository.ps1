@@ -97,6 +97,12 @@ Use `<tipo>[escopo opcional][!]: <descrição>` para commits.
 ```text
 <tipo>[escopo opcional][!]: <descrição>
 ```
+
+1. Exemplo em lista:
+
+    ```bash
+    gh api repos/example/deployments --jq '.[0:5][]'
+    ```
 '@
     Set-Content -LiteralPath (Join-Path $fixtureRoot '.github/workflows/ci.yml') -Value @'
 jobs:

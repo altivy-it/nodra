@@ -217,6 +217,11 @@ try {
             $releaseImages = ConvertFrom-StringData -StringData $manifestText
         } catch { throw 'Formato de images.env invalido; release rejeitada.' }
         $expectedImages = @{
+            ALTIVY_WEB_IMAGE='nodra-web'; ALTIVY_API_IMAGE='nodra-api'
+            ALTIVY_BFF_IMAGE='nodra-bff'; ALTIVY_WORKER_IMAGE='nodra-worker'
+            ALTIVY_MIGRATIONS_IMAGE='nodra-migrations'
+        }
+        $legacyImages = @{
             ALTIVY_WEB_IMAGE='nodra-web'; ALTIVY_API_IMAGE='altivy-api'
             ALTIVY_BFF_IMAGE='altivy-bff'; ALTIVY_WORKER_IMAGE='altivy-worker'
             ALTIVY_MIGRATIONS_IMAGE='nodra-migrations'
@@ -227,8 +232,11 @@ try {
             throw 'images.env deve conter exatamente as cinco imagens Altivy da release.'
         }
         foreach ($key in $expectedImages.Keys) {
-            $pattern = '^ghcr\.io/lzocateli/' + [regex]::Escape($expectedImages[$key]) + '@sha256:[a-f0-9]{64}$'
-            if ([string]$releaseImages[$key] -cnotmatch $pattern) { throw "Referencia imutavel invalida para $key." }
+            $pattern = '^ghcr\.io/altivy-it/' + [regex]::Escape($expectedImages[$key]) + '@sha256:[a-f0-9]{64}$'
+            $legacyPattern = '^ghcr\.io/lzocateli/(' + [regex]::Escape($legacyImages[$key]) + '|' + [regex]::Escape($expectedImages[$key]) + ')@sha256:[a-f0-9]{64}$'
+            if ([string]$releaseImages[$key] -cnotmatch $pattern -and [string]$releaseImages[$key] -cnotmatch $legacyPattern) {
+                throw "Referencia imutavel invalida para $key."
+            }
             $settings[$key] = [string]$releaseImages[$key]
         }
         $settings.ALTIVY_IMAGE_PULL_POLICY = 'always'

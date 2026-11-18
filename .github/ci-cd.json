@@ -1,0 +1,91 @@
+{
+  "$comment": "Semente do Altivy.Groundwork: pertence ao projeto e é lida pelos workflows gw-*. Revise mudanças em PR.",
+  "schemaVersion": 1,
+  "releaseDependencies": [],
+  "distributionApproval": { "mode": "environment" },
+  "distributionAfterValidation": false,
+  "defaultBranch": "main",
+  "commitScopes": ["web", "api", "worker", "frontend", "backend", "contracts", "db", "deploy", "deps", "actions", "security", "observability", "docs", "tooling", "repo"],
+  "dotnet": {
+    "sdkImage": "docker.io/lzocateli/dotnet-sdk:10.0.403-noble-v1",
+    "solution": "Nodra.slnx"
+  },
+  "versionFiles": ["backend/Directory.Build.props", "frontend/web/package.json"],
+  "publishSnapshots": false,
+  "preview": {
+    "enabled": true,
+    "suffix": "rc",
+    "requiredForRelease": true,
+    "acceptance": "deploy"
+  },
+  "deploy": {
+    "environments": ["quality", "production"],
+    "previewEnvironment": "quality",
+    "autoDeployEnvironment": ""
+  },
+  "repositorySetup": {
+    "environments": [
+      {
+        "name": "ci",
+        "purpose": "Validacao de CI sem credenciais operacionais",
+        "requiredReviewers": false,
+        "triggers": ["pull_request", "merge_group", "push:main", "workflow_dispatch"]
+      },
+      {
+        "name": "copilot",
+        "purpose": "Automacao reservada, sem secrets de release ou deploy",
+        "requiredReviewers": false,
+        "triggers": []
+      },
+      {
+        "name": "quality",
+        "purpose": "Validacao de candidata",
+        "requiredReviewers": true,
+        "reviewerGroup": "Administradores da Altivy",
+        "reviewerTeamSlugConfigured": false,
+        "allowedRefs": ["tag:v*"]
+      },
+      {
+        "name": "release",
+        "purpose": "Preparacao e publicacao de release",
+        "requiredReviewers": true,
+        "reviewerGroup": "Administradores da Altivy",
+        "reviewerTeamSlugConfigured": false,
+        "allowedRefs": ["branch:main", "tag:v*"]
+      },
+      {
+        "name": "distribution",
+        "purpose": "Autorizacao de divulgacao",
+        "requiredReviewers": true,
+        "reviewerGroup": "Administradores da Altivy",
+        "reviewerTeamSlugConfigured": false,
+        "allowedRefs": ["branch:main", "tag:v*"]
+      },
+      {
+        "name": "production",
+        "purpose": "Deploy manual de release publicada",
+        "requiredReviewers": true,
+        "reviewerGroup": "Administradores da Altivy",
+        "reviewerTeamSlugConfigured": false,
+        "allowedRefs": ["tag:v*"]
+      }
+    ],
+    "variables": [
+      { "name": "RELEASE_APP_ID", "scope": "repository", "required": true },
+      { "name": "ALTIVY_ADMIN_TEAM", "scope": "repository", "required": true },
+      { "name": "DEPLOY_SSH_TARGET", "scope": "environment:quality", "required": true },
+      { "name": "DEPLOY_HOOK", "scope": "environment:quality", "required": true },
+      { "name": "DEPLOY_SSH_TARGET", "scope": "environment:production", "required": true },
+      { "name": "DEPLOY_HOOK", "scope": "environment:production", "required": true }
+    ],
+    "secrets": [
+      { "name": "RELEASE_APP_PRIVATE_KEY", "scope": "repository", "required": true },
+      { "name": "DEPLOY_SSH_KEY", "scope": "environment:quality", "required": true },
+      { "name": "DEPLOY_SSH_KNOWN_HOSTS", "scope": "environment:quality", "required": true },
+      { "name": "DEPLOY_SSH_KEY", "scope": "environment:production", "required": true },
+      { "name": "DEPLOY_SSH_KNOWN_HOSTS", "scope": "environment:production", "required": true }
+    ]
+  },
+  "attestations": true,
+  "rollbackMinimumVersion": "0.0.0"
+}

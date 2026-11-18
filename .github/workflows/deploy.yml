@@ -1,0 +1,109 @@
+# Semente do Altivy.Groundwork (componente deploy): pertence ao projeto.
+# Contrato (ver .github/CI-CD.md e docs/runbooks/deploy-e-rollback.md):
+# - chamado somente por gw-deploy.yml, depois do guard, na tag da release;
+# - recebe apenas version, environment e o artifact com o release-manifest.json validado;
+# - não aceita versão, imagem ou digest livres: tudo vem do manifesto;
+# - todo job que altera o ambiente declara "environment: ${{ inputs.environment }}";
+# - é idempotente: aplicar a mesma release duas vezes leva ao mesmo estado;
+# - termina com smoke test que confirma a versão em execução.
+name: Deploy (project)
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: Versão da release validada pelo guard
+        type: string
+        required: true
+      environment:
+        description: Environment de deploy
+        type: string
+        required: true
+      manifest-artifact:
+        description: Artifact com o release-manifest.json validado
+        type: string
+        required: true
+
+permissions: {}
+
+jobs:
+  deploy:
+    name: Apply release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment:
+      name: ${{ inputs.environment }}
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Download validated manifest
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ${{ inputs.manifest-artifact }}
+          path: artifacts
+
+      - name: Apply release idempotently
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_SSH_KNOWN_HOSTS }}
+          TARGET: ${{ vars.DEPLOY_SSH_TARGET }}
+          HOOK: ${{ vars.DEPLOY_HOOK }}
+        run: |
+          set -Eeuo pipefail
+          [[ "$TARGET" =~ ^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+$ ]] || { echo '::error::DEPLOY_SSH_TARGET invalido ou ausente'; exit 1; }
+          [[ "$HOOK" =~ ^/[a-zA-Z0-9/_.-]+$ && "$HOOK" != *..* ]] || { echo '::error::DEPLOY_HOOK invalido ou ausente'; exit 1; }
+          [[ -n "$SSH_KEY" && -n "$KNOWN_HOSTS" ]] || { echo '::error::Configure os secrets SSH no Environment'; exit 1; }
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/nodra-deploy
+          chmod 600 ~/.ssh/nodra-deploy
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          remote() { ssh -i ~/.ssh/nodra-deploy -o BatchMode=yes -o StrictHostKeyChecking=yes "$TARGET" "$@"; }
+          directory=$(remote mktemp -d)
+          [[ "$directory" =~ ^/tmp/[a-zA-Z0-9._-]+$ ]] || { echo '::error::Diretorio temporario remoto invalido'; exit 1; }
+          trap 'remote "rm -rf -- $directory"; rm -f ~/.ssh/nodra-deploy' EXIT
+          remote "umask 077; cat > $directory/release-manifest.json" < artifacts/release-manifest.json
+          printf '%s' "$GH_TOKEN" | remote "umask 077; cat > $directory/token"
+          remote "$HOOK apply $directory/release-manifest.json $directory/token $GITHUB_ACTOR"
+
+  smoke:
+    name: Smoke test
+    needs: deploy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment:
+      name: ${{ inputs.environment }}
+    permissions: {}
+    steps:
+      - name: Download validated manifest
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: ${{ inputs.manifest-artifact }}
+          path: artifacts
+
+      - name: Confirm running version
+        shell: bash
+        env:
+          EXPECTED_VERSION: ${{ inputs.version }}
+          SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.DEPLOY_SSH_KNOWN_HOSTS }}
+          TARGET: ${{ vars.DEPLOY_SSH_TARGET }}
+          HOOK: ${{ vars.DEPLOY_HOOK }}
+        run: |
+          set -Eeuo pipefail
+          [[ "$TARGET" =~ ^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+$ ]] || exit 1
+          [[ "$HOOK" =~ ^/[a-zA-Z0-9/_.-]+$ && "$HOOK" != *..* ]] || exit 1
+          [[ "$EXPECTED_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]] || exit 1
+          [[ -n "$SSH_KEY" && -n "$KNOWN_HOSTS" ]] || exit 1
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/nodra-deploy
+          chmod 600 ~/.ssh/nodra-deploy
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          remote() { ssh -i ~/.ssh/nodra-deploy -o BatchMode=yes -o StrictHostKeyChecking=yes "$TARGET" "$@"; }
+          directory=$(remote mktemp -d)
+          [[ "$directory" =~ ^/tmp/[a-zA-Z0-9._-]+$ ]] || exit 1
+          trap 'remote "rm -rf -- $directory"; rm -f ~/.ssh/nodra-deploy' EXIT
+          remote "umask 077; cat > $directory/release-manifest.json" < artifacts/release-manifest.json
+          remote "$HOOK check $directory/release-manifest.json $EXPECTED_VERSION"

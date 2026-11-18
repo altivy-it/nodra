@@ -84,6 +84,23 @@ Testes de integração podem exigir Docker para PostgreSQL/Testcontainers. Scrip
 
 ## Commits e pull requests
 
+### Identidade institucional desta manutenção
+
+Contribuições desta manutenção e da automação configurada são atribuídas a
+`lunadev00 <luna@altivy.it>`. Configure somente o clone correspondente:
+
+```bash
+git config --local user.name lunadev00
+git config --local user.email luna@altivy.it
+```
+
+Não altere a autoria de contribuições de terceiros nem reescreva histórico sem
+autorização específica. Essa configuração define autor/committer; assinatura
+criptográfica exige uma chave GPG/SSH autorizada separadamente. Aprovações
+cabem à administração da Altivy, conforme políticas e permissões efetivas.
+
+### Regras de contribuição
+
 - Todo commit deve seguir [Conventional Commits](COMMIT_CONVENTIONS.md), incluindo os tipos e escopos aprovados pelo projeto.
 - Prefira commits pequenos que compilam e têm propósito único.
 - Referencie issue/ADR quando existir.

@@ -2,23 +2,42 @@ name: CI
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, edited]
+  merge_group:
+    types: [checks_requested]
   push:
     branches:
       - main
   workflow_dispatch:
 
-permissions:
-  contents: read
+permissions: {}
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name != 'pull_request' && github.event_name != 'merge_group' }}
 
 jobs:
+  hygiene:
+    name: Hygiene
+    uses: ./.github/workflows/gw-pr-hygiene.yml
+    permissions:
+      contents: read
+      pull-requests: read
+      actions: read
+      checks: read
+
+  gitleaks:
+    name: Gitleaks
+    uses: ./.github/workflows/gw-gitleaks.yml
+    permissions:
+      contents: read
+
   repository-baseline:
     name: Repository Baseline
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -26,15 +45,20 @@ jobs:
           persist-credentials: false
 
       - name: Validate repository
-        shell: pwsh
+        shell: bash
         run: |
-          ./tools/scripts/test-validate-repository.ps1
-          ./tools/scripts/validate-repository.ps1
+          set -Eeuo pipefail
+          docker run --rm --user 0:0 \
+            --volume "$GITHUB_WORKSPACE:/workspace" --workdir /workspace \
+            --entrypoint pwsh lzocateli/dotnet-sdk:10.0.403-noble-v1 \
+            -NoProfile -Command '& ./tools/scripts/test-validate-repository.ps1; if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }; & ./tools/scripts/validate-repository.ps1; exit $LASTEXITCODE'
 
   frontend:
     name: Frontend
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -58,6 +82,9 @@ jobs:
     name: Backend
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    environment: ci
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -83,14 +110,25 @@ jobs:
               --env HOME=/tmp \
               --env DOTNET_CLI_HOME=/tmp \
               --env NUGET_PACKAGES=/tmp/nuget-packages \
-              lzocateli/dotnet-sdk:10.0.400-noble \
+              lzocateli/dotnet-sdk:10.0.403-noble-v1 \
               dotnet test "$project" --configuration Release --verbosity minimal
           done
+
+      - name: Validate CI/CD contracts in container
+        shell: bash
+        run: |
+          docker run --rm --user 0:0 \
+            --volume "$GITHUB_WORKSPACE:/workspace" --workdir /workspace \
+            --entrypoint pwsh lzocateli/dotnet-sdk:10.0.403-noble-v1 \
+            -NoProfile -File tools/scripts/test-cicd-contracts.ps1
 
   backend-integration:
     name: Backend Integration
     runs-on: ubuntu-24.04
     timeout-minutes: 45
+    environment: ci
+    permissions:
+      contents: read
     services:
       postgres:
         image: lzocateli/postgresql:18.4-pgvector0.8.6-bookworm
@@ -139,7 +177,7 @@ jobs:
             --env NUGET_PACKAGES=/tmp/nuget-packages \
             --env 'ALTIVY_INTEGRATION_MIGRATOR_CONNECTION_STRING=Host=127.0.0.1;Port=5432;Database=altivy;Username=altivy_migrator;Password=ci-migrator-only;Timezone=UTC' \
             --env 'ALTIVY_INTEGRATION_RUNTIME_CONNECTION_STRING=Host=127.0.0.1;Port=5432;Database=altivy;Username=altivy_runtime;Password=ci-runtime-only;Timezone=UTC' \
-            lzocateli/dotnet-sdk:10.0.400-noble \
+            lzocateli/dotnet-sdk:10.0.403-noble-v1 \
             dotnet test backend/tests/Nodra.Backend.Infra.Data.Postgres.IntegrationTests/Nodra.Backend.Infra.Data.Postgres.IntegrationTests.csproj \
               --configuration Release --verbosity minimal
 
@@ -147,33 +185,58 @@ jobs:
     name: Container Images
     runs-on: ubuntu-24.04
     timeout-minutes: 90
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
+      - name: Set up Docker with containerd image store
+        uses: docker/setup-docker-action@3f1ab1ab0e29231562e4db4ca600c1a49653bac6 # v5.7.0
+        with:
+          version: v29.9.3
+          set-host: true
+          daemon-config: |
+            {"features":{"containerd-snapshotter":true,"lazy-pull":false}}
+
       - name: Build production images in BuildKit
+        shell: pwsh
+        run: |
+          ./tools/scripts/validate-release-images.ps1 -Image all -Tag ci
+
+      - name: Verify BuildKit attestations
         shell: bash
         run: |
           set -Eeuo pipefail
-          docker buildx inspect --bootstrap
-          docker buildx build --load --build-arg IMAGE_VERSION=0.0.0-ci \
-            --build-arg WEB_CONFIGURATION=production --build-arg WEB_BASE_HREF=/ \
-            --file frontend/web/Dockerfile --tag nodra-web:ci .
-          docker buildx build --load --build-arg IMAGE_VERSION=0.0.0-ci \
-            --file backend/apps/api/Dockerfile --tag altivy-api:ci .
-          docker buildx build --load --build-arg IMAGE_VERSION=0.0.0-ci \
-            --file backend/apps/bff/Dockerfile --tag altivy-bff:ci .
-          docker buildx build --load --build-arg IMAGE_VERSION=0.0.0-ci \
-            --file backend/apps/worker/Dockerfile --tag altivy-worker:ci .
-          docker buildx build --load --build-arg IMAGE_VERSION=0.0.0-ci \
-            --file deploy/production/migrations.Dockerfile --tag nodra-migrations:ci .
+          [[ "$DOCKER_HOST" == unix://* ]]
+          for image in api bff worker web migrations; do
+            echo "Verificando atestações de nodra-$image:ci"
+            curl --fail --silent --show-error --unix-socket "${DOCKER_HOST#unix://}" \
+              "http://localhost/v1.55/images/nodra-$image:ci/attestations?statement=1" |
+              docker run --rm --interactive --network none --read-only \
+                --tmpfs /tmp:rw,noexec,nosuid,mode=1777,size=32m --env HOME=/tmp \
+                --volume "$GITHUB_WORKSPACE:/workspace:ro" --workdir /workspace \
+                --entrypoint pwsh docker.io/lzocateli/dotnet-sdk:10.0.403-noble-v1@sha256:61320a81b460fdeb2d838f91e1204ded8b846335dbc572719bdd82cb109bec11 \
+                -NoLogo -NoProfile -File tools/scripts/assert-buildkit-attestations.ps1
+          done
+
+      - name: Upload image security evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: image-security
+          path: artifacts/security-local/*.json
+          if-no-files-found: error
+          retention-days: 14
 
   result:
     name: Result
     if: ${{ always() }}
     needs:
+      - hygiene
+      - gitleaks
       - repository-baseline
       - frontend
       - backend
@@ -185,6 +248,8 @@ jobs:
     steps:
       - name: Evaluate required jobs
         env:
+          HYGIENE_RESULT: ${{ needs.hygiene.result }}
+          GITLEAKS_RESULT: ${{ needs.gitleaks.result }}
           REPOSITORY_BASELINE_RESULT: ${{ needs.repository-baseline.result }}
           FRONTEND_RESULT: ${{ needs.frontend.result }}
           BACKEND_RESULT: ${{ needs.backend.result }}
@@ -196,7 +261,7 @@ jobs:
             echo "Repository Baseline terminou com: $REPOSITORY_BASELINE_RESULT"
             exit 1
           fi
-          for result in "$FRONTEND_RESULT" "$BACKEND_RESULT" "$BACKEND_INTEGRATION_RESULT" "$IMAGES_RESULT"; do
+          for result in "$HYGIENE_RESULT" "$GITLEAKS_RESULT" "$FRONTEND_RESULT" "$BACKEND_RESULT" "$BACKEND_INTEGRATION_RESULT" "$IMAGES_RESULT"; do
             if [[ "$result" != "success" ]]; then
               echo "Gate de CI terminou com: $result"
               exit 1
