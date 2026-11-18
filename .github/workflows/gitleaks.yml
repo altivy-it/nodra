@@ -1,0 +1,46 @@
+name: Gitleaks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: gitleaks-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  full-history:
+    name: Full History
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Test secret scanning rules
+        shell: pwsh
+        run: ./tools/scripts/test-gitleaks.ps1 -HistoricalFixture
+
+      - name: Scan full Git history
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          patches=$(mktemp -d "$RUNNER_TEMP/gitleaks.XXXXXX")
+          git log --all --full-history -p -- |
+            awk -v dir="$patches" '/^commit [0-9a-f]+$/ { if (file) close(file); file = dir "/" $2 ".patch" } file { print > file }'
+          echo "$(find "$patches" -type f | wc -l) commits preparados para a varredura."
+          docker run --rm --network none --read-only \
+            --volume "$patches:/history:ro" \
+            --volume "$GITHUB_WORKSPACE/.gitleaks.toml:/gitleaks.toml:ro" \
+            docker.io/lzocateli/gitleaks:8.30.1 \
+            dir /history --redact --config /gitleaks.toml

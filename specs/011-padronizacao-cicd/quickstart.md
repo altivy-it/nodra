@@ -159,6 +159,11 @@ Foram autorizados commits e pushes para normalizar as branches, mantendo os
 PRs separados e em rascunho. Merge final, publicação e deploy não foram
 autorizados.
 
+O workflow Gitleaks legado permanece em paralelo ao fluxo gerenciado para
+preservar a varredura de histórico sem rede e as referências dos relatórios
+da 010. Ambos executam verificações de segredos; o fluxo gerenciado continua
+obrigatório no resultado da CI.
+
 O job `Container Images` usa um Docker Engine 29.9.3 isolado no runner efêmero,
 com `containerd-snapshotter` e sem `lazy-pull`. O build conserva `--load`,
 `--provenance=mode=max` e SBOM; o gerador
