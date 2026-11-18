@@ -1,2 +1,18 @@
 .githooks/* text eol=lf
 deploy/production/*.sh text eol=lf
+
+# O manifesto Groundwork verifica os bytes dos arquivos gerenciados.
+.github/CI-CD.md text eol=lf
+.github/REPOSITORY-POLICY.md text eol=lf
+.github/instructions/release-integrity.instructions.md text eol=lf
+.github/repository-policy.json text eol=lf
+.github/workflows/gw-*.yml text eol=lf
+docs/en/release-integrity.md text eol=lf
+docs/es/release-integrity.md text eol=lf
+docs/estrategia-de-release.md text eol=lf
+docs/release-integrity.md text eol=lf
+docs/runbooks/deploy-e-rollback.md text eol=lf
+docs/runbooks/release-preview.md text eol=lf
+docs/runbooks/release.md text eol=lf
+tools/scripts/ci/*.ps1 text eol=crlf
+tools/scripts/ci/*.psm1 text eol=crlf

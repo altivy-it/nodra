@@ -82,7 +82,23 @@ O repositório possui workflows versionados de CI e release:
 - `deploy/production/` e o runbook de VPS permanecem como histórico supersedido, sem workflow ativo;
 - um checklist administrativo do mantenedor deve registrar configurações que exigem acesso a **Settings** e evidência manual.
 
-CI e publicação de imagens ainda precisam executar no GitHub com os secrets da GitHub App. A instalação self-hosted permanece pendente de configuração local, bootstrap seguro das roles, callbacks OIDC, smoke test e validação de backup/restore. O CI atual ainda não executa Sonar, CodeQL, Dependency Review nem E2E autenticado; esses gates devem ser adicionados antes de declarar release estável.
+No job `Container Images`, um Docker Engine fixado é criado somente no runner
+efêmero com `containerd-snapshotter` ativo e `lazy-pull` desativado. O
+`validate-release-images.ps1` mantém `--load`, proveniência `mode=max` e um
+gerador SBOM fixado por digest; o Trivy lê o arquivo de `docker save` e executa
+os dois scans sem receber o socket Docker. Após os builds, o CI consulta a API
+local do Engine e valida SBOM SPDX e proveniência vinculados à mesma imagem em
+um container sem rede nem socket. A proveniência `mode=max` inclui valores de
+argumentos de build: nunca passe secrets por `ARG`. Para testar localmente, use
+um Engine isolado compatível, sem reconfigurar o daemon de um host compartilhado.
+As evidências e limitações estão no [guia da feature 011](../specs/011-padronizacao-cicd/quickstart.md).
+
+A publicação de imagens ainda depende de configuração e homologação no GitHub
+com os secrets da GitHub App; o CI não depende desses secrets. A instalação
+self-hosted permanece pendente de configuração local, bootstrap seguro das
+roles, callbacks OIDC, smoke test e validação de backup/restore. O CI atual
+ainda não executa Sonar, CodeQL, Dependency Review nem E2E autenticado; esses
+gates devem ser adicionados antes de declarar release estável.
 
 ### 2.3 Configuração administrativa na plataforma GitHub
 

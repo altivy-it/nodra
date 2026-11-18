@@ -3,6 +3,7 @@
 Valida os contratos estruturais de CI/CD do Nodra sem publicar ou implantar.
 .DESCRIPTION
 Le os workflows com YamlDotNet e verifica eventos, permissoes, gates e imagens.
+Confere os arquivos gerenciados em checkouts Git com diferentes finais de linha.
 Executar em container apos compilar o backend para disponibilizar YamlDotNet.
 .PARAMETER RepositoryRoot
 Raiz do repositorio; padrao dois niveis acima deste script.
@@ -19,7 +20,7 @@ Arquivos versionados; nenhum secret ou conexao remota.
 .OUTPUTS
 Resumo dos contratos aprovados ou erro acionavel.
 .NOTES
-Requer PowerShell 7.6/.NET 10, Bash e YamlDotNet 18.1.0 do backend existente.
+Requer PowerShell 7.6/.NET 10, Bash, Git e YamlDotNet 18.1.0 do backend existente.
 .LINK
 ../../specs/011-padronizacao-cicd/quickstart.md
 #>
@@ -80,6 +81,23 @@ foreach ($job in $ci['jobs'].Values) {
     }
 }
 Assert-Contract ($ci['jobs']['result']['if'] -eq '${{ always() }}') 'Result deve executar sempre'
+
+$imageSteps = @($ci['jobs']['images']['steps'])
+$dockerSetup = @($imageSteps | Where-Object { $_.ContainsKey('uses') -and $_['uses'] -like 'docker/setup-docker-action@*' })
+$imageBuild = @($imageSteps | Where-Object { $_['name'] -eq 'Build production images in BuildKit' })
+$attestationCheck = @($imageSteps | Where-Object { $_['name'] -eq 'Verify BuildKit attestations' })
+Assert-Contract ($dockerSetup.Count -eq 1 -and $dockerSetup[0]['uses'] -cmatch '^docker/setup-docker-action@[a-f0-9]{40}$') 'setup Docker deve usar SHA imutavel'
+Assert-Contract ($dockerSetup[0]['with']['version'] -cmatch '^v[0-9]+\.[0-9]+\.[0-9]+$') 'Engine Docker deve ter versao fixa'
+$dockerVersion = [version]$dockerSetup[0]['with']['version'].TrimStart('v')
+Assert-Contract ($dockerVersion -ge [version]'29.6.0') 'API de atestacoes requer Docker Engine 29.6 ou superior'
+Assert-Contract ([string]$dockerSetup[0]['with']['set-host'] -eq 'true') 'socket isolado do Docker deve estar disponivel no job'
+$daemonConfig = $dockerSetup[0]['with']['daemon-config'] | ConvertFrom-Json -AsHashtable
+Assert-Contract ($daemonConfig.features.'containerd-snapshotter' -eq $true -and $daemonConfig.features.'lazy-pull' -eq $false) 'store compativel e download completo das camadas sao obrigatorios'
+Assert-Contract ($imageBuild.Count -eq 1 -and $attestationCheck.Count -eq 1 -and
+    [array]::IndexOf($imageSteps, $dockerSetup[0]) -lt [array]::IndexOf($imageSteps, $imageBuild[0]) -and
+    [array]::IndexOf($imageSteps, $imageBuild[0]) -lt [array]::IndexOf($imageSteps, $attestationCheck[0])) 'setup, build e verificacao de atestacoes devem executar nessa ordem'
+Assert-Contract ($attestationCheck[0]['run'].Contains('for image in api bff worker web migrations') -and
+    $attestationCheck[0]['run'].Contains('assert-buildkit-attestations.ps1')) 'as cinco imagens devem ter as atestacoes verificadas'
 
 $publish = Read-Workflow 'publish.yml'
 $images = @($publish['jobs']['containers']['with']['images'] | ConvertFrom-Json)
@@ -150,6 +168,116 @@ function Invoke-ContractProcess([string] $Executable, [string[]] $Arguments, [ha
 
 try {
     $pwsh = (Get-Process -Id $PID).Path
+    $dockerDirs = @((Join-Path $fixtureRoot 'docker-first'), (Join-Path $fixtureRoot 'docker-second'))
+    New-Item -ItemType Directory -Path $dockerDirs | Out-Null
+    $firstDocker = Join-Path $dockerDirs[0] 'docker'
+    $secondDocker = Join-Path $dockerDirs[1] 'docker'
+    $dockerLog = Join-Path $fixtureRoot 'docker-calls'
+    $dockerCopyPath = Join-Path $fixtureRoot 'docker-copy-path'
+    $dockerMock = @'
+#!/bin/sh
+printf '%s\n' "$1" >> "$NODRA_DOCKER_LOG"
+case "$1" in
+    create) printf '%064d\n' 1 ;;
+    cp) : > "$3"; printf '%s\n' "$3" > "$NODRA_DOCKER_COPY_PATH" ;;
+    rm|run) ;;
+    *) exit 2 ;;
+esac
+'@
+    [IO.File]::WriteAllText($firstDocker, $dockerMock.Replace("`r`n", "`n"))
+    [IO.File]::WriteAllText($secondDocker, "#!/bin/sh`nexit 9`n")
+    & chmod 755 $firstDocker $secondDocker
+    if ($LASTEXITCODE -ne 0) { throw 'Nao foi possivel preparar Docker sintetico.' }
+    $gitleaksTest = Join-Path $RepositoryRoot 'tools/scripts/test-gitleaks.ps1'
+    $dockerEnvironment = @{
+        PATH = ($dockerDirs + @($env:PATH)) -join [IO.Path]::PathSeparator
+        NODRA_DOCKER_LOG = $dockerLog
+        NODRA_DOCKER_COPY_PATH = $dockerCopyPath
+    }
+    $result = Invoke-ContractProcess $pwsh @('-NoProfile', '-File', $gitleaksTest, '-RepositoryRoot', $RepositoryRoot) $dockerEnvironment
+    Assert-Contract ($result.Code -eq 0) "selecao do primeiro Docker no PATH falhou: $($result.Output)"
+    Assert-Contract (((Get-Content -LiteralPath $dockerLog) -join ',') -ceq 'create,cp,rm,run') 'orquestracao Docker incompleta'
+    $copiedScanner = [IO.File]::ReadAllText($dockerCopyPath).Trim()
+    Assert-Contract (-not (Test-Path -LiteralPath (Split-Path -Parent $copiedScanner))) 'diretorio temporario do scanner nao foi removido'
+    $result = Invoke-ContractProcess $pwsh @('-NoProfile', '-File', $gitleaksTest, '-RepositoryRoot', $RepositoryRoot) @{ PATH = (Join-Path $fixtureRoot 'docker-missing') }
+    Assert-Contract ($result.Code -ne 0 -and $result.Output.Contains('Docker não encontrado')) 'ausencia do Docker nao foi recusada explicitamente'
+
+    $subject = @(@{ digest = @{ sha256 = ('a' * 64) } })
+    $sbom = @{
+        PredicateType = 'https://spdx.dev/Document'
+        Statement = @{ predicateType = 'https://spdx.dev/Document'; subject = $subject; predicate = @{ SPDXID = 'SPDXRef-DOCUMENT'; spdxVersion = 'SPDX-2.3' } }
+    }
+    $provenance = @{
+        PredicateType = 'https://slsa.dev/provenance/v1'
+        Statement = @{
+            predicateType = 'https://slsa.dev/provenance/v1'
+            subject = $subject
+            predicate = @{ buildDefinition = @{ internalParameters = @{ buildConfig = @{ llbDefinition = @(@{ id = 'step0' }) } } } }
+        }
+    }
+    $attestations = @($sbom, $provenance)
+    $validAttestations = ConvertTo-Json -InputObject $attestations -Depth 20 -Compress
+    $missingSubject = $validAttestations | ConvertFrom-Json -AsHashtable
+    $missingSubject[0].Statement.subject = @()
+    $minimumProvenance = $validAttestations | ConvertFrom-Json -AsHashtable
+    $minimumProvenance[1].Statement.predicate.buildDefinition.internalParameters.Remove('buildConfig')
+    $invalidPredicate = $validAttestations | ConvertFrom-Json -AsHashtable
+    $invalidPredicate[0].Statement.predicateType = 'https://example.invalid/other'
+    $invalidSbom = $validAttestations | ConvertFrom-Json -AsHashtable
+    $invalidSbom[0].Statement.predicate.Remove('spdxVersion')
+    $differentSubject = $validAttestations | ConvertFrom-Json -AsHashtable
+    $differentSubject[1].Statement.subject[0].digest.sha256 = ('b' * 64)
+    $attestationCases = @(
+        @{ Name = 'validas'; Json = $validAttestations; Valid = $true },
+        @{ Name = 'sem SBOM'; Json = (ConvertTo-Json -InputObject @($provenance) -Depth 20 -Compress); Valid = $false },
+        @{ Name = 'subject ausente'; Json = (ConvertTo-Json -InputObject $missingSubject -Depth 20 -Compress); Valid = $false },
+        @{ Name = 'proveniencia minima'; Json = (ConvertTo-Json -InputObject $minimumProvenance -Depth 20 -Compress); Valid = $false },
+        @{ Name = 'predicado divergente'; Json = (ConvertTo-Json -InputObject $invalidPredicate -Depth 20 -Compress); Valid = $false },
+        @{ Name = 'SBOM incompleto'; Json = (ConvertTo-Json -InputObject $invalidSbom -Depth 20 -Compress); Valid = $false },
+        @{ Name = 'subject divergente'; Json = (ConvertTo-Json -InputObject $differentSubject -Depth 20 -Compress); Valid = $false },
+        @{ Name = 'resposta invalida'; Json = '{'; Valid = $false }
+    )
+    $attestationScript = Join-Path $RepositoryRoot 'tools/scripts/assert-buildkit-attestations.ps1'
+    $attestationFixture = Join-Path $fixtureRoot 'attestations.json'
+    foreach ($case in $attestationCases) {
+        [IO.File]::WriteAllText($attestationFixture, $case.Json)
+        $result = Invoke-ContractProcess 'bash' @('-c', 'exec "$1" -NoProfile -File "$2" < "$3"', 'bash', $pwsh, $attestationScript, $attestationFixture)
+        Assert-Contract (($result.Code -eq 0) -eq $case.Valid) "validacao de atestacoes aceitou ou recusou incorretamente: $($case.Name)"
+    }
+
+    $managedManifest = Get-Content -Raw -LiteralPath (Join-Path $RepositoryRoot '.groundwork/manifest.json') | ConvertFrom-Json -AsHashtable
+    $managedSource = Join-Path $fixtureRoot 'managed-source'
+    New-Item -ItemType Directory -Path $managedSource | Out-Null
+    foreach ($relative in @('.gitattributes', '.groundwork/manifest.json') + @($managedManifest.files.Keys)) {
+        $destination = Join-Path $managedSource $relative
+        New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
+        Copy-Item -LiteralPath (Join-Path $RepositoryRoot $relative) -Destination $destination
+    }
+    $result = Invoke-ContractProcess 'git' @('-C', $managedSource, 'init', '--quiet')
+    Assert-Contract ($result.Code -eq 0) 'nao foi possivel inicializar fixture Git'
+    $result = Invoke-ContractProcess 'git' @('-C', $managedSource, '-c', 'core.autocrlf=input', '-c', 'core.safecrlf=false', 'add', '--all')
+    Assert-Contract ($result.Code -eq 0) 'nao foi possivel preparar fixture Git'
+
+    foreach ($autoCrlf in @('false', 'true')) {
+        $checkout = Join-Path $fixtureRoot "managed-$autoCrlf"
+        New-Item -ItemType Directory -Path $checkout | Out-Null
+        $prefix = "$checkout$([IO.Path]::DirectorySeparatorChar)"
+        $result = Invoke-ContractProcess 'git' @('-C', $managedSource, '-c', "core.autocrlf=$autoCrlf", 'checkout-index', '--all', "--prefix=$prefix")
+        Assert-Contract ($result.Code -eq 0) "checkout sintetico falhou para core.autocrlf=$autoCrlf"
+
+        $managedCheck = Join-Path $checkout 'tools/scripts/ci/Test-ManagedFiles.ps1'
+        $result = Invoke-ContractProcess $pwsh @('-NoProfile', '-File', $managedCheck, '-Root', $checkout)
+        Assert-Contract ($result.Code -eq 0) "arquivos gerenciados divergiram com core.autocrlf=$autoCrlf`: $($result.Output)"
+        foreach ($relative in $managedManifest.files.Keys) {
+            $hash = (Get-FileHash -LiteralPath (Join-Path $checkout $relative) -Algorithm SHA256).Hash.ToLowerInvariant()
+            Assert-Contract ($hash -ceq $managedManifest.files[$relative].sha256.ToLowerInvariant()) "hash divergente para $relative com core.autocrlf=$autoCrlf"
+        }
+    }
+    $tampered = 'tools/scripts/ci/Test-PullRequestTitle.ps1'
+    Add-Content -LiteralPath (Join-Path $checkout $tampered) -Value '# alteracao sintetica'
+    $result = Invoke-ContractProcess $pwsh @('-NoProfile', '-File', $managedCheck, '-Root', $checkout)
+    Assert-Contract ($result.Code -ne 0 -and $result.Output.Contains($tampered)) 'alteracao de arquivo gerenciado nao foi rejeitada'
+
     $resultStep = @($ci['jobs']['result']['steps'] | Where-Object { $_.ContainsKey('run') })[0]
     $aggregatePath = Join-Path $fixtureRoot 'result.sh'
     [IO.File]::WriteAllText($aggregatePath, $resultStep['run'])
@@ -209,6 +337,16 @@ try {
     New-Item -ItemType Directory -Path $entriesPath | Out-Null
     $fixture.artifacts | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $entriesPath 'containers.json')
     $scanner = Join-Path $RepositoryRoot 'tools/scripts/validate-release-images.ps1'
+    $result = Invoke-ContractProcess $pwsh @('-NoProfile', '-File', $scanner, '-Image', 'all', '-DryRun')
+    $buildCommands = @($result.Output -split "`n" | Where-Object { $_.Contains('docker buildx build ') })
+    Assert-Contract ($result.Code -eq 0 -and $buildCommands.Count -eq 5) 'cinco imagens devem ser construidas localmente'
+    foreach ($command in $buildCommands) {
+        Assert-Contract ($command.Contains('--load') -and $command.Contains('--provenance=mode=max') -and
+            $command -cmatch '--sbom=generator=\S+:[^@\s]+@sha256:[a-f0-9]{64}') 'build deve carregar a imagem com proveniencia e gerador SBOM imutavel'
+    }
+    Assert-Contract (@($result.Output -split "`n" | Where-Object { $_.Contains('docker save ') }).Count -eq 5 -and
+        @($result.Output -split "`n" | Where-Object { $_.Contains('--format cyclonedx') }).Count -eq 5 -and
+        @($result.Output -split "`n" | Where-Object { $_.Contains('--severity HIGH,CRITICAL --exit-code 1') }).Count -eq 5) 'arquivos devem passar pelos dois scans Trivy'
     $result = Invoke-ContractProcess $pwsh @('-NoProfile', '-File', $scanner, '-ReleaseEntriesPath', $entriesPath, '-DryRun')
     Assert-Contract ($result.Code -eq 0 -and $result.Output.Contains('--image-src remote ghcr.io/altivy-it/nodra-api@sha256:') -and -not $result.Output.Contains('buildx')) 'scan deve consumir digests sem rebuild'
     $fixture | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $fixturePath

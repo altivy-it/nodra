@@ -25,6 +25,7 @@ Relatorios em artifacts/security-local e codigo nao zero em falha.
 .NOTES
 Requer PowerShell 7.4+, Docker com BuildKit e rede para imagens/banco Trivy.
 O scanner Trivy 0.72.0 possui licenca Apache-2.0 verificada na origem oficial.
+O gerador BuildKit Syft 1.12.1 tambem possui licenca Apache-2.0 verificada.
 .LINK
 ../../docs/ci-cd-seguranca.md
 #>
@@ -48,6 +49,7 @@ $output = Join-Path $repository 'artifacts/security-local'
 $temporary = Join-Path ([IO.Path]::GetTempPath()) "nodra-images-$([Guid]::NewGuid().ToString('N'))"
 $cache = Join-Path $temporary 'cache'
 $scanner = 'docker.io/aquasec/trivy:0.72.0@sha256:c6e969c5662a546ad5de4a73c2a6b7a7c627f86d916903e175aa623af5b97ada'
+$sbomGenerator = 'docker.io/docker/buildkit-syft-scanner:1.12.1@sha256:873a7458c3c8ac8e32c7b796c10e1600b07b963d2aa000a72a2d97aaaa2d6315'
 $definitions = [ordered]@{
     api = 'backend/apps/api/Dockerfile'
     bff = 'backend/apps/bff/Dockerfile'
@@ -92,7 +94,7 @@ try {
         }
         else {
         $reference = "nodra-${name}:$Tag"
-        $build = @('buildx', 'build', '--load', '--provenance=mode=max', '--sbom=true', '--build-arg', 'RELEASE_VERSION=0.0.0-ci', '--file', $definitions[$name], '--tag', $reference, '--metadata-file', (Join-Path $output "$name-build.json"))
+        $build = @('buildx', 'build', '--load', '--provenance=mode=max', "--sbom=generator=$sbomGenerator", '--build-arg', 'RELEASE_VERSION=0.0.0-ci', '--file', $definitions[$name], '--tag', $reference, '--metadata-file', (Join-Path $output "$name-build.json"))
         if ($name -eq 'web') { $build += @('--build-arg', 'WEB_CONFIGURATION=production', '--build-arg', 'WEB_BASE_HREF=/') }
         Invoke-Docker ($build + @('.'))
         Invoke-Docker @('save', '--output', (Join-Path $temporary "$name.tar"), $reference)

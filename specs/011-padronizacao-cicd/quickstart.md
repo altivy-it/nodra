@@ -150,5 +150,31 @@ falhou na fixture e foi corrigido; o resultado final acima e o que foi aprovado.
    em validacao autorizada. Builds locais Podman nao comprovam esses gates.
 5. Homologar hook/SSH e laboratorio OIDC/upgrade/recuperacao separadamente;
    nenhuma instalacao foi acessada ou modificada nesta feature.
-6. Obter autorizacao explicita para commit/push 011; reconciliar PR 31 antes de
-   integrar em main. Nenhum commit/push desta feature foi executado.
+6. Reconciliar PR 31 antes de integrar em main. Em 2026-11-11, commit e push
+   da 011 aguardavam autorizacao; veja a atualização abaixo.
+
+## Atualização — normalização do CI em 2026-11-18
+
+Foram autorizados commits e pushes para normalizar as branches, mantendo os
+PRs separados e em rascunho. Merge final, publicação e deploy não foram
+autorizados.
+
+O job `Container Images` usa um Docker Engine 29.9.3 isolado no runner efêmero,
+com `containerd-snapshotter` e sem `lazy-pull`. O build conserva `--load`,
+`--provenance=mode=max` e SBOM; o gerador
+`docker/buildkit-syft-scanner:1.12.1` é fixado pelo digest do índice
+multiplataforma. O Trivy continua lendo os arquivos locais, sem socket Docker,
+e o CI valida SBOM e proveniência na imagem carregada sem imprimir seus corpos.
+
+A prova isolada em [Docker real no GitHub Actions](https://github.com/altivy-it/nodra/actions/runs/44365783571)
+gerou as duas atestações de uma imagem sintética e executou os dois scans Trivy
+sobre o arquivo exportado, sem publicar imagens. Ela não substitui a execução
+do job nas cinco imagens do projeto, tampouco a validação de publicação,
+imutabilidade e republish de T033, que permanece pendente.
+
+Licenças verificadas nas versões exatas: a
+[setup-docker-action 5.7.0](https://github.com/docker/setup-docker-action/blob/v5.7.0/LICENSE),
+o [Docker Engine 29.9.3](https://github.com/moby/moby/blob/docker-v29.9.3/LICENSE)
+e o [gerador Syft 1.12.1](https://github.com/docker/buildkit-syft-scanner/blob/v1.12.1/LICENSE)
+declaram Apache-2.0. O [Syft 1.51.0](https://github.com/anchore/syft/blob/v1.51.0/LICENSE)
+incluído no gerador também declara Apache-2.0.

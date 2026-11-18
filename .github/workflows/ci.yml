@@ -193,10 +193,34 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Set up Docker with containerd image store
+        uses: docker/setup-docker-action@3f1ab1ab0e29231562e4db4ca600c1a49653bac6 # v5.7.0
+        with:
+          version: v29.9.3
+          set-host: true
+          daemon-config: |
+            {"features":{"containerd-snapshotter":true,"lazy-pull":false}}
+
       - name: Build production images in BuildKit
         shell: pwsh
         run: |
           ./tools/scripts/validate-release-images.ps1 -Image all -Tag ci
+
+      - name: Verify BuildKit attestations
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          [[ "$DOCKER_HOST" == unix://* ]]
+          for image in api bff worker web migrations; do
+            echo "Verificando atestações de nodra-$image:ci"
+            curl --fail --silent --show-error --unix-socket "${DOCKER_HOST#unix://}" \
+              "http://localhost/v1.55/images/nodra-$image:ci/attestations?statement=1" |
+              docker run --rm --interactive --network none --read-only \
+                --tmpfs /tmp:rw,noexec,nosuid,mode=1777,size=32m --env HOME=/tmp \
+                --volume "$GITHUB_WORKSPACE:/workspace:ro" --workdir /workspace \
+                --entrypoint pwsh docker.io/lzocateli/dotnet-sdk:10.0.403-noble-v1@sha256:61320a81b460fdeb2d838f91e1204ded8b846335dbc572719bdd82cb109bec11 \
+                -NoLogo -NoProfile -File tools/scripts/assert-buildkit-attestations.ps1
+          done
 
       - name: Upload image security evidence
         if: ${{ always() }}
