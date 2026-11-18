@@ -1,0 +1,12 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Tag pública em uma linha específica da tarefa local de imagens"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''(?:^|/)[0-9a-f]{40}\.patch$''']
+regexTarget = "line"
+regexes = [
+  '''^\n?[ +\-][ \t]*\Q"command": "podman run --rm --user 0:0 --entrypoint pwsh --volume \"$PWD:/workspace:ro,Z\" --workdir /workspace docker.io/lzocateli/dotnet-sdk:10.0.403-noble-v1 -NoProfile -Command '$ErrorActionPreference=\"Stop\"; foreach ($name in @(\"test-cicd-contracts\", \"convert-release-manifest\", \"validate-release-images\")) { & pwsh -NoProfile -File \"tools/scripts/$name.ps1\" --help | Out-Null; if ($LASTEXITCODE -ne 0) { throw \"Ajuda falhou: $name\" }; Write-Output \"--help aprovado: $name\" }; & ./.specify/scripts/powershell/check-prerequisites.ps1 -Json -RequireSpec -RequireTasks -IncludeTasks; & ./tools/scripts/ci/Test-ManagedFiles.ps1 -Components ci,release,release-preview,publish-containers,publish-github-assets,deploy,dependency-updates,repository-policy' && podman image inspect nodra-api\E\x3a\Q011-rc-validation nodra-bff:011-rc-validation nodra-worker:011-rc-validation --format '{{.RepoTags}} {{json .Config.Labels}}' && tail -n 8 /tmp/nodra-011-web-build-20261111-1615.log",\E$'''
+]

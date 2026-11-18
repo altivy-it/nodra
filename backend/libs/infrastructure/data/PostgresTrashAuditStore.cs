@@ -1,6 +1,6 @@
-using Altivy.Backend.Application.Notes;
+using Nodra.Backend.Application.Notes;
 
-namespace Altivy.Backend.Infra.Data.Postgres;
+namespace Nodra.Backend.Infra.Data.Postgres;
 
 /// <summary>
 /// Persiste eventos de lixeira sem atualizar ou excluir eventos existentes.
@@ -9,7 +9,7 @@ public sealed class PostgresTrashAuditStore(PostgresDbContext db) : ITrashAuditS
 {
     public async Task RecordAsync(TrashAuditEvent auditEvent, CancellationToken cancellationToken)
     {
-        db.Set<TrashAuditRecord>().Add(new TrashAuditRecord
+        _ = db.Set<TrashAuditRecord>().Add(new TrashAuditRecord
         {
             AuditId = Guid.NewGuid(),
             OperationId = auditEvent.OperationId,
@@ -20,6 +20,6 @@ public sealed class PostgresTrashAuditStore(PostgresDbContext db) : ITrashAuditS
             OccurredAtUtc = auditEvent.OccurredAtUtc,
             ReauthenticatedAtUtc = auditEvent.ReauthenticatedAtUtc
         });
-        await db.SaveChangesAsync(cancellationToken);
+        _ = await db.SaveChangesAsync(cancellationToken);
     }
 }

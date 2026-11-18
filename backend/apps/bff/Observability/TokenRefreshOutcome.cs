@@ -1,4 +1,4 @@
-namespace Altivy.Bff.Observability;
+namespace Nodra.Bff.Observability;
 
 /// <summary>
 /// Classifica resultados possíveis da renovação de sessão com cardinalidade fixa.

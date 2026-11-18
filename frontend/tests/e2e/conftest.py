@@ -34,7 +34,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 
 
 def pytest_configure(config: pytest.Config) -> None:
-    config.addinivalue_line("markers", "e2e: jornada executada em browser contra um ambiente Altivy acessível")
+    config.addinivalue_line("markers", "e2e: jornada executada em browser contra um ambiente Nodra acessível")
     config.addinivalue_line(
         "markers",
         "authenticated: jornada que exige credenciais de laboratório fornecidas em runtime",
@@ -75,7 +75,7 @@ def credentials() -> E2ECredentials:
 @pytest.fixture
 def authenticated_page(page: Page, base_url: str, credentials: E2ECredentials) -> Page:
     page.goto(base_url, wait_until="networkidle")
-    page.get_by_role("link", name="Entrar no Altivy Notes").click()
+    page.get_by_role("link", name="Entrar no Nodra").click()
     page.get_by_role("textbox", name="Username or email").fill(credentials.username)
     page.get_by_role("textbox", name="Password").fill(credentials.password)
     page.get_by_role("button", name="Sign In").click()

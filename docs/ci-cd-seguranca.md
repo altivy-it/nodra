@@ -2,11 +2,11 @@
 
 **Status:** referência arquitetural inicial  
 **Data de referência:** 28 de julho de 2026  
-**Escopo:** recursos do repositório e da plataforma GitHub para integração contínua, entrega, segurança e cadeia de fornecimento do Altivy.
+**Escopo:** recursos do repositório e da plataforma GitHub para integração contínua, entrega, segurança e cadeia de fornecimento do Nodra.
 
 ## 1. Objetivo
 
-Este documento descreve como utilizar o GitHub para proteger mudanças, executar validações, publicar imagens de container e promover releases do Altivy. O Sonar faz parte dessa estratégia como gate de qualidade e segurança do código, mas não substitui os controles nativos do GitHub.
+Este documento descreve como utilizar o GitHub para proteger mudanças, executar validações, publicar imagens de container e promover releases do Nodra. O Sonar faz parte dessa estratégia como gate de qualidade e segurança do código, mas não substitui os controles nativos do GitHub.
 
 A solução deve combinar quatro camadas:
 
@@ -90,7 +90,7 @@ Essas configurações devem ser inventariadas em checklist ou evidência adminis
 
 ## 3. GitHub Actions como motor de CI/CD
 
-GitHub Actions executa workflows YAML em resposta a eventos como `pull_request`, `push`, tags, agenda e acionamento manual. Para o monorepo do Altivy, a divisão recomendada é:
+GitHub Actions executa workflows YAML em resposta a eventos como `pull_request`, `push`, tags, agenda e acionamento manual. Para o monorepo do Nodra, a divisão recomendada é:
 
 | Job | Validação principal |
 | --- | --- |
@@ -262,7 +262,7 @@ A biblioteca MediatR é proibida no projeto por sua política de licenciamento; 
 
 ### 6.2 Code scanning com CodeQL
 
-CodeQL suporta as linguagens principais do Altivy:
+CodeQL suporta as linguagens principais do Nodra:
 
 - C# para API, worker e bibliotecas backend;
 - JavaScript/TypeScript para Angular e bibliotecas frontend;
@@ -339,7 +339,7 @@ O job de deploy recebe `id-token: write`; os jobs de build não recebem essa per
 As imagens podem ser publicadas no GitHub Container Registry:
 
 ```text
-ghcr.io/lzocateli/altivy-web:1.0.0
+ghcr.io/lzocateli/nodra-web:1.0.0
 ghcr.io/lzocateli/altivy-api:1.0.0
 ghcr.io/lzocateli/altivy-worker:1.0.0
 ```

@@ -1,4 +1,4 @@
-namespace Altivy.Backend.Infra.Data.Postgres;
+namespace Nodra.Backend.Infra.Data.Postgres;
 
 /// <summary>
 /// Persiste somente o parâmetro de retenção da lixeira do sujeito autenticado.

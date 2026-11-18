@@ -1,16 +1,16 @@
 ---
 name: altivy-notes-generate-tests
-description: "Use quando solicitado explicitamente para gerar e executar testes de uma tarefa autorizada do Spec Kit no AltivyNotes, preservando seus critérios, fixtures e execução containerizada, sem criar escopo de produto."
+description: "Use quando solicitado explicitamente para gerar e executar testes de uma tarefa autorizada do Spec Kit no Nodra, preservando seus critérios, fixtures e execução containerizada, sem criar escopo de produto."
 argument-hint: "Caminho do artefato Spec Kit, ID da tarefa, critérios, autorização e escopo dos testes"
 user-invocable: true
 disable-model-invocation: true
 ---
 
-# Auxílio a testes de tarefa oficial do AltivyNotes
+# Auxílio a testes de tarefa oficial do Nodra
 
 ## Escopo e seleção do agente
 
-Na raiz AltivyNotes, selecione explicitamente **Altivy Quality Engineer**,
+Na raiz Nodra, selecione explicitamente **Altivy Quality Engineer**,
 conforme seu [contrato](../../agents/quality-engineer.agent.md), e invoque
 `/altivy-notes-generate-tests` com o artefato e o ID. Esta skill não seleciona
 agente, modelo ou ferramentas pelo frontmatter. Se o agente estiver

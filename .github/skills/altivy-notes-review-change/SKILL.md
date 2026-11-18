@@ -1,16 +1,16 @@
 ---
 name: altivy-notes-review-change
-description: "Use quando solicitado explicitamente para revisar diff, branch ou PR do AltivyNotes contra spec e tarefa oficiais, sem editar código; validações estreitas exigem autorização explícita e ferramentas permitidas."
+description: "Use quando solicitado explicitamente para revisar diff, branch ou PR do Nodra contra spec e tarefa oficiais, sem editar código; validações estreitas exigem autorização explícita e ferramentas permitidas."
 argument-hint: "Diff, branch, PR ou escopo; spec e tarefa oficiais; autorização específica de validação, se houver"
 user-invocable: true
 disable-model-invocation: true
 ---
 
-# Auxílio à revisão de mudanças do AltivyNotes
+# Auxílio à revisão de mudanças do Nodra
 
 ## Escopo e seleção do agente
 
-Na raiz AltivyNotes, selecione explicitamente **Altivy Code Reviewer**,
+Na raiz Nodra, selecione explicitamente **Altivy Code Reviewer**,
 conforme seu [contrato](../../agents/code-reviewer.agent.md), e invoque
 `/altivy-notes-review-change`. O frontmatter desta skill não seleciona agente,
 modelo ou ferramentas. Se o agente não estiver disponível, informe o bloqueio

@@ -1,6 +1,4 @@
-using Microsoft.Extensions.Options;
-
-namespace Altivy.Bff.Observability;
+namespace Nodra.Bff.Observability;
 
 /// <summary>
 /// Valida o endpoint OTLP conforme o ambiente de execução.

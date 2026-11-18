@@ -25,7 +25,7 @@ $env:ALTIVY_E2E_BFF_CLIENT_SECRET = '<novo-secret-gerado>'
 
 # 2. Reiniciar o serviço do BFF aplicando a nova variável
 docker compose --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" `
-  -f deploy/e2e/docker-compose-altivynotes.yaml up --no-build --force-recreate --detach bff
+  -f deploy/e2e/docker-compose-nodra.yaml up --no-build --force-recreate --detach bff
 
 # 3. Validar a prontidão do serviço
 curl.exe --noproxy "*" --insecure --silent --include https://localhost:7443/health/ready
@@ -60,7 +60,7 @@ $env:ALTIVY_E2E_DATA_PROTECTION_KEYS_PATH = (Resolve-Path $novoKeyRing).Path
 
 # 3. Recriar o container BFF (isso invalidará todas as sessões ativas existentes)
 docker compose --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" `
-  -f deploy/e2e/docker-compose-altivynotes.yaml up --no-build --force-recreate --detach bff
+  -f deploy/e2e/docker-compose-nodra.yaml up --no-build --force-recreate --detach bff
 ```
 
 ---

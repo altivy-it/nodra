@@ -1,10 +1,10 @@
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 
-namespace Altivy.Notes.Worker.Observability;
+namespace Nodra.Notes.Worker.Observability;
 
 /// <summary>
 /// Registra métricas e traces OpenTelemetry opcionais do worker.
@@ -23,26 +23,26 @@ public static class WorkerOpenTelemetrySetup
         Uri? endpoint = Uri.TryCreate(endpointValue, UriKind.Absolute, out var parsedEndpoint)
             ? parsedEndpoint
             : null;
-        services.AddSingleton<WorkerTelemetry>();
-        services.AddOpenTelemetry()
+        _ = services.AddSingleton<WorkerTelemetry>();
+        _ = services.AddOpenTelemetry()
             .ConfigureResource(resource => resource.AddService("altivy-worker"))
             .WithTracing(tracing =>
             {
-                tracing.AddHttpClientInstrumentation();
+                _ = tracing.AddHttpClientInstrumentation();
                 if (endpoint is not null)
                 {
-                    tracing.AddOtlpExporter(exporter => exporter.Endpoint = endpoint);
+                    _ = tracing.AddOtlpExporter(exporter => exporter.Endpoint = endpoint);
                 }
             })
             .WithMetrics(metrics =>
             {
-                metrics
+                _ = metrics
                     .AddMeter(WorkerTelemetry.MeterName)
                     .AddHttpClientInstrumentation()
                     .AddRuntimeInstrumentation();
                 if (endpoint is not null)
                 {
-                    metrics.AddOtlpExporter(exporter => exporter.Endpoint = endpoint);
+                    _ = metrics.AddOtlpExporter(exporter => exporter.Endpoint = endpoint);
                 }
             });
         return services;

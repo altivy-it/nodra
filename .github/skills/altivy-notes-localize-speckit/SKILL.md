@@ -1,12 +1,12 @@
 ---
 name: altivy-notes-localize-speckit
-description: "Use quando solicitado explicitamente para auditar ou traduzir textos humanos do Spec Kit no AltivyNotes após instalação ou atualização, preservando contratos, literais, exclusões e conteúdo do usuário. Sem modo explícito, somente audita."
+description: "Use quando solicitado explicitamente para auditar ou traduzir textos humanos do Spec Kit no Nodra após instalação ou atualização, preservando contratos, literais, exclusões e conteúdo do usuário. Sem modo explícito, somente audita."
 argument-hint: "Extensão ou arquivos alvo; modo=auditar ou modo=traduzir; exclusões adicionais"
 user-invocable: true
 disable-model-invocation: true
 ---
 
-# Localização segura do Spec Kit no AltivyNotes
+# Localização segura do Spec Kit no Nodra
 
 Use após instalar ou atualizar uma extensão, preset ou integração do Spec Kit,
 como apoio ao trabalho oficial, nunca como processo concorrente. Siga a
@@ -15,7 +15,7 @@ como apoio ao trabalho oficial, nunca como processo concorrente. Siga a
 
 ## Uso e autorização
 
-Na raiz AltivyNotes, invoque explicitamente:
+Na raiz Nodra, invoque explicitamente:
 
 ```text
 /altivy-notes-localize-speckit extensão=assess modo=auditar
@@ -25,7 +25,7 @@ Na raiz AltivyNotes, invoque explicitamente:
 
 Essas entradas são orientações em linguagem natural, não opções do CLI nem
 variáveis interpoladas pelo cliente. Sem modo explícito, somente audite.
-Sem alvo explícito, inventarie os arquivos do Spec Kit no AltivyNotes e
+Sem alvo explícito, inventarie os arquivos do Spec Kit no Nodra e
 apresente candidatos; não traduza indiscriminadamente. Esclareça modos
 inválidos ou contraditórios antes de qualquer escrita.
 
@@ -63,7 +63,7 @@ validar a migração ou a tradução.
 ## Procedimento
 
 1. Leia a versão atual dos arquivos, inclusive alterações locais do
-   desenvolvedor. Restrinja o trabalho à raiz AltivyNotes e ao alvo solicitado.
+   desenvolvedor. Restrinja o trabalho à raiz Nodra e ao alvo solicitado.
 2. Identifique a origem em `.specify/extensions/<extensão>/commands/`, as
    skills materializadas em `.github/skills/` e os textos pertinentes de
    `extension.yml` ou `workflow.yml`. Não suponha que fonte e skill sejam idênticas.

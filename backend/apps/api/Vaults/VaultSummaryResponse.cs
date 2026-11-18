@@ -1,4 +1,4 @@
-namespace Altivy.Notes.Api.Vaults;
+namespace Nodra.Notes.Api.Vaults;
 
 /// <summary>
 /// Representa um vault cuja leitura foi autorizada.

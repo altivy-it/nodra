@@ -1,4 +1,4 @@
-namespace Altivy.Backend.Infra.Data.Postgres;
+namespace Nodra.Backend.Infra.Data.Postgres;
 
 /// <summary>
 /// Registro durável de um trabalho de indexação.

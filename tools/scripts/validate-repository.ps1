@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Valida estrutura, Markdown, planos e referências imutáveis do Altivy.
+Valida estrutura, Markdown, planos e referências imutáveis do Nodra.
 
 .DESCRIPTION
 Verifica arquivos obrigatórios, links Markdown locais, IDs explícitos de headings,
@@ -75,6 +75,44 @@ $requiredPaths = @(
 foreach ($requiredPath in $requiredPaths) {
     if (-not (Test-Path -LiteralPath (Join-Path $repositoryRoot $requiredPath))) {
         $failures.Add("Arquivo obrigatório ausente: $requiredPath")
+    }
+}
+
+foreach ($solutionName in @('Nodra.slnx')) {
+    $solutionPath = Join-Path $repositoryRoot $solutionName
+    if (-not (Test-Path -LiteralPath $solutionPath)) {
+        continue
+    }
+
+    $solution = [xml](Get-Content -Raw -LiteralPath $solutionPath)
+    foreach ($project in $solution.SelectNodes('//Project[@Path]')) {
+        $projectPath = Join-Path $repositoryRoot $project.Path.Replace('\', '/')
+        if (-not (Test-Path -LiteralPath $projectPath)) {
+            $failures.Add("Projeto da solução ausente: $($project.Path)")
+            continue
+        }
+
+        $projectDocument = [xml](Get-Content -Raw -LiteralPath $projectPath)
+        foreach ($reference in $projectDocument.SelectNodes('//ProjectReference[@Include]')) {
+            $referencePath = Join-Path (Split-Path -Parent $projectPath) $reference.Include.Replace('\', '/')
+            if (-not (Test-Path -LiteralPath $referencePath)) {
+                $failures.Add("ProjectReference inválido em $($project.Path): $($reference.Include)")
+            }
+        }
+    }
+}
+
+$bffSettingsPath = Join-Path $repositoryRoot 'backend/apps/bff/appsettings.json'
+if (Test-Path -LiteralPath $bffSettingsPath) {
+    $bffSettings = Get-Content -Raw -LiteralPath $bffSettingsPath | ConvertFrom-Json
+    foreach ($expected in @{
+        DataProtectionApplicationName = 'Altivy.Bff'
+        AntiforgeryCookieName = '__Host-Altivy.Antiforgery'
+        AntiforgeryHeaderName = 'X-Altivy-Antiforgery'
+    }.GetEnumerator()) {
+        if ($bffSettings.Bff.($expected.Key) -cne $expected.Value) {
+            $failures.Add("Identificador de compatibilidade alterado no BFF: $($expected.Key)")
+        }
     }
 }
 

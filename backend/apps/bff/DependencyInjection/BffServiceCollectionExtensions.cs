@@ -1,20 +1,15 @@
-using Altivy.Bff.Authentication;
-using Altivy.Bff.Configuration;
-using Altivy.Bff.Health;
-using Altivy.Bff.Observability;
-using Altivy.Bff.Relay;
-using Microsoft.AspNetCore.Authentication;
+using System.Security.Cryptography.X509Certificates;
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using System.Security.Cryptography.X509Certificates;
-using System.Threading.RateLimiting;
+using Nodra.Bff.Authentication;
+using Nodra.Bff.Configuration;
+using Nodra.Bff.Health;
+using Nodra.Bff.Observability;
+using Nodra.Bff.Relay;
 
-namespace Altivy.Bff.DependencyInjection;
+namespace Nodra.Bff.DependencyInjection;
 
 /// <summary>
 /// Fornece métodos para registrar os serviços e integrações usados pelo BFF.
@@ -28,7 +23,7 @@ public static class BffServiceCollectionExtensions
     /// <returns>O mesmo builder, permitindo encadear outras extensões de composição.</returns>
     public static WebApplicationBuilder AddBffServices(this WebApplicationBuilder builder)
     {
-        builder.Services.AddBffOpenTelemetry(builder.Configuration);
+        _ = builder.Services.AddBffOpenTelemetry(builder.Configuration);
 
         var securityOptions = builder.Configuration
             .GetRequiredSection(BffSecurityOptions.SectionName)
@@ -64,31 +59,31 @@ public static class BffServiceCollectionExtensions
                 securityOptions.DataProtectionCertificatePath,
                 securityOptions.DataProtectionCertificatePassword,
                 X509KeyStorageFlags.EphemeralKeySet);
-            services.AddSingleton(dataProtectionCertificate);
-            dataProtection.ProtectKeysWithCertificate(dataProtectionCertificate);
+            _ = services.AddSingleton(dataProtectionCertificate);
+            _ = dataProtection.ProtectKeysWithCertificate(dataProtectionCertificate);
         }
 
-        services.AddMemoryCache(options => options.SizeLimit = runtimeOptions.MemoryCacheSizeLimit);
+        _ = services.AddMemoryCache(options => options.SizeLimit = runtimeOptions.MemoryCacheSizeLimit);
     }
 
     private static void AddCoreServices(IServiceCollection services)
     {
-        services.AddSingleton<ServerSideTicketStore>();
-        services.AddSingleton<RequestOriginValidator>();
-        services.AddSingleton(TimeProvider.System);
-        services.AddSingleton<IAccessTokenRefreshCoordinator, AccessTokenRefreshCoordinator>();
-        services.AddScoped<CookieTokenRefreshEvents>();
-        services.AddHttpContextAccessor();
-        services.AddTransient<IAccessTokenProvider, ServerAccessTokenProvider>();
-        services.AddTransient<BearerTokenRelayHandler>();
-        services.AddSingleton<IConfigureOptions<ForwardedHeadersOptions>, ConfigureForwardedHeadersOptions>();
-        services.AddSingleton<IPostConfigureOptions<CookieAuthenticationOptions>, ConfigureCookieOptions>();
-        services.AddSingleton<IConfigureOptions<OpenIdConnectOptions>, ConfigureOpenIdConnectOptions>();
+        _ = services.AddSingleton<ServerSideTicketStore>();
+        _ = services.AddSingleton<RequestOriginValidator>();
+        _ = services.AddSingleton(TimeProvider.System);
+        _ = services.AddSingleton<IAccessTokenRefreshCoordinator, AccessTokenRefreshCoordinator>();
+        _ = services.AddScoped<CookieTokenRefreshEvents>();
+        _ = services.AddHttpContextAccessor();
+        _ = services.AddTransient<IAccessTokenProvider, ServerAccessTokenProvider>();
+        _ = services.AddTransient<BearerTokenRelayHandler>();
+        _ = services.AddSingleton<IConfigureOptions<ForwardedHeadersOptions>, ConfigureForwardedHeadersOptions>();
+        _ = services.AddSingleton<IPostConfigureOptions<CookieAuthenticationOptions>, ConfigureCookieOptions>();
+        _ = services.AddSingleton<IConfigureOptions<OpenIdConnectOptions>, ConfigureOpenIdConnectOptions>();
     }
 
     private static void AddAuthenticationAndAuthorization(IServiceCollection services)
     {
-        services
+        _ = services
             .AddAuthentication(options =>
             {
                 options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -96,7 +91,7 @@ public static class BffServiceCollectionExtensions
             })
             .AddCookie()
             .AddOpenIdConnect();
-        services.AddAuthorizationBuilder()
+        _ = services.AddAuthorizationBuilder()
             .SetFallbackPolicy(new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
                 .RequireAuthenticatedUser()
                 .Build());
@@ -104,9 +99,9 @@ public static class BffServiceCollectionExtensions
 
     private static void AddRateLimiting(IServiceCollection services, BffRuntimeOptions runtimeOptions)
     {
-        services.AddRateLimiter(options =>
+        _ = services.AddRateLimiter(options =>
         {
-            options.AddPolicy("login", context => RateLimitPartition.GetFixedWindowLimiter(
+            _ = options.AddPolicy("login", context => RateLimitPartition.GetFixedWindowLimiter(
                 LoginRateLimitPartition.GetKey(context),
                 _ => new FixedWindowRateLimiterOptions
                 {
@@ -119,7 +114,7 @@ public static class BffServiceCollectionExtensions
 
     private static void AddDownstreamHttpClients(IServiceCollection services, BffRuntimeOptions runtimeOptions)
     {
-        services
+        _ = services
             .AddHttpClient(AccessTokenRefreshCoordinator.HttpClientName, client =>
             {
                 client.Timeout = TimeSpan.FromSeconds(runtimeOptions.TokenRefreshTimeoutSeconds);
@@ -130,7 +125,7 @@ public static class BffServiceCollectionExtensions
                 var keycloak = provider.GetRequiredService<IOptions<KeycloakOptions>>().Value;
                 return KeycloakHttpMessageHandlerFactory.Create(keycloak.Authority);
             });
-        services
+        _ = services
             .AddHttpClient(KeycloakDiscoveryHealthCheck.HttpClientName, client =>
                 client.Timeout = TimeSpan.FromSeconds(runtimeOptions.KeycloakDiscoveryTimeoutSeconds))
             .ConfigurePrimaryHttpMessageHandler(provider =>
@@ -138,7 +133,7 @@ public static class BffServiceCollectionExtensions
                 var keycloak = provider.GetRequiredService<IOptions<KeycloakOptions>>().Value;
                 return KeycloakHttpMessageHandlerFactory.Create(keycloak.Authority);
             });
-        services.AddHttpClient("AltivyApi", (provider, client) =>
+        _ = services.AddHttpClient("NodraApi", (provider, client) =>
             {
                 var api = provider.GetRequiredService<IOptions<DownstreamApiOptions>>().Value;
                 client.BaseAddress = new Uri(api.BaseUrl, UriKind.Absolute);
@@ -149,9 +144,9 @@ public static class BffServiceCollectionExtensions
 
     private static void AddHealthAndAntiforgery(IServiceCollection services, BffRuntimeOptions runtimeOptions)
     {
-        services.AddHealthChecks()
+        _ = services.AddHealthChecks()
             .AddCheck<KeycloakDiscoveryHealthCheck>("keycloak", tags: ["ready"]);
-        services.AddAntiforgery(options =>
+        _ = services.AddAntiforgery(options =>
         {
             options.Cookie.Name = runtimeOptions.AntiforgeryCookieName;
             options.Cookie.Path = "/";

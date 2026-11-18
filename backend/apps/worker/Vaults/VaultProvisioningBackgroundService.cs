@@ -1,11 +1,11 @@
-using Altivy.Backend.Application.Vaults;
-using Altivy.Notes.Worker.Observability;
 using System.Data.Common;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Nodra.Backend.Application.Vaults;
+using Nodra.Notes.Worker.Observability;
 
-namespace Altivy.Notes.Worker.Vaults;
+namespace Nodra.Notes.Worker.Vaults;
 
 /// <summary>
 /// Consome operações de provisioning de vault persistidas no PostgreSQL.
@@ -16,8 +16,8 @@ public sealed class VaultProvisioningBackgroundService(
     WorkerTelemetry telemetry,
     ILogger<VaultProvisioningBackgroundService> logger) : BackgroundService
 {
-    private static readonly TimeSpan PollingInterval = TimeSpan.FromSeconds(5);
-    private static readonly TimeSpan ReconciliationInterval = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan s_pollingInterval = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan s_reconciliationInterval = TimeSpan.FromMinutes(5);
 
     /// <inheritdoc />
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -37,7 +37,7 @@ public sealed class VaultProvisioningBackgroundService(
                     await ReconcileAsync(stoppingToken);
                     await ReconcileOrphanedDirectoriesAsync(stoppingToken);
                     await ScheduleRetentionWarningsAsync(stoppingToken);
-                    nextReconciliationAt = timeProvider.GetUtcNow().Add(ReconciliationInterval);
+                    nextReconciliationAt = timeProvider.GetUtcNow().Add(s_reconciliationInterval);
                 }
 
                 while (await ProcessNextAlertAsync(stoppingToken))
@@ -75,7 +75,7 @@ public sealed class VaultProvisioningBackgroundService(
                 logger.LogError(exception, "Falha ao processar uma operação de provisioning de vault.");
             }
 
-            await Task.Delay(PollingInterval, stoppingToken);
+            await Task.Delay(s_pollingInterval, stoppingToken);
         }
     }
 

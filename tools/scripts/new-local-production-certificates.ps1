@@ -97,7 +97,7 @@ openssl x509 -req -in /tmp/tls.csr -CA /ca/rootCA.pem -CAkey /ca/rootCA-key.pem 
 openssl req -new -newkey rsa:3072 -nodes -keyout /tmp/generated/api.key -out /tmp/api.csr -subj '/CN=api' -addext 'subjectAltName=DNS:api,DNS:localhost,IP:127.0.0.1,IP:::1'
 openssl x509 -req -in /tmp/api.csr -CA /ca/rootCA.pem -CAkey /ca/rootCA-key.pem -set_serial "0x$(openssl rand -hex 16)" -days 825 -sha256 -copy_extensions copy -out /tmp/generated/api.crt
 cp /ca/rootCA.pem /tmp/generated/rootCA.pem
-openssl req -x509 -newkey rsa:3072 -nodes -keyout /tmp/generated/protection.key -out /tmp/generated/protection.crt -days 730 -sha256 -subj '/CN=Altivy Notes Data Protection'
+openssl req -x509 -newkey rsa:3072 -nodes -keyout /tmp/generated/protection.key -out /tmp/generated/protection.crt -days 730 -sha256 -subj '/CN=Nodra Data Protection'
 openssl pkcs12 -export -inkey /tmp/generated/protection.key -in /tmp/generated/protection.crt -out /tmp/generated/altivy-data-protection.pfx -passout env:ALTIVY_DATA_PROTECTION_CERTIFICATE_PASSWORD -keypbe AES-256-CBC -certpbe AES-256-CBC -macalg SHA256 -iter 100000
 chmod 0444 /tmp/generated/*.crt /tmp/generated/rootCA.pem
 chown 101:101 /tmp/generated/tls.key

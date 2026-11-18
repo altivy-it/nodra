@@ -1,6 +1,6 @@
 ---
 name: "Criação e manutenção de scripts"
-description: "Use ao criar, mover ou refatorar scripts PowerShell, Bash ou Python, automações locais, comandos uv e pyproject.toml do Altivy."
+description: "Use ao criar, mover ou refatorar scripts PowerShell, Bash ou Python, automações locais, comandos uv e pyproject.toml do Nodra."
 applyTo: "**/*.ps1, **/*.sh, **/*.bash, **/*.py, **/pyproject.toml, tools/**"
 ---
 

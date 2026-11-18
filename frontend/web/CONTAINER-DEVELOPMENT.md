@@ -1,4 +1,4 @@
-# Desenvolvimento do Altivy Web
+# Desenvolvimento do Nodra Web
 
 O alias `ng` usa `lzocateli/angular-cli:22.1.0-node24.15.0-bookworm`.
 O código é montado em `/workspace` e `node_modules` fica no volume Docker
@@ -13,7 +13,7 @@ ng test
 ```
 
 O alias monta o diretório atual como `/workspace`. Portanto, não execute `ng`
-na raiz de `AltivyNotes`: ela não contém `angular.json` e o Angular CLI retorna
+na raiz de `Nodra`: ela não contém `angular.json` e o Angular CLI retorna
 “This command is not available when running the Angular CLI outside a workspace”.
 
 Secret recomendado (arquivo local montado como read-only no container):

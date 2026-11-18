@@ -1,0 +1,184 @@
+name: nodra
+
+services:
+
+  web:
+    build:
+      context: ../..
+      dockerfile: frontend/web/Dockerfile
+      args:
+        WEB_CONFIGURATION: e2e
+        WEB_BASE_HREF: /notes/
+    image: nodra-web:e2e
+    restart: "no"
+    stop_grace_period: 10s
+    networks:
+      altivy:
+        ipv4_address: 172.30.0.10
+        aliases:
+          - web
+      identity-global:
+        aliases:
+          - notes-web
+
+  bff:
+    build:
+      context: ../..
+      dockerfile: backend/apps/bff/Dockerfile
+    image: altivy-bff:e2e
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      Bff__AllowInsecureHttpForDevelopment: "true"
+      Authentication__Keycloak__Authority: ${KEYCLOAK_PUBLIC_URL:-https://localhost:7443}/realms/altivy
+      Authentication__Keycloak__ClientId: altivy-bff
+      Authentication__Keycloak__ClientSecret: ${ALTIVY_E2E_BFF_CLIENT_SECRET:?Defina o secret local do client BFF}
+      Downstream__Api__BaseUrl: http://api:8080
+      Security__AllowedOrigins__0: https://localhost:7443
+      Security__TrustedProxies__0: ${IDENTITY_GATEWAY_IP:?Defina o IP atual do gateway identity-global}
+      Security__TrustedNetworks__0: 172.30.0.0/24
+      Security__TrustedNetworks__1: ${IDENTITY_GATEWAY_SUBNET:?Defina a sub-rede atual de identity-global}
+      Security__TrustedNetworks__2: 127.0.0.0/8
+      Security__DataProtectionKeysPath: /keys
+      AllowedHosts: "*"
+      SSL_CERT_FILE: /certs/rootCA.pem
+    extra_hosts:
+      - "localhost:${IDENTITY_GATEWAY_IP:?Defina o IP atual do gateway identity-global}"
+    volumes:
+      - ${ALTIVY_E2E_DATA_PROTECTION_KEYS_PATH:?Defina o diretório absoluto para chaves de Data Protection}:/keys
+      - ${ALTIVY_E2E_TLS_CA_PATH:?Defina o caminho absoluto da CA local do mkcert}:/certs/rootCA.pem:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: "no"
+    stop_grace_period: 20s
+    networks:
+      altivy:
+        ipv4_address: 172.30.0.20
+        aliases:
+          - bff
+      identity-global:
+        aliases:
+          - notes-bff
+
+  vaults-init:
+    image: lzocateli/dotnet-aspnet:10.0.11-noble
+    # named volumes são criados root:root; a imagem roda não-root por padrão, então força root aqui.
+    user: "0:0"
+    entrypoint: ["chown", "-R", "1654:1654", "/vaults"]
+    restart: "no"
+    volumes:
+      - altivy-e2e-vaults:/vaults
+    networks:
+      altivy:
+
+  api:
+    build:
+      context: ../..
+      dockerfile: backend/apps/api/Dockerfile
+    image: altivy-api:e2e
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      Keycloak__Authority: ${KEYCLOAK_PUBLIC_URL:-https://localhost:7443}/realms/altivy
+      Keycloak__Audience: altivy-api
+      ConnectionStrings__AltivyPostgres: ${ALTIVY_INTEGRATION_RUNTIME_CONNECTION_STRING:?Defina a connection string runtime do Nodra}
+      Database__PostgresHostOverride: postgres
+      VaultStorage__Root: /vaults
+      SSL_CERT_FILE: /certs/rootCA.pem
+    extra_hosts:
+      - "localhost:${IDENTITY_GATEWAY_IP:?Defina o IP atual do gateway identity-global}"
+    volumes:
+      - ${ALTIVY_E2E_TLS_CA_PATH:?Defina o caminho absoluto da CA local do mkcert}:/certs/rootCA.pem:ro
+      - altivy-e2e-vaults:/vaults
+    depends_on:
+      vaults-init:
+        condition: service_completed_successfully
+    restart: "no"
+    stop_grace_period: 20s
+    networks:
+      altivy:
+        ipv4_address: 172.30.0.30
+        aliases:
+          - api
+      identity-data:
+
+  worker:
+    build:
+      context: ../..
+      dockerfile: backend/apps/worker/Dockerfile
+    image: altivy-worker:e2e
+    environment:
+      DOTNET_ENVIRONMENT: Development
+      ConnectionStrings__AltivyPostgres: ${ALTIVY_INTEGRATION_RUNTIME_CONNECTION_STRING:?Defina a connection string runtime do Nodra}
+      Database__PostgresHostOverride: postgres
+      VaultStorage__Root: /vaults
+    extra_hosts:
+      - "localhost:${IDENTITY_GATEWAY_IP:?Defina o IP atual do gateway identity-global}"
+    volumes:
+      - ${ALTIVY_E2E_TLS_CA_PATH:?Defina o caminho absoluto da CA local do mkcert}:/certs/rootCA.pem:ro
+      - altivy-e2e-vaults:/vaults
+    depends_on:
+      vaults-init:
+        condition: service_completed_successfully
+    restart: "no"
+    stop_grace_period: 30s
+    networks:
+      altivy:
+      identity-data:
+
+  migrator:
+    build:
+      context: ../..
+      dockerfile: deploy/production/migrations.Dockerfile
+    image: altivy-migrations:e2e
+    environment:
+      ALTIVY_E2E_MIGRATOR_CONNECTION_STRING: ${ALTIVY_INTEGRATION_MIGRATOR_CONNECTION_STRING:?Defina a connection string de migration do Nodra}
+      ALTIVY_DESIGNTIME_CONNECTION_STRING: ${ALTIVY_INTEGRATION_MIGRATOR_CONNECTION_STRING:?Defina a connection string de migration do Nodra}
+    entrypoint: ["/bin/sh", "-ec"]
+    command: ["exec /app/efbundle --connection \"$$ALTIVY_E2E_MIGRATOR_CONNECTION_STRING\""]
+    profiles:
+      - operations
+    network_mode: host
+    restart: "no"
+
+  integration-tests:
+    image: lzocateli/dotnet-sdk:10.0.400-noble
+    profiles:
+      - integration-tests
+    working_dir: /workspace/backend
+    network_mode: host
+    environment:
+      HOME: /tmp
+      DOTNET_CLI_HOME: /tmp
+      NUGET_PACKAGES: /tmp/nuget-packages
+      ALTIVY_INTEGRATION_MIGRATOR_CONNECTION_STRING: ${ALTIVY_INTEGRATION_MIGRATOR_CONNECTION_STRING:?Defina a connection string de migration do Nodra}
+      ALTIVY_INTEGRATION_RUNTIME_CONNECTION_STRING: ${ALTIVY_INTEGRATION_RUNTIME_CONNECTION_STRING:?Defina a connection string runtime do Nodra}
+    volumes:
+      - ../..:/workspace
+    entrypoint: ["dotnet"]
+    command:
+      - test
+      - tests/Nodra.Backend.Infra.Data.Postgres.IntegrationTests/Nodra.Backend.Infra.Data.Postgres.IntegrationTests.csproj
+      - --configuration
+      - Release
+      - --verbosity
+      - minimal
+      - --filter
+      - Category=Integration
+      - -p:RunAnalyzers=false
+
+networks:
+  altivy:
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
+  identity-global:
+    external: true
+    name: identity-global
+  identity-data:
+    external: true
+    name: identity-data
+
+volumes:
+  altivy-e2e-vaults:

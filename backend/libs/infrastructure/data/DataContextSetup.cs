@@ -1,8 +1,8 @@
-using Altivy.Backend.Application.Notes;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Nodra.Backend.Application.Notes;
 
-namespace Altivy.Backend.Infra.Data.Postgres;
+namespace Nodra.Backend.Infra.Data.Postgres;
 
 /// <summary>
 /// Configura o acesso PostgreSQL da infraestrutura de dados.
@@ -19,15 +19,15 @@ public static class DataContextSetup
         this IServiceCollection services,
         string connectionString)
     {
-        services.AddDbContextPool<PostgresDbContext>(options =>
+        _ = services.AddDbContextPool<PostgresDbContext>(options =>
         {
-            options.UseNpgsql(connectionString, npgsqlOptions =>
+            _ = options.UseNpgsql(connectionString, npgsqlOptions =>
                 npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "altivy"));
         });
 
-        services.AddScoped<INoteProjectionStore, PostgresNoteProjectionStore>();
-        services.AddScoped<INoteIndexJobStore, PostgresNoteIndexJobStore>();
-        services.AddScoped<PostgresVaultReader>();
+        _ = services.AddScoped<INoteProjectionStore, PostgresNoteProjectionStore>();
+        _ = services.AddScoped<INoteIndexJobStore, PostgresNoteIndexJobStore>();
+        _ = services.AddScoped<PostgresVaultReader>();
         return services;
     }
 }

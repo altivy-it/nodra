@@ -7,7 +7,7 @@ termos de contrato e marcadores literais exigidos por ferramentas.
 
 ## Contexto obrigatório
 
-- O Altivy é uma aplicação web self-hosted de gestão de conhecimento em Markdown.
+- O Nodra é uma aplicação web self-hosted de gestão de conhecimento em Markdown.
 - Leia o [plano mestre](../docs/plano-mestre.md) antes de alterar arquitetura, contratos, persistência ou segurança.
 - Consulte [frontend](../docs/frontend.md), [backend](../docs/backend.md) e [evolução do produto](../docs/evolucao-produto.md) conforme o escopo.
 - Arquivos Markdown no vault são a fonte canônica; PostgreSQL é uma projeção reconstruível.
@@ -75,7 +75,7 @@ Para mudanças da aplicação, esse fluxo técnico é executado exclusivamente d
   [altivy-notes-localize-speckit](skills/altivy-notes-localize-speckit/SKILL.md)
   para auditar/traduzir textos humanos em pt-BR sem alterar comandos, aliases,
   IDs, placeholders ou contratos de leitura. Invoque explicitamente na raiz
-  AltivyNotes; sem modo explícito, somente audite. Não invente configuração de
+  Nodra; sem modo explícito, somente audite. Não invente configuração de
   idioma ou hooks de instalação.
 - Consulte [o guia de extensões e manutenção](README.md#spec-kit-e-extensões) para versões, comandos e validação. Preserve constituição, specs, overrides e personalizações locais ao atualizar.
 
@@ -99,7 +99,7 @@ Para mudanças da aplicação, esse fluxo técnico é executado exclusivamente d
 	container apropriado; não invoque `npx` instalado no host.
 - Antes de enviar `ng`, confirme que o diretório atual é `frontend/web`; se o
 	terminal estiver na raiz do monorepo, envie primeiro
-	`Set-Location $env:USERPROFILE\projetos\AltivyNotes\frontend\web`. Executar
+	`Set-Location $env:USERPROFILE\projetos\nodra\frontend\web`. Executar
 	`ng` na raiz monta um diretório sem `angular.json` e falha com “outside a
 	workspace”.
 - Envie os comandos ao terminal como texto literal, sem caracteres de controle
@@ -136,7 +136,7 @@ Para mudanças da aplicação, esse fluxo técnico é executado exclusivamente d
 	durante validações. Antes de mover ou gravar secrets, falhe fechado se o
 	destino já existir.
 - Conteúdo, persistência, busca e edição não podem depender de embeddings, nuvem ou internet; acesso autenticado depende somente do Keycloak configurado, que pode operar na rede local.
-- Keycloak é a plataforma externa obrigatória de identidade e decisão de autorização. Não implemente cadastro, senha, recuperação de conta, diretório de usuários, memberships ou políticas de autorização no Altivy.
+- Keycloak é a plataforma externa obrigatória de identidade e decisão de autorização. Não implemente cadastro, senha, recuperação de conta, diretório de usuários, memberships ou políticas de autorização no Nodra.
 - O BFF atua somente como cliente OIDC e proteção de tokens; a API atua como PEP e falha fechada ao aplicar as permissões emitidas pelo Keycloak.
 - Não adicione Redis, object storage, banco de grafos ou microsserviço sem ADR e evidência operacional.
 - Tabelas com potencial de crescimento elevado ou retenção temporal devem usar Table Partitioning/Declarative Partitioning por faixa de data, preferencialmente partições mensais; a solução deve definir criação antecipada, rollover, partição de segurança para datas fora da janela, índices por partição, retenção e testes de roteamento antes da produção, independentemente do banco de dados adotado.

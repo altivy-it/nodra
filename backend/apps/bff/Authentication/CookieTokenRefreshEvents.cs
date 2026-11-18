@@ -1,9 +1,9 @@
 using System.Globalization;
-using Altivy.Bff.Observability;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Nodra.Bff.Observability;
 
-namespace Altivy.Bff.Authentication;
+namespace Nodra.Bff.Authentication;
 
 /// <summary>
 /// Valida a sessão do cookie e renova tokens próximos da expiração.
@@ -14,8 +14,8 @@ public sealed class CookieTokenRefreshEvents(
     BffTelemetry telemetry,
     ILogger<CookieTokenRefreshEvents> logger) : CookieAuthenticationEvents
 {
-    private static readonly TimeSpan RefreshWindow = TimeSpan.FromMinutes(1);
-    private static readonly Action<ILogger, Exception?> LogRefreshFailure = LoggerMessage.Define(
+    private static readonly TimeSpan s_refreshWindow = TimeSpan.FromMinutes(1);
+    private static readonly Action<ILogger, Exception?> s_logRefreshFailure = LoggerMessage.Define(
         LogLevel.Warning,
         new EventId(1, "TokenRefreshFailure"),
         "A renovação da sessão no Keycloak falhou.");
@@ -33,7 +33,7 @@ public sealed class CookieTokenRefreshEvents(
                 CultureInfo.InvariantCulture,
                 DateTimeStyles.RoundtripKind,
             out var expiresAt);
-        if (hasExpiration && expiresAt > timeProvider.GetUtcNow().Add(RefreshWindow))
+        if (hasExpiration && expiresAt > timeProvider.GetUtcNow().Add(s_refreshWindow))
         {
             return;
         }
@@ -51,9 +51,9 @@ public sealed class CookieTokenRefreshEvents(
             var refreshed = await refreshCoordinator.RefreshAsync(
                 refreshToken,
                 context.HttpContext.RequestAborted);
-            context.Properties.UpdateTokenValue("access_token", refreshed.AccessToken);
-            context.Properties.UpdateTokenValue("refresh_token", refreshed.RefreshToken);
-            context.Properties.UpdateTokenValue(
+            _ = context.Properties.UpdateTokenValue("access_token", refreshed.AccessToken);
+            _ = context.Properties.UpdateTokenValue("refresh_token", refreshed.RefreshToken);
+            _ = context.Properties.UpdateTokenValue(
                 "expires_at",
                 refreshed.ExpiresAt.ToString("O", CultureInfo.InvariantCulture));
             context.ShouldRenew = true;
@@ -62,7 +62,7 @@ public sealed class CookieTokenRefreshEvents(
         catch (TokenRefreshRejectedException exception)
         {
             RecordRefresh(startedAt, TokenRefreshOutcome.Rejected);
-            LogRefreshFailure(logger, exception);
+            s_logRefreshFailure(logger, exception);
             await RejectSessionAsync(context, "A renovação da sessão foi rejeitada.");
         }
         catch (OperationCanceledException exception) when (!context.HttpContext.RequestAborted.IsCancellationRequested)
@@ -86,7 +86,7 @@ public sealed class CookieTokenRefreshEvents(
         bool hasExpiration,
         DateTimeOffset expiresAt)
     {
-        LogRefreshFailure(logger, exception);
+        s_logRefreshFailure(logger, exception);
         if (!hasExpiration || expiresAt <= timeProvider.GetUtcNow())
         {
             context.RejectPrincipal();

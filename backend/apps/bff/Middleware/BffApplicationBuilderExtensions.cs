@@ -1,7 +1,6 @@
-using Altivy.Bff.Authentication;
-using Microsoft.AspNetCore.Builder;
+using Nodra.Bff.Authentication;
 
-namespace Altivy.Bff.Middleware;
+namespace Nodra.Bff.Middleware;
 
 /// <summary>
 /// Fornece métodos para compor o pipeline HTTP do BFF.
@@ -15,15 +14,15 @@ public static class BffApplicationBuilderExtensions
     /// <returns>A mesma aplicação Web, permitindo encadear outras extensões de pipeline.</returns>
     public static WebApplication UseBff(this WebApplication app)
     {
-        app.UseMiddleware<ForwardedPrefixMiddleware>();
-        app.UseForwardedHeaders();
-        app.UseHttpsRedirection();
-        app.UseWebSockets();
-        app.UseMiddleware<OriginValidationMiddleware>();
-        app.UseRateLimiter();
-        app.UseAuthentication();
-        app.UseAuthorization();
-        app.UseAntiforgery();
+        _ = app.UseMiddleware<ForwardedPrefixMiddleware>();
+        _ = app.UseForwardedHeaders();
+        _ = app.UseHttpsRedirection();
+        _ = app.UseWebSockets();
+        _ = app.UseMiddleware<OriginValidationMiddleware>();
+        _ = app.UseRateLimiter();
+        _ = app.UseAuthentication();
+        _ = app.UseAuthorization();
+        _ = app.UseAntiforgery();
 
         return app;
     }

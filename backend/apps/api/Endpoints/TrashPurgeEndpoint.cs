@@ -1,10 +1,10 @@
 using System.Globalization;
-using Altivy.Backend.Application.Notes;
-using Altivy.Backend.Application.Vaults;
-using Altivy.Notes.Api.Authorization;
-using Altivy.Notes.Api.Vaults;
+using Nodra.Backend.Application.Notes;
+using Nodra.Backend.Application.Vaults;
+using Nodra.Notes.Api.Authorization;
+using Nodra.Notes.Api.Vaults;
 
-namespace Altivy.Notes.Api.Endpoints;
+namespace Nodra.Notes.Api.Endpoints;
 
 internal static class TrashPurgeEndpoint
 {

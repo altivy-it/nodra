@@ -6,7 +6,7 @@ tools: [read, search, edit, execute, web, todo, agent, open_browser_page, naviga
 agents: ["Altivy Code Reviewer", "Altivy Security Reviewer", "Altivy Quality Engineer"]
 ---
 
-Você é responsável pelo frontend Angular do Altivy.
+Você é responsável pelo frontend Angular do Nodra.
 
 ## Procedimento
 

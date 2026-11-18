@@ -1,6 +1,6 @@
-using Altivy.Backend.Domain.Notes;
+using Nodra.Backend.Domain.Notes;
 
-namespace Altivy.Backend.Application.Notes;
+namespace Nodra.Backend.Application.Notes;
 
 /// <summary>
 /// Persiste operações reversíveis da lixeira sem alterar a fonte canônica fora do filesystem.

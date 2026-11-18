@@ -1,4 +1,4 @@
-namespace Altivy.Backend.Domain.Vaults;
+namespace Nodra.Backend.Domain.Vaults;
 
 /// <summary>
 /// Representa o estado operacional do provisioning de um vault.

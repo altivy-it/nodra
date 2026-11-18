@@ -1,10 +1,10 @@
 using System.Globalization;
 using System.Net;
 using System.Net.Mail;
-using Altivy.Backend.Application.Vaults;
 using Microsoft.Extensions.Options;
+using Nodra.Backend.Application.Vaults;
 
-namespace Altivy.Notes.Worker.Notifications;
+namespace Nodra.Notes.Worker.Notifications;
 
 /// <summary>
 /// Envia alertas operacionais sanitizados à caixa SMTP administrativa.

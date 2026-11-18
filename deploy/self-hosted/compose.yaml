@@ -9,7 +9,7 @@ services:
         IMAGE_VERSION: ${ALTIVY_WEB_VERSION:-0.1.0}
         WEB_CONFIGURATION: production
         WEB_BASE_HREF: /notes/
-    image: ${ALTIVY_WEB_IMAGE:-altivy-web:0.1.0}
+    image: ${ALTIVY_WEB_IMAGE:-nodra-web:0.1.0}
     pull_policy: missing
     restart: unless-stopped
     init: true
@@ -31,7 +31,7 @@ services:
       dockerfile: backend/apps/bff/Dockerfile
       args:
         IMAGE_VERSION: ${ALTIVY_BACKEND_VERSION:-0.1.0}
-    image: ${ALTIVY_BFF_IMAGE:-altivy-bff:0.1.0}
+    image: ${ALTIVY_BFF_IMAGE:-nodra-bff:0.1.0}
     pull_policy: missing
     extra_hosts:
       - "localhost:${IDENTITY_GATEWAY_IP:?Configure IDENTITY_GATEWAY_IP}"
@@ -79,7 +79,7 @@ services:
       dockerfile: backend/apps/api/Dockerfile
       args:
         IMAGE_VERSION: ${ALTIVY_BACKEND_VERSION:-0.1.0}
-    image: ${ALTIVY_API_IMAGE:-altivy-api:0.1.0}
+    image: ${ALTIVY_API_IMAGE:-nodra-api:0.1.0}
     pull_policy: missing
     extra_hosts:
       - "localhost:${IDENTITY_GATEWAY_IP:?Configure IDENTITY_GATEWAY_IP}"
@@ -123,7 +123,7 @@ services:
       dockerfile: backend/apps/worker/Dockerfile
       args:
         IMAGE_VERSION: ${ALTIVY_BACKEND_VERSION:-0.1.0}
-    image: ${ALTIVY_WORKER_IMAGE:-altivy-worker:0.1.0}
+    image: ${ALTIVY_WORKER_IMAGE:-nodra-worker:0.1.0}
     pull_policy: missing
     environment:
       DOTNET_ENVIRONMENT: Production

@@ -1,8 +1,8 @@
-using Altivy.Backend.Application.Vaults;
-using Altivy.Backend.Domain.Vaults;
 using System.Text;
+using Nodra.Backend.Application.Vaults;
+using Nodra.Backend.Domain.Vaults;
 
-namespace Altivy.Notes.Api.Vaults;
+namespace Nodra.Notes.Api.Vaults;
 
 /// <summary>
 /// Reader temporário para o vault sintético do laboratório.
@@ -10,7 +10,7 @@ namespace Altivy.Notes.Api.Vaults;
 public sealed class LabVaultReader : IVaultReader
 {
     private const string CursorPrefix = "v1:";
-    private static readonly VaultCandidate[] Candidates =
+    private static readonly VaultCandidate[] s_candidates =
     [
         new("lab-0001", "Laboratório principal"),
         new("lab-0002", "Laboratório secundário")
@@ -24,7 +24,7 @@ public sealed class LabVaultReader : IVaultReader
     /// <returns>O vault de laboratório quando o ID é conhecido.</returns>
     public Task<Vault?> FindAsync(string id, CancellationToken cancellationToken)
     {
-        var candidate = Candidates.SingleOrDefault(candidate => candidate.Id == id);
+        var candidate = s_candidates.SingleOrDefault(candidate => candidate.Id == id);
         var vault = candidate is null ? null : Vault.Create(candidate.Id, candidate.Name);
         return Task.FromResult(vault);
     }
@@ -38,8 +38,8 @@ public sealed class LabVaultReader : IVaultReader
         cancellationToken.ThrowIfCancellationRequested();
         var lastId = DecodeCursor(cursor);
         var candidates = lastId is null
-            ? Candidates
-            : Candidates.Where(candidate => string.CompareOrdinal(candidate.Id, lastId) > 0).ToArray();
+            ? s_candidates
+            : s_candidates.Where(candidate => string.CompareOrdinal(candidate.Id, lastId) > 0).ToArray();
         var items = candidates.Take(limit).ToArray();
         var nextCursor = candidates.Length > limit ? EncodeCursor(items[^1].Id) : null;
         return Task.FromResult(new VaultCandidatePage(items, nextCursor));
@@ -63,7 +63,7 @@ public sealed class LabVaultReader : IVaultReader
             var value = Encoding.UTF8.GetString(Convert.FromBase64String(base64));
             if (!value.StartsWith(CursorPrefix, StringComparison.Ordinal)) throw new InvalidVaultCursorException();
             var id = value[CursorPrefix.Length..];
-            if (Candidates.All(candidate => candidate.Id != id)) throw new InvalidVaultCursorException();
+            if (s_candidates.All(candidate => candidate.Id != id)) throw new InvalidVaultCursorException();
             return id;
         }
         catch (InvalidVaultCursorException)

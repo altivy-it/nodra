@@ -1,6 +1,6 @@
 # Scripts e automação
 
-Este documento define onde criar scripts e o contrato mínimo de linha de comando no monorepo Altivy.
+Este documento define onde criar scripts e o contrato mínimo de linha de comando no monorepo Nodra.
 
 ## Estrutura
 

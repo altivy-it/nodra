@@ -1,6 +1,6 @@
 ---
 name: "Design System Frontend"
-description: "Use ao criar ou alterar design system, tokens, temas, ícones e componentes base Angular do Altivy."
+description: "Use ao criar ou alterar design system, tokens, temas, ícones e componentes base Angular do Nodra."
 applyTo: "frontend/libs/frontend/design-system/**, frontend/web/src/app/design-system/**"
 ---
 

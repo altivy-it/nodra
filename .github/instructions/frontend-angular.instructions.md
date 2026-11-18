@@ -1,6 +1,6 @@
 ---
 name: "Frontend Angular"
-description: "Use ao criar ou alterar Angular 22, TypeScript, componentes, páginas, estado, rotas, editor Markdown, grafo, acessibilidade ou UX do Altivy."
+description: "Use ao criar ou alterar Angular 22, TypeScript, componentes, páginas, estado, rotas, editor Markdown, grafo, acessibilidade ou UX do Nodra."
 applyTo: "frontend/web/**, frontend/libs/frontend/**"
 ---
 
@@ -19,7 +19,7 @@ applyTo: "frontend/web/**, frontend/libs/frontend/**"
 	`ng serve` ou dos serviços diretamente, mesmo quando publicados no host.
 - Antes de invocar `ng`, confirme o diretório atual. Quando o terminal iniciar
 	na raiz do monorepo, execute
-	`Set-Location $env:USERPROFILE\projetos\AltivyNotes\frontend\web`; a raiz não
+	`Set-Location $env:USERPROFILE\projetos\nodra\frontend\web`; a raiz não
 	contém `angular.json` e resulta no erro “outside a workspace”.
 - Envie somente o comando literal ao terminal; nunca prefixe `ng` com `^U`,
 	`Ctrl+U` ou outra sequência de controle. Se essa sequência aparecer no prompt,

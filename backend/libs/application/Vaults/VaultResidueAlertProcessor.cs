@@ -1,4 +1,4 @@
-namespace Altivy.Backend.Application.Vaults;
+namespace Nodra.Backend.Application.Vaults;
 
 /// <summary>
 /// Entrega alertas administrativos de resíduos com lease e retry duráveis.
@@ -8,8 +8,8 @@ public sealed class VaultResidueAlertProcessor(
     IAdministrativeNotifier notifier,
     TimeProvider timeProvider)
 {
-    private static readonly TimeSpan LeaseDuration = TimeSpan.FromMinutes(5);
-    private static readonly TimeSpan RetryDelay = TimeSpan.FromMinutes(1);
+    private static readonly TimeSpan s_leaseDuration = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan s_retryDelay = TimeSpan.FromMinutes(1);
 
     /// <summary>
     /// Reivindica e entrega um alerta administrativo pendente.
@@ -19,7 +19,7 @@ public sealed class VaultResidueAlertProcessor(
     public async Task<bool> ProcessNextAsync(CancellationToken cancellationToken)
     {
         var now = timeProvider.GetUtcNow();
-        var workItem = await alertStore.ClaimNextAlertAsync(now, LeaseDuration, cancellationToken);
+        var workItem = await alertStore.ClaimNextAlertAsync(now, s_leaseDuration, cancellationToken);
         if (workItem is null)
         {
             return false;
@@ -28,13 +28,13 @@ public sealed class VaultResidueAlertProcessor(
         try
         {
             await notifier.NotifyAsync(workItem.Alert, cancellationToken);
-            await alertStore.CompleteAlertAsync(workItem, null, null, cancellationToken);
+            _ = await alertStore.CompleteAlertAsync(workItem, null, null, cancellationToken);
         }
         catch (AdministrativeNotificationDeliveryException)
         {
-            await alertStore.CompleteAlertAsync(
+            _ = await alertStore.CompleteAlertAsync(
                 workItem,
-                now.Add(RetryDelay),
+                now.Add(s_retryDelay),
                 "administrative-notification-delivery-failed",
                 cancellationToken);
         }

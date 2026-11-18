@@ -1,6 +1,6 @@
-using Altivy.Backend.Domain.Vaults;
+using Nodra.Backend.Domain.Vaults;
 
-namespace Altivy.Backend.Infra.Data.Postgres;
+namespace Nodra.Backend.Infra.Data.Postgres;
 
 /// <summary>
 /// Modelo de persistência da projeção de um vault.

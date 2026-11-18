@@ -218,6 +218,27 @@ def mocked_workspace(page: Page, base_url: str) -> FakeVault:
     return vault
 
 
+@pytest.mark.parametrize("width", [1440, 390], ids=["desktop", "mobile"])
+def test_nodra_brand_keeps_workspace_identity(
+    page: Page, base_url: str, mocked_workspace: FakeVault, width: int,
+) -> None:
+    errors: list[str] = []
+    page.on("pageerror", lambda error: errors.append(str(error)))
+    page.set_viewport_size({"width": width, "height": 900 if width > 480 else 844})
+    page.goto(f"{base_url}/workspace/lab-0001/files")
+    expect(page).to_have_title("Nodra Workspace")
+    expect(page.get_by_role("contentinfo")).to_contain_text("Altivy Nodra")
+    expect(page.get_by_text("Altivy Notes", exact=False)).to_have_count(0)
+    if width <= 480:
+        page.get_by_role("button", name="Recolher explorador").click()
+        page.get_by_role("button", name="Recolher painel contextual").click()
+        expect(page.get_by_role("heading", name="Abra uma nota para começar.")).to_be_in_viewport()
+    assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+    REPORTS.mkdir(parents=True, exist_ok=True)
+    page.screenshot(path=str(REPORTS / f"nodra-brand-{width}.png"))
+    assert not errors
+
+
 @pytest.mark.parametrize("viewport", [
     {"width": 1440, "height": 900},
     {"width": 390, "height": 844},

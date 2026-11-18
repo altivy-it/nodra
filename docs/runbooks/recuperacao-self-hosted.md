@@ -5,7 +5,7 @@
 Use quando PostgreSQL/readiness estiver indisponivel, uma atualizacao falhar ou
 for necessario restaurar dados. Arquivos Markdown e banco devem ser recuperados
 como um conjunto coerente. Keycloak e seus backups pertencem ao operador da
-plataforma de identidade, nao ao backup do Altivy.
+plataforma de identidade, nao ao backup do Nodra.
 
 Este procedimento nao autoriza restaurar sobre um banco compartilhado nem
 aplicar downgrade de schema. Consulte o
@@ -79,10 +79,10 @@ do container: `--network none`, sem portas publicadas e com listener TCP
 desabilitado. A camada e removida automaticamente. Use a mesma versao/digest
 PostgreSQL da origem, disponivel localmente; o ensaio nao le credenciais.
 
-Na raiz do AltivyNotes, informe o ID emitido pelo boot e execute:
+Na raiz do Nodra, informe o ID emitido pelo boot e execute:
 
 ```powershell
-$dataRoot = Join-Path $env:LOCALAPPDATA 'AltivyNotes\Production'
+$dataRoot = Join-Path $env:LOCALAPPDATA 'Nodra\Production'
 $backupId = '<id-do-snapshot>'
 $backupDirectory = Join-Path $dataRoot 'backups'
 $metadataName = "$backupId.metadata.json"

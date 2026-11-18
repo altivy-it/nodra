@@ -1,11 +1,11 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using Altivy.Backend.Application.Notes;
-using Altivy.Backend.Domain.Notes;
-using Altivy.Backend.Domain.Vaults;
+using Nodra.Backend.Application.Notes;
+using Nodra.Backend.Domain.Notes;
+using Nodra.Backend.Domain.Vaults;
 
-namespace Altivy.Backend.Infra.Data.Postgres;
+namespace Nodra.Backend.Infra.Data.Postgres;
 
 /// <summary>
 /// Lista filhos imediatos e cria pastas dentro da raiz local de vaults.
@@ -142,7 +142,7 @@ public sealed class FileSystemFolderStore(string vaultRoot) : IFolderStore
         EnsureNotReparsePoint(parentPath);
         var operationId = Guid.NewGuid();
         var operationDirectory = GetOperationDirectory(vaultPath, subject, operationId, createIfMissing: true);
-        Directory.CreateDirectory(operationDirectory);
+        _ = Directory.CreateDirectory(operationDirectory);
         EnsureNotReparsePoint(operationDirectory);
 
         var manifest = new TrashManifest(
@@ -399,7 +399,7 @@ public sealed class FileSystemFolderStore(string vaultRoot) : IFolderStore
 
         try
         {
-            Directory.CreateDirectory(destination);
+            _ = Directory.CreateDirectory(destination);
         }
         catch (IOException) when (Directory.Exists(destination))
         {
@@ -625,7 +625,7 @@ public sealed class FileSystemFolderStore(string vaultRoot) : IFolderStore
         {
             throw new UnauthorizedAccessException("O diretório isolado da lixeira é inválido.");
         }
-        if (createIfMissing) Directory.CreateDirectory(subjectDirectory);
+        if (createIfMissing) _ = Directory.CreateDirectory(subjectDirectory);
         if (Directory.Exists(subjectDirectory)) EnsureNotReparsePoint(subjectDirectory);
         return subjectDirectory;
     }

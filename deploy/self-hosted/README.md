@@ -1,25 +1,49 @@
 # Instalação self-hosted
 
+## Transicao para Nodra
+
+O produto passa a se chamar **Nodra**, da empresa **Altivy**, com marca completa
+**Altivy Nodra** e repositorio `altivy-it/nodra`. A solucao agora e
+`Nodra.slnx`; projetos e assemblies usam o prefixo `Nodra`.
+
+A renomeacao nao move vaults, backups, bancos, paths externos ou secrets.
+O namespace Compose instalado continua `altivy-notes`, e as variaveis
+`ALTIVY_*`, a chave `AltivyPostgres`, o schema `altivy`, os identificadores
+Keycloak, cookies e Data Protection permanecem compativeis. Nao recrie o realm,
+nao altere issuer/audience nem mova o arquivo externo
+`$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env` para aplicar a marca.
+
+Para atualizar, mantenha a configuracao e os bind mounts existentes, revise os
+novos nomes de imagem e execute o mesmo inicializador documentado abaixo.
+Imagens novas devem existir localmente ou em release aprovada antes do rollout;
+renomear o repositorio nao publica imagens nem autoriza deploy.
+
+Para recuperacao, retorne as referencias de imagens ao manifesto anterior
+aprovado e use os mesmos dados/configuracao, sem downgrade de schema ou copia
+de secrets. A renomeacao nao requer migracao de conteudo. Consulte o
+[contrato de compatibilidade](../../specs/010-renomeacao-nodra/contracts/compatibilidade.md)
+para distinguir nomes novos de identificadores legados preservados.
+
 O ambiente self-hosted usa duas stacks independentes:
 
 | Stack | Repositorio proprietario | Servicos permanentes |
 | --- | --- | --- |
 | `altivy-identity` | `architecture-knowledge-base` | `gateway`, `postgres`, `keycloak` |
-| `altivy-notes` | `AltivyNotes` | `web`, `bff`, `api`, `worker` |
+| `altivy-notes` (namespace legado do Nodra) | `altivy-it/nodra` | `web`, `bff`, `api`, `worker` |
 
 Gateway, PostgreSQL e Keycloak sao compartilhados com outros produtos e nunca
-devem ser copiados para o Compose do AltivyNotes. O migrator e uma operacao
+devem ser copiados para o Compose do Nodra. O migrator e uma operacao
 transitoria e tambem nao integra a stack permanente do produto.
 
 > **Importante:** este projeto nao inicia nem administra a stack
-> `altivy-identity`. Ela deve estar online antes da subida do AltivyNotes e e
+> `altivy-identity`. Ela deve estar online antes da subida do Nodra e e
 > gerenciada no repositorio `architecture-knowledge-base`, em
 > `platforms/identity`. Consulte o README desse diretorio para operacoes da
 > infraestrutura compartilhada.
 
 ## Comando para subir a aplicacao
 
-Execute o comando abaixo a partir da raiz do repositorio `AltivyNotes`:
+Execute o comando abaixo a partir da raiz do repositorio `Nodra`:
 
 ```powershell
 pwsh -NoProfile -File tools/scripts/start-self-hosted.ps1 `
@@ -37,9 +61,9 @@ A versao inicial dos programas e `0.1.0`:
 
 - backend: `VersionPrefix` em `backend/Directory.Build.props`;
 - frontend: `version` em `frontend/web/package.json`;
-- imagens locais: `altivy-web:0.1.0`, `altivy-bff:0.1.0`,
-  `altivy-api:0.1.0` e `altivy-worker:0.1.0`;
-- migrator transitorio: `altivy-migrations:0.1.0`.
+- imagens locais: `nodra-web:0.1.0`, `nodra-bff:0.1.0`,
+  `nodra-api:0.1.0` e `nodra-worker:0.1.0`;
+- migrator transitorio: `nodra-migrations:0.1.0`.
 
 Ao alterar a versao, atualize as duas fontes de compilacao, os defaults do
 Compose e os defaults `IMAGE_VERSION` dos Dockerfiles no mesmo change set.
@@ -71,7 +95,7 @@ arquivo por `-IdentityEnvironmentFile`, sem copiar ou exibir seu conteudo.
 
 ## Redes e roteamento
 
-A stack `altivy-notes` ingressa nas redes externas ja existentes:
+A stack `nodra` ingressa nas redes externas ja existentes:
 
 - `identity-global`: web, BFF e API alcancam o gateway compartilhado;
 - `identity-client`: API e worker alcancam o PostgreSQL compartilhado;
@@ -135,7 +159,7 @@ O script executa automaticamente, nesta ordem:
 6. sincroniza os callbacks OIDC de `/notes` por meio do script pertencente ao
    repositorio `architecture-knowledge-base`;
 7. inicia ou atualiza somente `web`, `bff`, `api` e `worker` no projeto Compose
-   `altivy-notes` e aguarda os health checks;
+   `nodra` e aguarda os health checks;
 8. executa o smoke test de sessao pela borda compartilhada.
 
 Se uma etapa falhar, as seguintes nao sao executadas. Writers que tenham sido
@@ -158,6 +182,6 @@ Invoke-RestMethod -Uri 'https://localhost:7443/notes/bff/session'
 ```
 
 O retorno esperado antes do login informa `authenticated: false`. Para estado e
-logs, filtre os containers pelo projeto `altivy-notes`; nao use comandos que
+logs, filtre os containers pelo projeto `nodra`; nao use comandos que
 removam volumes ou bind mounts. Backup, restore isolado e rollback estao no
 [runbook de recuperacao](../../docs/runbooks/recuperacao-self-hosted.md).

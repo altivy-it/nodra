@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace Altivy.Backend.Infra.Data.Postgres;
+namespace Nodra.Backend.Infra.Data.Postgres;
 
 internal static class FileSystemTrashArea
 {
@@ -45,7 +45,7 @@ internal static class FileSystemTrashArea
 
         if (!Directory.Exists(directory))
         {
-            Directory.CreateDirectory(directory);
+            _ = Directory.CreateDirectory(directory);
             try
             {
                 using var marker = new FileStream(Path.Combine(directory, MarkerName), FileMode.CreateNew, FileAccess.Write, FileShare.None);

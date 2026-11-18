@@ -1,7 +1,7 @@
-using Altivy.Backend.Application.Vaults;
-using Altivy.Backend.Domain.Vaults;
+using Nodra.Backend.Application.Vaults;
+using Nodra.Backend.Domain.Vaults;
 
-namespace Altivy.Backend.Infra.Data.Postgres;
+namespace Nodra.Backend.Infra.Data.Postgres;
 
 /// <summary>
 /// Provisiona diretórios de vault sem permitir escape da raiz configurada.
@@ -15,7 +15,7 @@ public sealed class FileSystemVaultProvisioner(string vaultRoot) : IVaultFileSys
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        Directory.CreateDirectory(vaultRoot);
+        _ = Directory.CreateDirectory(vaultRoot);
         EnsureNotReparsePoint(vaultRoot);
 
         var vaultPath = GetVaultPath(vaultId);
@@ -26,7 +26,7 @@ public sealed class FileSystemVaultProvisioner(string vaultRoot) : IVaultFileSys
             return Task.CompletedTask;
         }
 
-        Directory.CreateDirectory(vaultPath);
+        _ = Directory.CreateDirectory(vaultPath);
         EnsureNotReparsePoint(vaultPath);
         return Task.CompletedTask;
     }
@@ -105,7 +105,7 @@ public sealed class FileSystemVaultProvisioner(string vaultRoot) : IVaultFileSys
 
         EnsureNotReparsePoint(vaultPath);
         var quarantineRoot = Path.Combine(vaultRoot, ".quarantine");
-        Directory.CreateDirectory(quarantineRoot);
+        _ = Directory.CreateDirectory(quarantineRoot);
         EnsureNotReparsePoint(quarantineRoot);
         var destination = Path.Combine(
             quarantineRoot,

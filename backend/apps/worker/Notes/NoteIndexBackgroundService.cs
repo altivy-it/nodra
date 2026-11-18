@@ -1,10 +1,10 @@
-using Altivy.Backend.Application.Notes;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Nodra.Backend.Application.Notes;
 using Npgsql;
 
-namespace Altivy.Notes.Worker.Notes;
+namespace Nodra.Notes.Worker.Notes;
 
 /// <summary>
 /// Consome jobs duráveis de indexação de notas.
@@ -13,8 +13,8 @@ public sealed class NoteIndexBackgroundService(
     IServiceScopeFactory serviceScopeFactory,
     ILogger<NoteIndexBackgroundService> logger) : BackgroundService
 {
-    private static readonly TimeSpan PollingInterval = TimeSpan.FromSeconds(5);
-    private static readonly TimeSpan[] TransientRetryDelays =
+    private static readonly TimeSpan s_pollingInterval = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan[] s_transientRetryDelays =
     [
         TimeSpan.FromSeconds(5),
         TimeSpan.FromSeconds(10),
@@ -46,7 +46,7 @@ public sealed class NoteIndexBackgroundService(
             }
             catch (Exception exception) when (IsTransient(exception))
             {
-                var retryDelay = TransientRetryDelays[Math.Min(transientFailureCount, TransientRetryDelays.Length - 1)];
+                var retryDelay = s_transientRetryDelays[Math.Min(transientFailureCount, s_transientRetryDelays.Length - 1)];
                 transientFailureCount++;
                 logger.LogWarning(
                     exception,
@@ -56,7 +56,7 @@ public sealed class NoteIndexBackgroundService(
                 continue;
             }
 
-            await Task.Delay(PollingInterval, stoppingToken);
+            await Task.Delay(s_pollingInterval, stoppingToken);
         }
     }
 

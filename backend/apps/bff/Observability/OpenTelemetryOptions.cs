@@ -1,4 +1,4 @@
-namespace Altivy.Bff.Observability;
+namespace Nodra.Bff.Observability;
 
 /// <summary>
 /// Configura a exportação opcional de métricas e traces por OTLP.

@@ -1,6 +1,6 @@
-# Tutorial de GitHub Copilot no Altivy
+# Tutorial de GitHub Copilot no Nodra
 
-Este guia explica como usar as customizações do GitHub Copilot presentes em `.github` para planejar, desenvolver, testar, revisar e preparar releases do Altivy.
+Este guia explica como usar as customizações do GitHub Copilot presentes em `.github` para planejar, desenvolver, testar, revisar e preparar releases do Nodra.
 
 O objetivo não é aprender a escrever frases sofisticadas. O objetivo é fornecer ao Copilot contexto, resultado esperado, limites e evidências suficientes para que ele trabalhe como parte do processo de engenharia.
 

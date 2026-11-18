@@ -1,6 +1,6 @@
-using Altivy.Backend.Domain.Notes;
+using Nodra.Backend.Domain.Notes;
 
-namespace Altivy.Backend.Application.Notes;
+namespace Nodra.Backend.Application.Notes;
 
 /// <summary>
 /// Processa um job de indexação com lease e retry duráveis.
@@ -11,8 +11,8 @@ public sealed class NoteIndexJobProcessor(
     INoteProjectionStore projectionStore,
     TimeProvider timeProvider)
 {
-    private static readonly TimeSpan LeaseDuration = TimeSpan.FromMinutes(5);
-    private static readonly TimeSpan RetryDelay = TimeSpan.FromMinutes(1);
+    private static readonly TimeSpan s_leaseDuration = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan s_retryDelay = TimeSpan.FromMinutes(1);
 
     /// <summary>
     /// Reivindica e processa o próximo job elegível.
@@ -20,7 +20,7 @@ public sealed class NoteIndexJobProcessor(
     public async Task<bool> ProcessNextAsync(CancellationToken cancellationToken)
     {
         var now = timeProvider.GetUtcNow();
-        var job = await jobStore.ClaimNextAsync(now, LeaseDuration, cancellationToken);
+        var job = await jobStore.ClaimNextAsync(now, s_leaseDuration, cancellationToken);
         if (job is null)
         {
             return false;
@@ -52,15 +52,15 @@ public sealed class NoteIndexJobProcessor(
                 }
             }
 
-            await jobStore.CompleteAsync(job, null, null, cancellationToken);
+            _ = await jobStore.CompleteAsync(job, null, null, cancellationToken);
         }
         catch (IOException)
         {
-            await jobStore.CompleteAsync(job, now.Add(RetryDelay), "filesystem-read-failed", cancellationToken);
+            _ = await jobStore.CompleteAsync(job, now.Add(s_retryDelay), "filesystem-read-failed", cancellationToken);
         }
         catch (UnauthorizedAccessException)
         {
-            await jobStore.CompleteAsync(job, now.Add(RetryDelay), "filesystem-access-denied", cancellationToken);
+            _ = await jobStore.CompleteAsync(job, now.Add(s_retryDelay), "filesystem-access-denied", cancellationToken);
         }
 
         return true;

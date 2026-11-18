@@ -1,4 +1,4 @@
-namespace Altivy.Notes.Api.Authorization;
+namespace Nodra.Notes.Api.Authorization;
 
 public interface IAuthorizationDecisionService
 {

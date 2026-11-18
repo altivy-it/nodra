@@ -2,7 +2,7 @@
 
 ## Decisão atual
 
-O Altivy Notes utiliza exclusivamente cookies técnicos no BFF:
+O Nodra utiliza exclusivamente cookies técnicos no BFF:
 
 | Cookie | Finalidade | Classificação |
 | --- | --- | --- |

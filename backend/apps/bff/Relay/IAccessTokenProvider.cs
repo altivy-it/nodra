@@ -1,4 +1,4 @@
-namespace Altivy.Bff.Relay;
+namespace Nodra.Bff.Relay;
 
 /// <summary>
 /// Define o contrato para obtenção do token de acesso da sessão atual.

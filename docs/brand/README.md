@@ -1,6 +1,14 @@
-# Branding do Altivy - Migrado para Altivy
+# Marca do Produto: Altivy Nodra
 
-O conteúdo canônico de branding do Altivy foi consolidado no repositório `Altivy` para evitar duplicidade e drift.
+A empresa permanece **Altivy**. O produto e o aplicativo passam a se chamar
+**Nodra**, com assinatura **Altivy Nodra** e tagline
+**Your connected knowledge workspace.** A decisão humana, o posicionamento
+literal e a associação a notas conectadas estão registrados no
+[README do produto](../../README.md#identidade-e-posicionamento) e no
+[plano mestre](../plano-mestre.md#11-nome-da-marca).
+
+A identidade visual corporativa continua canônica no repositório `Altivy`,
+sem duplicar ou gerar novos artefatos neste diretório.
 
 ## Referência oficial atual
 

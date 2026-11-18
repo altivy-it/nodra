@@ -1,9 +1,9 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Altivy.Backend.Infra.Data.Postgres.Migrations
+namespace Nodra.Backend.Infra.Data.Postgres.Migrations
 {
     /// <inheritdoc />
     public partial class AddNoteProjections : Migration

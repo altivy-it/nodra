@@ -1,11 +1,11 @@
-# Infraestrutura PostgreSQL do Altivy
+# Infraestrutura PostgreSQL do Nodra
 
 Este projeto contém o `PostgresDbContext`, as migrations e os adapters de
-leitura da projeção PostgreSQL do Altivy.
+leitura da projeção PostgreSQL do Nodra.
 
 ## Banco e isolamento
 
-O Altivy usa o mesmo **database PostgreSQL** já utilizado pelo laboratório do
+O Nodra usa o mesmo **database PostgreSQL** já utilizado pelo laboratório do
 Keycloak (`keycloak`), mas não compartilha schema nem permissões:
 
 - Keycloak mantém suas tabelas no schema próprio;
@@ -20,7 +20,7 @@ O SQL versionado está em
 [`sql/001-bootstrap-altivy-roles.sql`](sql/001-bootstrap-altivy-roles.sql) e é
 executado de modo idempotente pelo script abaixo. Ele lê somente as senhas já
 presentes nas duas connection strings locais, não as mostra e não usa a senha
-do Keycloak como credencial das roles do Altivy:
+do Keycloak como credencial das roles do Nodra:
 
 ```powershell
 .\tools\scripts\bootstrap-altivy-postgres.ps1
@@ -61,7 +61,7 @@ Execute a partir da raiz, usando a ferramenta versionada em `dotnet-tools.json`:
 ```powershell
 dotnet tool restore
 dotnet tool run dotnet-ef migrations add NomeDaMigration `
-  --project .\backend\libs\infrastructure\data\Altivy.Backend.Infra.Data.Postgres.csproj `
+  --project .\backend\libs\infrastructure\data\Nodra.Backend.Infra.Data.Postgres.csproj `
   --output-dir Migrations `
   --configuration Release
 ```
@@ -84,7 +84,7 @@ aprovação do rollout, execute:
 
 ```powershell
 dotnet tool run dotnet-ef database update `
-  --project .\backend\libs\infrastructure\data\Altivy.Backend.Infra.Data.Postgres.csproj `
+  --project .\backend\libs\infrastructure\data\Nodra.Backend.Infra.Data.Postgres.csproj `
   --configuration Release
 ```
 
@@ -100,7 +100,7 @@ migrations:
 
 ```powershell
 dotnet tool run dotnet-ef migrations script `
-  --project .\backend\libs\infrastructure\data\Altivy.Backend.Infra.Data.Postgres.csproj `
+  --project .\backend\libs\infrastructure\data\Nodra.Backend.Infra.Data.Postgres.csproj `
   --from 0 `
   --to 20260819181928_InitialCreate `
   --output .\artifacts\sql\altivy-initial.sql `
@@ -115,13 +115,13 @@ rollout.
 
 Scaffolding é apenas uma ferramenta de diagnóstico/migração de legado. O
 resultado deve ser revisado e alinhado ao domínio; não substitui as entidades,
-portas ou mapeamentos do Altivy.
+portas ou mapeamentos do Nodra.
 
 ```powershell
 dotnet tool run dotnet-ef dbcontext scaffold `
   'Name=ConnectionStrings:AltivyPostgres' `
   Npgsql.EntityFrameworkCore.PostgreSQL `
-  --project .\backend\libs\infrastructure\data\Altivy.Backend.Infra.Data.Postgres.csproj `
+  --project .\backend\libs\infrastructure\data\Nodra.Backend.Infra.Data.Postgres.csproj `
   --context PostgresDbContext `
   --schema altivy `
   --output-dir Scaffolding `
@@ -135,9 +135,9 @@ obrigatório para manter a fronteira de dados.
 ## Validação
 
 ```powershell
-dotnet build .\backend\libs\backend\infrastructure\data\Altivy.Backend.Infra.Data.Postgres.csproj --configuration Release
-dotnet test .\Altivy.slnx --configuration Release --filter "Category=Unit"
-dotnet test .\Altivy.slnx --configuration Release --filter "Category=Integration"
+dotnet build .\backend\libs\backend\infrastructure\data\Nodra.Backend.Infra.Data.Postgres.csproj --configuration Release
+dotnet test .\Nodra.slnx --configuration Release --filter "Category=Unit"
+dotnet test .\Nodra.slnx --configuration Release --filter "Category=Integration"
 ```
 
 Testes que provam comportamento PostgreSQL devem usar PostgreSQL real, nunca
@@ -187,7 +187,7 @@ isolamento](#banco-e-isolamento) foram provisionados pelo script
 Na raiz do repositório, carregue essas variáveis no terminal e execute:
 
 ```powershell
-dotnet test .\backend\tests\Altivy.Backend.Infra.Data.Postgres.IntegrationTests\Altivy.Backend.Infra.Data.Postgres.IntegrationTests.csproj `
+dotnet test .\backend\tests\Nodra.Backend.Infra.Data.Postgres.IntegrationTests\Nodra.Backend.Infra.Data.Postgres.IntegrationTests.csproj `
   --configuration Release --filter 'Category=Integration'
 ```
 

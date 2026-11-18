@@ -60,7 +60,7 @@ As imagens foram publicadas no Docker Hub `lzocateli` com a tag imutável
 - `lzocateli/altivy-api:69431f0` — `sha256:1cb3433441b7d8ae98730dba16ff0d2e575177d7aca798ef1e8ac5d0a8d350ee`;
 - `lzocateli/altivy-bff:69431f0` — `sha256:acbbb8e225543013de2a00ef39d1acf3f9396e2d049985c81145eea930b6c40a`;
 - `lzocateli/altivy-worker:69431f0` — `sha256:1a17452ea23c4c17c4b70711ef42a36154430a0a95121c617e285c7a06c0cf2d`;
-- `lzocateli/altivy-web:69431f0` — `sha256:2ce2bba678ff39a363abb76c1275ba84bcc6667ac8d7ea6958a7744eb2266d98`.
+- `lzocateli/nodra-web:69431f0` — `sha256:2ce2bba678ff39a363abb76c1275ba84bcc6667ac8d7ea6958a7744eb2266d98`.
 
 O scanner Trivy não estava disponível no ambiente local; o scan de
 vulnerabilidades e a geração de SBOM/provenance permanecem como pendência

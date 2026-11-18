@@ -1,4 +1,4 @@
-namespace Altivy.Bff.Authentication;
+namespace Nodra.Bff.Authentication;
 
 /// <summary>
 /// Define as configurações de proteção de dados, origens permitidas e proxies confiáveis do BFF.

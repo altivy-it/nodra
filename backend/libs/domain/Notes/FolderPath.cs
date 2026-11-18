@@ -1,11 +1,11 @@
-namespace Altivy.Backend.Domain.Notes;
+namespace Nodra.Backend.Domain.Notes;
 
 /// <summary>
 /// Representa o caminho relativo e seguro de uma pasta dentro de um vault.
 /// </summary>
 public sealed class FolderPath
 {
-    private static readonly HashSet<string> ReservedNames =
+    private static readonly HashSet<string> s_reservedNames =
         ["con", "prn", "aux", "nul", "com1", "com2", "com3", "com4", "com5", "com6", "com7", "com8", "com9", "lpt1", "lpt2", "lpt3", "lpt4", "lpt5", "lpt6", "lpt7", "lpt8", "lpt9"];
 
     private FolderPath(string value)
@@ -34,7 +34,7 @@ public sealed class FolderPath
         var normalizedValue = value.Replace('\\', '/').Trim();
         if (Path.IsPathRooted(normalizedValue) ||
             normalizedValue.StartsWith("//", StringComparison.Ordinal) ||
-            normalizedValue.Length > 1 && char.IsAsciiLetter(normalizedValue[0]) && normalizedValue[1] == ':' ||
+            (normalizedValue.Length > 1 && char.IsAsciiLetter(normalizedValue[0]) && normalizedValue[1] == ':') ||
             normalizedValue.Split('/').Any(IsInvalidSegment))
         {
             throw new ArgumentException("O caminho da pasta é inválido.", nameof(value));
@@ -52,6 +52,6 @@ public sealed class FolderPath
             segment.Any(character => char.IsControl(character) || "<>:\"|?*".Contains(character)) ||
             segment.EndsWith('.') ||
             segment.EndsWith(' ') ||
-            ReservedNames.Contains(baseName, StringComparer.OrdinalIgnoreCase);
+            s_reservedNames.Contains(baseName, StringComparer.OrdinalIgnoreCase);
     }
 }

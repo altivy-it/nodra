@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Altivy.Backend.Infra.Data.Postgres;
+namespace Nodra.Backend.Infra.Data.Postgres;
 
 /// <summary>
 /// Mapeia a projeção de vault para o schema PostgreSQL do Altivy.
@@ -11,15 +11,15 @@ public sealed class VaultRecordConfiguration : IEntityTypeConfiguration<VaultRec
     /// <inheritdoc />
     public void Configure(EntityTypeBuilder<VaultRecord> builder)
     {
-        builder.ToTable("vaults");
-        builder.HasKey(record => record.Id);
-        builder.Property(record => record.Id)
+        _ = builder.ToTable("vaults");
+        _ = builder.HasKey(record => record.Id);
+        _ = builder.Property(record => record.Id)
             .HasMaxLength(64)
             .IsRequired();
-        builder.Property(record => record.Name)
+        _ = builder.Property(record => record.Name)
             .HasMaxLength(200)
             .IsRequired();
-        builder.Property(record => record.State)
+        _ = builder.Property(record => record.State)
             .HasColumnName("state")
             .IsRequired();
     }

@@ -1,3 +1,3 @@
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("Altivy.Bff.UnitTests")]
+[assembly: InternalsVisibleTo("Nodra.Bff.UnitTests")]

@@ -1,12 +1,12 @@
 ---
 name: altivy-notes-create-adr
-description: "Use quando solicitado explicitamente para analisar uma decisão arquitetural do AltivyNotes e redigir um ADR justificado dentro de uma tarefa Spec Kit ou de /speckit-plan, sem implementar ou aceitar a decisão."
+description: "Use quando solicitado explicitamente para analisar uma decisão arquitetural do Nodra e redigir um ADR justificado dentro de uma tarefa Spec Kit ou de /speckit-plan, sem implementar ou aceitar a decisão."
 argument-hint: "Plano ou tarefa Spec Kit; decisão arquitetural, contexto, restrições e revisor humano"
 user-invocable: true
 disable-model-invocation: true
 ---
 
-# Auxílio à redação de ADR do AltivyNotes
+# Auxílio à redação de ADR do Nodra
 
 ## Escopo e seleção do agente
 
@@ -14,7 +14,7 @@ Este auxiliar só apoia uma tarefa Spec Kit existente ou uma decisão identifica
 por `/speckit-plan`. Não cria requisitos, specs, planos ou tarefas e não autoriza
 implementação.
 
-Na raiz AltivyNotes, selecione explicitamente **Altivy Solution Architect**,
+Na raiz Nodra, selecione explicitamente **Altivy Solution Architect**,
 conforme seu [contrato](../../agents/solution-architect.agent.md), e invoque
 `/altivy-notes-create-adr` com o contexto. O frontmatter desta skill não seleciona
 agente, modelo ou ferramentas. Se o agente não estiver disponível, informe o

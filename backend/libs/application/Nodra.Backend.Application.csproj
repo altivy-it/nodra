@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <RootNamespace>Nodra.Backend.Application</RootNamespace>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="../domain/Nodra.Backend.Domain.csproj" />
+    </ItemGroup>
+</Project>

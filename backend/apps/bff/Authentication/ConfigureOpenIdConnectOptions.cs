@@ -1,8 +1,7 @@
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
-namespace Altivy.Bff.Authentication;
+namespace Nodra.Bff.Authentication;
 
 /// <summary>
 /// Configura o cliente OpenID Connect do BFF para integração com o Keycloak.
@@ -83,8 +82,8 @@ public sealed class ConfigureOpenIdConnectOptions(IOptions<KeycloakOptions> keyc
 
             properties.Items[ReauthenticationEvidence.AuthenticatedAtItem] =
                 evidence.AuthenticatedAtUtc.ToString("O", System.Globalization.CultureInfo.InvariantCulture);
-            properties.Items.Remove(ReauthenticationEvidence.ChallengeItem);
-            properties.Items.Remove(ReauthenticationEvidence.ExpectedSubjectItem);
+            _ = properties.Items.Remove(ReauthenticationEvidence.ChallengeItem);
+            _ = properties.Items.Remove(ReauthenticationEvidence.ExpectedSubjectItem);
             return Task.CompletedTask;
         };
     }

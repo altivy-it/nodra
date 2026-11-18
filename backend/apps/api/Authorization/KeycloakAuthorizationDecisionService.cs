@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text.Json;
 
-namespace Altivy.Notes.Api.Authorization;
+namespace Nodra.Notes.Api.Authorization;
 
 public sealed partial class KeycloakAuthorizationDecisionService(
     HttpClient httpClient,

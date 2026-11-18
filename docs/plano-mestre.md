@@ -1,24 +1,38 @@
-# Altivy
+# Altivy Nodra
 
 ## Plano mestre da solução
 
 **Status:** proposta arquitetural inicial  
 **Data de referência:** 28 de julho de 2026  
-**Objetivo:** orientar produto, arquitetura, implementação, implantação e evolução do Altivy.
+**Objetivo:** orientar produto, arquitetura, implementação, implantação e evolução do Nodra.
 
 ## 1. Visão do produto
 
-O Altivy será uma plataforma web self-hosted de gestão de conhecimento baseada em Markdown. A experiência deve oferecer edição, organização, links entre notas, backlinks, propriedades, pesquisa e visualização em grafo, sem exigir instalação de software no computador do usuário além de um navegador.
+O Nodra será uma plataforma web self-hosted de gestão de conhecimento baseada em Markdown. A experiência deve oferecer edição, organização, links entre notas, backlinks, propriedades, pesquisa e visualização em grafo, sem exigir instalação de software no computador do usuário além de um navegador.
 
 A solução será distribuída por containers e deverá funcionar tanto em uma máquina com Docker Desktop quanto em um servidor atrás de proxy reverso. Os documentos e demais dados persistentes ficarão em bind mounts configuráveis, incluindo pastas locais, compartilhamentos de rede e NAS compatíveis com o host dos containers.
 
 ### 1.1 Nome da marca
 
-O nome **Altivy** foi escolhido como marca principal porque é curto, memorável, proprietário e tecnicamente forte. Ele comunica clareza, confiança e escala, sem depender de termos genéricos nem de sufixos que enfraquecem a percepção da marca. Essa decisão está alinhada com o posicionamento do produto: uma solução profissional, confiável e escalável para gestão de conhecimento em ambiente self-hosted.
+Por decisão humana registrada em 11 de novembro de 2026, **Altivy** é a empresa,
+**Nodra** é o produto e o aplicativo, e **Altivy Nodra** é a marca completa.
+O repositório principal é `altivy-it/nodra`, na organização já existente,
+sem transferência para outra organização. A futura CLI usará `nodra`;
+esta decisão não cria uma CLI nesta entrega.
 
-A identidade da marca foi pensada para funcionar em múltiplos contextos: produto, documentação, operação, presença digital e canais de distribuição. **Altivy** transmite uma sensação de organização, memória e inteligência aplicada, mantendo uma assinatura limpa e fácil de reconhecer. A marca sustenta a proposta de valor do produto sem depender de referências mitológicas ou de termos genéricos do mercado.
+A tagline aprovada é **Your connected knowledge workspace.** O posicionamento
+literal da marca é:
 
-A pronúncia é fácil de memorizar em português, espanhol e inglês, mantém uma sonoridade forte e auxilia a consistência da marca em ambientes digitais, comerciais e operacionais. Os endereços oficiais previstos são **altivy.app** e **altivy.zocate.li**.
+> Altivy Nodra is an AI-powered knowledge workspace that connects your notes, documents, ideas, and conversations into a searchable personal knowledge graph.
+
+**Nodra** remete a *node* e conecta a identidade do produto a notas interligadas,
+grafo de conhecimento e IA. A sequência conceitual é
+**Notes → Nodes → Connections → Knowledge → AI**.
+
+O posicionamento define uma direção, não funcionalidades de IA já entregues.
+Recursos de IA permanecem opcionais e não alteram a independência do núcleo
+self-hosted em relação a nuvem e embeddings. Domínios, certificados e identidade
+corporativa da Altivy não são renomeados implicitamente.
 
 ### 1.2 Proposta de valor
 
@@ -39,7 +53,7 @@ A pronúncia é fácil de memorizar em português, espanhol e inglês, mantém u
 6. **Evolução orientada por evidências:** componentes adicionais entram somente quando houver necessidade medida.
 7. **Compatibilidade aberta:** arquivos, links e frontmatter devem usar formatos documentados e exportáveis.
 8. **Extensibilidade controlada:** integrações opcionais usam contratos de plugin versionados; código de plugin é confiável, revisado e fornecido na distribuição, nunca carregado arbitrariamente em runtime.
-9. **Núcleo aberto sustentável:** o núcleo do Altivy é MIT e permanece funcional para uso self-hosted; ofertas pagas agregam capacidades opcionais sem retirar direitos de versões já publicadas.
+9. **Núcleo aberto sustentável:** o núcleo do Nodra é MIT e permanece funcional para uso self-hosted; ofertas pagas agregam capacidades opcionais sem retirar direitos de versões já publicadas.
 
 ## 2. Escopo funcional
 
@@ -120,7 +134,7 @@ Como filesystem e PostgreSQL não compartilham uma transação, inconsistências
 ```mermaid
 flowchart LR
     U[Browser] -->|HTTPS| P[Gateway compartilhado]
-    P --> W[altivy-web]
+    P --> W[nodra-web]
     U -->|HTTP local| W
     W -->|/bff, /api e /hubs| B[altivy-bff]
     B -->|OIDC Authorization Code + PKCE| KC[Keycloak]
@@ -139,19 +153,19 @@ flowchart LR
 
 | Serviço | Responsabilidade | Exposição | Persistência |
 | --- | --- | --- | --- |
-| `altivy-web` | arquivos estáticos, headers e roteamento para o BFF | única porta pública | nenhuma |
+| `nodra-web` | arquivos estáticos, headers e roteamento para o BFF | única porta pública | nenhuma |
 | `altivy-bff` | cliente OIDC, sessão técnica, antiforgery e relay para API/SignalR | somente rede interna | key ring e estado técnico conforme ADR |
 | `altivy-api` | PEP, regras de negócio, arquivos, consultas e SignalR | somente rede interna | vault em leitura e escrita |
 | `altivy-worker` | reconciliação, parsing, indexação e embeddings | nenhuma | mesmo vault, conforme estratégia de escrita |
-| PostgreSQL compartilhado | catálogo, busca, relações, jobs e vetores em database dedicado | rede externa restrita `identity-client` | fora do ciclo de vida do Altivy Notes |
+| PostgreSQL compartilhado | catálogo, busca, relações, jobs e vetores em database dedicado | rede externa restrita `identity-client` | fora do ciclo de vida do Nodra |
 | `embedding-provider` | embeddings locais opcionais | somente rede interna | cache/modelos, se necessário |
-| Keycloak externo | identidade, sessões de SSO e decisão de autorização | HTTPS configurado pelo operador | fora do ciclo de vida do Altivy |
+| Keycloak externo | identidade, sessões de SSO e decisão de autorização | HTTPS configurado pelo operador | fora do ciclo de vida do Nodra |
 
-A imagem de banco obrigatória é `lzocateli/postgresql:18.4-pgvector0.8.6-bookworm`, mantida separadamente em `containers-lzo/postgres`. Gateway, PostgreSQL e Keycloak são operados pela stack compartilhada `altivy-identity` no repositório `architecture-knowledge-base`; a stack `altivy-notes` contém somente web, BFF, API e worker. O Altivy não deve duplicar os Composes ou Dockerfiles dessa infraestrutura.
+A imagem de banco obrigatória é `lzocateli/postgresql:18.4-pgvector0.8.6-bookworm`, mantida separadamente em `containers-lzo/postgres`. Gateway, PostgreSQL e Keycloak são operados pela stack compartilhada `altivy-identity` no repositório `architecture-knowledge-base`; a stack `nodra` contém somente web, BFF, API e worker. O Nodra não deve duplicar os Composes ou Dockerfiles dessa infraestrutura.
 
 ### 3.5 Estilo arquitetural e padrões
 
-O Altivy adota **monólito modular orientado a domínio**, com hosts separados para BFF, API e worker, **Clean Architecture pragmática** e **Ports and Adapters** nas integrações. Os módulos seguem limites de negócio explícitos; dependências apontam para o domínio, e os hosts apenas compõem e expõem casos de uso. A convenção de namespaces e assemblies do backend é detalhada nas instruções do Copilot em [.github/instructions/architecture.instructions.md](../.github/instructions/architecture.instructions.md) e usa o prefixo `Infra.<nome>` para a camada de infraestrutura.
+O Nodra adota **monólito modular orientado a domínio**, com hosts separados para BFF, API e worker, **Clean Architecture pragmática** e **Ports and Adapters** nas integrações. Os módulos seguem limites de negócio explícitos; dependências apontam para o domínio, e os hosts apenas compõem e expõem casos de uso. A convenção de namespaces e assemblies do backend é detalhada nas instruções do Copilot em [.github/instructions/architecture.instructions.md](../.github/instructions/architecture.instructions.md) e usa o prefixo `Infra.<nome>` para a camada de infraestrutura.
 
 O backend usa **DDD** para linguagem, invariantes, aggregates e value objects; **CQRS pragmático** para separar commands de consultas sobre projeções; **optimistic concurrency** com ETag; e processamento assíncrono por **Outbox/jobs duráveis**, consumers idempotentes, lease, retry com backoff e dead letter. Como filesystem e PostgreSQL não compartilham transação, gravação segura, detecção por hash e reconciliação periódica fazem parte da consistência do sistema.
 
@@ -190,7 +204,7 @@ worker, somente com tráfego de saída. Callbacks HTTPS são opcionais para essa
 integrações e obrigatórios apenas quando o protocolo escolhido, como um bot
 interativo do Teams, não oferecer modo exclusivamente de saída.
 
-Identidade e decisão de autorização não formam módulo de domínio do Altivy. O BFF integra OIDC, o Keycloak mantém usuários e políticas, e a API apenas aplica as permissões externas antes de acessar cada recurso.
+Identidade e decisão de autorização não formam módulo de domínio do Nodra. O BFF integra OIDC, o Keycloak mantém usuários e políticas, e a API apenas aplica as permissões externas antes de acessar cada recurso.
 
 Os detalhes estão em [Implementação do Backend](backend.md). A experiência e arquitetura da interface estão em [Implementação do Frontend](frontend.md).
 

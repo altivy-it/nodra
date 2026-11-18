@@ -1,8 +1,8 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace Altivy.Backend.Infra.Data.Postgres.Migrations
+namespace Nodra.Backend.Infra.Data.Postgres.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration

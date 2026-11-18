@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 
-namespace Altivy.Notes.Worker.Observability;
+namespace Nodra.Notes.Worker.Observability;
 
 /// <summary>
 /// Publica métricas operacionais do worker com atributos de cardinalidade fixa.

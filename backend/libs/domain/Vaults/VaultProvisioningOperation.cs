@@ -1,4 +1,4 @@
-namespace Altivy.Backend.Domain.Vaults;
+namespace Nodra.Backend.Domain.Vaults;
 
 /// <summary>
 /// Controla o lifecycle idempotente do provisioning de um vault.

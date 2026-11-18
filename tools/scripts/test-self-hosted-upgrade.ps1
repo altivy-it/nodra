@@ -12,7 +12,7 @@ Migration final que representa o schema de origem.
 .PARAMETER PreviousApiImage
 Imagem API anterior ja presente localmente e fixada por digest OCI.
 .PARAMETER CurrentMigrationImage
-Imagem do bundle atual ja presente localmente. Padrao: altivy-migrations:0.1.0.
+Imagem do bundle atual ja presente localmente. Padrao: nodra-migrations:0.1.0.
 .PARAMETER PostgresImage
 Imagem PostgreSQL ja presente localmente. Padrao: imagem PostgreSQL 18 do plano.
 .PARAMETER ProjectName
@@ -36,7 +36,7 @@ param(
     [ValidatePattern('^[a-fA-F0-9]{7,40}$')][string] $PreviousCommit,
     [ValidatePattern('^[0-9]{14}_[A-Za-z0-9_]+$')][string] $PreviousMigration,
     [ValidatePattern('^[A-Za-z0-9./_-]+@sha256:[a-f0-9]{64}$')][string] $PreviousApiImage,
-    [string] $CurrentMigrationImage = 'altivy-migrations:0.1.0',
+    [string] $CurrentMigrationImage = 'nodra-migrations:0.1.0',
     [string] $PostgresImage = 'lzocateli/postgresql:18.4-pgvector0.8.6-bookworm',
     [ValidatePattern('^[a-z0-9][a-z0-9_-]{0,48}$')][string] $ProjectName,
     [Parameter(ValueFromRemainingArguments)][string[]] $RemainingArguments
@@ -104,7 +104,7 @@ try {
     & tar -xf $sourceArchive -C $previousSource
     if ($LASTEXITCODE -ne 0) { throw 'Falha ao extrair o commit anterior em diretorio temporario.' }
 
-    $previousMigrationImage = 'altivy-migrations:p04-' + $previousCommitHash.Substring(0,7) + '-' + [Guid]::NewGuid().ToString('N').Substring(0,8)
+    $previousMigrationImage = 'nodra-migrations:p04-' + $previousCommitHash.Substring(0,7) + '-' + [Guid]::NewGuid().ToString('N').Substring(0,8)
     $dockerfile = Join-Path $repository 'deploy/production/migrations.Dockerfile'
     Invoke-Docker -Arguments @(
         'build','--file',$dockerfile,'--build-arg',"IMAGE_VERSION=0.0.0-p04.$($previousCommitHash.Substring(0,7))",

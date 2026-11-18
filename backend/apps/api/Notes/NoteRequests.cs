@@ -1,4 +1,4 @@
-namespace Altivy.Notes.Api.Notes;
+namespace Nodra.Notes.Api.Notes;
 
 /// <summary>
 /// Representa o corpo recebido para criar ou atualizar uma nota.

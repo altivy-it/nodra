@@ -1,6 +1,6 @@
 using System.Security.Claims;
 
-namespace Altivy.Bff.Endpoints;
+namespace Nodra.Bff.Endpoints;
 
 /// <summary>
 /// Representa o estado público e sanitizado da sessão do browser.

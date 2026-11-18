@@ -1,9 +1,8 @@
 using System.Text.Json;
-using Altivy.Bff.Authentication;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Options;
+using Nodra.Bff.Authentication;
 
-namespace Altivy.Bff.Health;
+namespace Nodra.Bff.Health;
 
 public sealed class KeycloakDiscoveryHealthCheck(
     IHttpClientFactory httpClientFactory,

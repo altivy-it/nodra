@@ -1,9 +1,9 @@
 using System.Security.Cryptography;
 using System.Text;
-using Altivy.Backend.Application.Notes;
-using Altivy.Backend.Domain.Notes;
+using Nodra.Backend.Application.Notes;
+using Nodra.Backend.Domain.Notes;
 
-namespace Altivy.Backend.Infra.Data.Postgres;
+namespace Nodra.Backend.Infra.Data.Postgres;
 
 /// <summary>
 /// Persiste as notas canônicas em um diretório local montado para os vaults.
@@ -54,7 +54,7 @@ public sealed class FileSystemNoteStore(string vaultRoot) : INoteStore
     public async Task<bool> TryCreateAsync(string vaultId, NotePath path, string content, CancellationToken cancellationToken)
     {
         var filePath = GetFilePath(vaultId, path);
-        Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
+        _ = Directory.CreateDirectory(Path.GetDirectoryName(filePath)!);
 
         try
         {

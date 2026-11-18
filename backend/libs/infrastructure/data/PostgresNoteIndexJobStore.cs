@@ -1,8 +1,8 @@
-using Altivy.Backend.Application.Notes;
 using Microsoft.EntityFrameworkCore;
+using Nodra.Backend.Application.Notes;
 using Npgsql;
 
-namespace Altivy.Backend.Infra.Data.Postgres;
+namespace Nodra.Backend.Infra.Data.Postgres;
 
 /// <summary>
 /// Implementa a fila de indexação com atualização condicional por lease.
@@ -34,11 +34,11 @@ public sealed class PostgresNoteIndexJobStore(PostgresDbContext dbContext) : INo
             AttemptCount = 0,
             NextAttemptAt = DateTimeOffset.UtcNow
         };
-        dbContext.NoteIndexJobs.Add(record);
+        _ = dbContext.NoteIndexJobs.Add(record);
 
         try
         {
-            await dbContext.SaveChangesAsync(cancellationToken);
+            _ = await dbContext.SaveChangesAsync(cancellationToken);
         }
         catch (PostgresException exception) when (exception.SqlState == PostgresErrorCodes.UniqueViolation)
         {
@@ -55,8 +55,8 @@ public sealed class PostgresNoteIndexJobStore(PostgresDbContext dbContext) : INo
         var candidate = await dbContext.NoteIndexJobs
             .AsNoTracking()
             .Where(job =>
-                job.State == Pending && job.NextAttemptAt <= now ||
-                job.State == Processing && job.LeaseExpiresAt <= now)
+                (job.State == Pending && job.NextAttemptAt <= now) ||
+                (job.State == Processing && job.LeaseExpiresAt <= now))
             .OrderBy(job => job.NextAttemptAt)
             .ThenBy(job => job.JobId)
             .Select(job => job.JobId)
@@ -69,8 +69,8 @@ public sealed class PostgresNoteIndexJobStore(PostgresDbContext dbContext) : INo
         var claimed = await dbContext.NoteIndexJobs
             .Where(job => job.JobId == candidate)
             .Where(job =>
-                job.State == Pending && job.NextAttemptAt <= now ||
-                job.State == Processing && job.LeaseExpiresAt <= now)
+                (job.State == Pending && job.NextAttemptAt <= now) ||
+                (job.State == Processing && job.LeaseExpiresAt <= now))
             .ExecuteUpdateAsync(setters => setters
                 .SetProperty(job => job.State, Processing)
                 .SetProperty(job => job.LeaseId, leaseId)

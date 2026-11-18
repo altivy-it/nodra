@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Gera o tema de login do Keycloak do Altivy a partir da fonte versionada.
+Gera o tema de login do Keycloak do Nodra a partir da fonte versionada.
 
 .DESCRIPTION
 Empacota o tema de Keycloak versionado em deploy/keycloak em um diretório de

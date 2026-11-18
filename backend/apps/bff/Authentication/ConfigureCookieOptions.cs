@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.Extensions.Options;
 
-namespace Altivy.Bff.Authentication;
+namespace Nodra.Bff.Authentication;
 
 /// <summary>
 /// Configura o cookie de sessão e o armazenamento server-side da autenticação.

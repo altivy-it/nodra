@@ -10,10 +10,10 @@ describe('HelpService', () => {
     const service = TestBed.inject(HelpService);
     const http = TestBed.inject(HttpTestingController);
     const first = service.load();
-    http.expectOne('/help.md').flush('# Ajuda do Altivy Notes');
+    http.expectOne('/help.md').flush('# Ajuda do Nodra');
     await first;
     await service.load();
-    expect(service.content()).toBe('# Ajuda do Altivy Notes');
+    expect(service.content()).toBe('# Ajuda do Nodra');
     http.verify();
   });
 

@@ -1,9 +1,9 @@
-using Altivy.Backend.Application.Vaults;
-using Altivy.Backend.Domain.Vaults;
-using Microsoft.EntityFrameworkCore;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
+using Nodra.Backend.Application.Vaults;
+using Nodra.Backend.Domain.Vaults;
 
-namespace Altivy.Backend.Infra.Data.Postgres;
+namespace Nodra.Backend.Infra.Data.Postgres;
 
 /// <summary>
 /// Lê vaults da projeção PostgreSQL sem expor modelos de persistência.
@@ -11,7 +11,7 @@ namespace Altivy.Backend.Infra.Data.Postgres;
 public sealed class PostgresVaultReader(PostgresDbContext dbContext) : IVaultReader
 {
     private const string CursorPrefix = "v1:";
-    private static readonly UTF8Encoding StrictUtf8 = new(false, true);
+    private static readonly UTF8Encoding s_strictUtf8 = new(false, true);
 
     /// <inheritdoc />
     public async Task<Vault?> FindAsync(string id, CancellationToken cancellationToken)
@@ -56,7 +56,7 @@ public sealed class PostgresVaultReader(PostgresDbContext dbContext) : IVaultRea
 
     private static string EncodeCursor(string id)
     {
-        var bytes = StrictUtf8.GetBytes(CursorPrefix + id);
+        var bytes = s_strictUtf8.GetBytes(CursorPrefix + id);
         return Convert.ToBase64String(bytes)
             .TrimEnd('=')
             .Replace('+', '-')
@@ -79,7 +79,7 @@ public sealed class PostgresVaultReader(PostgresDbContext dbContext) : IVaultRea
         {
             var base64 = cursor.Replace('-', '+').Replace('_', '/');
             base64 = base64.PadRight(base64.Length + ((4 - (base64.Length % 4)) % 4), '=');
-            var value = StrictUtf8.GetString(Convert.FromBase64String(base64));
+            var value = s_strictUtf8.GetString(Convert.FromBase64String(base64));
             if (!value.StartsWith(CursorPrefix, StringComparison.Ordinal))
             {
                 throw new InvalidVaultCursorException();

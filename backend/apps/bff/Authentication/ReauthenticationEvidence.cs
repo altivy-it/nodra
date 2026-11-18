@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 
-namespace Altivy.Bff.Authentication;
+namespace Nodra.Bff.Authentication;
 
 /// <summary>
 /// Evidência server-side de uma autenticação OIDC solicitada como step-up.
@@ -58,7 +58,7 @@ public sealed record ReauthenticationEvidence(string Subject, DateTimeOffset Aut
     {
         evidence = null;
         var subject = principal.FindFirst("sub")?.Value;
-        properties.Items.TryGetValue(AuthenticatedAtItem, out var value);
+        _ = properties.Items.TryGetValue(AuthenticatedAtItem, out var value);
         if (string.IsNullOrWhiteSpace(subject) || !DateTimeOffset.TryParse(
                 value,
                 CultureInfo.InvariantCulture,

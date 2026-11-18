@@ -1,8 +1,8 @@
-using Altivy.Backend.Application.Notes;
-using Altivy.Backend.Domain.Notes;
 using Microsoft.EntityFrameworkCore;
+using Nodra.Backend.Application.Notes;
+using Nodra.Backend.Domain.Notes;
 
-namespace Altivy.Backend.Infra.Data.Postgres;
+namespace Nodra.Backend.Infra.Data.Postgres;
 
 /// <summary>
 /// Persiste a projeção derivada sem substituir o filesystem como fonte canônica.
@@ -19,7 +19,7 @@ public sealed class PostgresNoteProjectionStore(PostgresDbContext dbContext) : I
 
         if (current is null)
         {
-            dbContext.NoteProjections.Add(projection);
+            _ = dbContext.NoteProjections.Add(projection);
         }
         else
         {
@@ -33,13 +33,13 @@ public sealed class PostgresNoteProjectionStore(PostgresDbContext dbContext) : I
             current.IndexedAt = projection.IndexedAt;
         }
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        _ = await dbContext.SaveChangesAsync(cancellationToken);
     }
 
     /// <inheritdoc />
     public async Task DeleteAsync(string vaultId, NotePath path, CancellationToken cancellationToken)
     {
-        await dbContext.NoteProjections
+        _ = await dbContext.NoteProjections
             .Where(record => record.VaultId == vaultId && record.Path == path.Value)
             .ExecuteDeleteAsync(cancellationToken);
     }

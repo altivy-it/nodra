@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Compara decisão remota e ticket UMA/RPT para um recurso sintético do Altivy.
+Compara decisão remota e ticket UMA/RPT para um recurso sintético do Nodra.
 
 .DESCRIPTION
 Obtém um PAT do resource server altivy-api, reconcilia um recurso sintético pela
@@ -11,7 +11,7 @@ UMA/RPT. Tokens e secrets permanecem apenas em memória e nunca são exibidos.
 URL do Keycloak sem barra final. Padrão: http://localhost:8080.
 
 .PARAMETER Realm
-Realm dedicado ao Altivy. Padrão: altivy.
+Realm dedicado ao Nodra. Padrão: altivy.
 
 .PARAMETER ApiClientSecret
 Secret do altivy-api. Quando omitido, lê ALTIVY_API_CLIENT_SECRET.

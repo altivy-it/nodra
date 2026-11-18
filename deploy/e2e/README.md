@@ -1,7 +1,7 @@
 # Laboratório E2E Web-BFF-API
 
 O arquivo canônico desta stack é
-`deploy/e2e/docker-compose-altivynotes.yaml`. Ele cria um ambiente local para
+`deploy/e2e/docker-compose-nodra.yaml`. Ele cria um ambiente local para
 os E2E do BFF. O reverse proxy global não pertence a este Compose: ele roda na
 plataforma `architecture-knowledge-base/platforms/identity` e publica
 `https://localhost:7443/notes`. BFF, API e Web não possuem portas publicadas neste
@@ -21,7 +21,7 @@ global antes do primeiro `up`:
 ```powershell
 Set-Location ..\architecture-knowledge-base\platforms\identity
 ./scripts/start-platform.ps1
-Set-Location ..\..\..\AltivyNotes
+Set-Location ..\..\..\Nodra
 ```
 
 O certificado da plataforma global deve ser
@@ -95,9 +95,9 @@ $env:ALTIVY_E2E_TLS_CERTIFICATE_PATH = Join-Path $AltivyCertsDirectory 'tls.crt'
 $env:ALTIVY_E2E_TLS_KEY_PATH = Join-Path $AltivyCertsDirectory 'tls.key'
 $env:ALTIVY_E2E_TLS_CA_PATH = Join-Path $AltivyCertsDirectory 'rootCA.pem'
 $env:ALTIVY_E2E_DATA_PROTECTION_KEYS_PATH = "$PWD\deploy\e2e\keys"
-docker compose -f deploy/e2e/docker-compose-altivynotes.yaml config --quiet
+docker compose -f deploy/e2e/docker-compose-nodra.yaml config --quiet
 docker compose --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" `
-  -f deploy/e2e/docker-compose-altivynotes.yaml up --build --wait
+  -f deploy/e2e/docker-compose-nodra.yaml up --build --wait
 ```
 
 O IP e a sub-rede são obtidos da rede/container em execução. Não use valores
@@ -130,7 +130,7 @@ $env:IDENTITY_GATEWAY_IP = docker inspect --format '{{with index .NetworkSetting
 $env:IDENTITY_GATEWAY_SUBNET = docker network inspect identity-global --format '{{(index .IPAM.Config 0).Subnet}}'
 if (-not $env:IDENTITY_GATEWAY_IP -or -not $env:IDENTITY_GATEWAY_SUBNET) { throw 'Não foi possível descobrir a rede identity-global atual.' }
 docker compose --env-file "$env:APPDATA\Microsoft\UserSecrets\Altivy.Notes\.env" `
-  -f deploy/e2e/docker-compose-altivynotes.yaml up --build --force-recreate --wait web bff api worker
+  -f deploy/e2e/docker-compose-nodra.yaml up --build --force-recreate --wait web bff api worker
 ```
 
 No perfil `Development`, quando a seção SMTP estiver completamente ausente, o
@@ -192,10 +192,24 @@ os recursos deste laboratório para recriar os aliases `web`, `bff` e `api`.
 Não remova a stack compartilhada do Keycloak/PostgreSQL/NGINX:
 
 ```powershell
-docker compose -f deploy/e2e/docker-compose-altivynotes.yaml down
+docker compose -f deploy/e2e/docker-compose-nodra.yaml down
 ```
 
 ## Executar E2E
+
+### Condição Temporal dos Testes PostgreSQL
+
+Os testes de roteamento mensal validam instantes em UTC. Nas conexões
+**sintéticas e descartáveis** de integração, configure `Timezone=UTC`, como
+nas duas connection strings do job `backend-integration` em
+`.github/workflows/ci.yml`. O parâmetro fixa o timezone da sessão Npgsql,
+inclusive quando a imagem PostgreSQL usa `America/Sao_Paulo` por padrão.
+
+Essa condição foi validada com PostgreSQL real e a suíte backend completa.
+Não exige `ALTER DATABASE`, alteração de migrations/SQL já publicados, leitura
+de secrets ou mudança na configuração de ambientes existentes. Não aplique uma
+migração operacional de timezone em produção por causa deste teste; qualquer
+impacto nesses ambientes exige decisão humana específica.
 
 Com o laboratório ativo, execute a imagem de testes a partir da raiz:
 
@@ -224,5 +238,5 @@ quando o teste falhar:
 ## Encerrar
 
 ```powershell
-docker compose -f deploy/e2e/docker-compose-altivynotes.yaml down
+docker compose -f deploy/e2e/docker-compose-nodra.yaml down
 ```

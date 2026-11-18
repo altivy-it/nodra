@@ -1,14 +1,14 @@
-using Altivy.Notes.Api.Authorization;
-using Altivy.Notes.Api.Notes;
-using Altivy.Notes.Api.Vaults;
-using Altivy.Backend.Application.Notes;
-using Altivy.Backend.Application.Vaults;
-using Altivy.Notes.Api.Realtime;
+using Nodra.Backend.Application.Notes;
+using Nodra.Backend.Application.Vaults;
+using Nodra.Notes.Api.Authorization;
+using Nodra.Notes.Api.Notes;
+using Nodra.Notes.Api.Realtime;
+using Nodra.Notes.Api.Vaults;
 
-namespace Altivy.Notes.Api.Endpoints;
+namespace Nodra.Notes.Api.Endpoints;
 
 /// <summary>
-/// Registra os endpoints públicos da API Altivy Notes.
+/// Registra os endpoints públicos da API Nodra.
 /// </summary>
 public static class ApiEndpointRouteBuilderExtensions
 {
@@ -345,38 +345,6 @@ public static class ApiEndpointRouteBuilderExtensions
     private static string FolderLocation(string vaultId, string path) =>
         $"/api/v1/vaults/{Uri.EscapeDataString(vaultId)}/folders/" +
         string.Join('/', path.Split('/').Select(Uri.EscapeDataString));
-
-    private static async Task<IResult> DeleteEmptyFolderAsync(
-        string vaultId,
-        string path,
-        HttpContext context,
-        IAuthorizationDecisionService authorization,
-        DeleteEmptyFolderCommandHandler command,
-        CancellationToken cancellationToken)
-    {
-        var access = await AuthorizeAsync(vaultId, VaultAuthorization.DeleteScope, context, authorization, cancellationToken);
-        if (access is not null) return access;
-        try
-        {
-            var result = await command.HandleAsync(
-                vaultId,
-                Uri.UnescapeDataString(path),
-                cancellationToken);
-            return result switch
-            {
-                FolderDeletionResult.Deleted or FolderDeletionResult.NotFound => Results.NoContent(),
-                _ => Results.Conflict()
-            };
-        }
-        catch (ArgumentException)
-        {
-            return Results.Problem(statusCode: 400, title: "Caminho da pasta inválido.");
-        }
-        catch (UnauthorizedAccessException)
-        {
-            return Results.Problem(statusCode: 403, title: "Acesso ao conteúdo do vault negado.");
-        }
-    }
 
     private static async Task<IResult> MoveFolderAsync(
         string vaultId,

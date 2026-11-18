@@ -1,8 +1,8 @@
-# Altivy - Implementação do Frontend
+# Nodra - Implementação do Frontend
 
 ## 1. Objetivo
 
-Definir a arquitetura e o plano de implementação da aplicação Angular do Altivy. As decisões de produto e arquitetura global permanecem no [Plano Mestre](plano-mestre.md).
+Definir a arquitetura e o plano de implementação da aplicação Angular do Nodra. As decisões de produto e arquitetura global permanecem no [Plano Mestre](plano-mestre.md).
 
 ## 2. Stack
 
@@ -148,7 +148,7 @@ Evolução posterior:
 
 ### 6.1 Direção visual
 
-O Altivy deve transmitir precisão, permanência e foco. A interface usa superfícies neutras, Manrope como família única de display, conteúdo e controles, e IBM Plex Mono para código, paths e dados técnicos, conforme `Altivy/docs/brand/tokens/typography.md`. Cores de destaque serão reservadas para ações, links, seleção e estados.
+O Nodra deve transmitir precisão, permanência e foco. A interface usa superfícies neutras, Manrope como família única de display, conteúdo e controles, e IBM Plex Mono para código, paths e dados técnicos, conforme `Altivy/docs/brand/tokens/typography.md`. Cores de destaque serão reservadas para ações, links, seleção e estados.
 
 Tokens mínimos:
 

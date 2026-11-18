@@ -1,9 +1,9 @@
 using System.Net.Http.Headers;
-using Altivy.Bff.Authentication;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Nodra.Bff.Authentication;
 
-namespace Altivy.Bff.Relay;
+namespace Nodra.Bff.Relay;
 
 /// <summary>
 /// Registra o encaminhamento server-side entre o BFF e a API Altivy.
@@ -24,7 +24,7 @@ public static class BffProxyRouteBuilderExtensions
     /// <returns>O mesmo construtor para composição adicional.</returns>
     public static IEndpointRouteBuilder MapBffApiProxy(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapMethods(
+        _ = endpoints.MapMethods(
             "/api/v1/{**path}",
             ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS", "QUERY"],
             ForwardAsync)
@@ -39,7 +39,7 @@ public static class BffProxyRouteBuilderExtensions
         string? path,
         CancellationToken cancellationToken)
     {
-        var client = httpClientFactory.CreateClient("AltivyApi");
+        var client = httpClientFactory.CreateClient("NodraApi");
         var downstreamUri = BuildDownstreamUri(client.BaseAddress, path, context.Request.QueryString);
         using var request = new HttpRequestMessage(new HttpMethod(context.Request.Method), downstreamUri);
 
@@ -53,7 +53,7 @@ public static class BffProxyRouteBuilderExtensions
         }
 
         ProxyHeaders.CopyRequestHeaders(context.Request.Headers, request);
-        request.Headers.Remove("X-Altivy-Reauth-At");
+        _ = request.Headers.Remove("X-Altivy-Reauth-At");
         if (HttpMethods.IsDelete(context.Request.Method) &&
             path?.StartsWith("vaults/", StringComparison.OrdinalIgnoreCase) == true &&
             path.Contains("/trash", StringComparison.OrdinalIgnoreCase))
@@ -64,7 +64,7 @@ public static class BffProxyRouteBuilderExtensions
                 evidence is not null &&
                 evidence.IsFresh(DateTimeOffset.UtcNow, ReauthenticationEvidence.FreshnessWindow))
             {
-                request.Headers.TryAddWithoutValidation("X-Altivy-Reauth-At", evidence.AuthenticatedAtUtc.ToString("O"));
+                _ = request.Headers.TryAddWithoutValidation("X-Altivy-Reauth-At", evidence.AuthenticatedAtUtc.ToString("O"));
             }
         }
 

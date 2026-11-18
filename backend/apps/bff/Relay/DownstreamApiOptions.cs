@@ -1,4 +1,4 @@
-namespace Altivy.Bff.Relay;
+namespace Nodra.Bff.Relay;
 
 /// <summary>
 /// Define as configurações da API downstream acessada pelo BFF.

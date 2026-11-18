@@ -1,4 +1,4 @@
-namespace Altivy.Backend.Domain.Notes;
+namespace Nodra.Backend.Domain.Notes;
 
 /// <summary>
 /// Representa os elementos estruturais extraídos de uma nota Markdown.
@@ -10,12 +10,12 @@ public sealed record MarkdownDocument(
     IReadOnlyList<string> WikiLinks,
     IReadOnlyList<string> MarkdownLinks)
 {
-    private static readonly HashSet<string> Classifications = new(StringComparer.Ordinal)
+    private static readonly HashSet<string> s_classifications = new(StringComparer.Ordinal)
     {
         "unclassified", "public", "internal", "restricted", "confidential"
     };
 
-    private static readonly HashSet<string> DocumentTypes = new(StringComparer.Ordinal)
+    private static readonly HashSet<string> s_documentTypes = new(StringComparer.Ordinal)
     {
         "note", "reference", "decision", "meeting", "runbook", "task"
     };
@@ -25,7 +25,7 @@ public sealed record MarkdownDocument(
     /// </summary>
     public bool IsUnclassified =>
         !Properties.TryGetValue("altivy.classification", out var classification) ||
-        !Classifications.Contains(classification) ||
+        !s_classifications.Contains(classification) ||
         string.Equals(classification, "unclassified", StringComparison.Ordinal);
 
     /// <summary>
@@ -33,8 +33,8 @@ public sealed record MarkdownDocument(
     /// </summary>
     public bool HasMinimumMetadata =>
         Properties.TryGetValue("altivy.metadata_version", out var version) && version == "1.0" &&
-        Properties.TryGetValue("altivy.classification", out var classification) && Classifications.Contains(classification) &&
-        Properties.TryGetValue("altivy.doc_type", out var documentType) && DocumentTypes.Contains(documentType) &&
+        Properties.TryGetValue("altivy.classification", out var classification) && s_classifications.Contains(classification) &&
+        Properties.TryGetValue("altivy.doc_type", out var documentType) && s_documentTypes.Contains(documentType) &&
         Properties.ContainsKey("altivy.tags") && Tags.Count > 0;
 
     /// <summary>
@@ -113,8 +113,8 @@ public sealed record MarkdownDocument(
         if (!string.IsNullOrWhiteSpace(currentDirectory))
         {
             var relative = CombineRelativePath(currentDirectory, normalizedTarget);
-            candidates.Add(relative);
-            candidates.Add(EnsureMarkdownExtension(relative));
+            _ = candidates.Add(relative);
+            _ = candidates.Add(EnsureMarkdownExtension(relative));
         }
 
         foreach (var candidate in candidates)

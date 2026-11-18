@@ -1,10 +1,10 @@
-using Altivy.Backend.Application.Vaults;
-using Altivy.Notes.Api.Authorization;
-using Altivy.Notes.Api.Vaults;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Nodra.Backend.Application.Vaults;
+using Nodra.Notes.Api.Authorization;
+using Nodra.Notes.Api.Vaults;
 
-namespace Altivy.Notes.Api.Realtime;
+namespace Nodra.Notes.Api.Realtime;
 
 /// <summary>
 /// Hub SignalR que publica atualizações de um vault autorizado pelo Keycloak.
@@ -24,12 +24,7 @@ public sealed class VaultHub(IAuthorizationDecisionService authorization) : Hub
             throw new HubException("Identificador de vault inválido.");
         }
 
-        var accessToken = ExtractAccessToken(Context.GetHttpContext());
-        if (accessToken is null)
-        {
-            throw new HubException("Acesso negado.");
-        }
-
+        var accessToken = ExtractAccessToken(Context.GetHttpContext()) ?? throw new HubException("Acesso negado.");
         var decision = await authorization.EvaluateAsync(
             accessToken,
             VaultAuthorization.ResourceFor(parsedVaultId.Value),

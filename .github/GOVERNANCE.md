@@ -1,4 +1,4 @@
-# Governança do Altivy
+# Governança do Nodra
 
 Este documento define como o projeto toma decisões, aceita mudanças e mantém sua
 integridade técnica. Ele complementa o [plano mestre](../docs/plano-mestre.md),

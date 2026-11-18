@@ -1,7 +1,7 @@
 using System.Net.Http.Headers;
 using System.Net.WebSockets;
 
-namespace Altivy.Bff.Relay;
+namespace Nodra.Bff.Relay;
 
 /// <summary>
 /// Registra o encaminhamento server-side entre o BFF e os hubs SignalR da API Altivy.
@@ -16,7 +16,7 @@ public static class BffHubsProxyRouteBuilderExtensions
     /// <returns>O mesmo construtor para composição adicional.</returns>
     public static IEndpointRouteBuilder MapBffHubsProxy(this IEndpointRouteBuilder endpoints)
     {
-        endpoints.MapMethods(
+        _ = endpoints.MapMethods(
             "/hubs/{**path}",
             ["GET", "POST"],
             ForwardAsync)
@@ -32,7 +32,7 @@ public static class BffHubsProxyRouteBuilderExtensions
         string? path,
         CancellationToken cancellationToken)
     {
-        var client = httpClientFactory.CreateClient("AltivyApi");
+        var client = httpClientFactory.CreateClient("NodraApi");
 
         if (context.WebSockets.IsWebSocketRequest)
         {
@@ -105,7 +105,7 @@ public static class BffHubsProxyRouteBuilderExtensions
 
         var toDownstream = PumpAsync(localSocket, downstreamSocket, cancellationToken);
         var toLocal = PumpAsync(downstreamSocket, localSocket, cancellationToken);
-        await Task.WhenAny(toDownstream, toLocal);
+        _ = await Task.WhenAny(toDownstream, toLocal);
     }
 
     private static async Task PumpAsync(WebSocket source, WebSocket destination, CancellationToken cancellationToken)

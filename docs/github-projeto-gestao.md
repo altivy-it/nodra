@@ -1,6 +1,6 @@
 # Gestão do projeto no GitHub
 
-Este documento define como usar GitHub Issues e GitHub Projects para gerenciar o Altivy com um fluxo equivalente a Work Items do Azure DevOps ou Jira.
+Este documento define como usar GitHub Issues e GitHub Projects para gerenciar o Nodra com um fluxo equivalente a Work Items do Azure DevOps ou Jira.
 
 ## Limites da configuração
 
@@ -22,7 +22,7 @@ Vulnerabilidades não devem ser registradas nesses formulários. Use o fluxo de 
 
 ## Project recomendado
 
-Crie um Project de organização chamado `Altivy Delivery` e associe o repositório `lzocateli/AltivyNotes`.
+Crie um Project de organização chamado `Altivy Delivery` e associe o repositório `lzocateli/Nodra`.
 
 Configure os campos abaixo. `Status` é o campo padrão do Projects; os demais são campos personalizados.
 
@@ -127,7 +127,7 @@ A automação nativa não interpreta com segurança todos os campos de texto de 
 ## Checklist de criação do Project
 
 - [ ] Criar `Altivy Delivery` no nível da organização.
-- [ ] Associar `lzocateli/AltivyNotes`.
+- [ ] Associar `lzocateli/Nodra`.
 - [ ] Criar os campos personalizados da tabela.
 - [ ] Criar as seis views descritas neste documento.
 - [ ] Configurar automação para novas Issues e PRs.

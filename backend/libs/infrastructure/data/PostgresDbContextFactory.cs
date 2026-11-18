@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
-namespace Altivy.Backend.Infra.Data.Postgres;
+namespace Nodra.Backend.Infra.Data.Postgres;
 
 /// <summary>
 /// Cria o contexto PostgreSQL durante operações de design-time do EF Core.
@@ -26,8 +26,8 @@ public sealed class PostgresDbContextFactory : IDesignTimeDbContextFactory<Postg
         var options = new DbContextOptionsBuilder<PostgresDbContext>()
             .UseNpgsql(connectionString, npgsqlOptions =>
             {
-                npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "altivy");
-                npgsqlOptions.CommandTimeout(180);
+                _ = npgsqlOptions.MigrationsHistoryTable("__EFMigrationsHistory", "altivy");
+                _ = npgsqlOptions.CommandTimeout(180);
             })
             .Options;
 

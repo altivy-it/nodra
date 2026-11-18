@@ -1,6 +1,6 @@
 using System.Net.Http.Headers;
 
-namespace Altivy.Bff.Relay;
+namespace Nodra.Bff.Relay;
 
 /// <summary>
 /// Adiciona o token de acesso da sessão ao header de autorização de chamadas downstream.

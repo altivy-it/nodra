@@ -1,6 +1,6 @@
-using Altivy.Bff.Configuration;
+using Nodra.Bff.Configuration;
 
-namespace Altivy.Bff.Relay;
+namespace Nodra.Bff.Relay;
 
 /// <summary>
 /// Valida as configurações da API downstream antes da aplicação iniciar.

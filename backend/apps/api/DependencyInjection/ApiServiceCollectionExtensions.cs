@@ -1,12 +1,12 @@
-using Altivy.Notes.Api.Authorization;
-using Altivy.Notes.Api.Vaults;
-using Altivy.Backend.Application.Notes;
-using Altivy.Backend.Application.Vaults;
-using Altivy.Backend.Infra.Data.Postgres;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Nodra.Backend.Application.Notes;
+using Nodra.Backend.Application.Vaults;
+using Nodra.Backend.Infra.Data.Postgres;
+using Nodra.Notes.Api.Authorization;
+using Nodra.Notes.Api.Vaults;
 
-namespace Altivy.Notes.Api.DependencyInjection;
+namespace Nodra.Notes.Api.DependencyInjection;
 
 /// <summary>
 /// Registra autenticação, autorização e integrações externas da API.

@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Provisiona as roles e grants do Altivy no PostgreSQL principal do laboratório.
+Provisiona as roles e grants do Nodra no PostgreSQL principal do laboratório.
 
 .DESCRIPTION
 Lê as connection strings locais de integração, valida que apontam para

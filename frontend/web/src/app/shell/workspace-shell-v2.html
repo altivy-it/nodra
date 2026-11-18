@@ -1,125 +1,327 @@
-<div class="workspace" [attr.data-theme]="workspace.theme()" [attr.data-density]="workspace.density()">
-    <header class="topbar">
-        <div class="context"><span class="brand-mark" aria-hidden="true">A/</span><app-vault-selector [vaults]="vaults"
-                [currentVaultId]="currentVaultId" [loading]="vaultsLoading"
-                (vaultSelected)="vaultSelected.emit($event)" /></div>
-        <div class="topbar-actions"><button type="button" class="icon-button" aria-label="Recolher explorador"
-                (click)="workspace.togglePrimaryPanel()">☰</button><button type="button" class="icon-button"
-                aria-label="Alternar tema" (click)="workspace.cycleTheme()">◐</button><button type="button"
-                class="icon-button" aria-label="Notificações"><svg viewBox="0 0 24 24" aria-hidden="true"
-                    focusable="false">
-                    <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />
-                </svg></button><span class="connection" [attr.aria-label]="'Conexão ' + realtimeStatus"><span
-                    aria-hidden="true"></span> {{ realtimeStatus }}</span><span class="account">{{
-                userName || 'Conta' }}</span><button type="button" class="logout-button" aria-label="Encerrar sessão"
-                (click)="loggedOut.emit()">Sair</button></div>
-    </header>
-    <nav class="activity-bar" aria-label="Módulos" role="toolbar">@for (item of activities.availableItems(); track
-        item.id) { <button type="button" class="activity" [class.active]="workspace.activeModule() === item.id"
-            [attr.aria-label]="item.label" [attr.data-activity]="item.id"
-            [attr.aria-current]="workspace.activeModule() === item.id ? 'page' : null"
-            [attr.tabindex]="workspace.activeModule() === item.id ? 0 : -1" (click)="selectModule(item.id)"
-            (keydown)="moveActivity($event, item.id)">{{ item.symbol }}<span>{{ item.label }}</span></button> }</nav>
-    @if (workspace.primaryPanelOpen()) { <aside class="primary-panel" [style.width.px]="workspace.primaryPanelWidth()"
-        aria-label="Explorador de arquivos">
-        <div class="panel-heading"><span>EXPLORADOR</span><button type="button" class="small-button"
-            (click)="noteCreated.emit(folderExplorer.noteParentPath)" aria-label="Criar nota">+</button></div>
-        <div class="panel-actions"><button type="button" (click)="noteCreated.emit(folderExplorer.noteParentPath)">Nova nota</button><button
-            type="button" (click)="folderExplorer.toggleFolderForm()">Nova pasta</button><button
-            type="button" (click)="folderExplorer.reload(); notesReloaded.emit()" aria-label="Atualizar arquivos">↻</button></div>
-        <div class="panel-actions"><button type="button" (click)="folderExplorer.openTrash()">Lixeira</button></div>
-        <div class="resize-handle" role="separator" aria-orientation="vertical" tabindex="0"
-            aria-label="Ajustar largura do explorador" aria-valuemin="220" aria-valuemax="420"
-            [attr.aria-valuenow]="workspace.primaryPanelWidth()" (pointerdown)="startResize($event, 'primary')"
-            (keydown)="resizeFromKeyboard($event, 'primary')"></div><app-folder-explorer #folderExplorer
-            [vaultId]="currentVaultId" [selectedPath]="selected?.path ?? null"
-            [expandedPaths]="workspace.expandedFolders()" (expandedPathsChange)="workspace.setExpandedFolders($event)"
-            (noteOpened)="noteOpened.emit($event)" (noteCreated)="noteCreated.emit($event)"
-            (folderMoved)="folderMoved.emit($event)"
-            (trashRequested)="trashRequested.emit($event)"
-            (noteDropped)="noteDropped.emit({ path: $event.note.path, eTag: $event.note.eTag!, destination: $event.destination })" />
-    </aside> }
-    <main class="content" aria-label="Área de trabalho">
-        <div class="document-tabs"><span class="tab active">{{ selected?.path || 'Workspace' }}</span><button
-                type="button" aria-label="Fechar documento">×</button></div>@if (error) { <p class="error" role="alert">
-            {{ error }}</p> } @if (isModule('files')) { @if (selected; as note) { <section class="editor"
-            aria-label="Editor Markdown">
-            <div class="editor-toolbar"><label>Caminho <input #path [value]="note.path" aria-label="Caminho da nota"
-                        (input)="note.eTag ? null : save(path.value, content.value)"
-                        (change)="note.eTag ? noteMoved.emit(path.value) : null"></label>
-                <div class="preview-controls" role="group" aria-label="Modo de visualização"><button type="button"
-                        [class.active]="previewMode() === 'editor'"
-                        (click)="setPreviewMode('editor')">Editor</button><button type="button"
-                        [class.active]="previewMode() === 'split'"
-                        (click)="setPreviewMode('split')">Dividir</button><button type="button"
-                        [class.active]="previewMode() === 'preview'"
-                        (click)="setPreviewMode('preview')">Preview</button><button type="button"
-                        class="preview-collapse"
-                        (click)="setPreviewMode(previewMode() === 'preview' ? 'split' : 'preview')"
-                        [attr.aria-label]="previewMode() === 'preview' ? 'Abrir editor' : 'Recolher editor'"><span
-                            aria-hidden="true">{{ previewMode() === 'preview' ? '←' : '→' }}</span></button></div>
+<div
+  class="workspace"
+  [attr.data-theme]="workspace.theme()"
+  [attr.data-density]="workspace.density()"
+>
+  <header class="topbar">
+    <div class="context">
+      <span class="brand-mark" aria-hidden="true">N/</span
+      ><app-vault-selector
+        [vaults]="vaults"
+        [currentVaultId]="currentVaultId"
+        [loading]="vaultsLoading"
+        (vaultSelected)="vaultSelected.emit($event)"
+      />
+    </div>
+    <div class="topbar-actions">
+      <button
+        type="button"
+        class="icon-button"
+        aria-label="Recolher explorador"
+        (click)="workspace.togglePrimaryPanel()"
+      >
+        ☰</button
+      ><button
+        type="button"
+        class="icon-button"
+        aria-label="Alternar tema"
+        (click)="workspace.cycleTheme()"
+      >
+        ◐</button
+      ><button type="button" class="icon-button" aria-label="Notificações">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />
+        </svg></button
+      ><span class="connection" [attr.aria-label]="'Conexão ' + realtimeStatus"
+        ><span aria-hidden="true"></span> {{ realtimeStatus }}</span
+      ><span class="account">{{ userName || 'Conta' }}</span
+      ><button
+        type="button"
+        class="logout-button"
+        aria-label="Encerrar sessão"
+        (click)="loggedOut.emit()"
+      >
+        Sair
+      </button>
+    </div>
+  </header>
+  <nav class="activity-bar" aria-label="Módulos" role="toolbar">
+    @for (item of activities.availableItems(); track item.id) {
+      <button
+        type="button"
+        class="activity"
+        [class.active]="workspace.activeModule() === item.id"
+        [attr.aria-label]="item.label"
+        [attr.data-activity]="item.id"
+        [attr.aria-current]="workspace.activeModule() === item.id ? 'page' : null"
+        [attr.tabindex]="workspace.activeModule() === item.id ? 0 : -1"
+        (click)="selectModule(item.id)"
+        (keydown)="moveActivity($event, item.id)"
+      >
+        {{ item.symbol }}<span>{{ item.label }}</span>
+      </button>
+    }
+  </nav>
+  @if (workspace.primaryPanelOpen()) {
+    <aside
+      class="primary-panel"
+      [style.width.px]="workspace.primaryPanelWidth()"
+      aria-label="Explorador de arquivos"
+    >
+      <div class="panel-heading">
+        <span>EXPLORADOR</span
+        ><button
+          type="button"
+          class="small-button"
+          (click)="noteCreated.emit(folderExplorer.noteParentPath)"
+          aria-label="Criar nota"
+        >
+          +
+        </button>
+      </div>
+      <div class="panel-actions">
+        <button type="button" (click)="noteCreated.emit(folderExplorer.noteParentPath)">
+          Nova nota</button
+        ><button type="button" (click)="folderExplorer.toggleFolderForm()">Nova pasta</button
+        ><button
+          type="button"
+          (click)="folderExplorer.reload(); notesReloaded.emit()"
+          aria-label="Atualizar arquivos"
+        >
+          ↻
+        </button>
+      </div>
+      <div class="panel-actions">
+        <button type="button" (click)="folderExplorer.openTrash()">Lixeira</button>
+      </div>
+      <div
+        class="resize-handle"
+        role="separator"
+        aria-orientation="vertical"
+        tabindex="0"
+        aria-label="Ajustar largura do explorador"
+        aria-valuemin="220"
+        aria-valuemax="420"
+        [attr.aria-valuenow]="workspace.primaryPanelWidth()"
+        (pointerdown)="startResize($event, 'primary')"
+        (keydown)="resizeFromKeyboard($event, 'primary')"
+      ></div>
+      <app-folder-explorer
+        #folderExplorer
+        [vaultId]="currentVaultId"
+        [selectedPath]="selected?.path ?? null"
+        [expandedPaths]="workspace.expandedFolders()"
+        (expandedPathsChange)="workspace.setExpandedFolders($event)"
+        (noteOpened)="noteOpened.emit($event)"
+        (noteCreated)="noteCreated.emit($event)"
+        (folderMoved)="folderMoved.emit($event)"
+        (trashRequested)="trashRequested.emit($event)"
+        (noteDropped)="
+          noteDropped.emit({
+            path: $event.note.path,
+            eTag: $event.note.eTag!,
+            destination: $event.destination,
+          })
+        "
+      />
+    </aside>
+  }
+  <main class="content" aria-label="Área de trabalho">
+    <div class="document-tabs">
+      <span class="tab active">{{ selected?.path || 'Workspace' }}</span
+      ><button type="button" aria-label="Fechar documento">×</button>
+    </div>
+    @if (error) {
+      <p class="error" role="alert">
+        {{ error }}
+      </p>
+    }
+    @if (isModule('files')) {
+      @if (selected; as note) {
+        <section class="editor" aria-label="Editor Markdown">
+          <div class="editor-toolbar">
+            <label
+              >Caminho
+              <input
+                #path
+                [value]="note.path"
+                aria-label="Caminho da nota"
+                (input)="note.eTag ? null : save(path.value, content.value)"
+                (change)="note.eTag ? noteMoved.emit(path.value) : null"
+            /></label>
+            <div class="preview-controls" role="group" aria-label="Modo de visualização">
+              <button
+                type="button"
+                [class.active]="previewMode() === 'editor'"
+                (click)="setPreviewMode('editor')"
+              >
+                Editor</button
+              ><button
+                type="button"
+                [class.active]="previewMode() === 'split'"
+                (click)="setPreviewMode('split')"
+              >
+                Dividir</button
+              ><button
+                type="button"
+                [class.active]="previewMode() === 'preview'"
+                (click)="setPreviewMode('preview')"
+              >
+                Preview</button
+              ><button
+                type="button"
+                class="preview-collapse"
+                (click)="setPreviewMode(previewMode() === 'preview' ? 'split' : 'preview')"
+                [attr.aria-label]="previewMode() === 'preview' ? 'Abrir editor' : 'Recolher editor'"
+              >
+                <span aria-hidden="true">{{ previewMode() === 'preview' ? '←' : '→' }}</span>
+              </button>
             </div>
-            <div class="editor-panes" [class.editor-only]="previewMode() === 'editor'"
-                [class.preview-only]="previewMode() === 'preview'"><textarea #content [value]="note.content"
-                    aria-label="Conteúdo Markdown" (input)="save(note.eTag ? note.path : path.value, content.value)"></textarea>
-                <article class="markdown-preview" aria-label="Preview Markdown">
-                    <div class="preview-heading"><span>PREVIEW</span><span class="muted">{{ note.path }}</span></div>
-                    <markdown mermaid katex [data]="note.content"></markdown>
-                </article>
-            </div>
-            <div class="editor-actions"><span class="muted" aria-live="polite">Markdown · salvamento
-                    automático</span><button type="button" (click)="noteRemoved.emit()">Excluir</button></div>
-        </section> } @else { <section class="empty"><span class="empty-code">A/</span>
-            <h1>Abra uma nota para começar.</h1>
-            <p>Seu vault permanece organizado ao redor do documento atual.</p>
-        </section> } } @else if (isModule('settings')) { <section class="module-page"><span class="empty-code">06 /
-                CONFIGURAÇÕES</span>
-            <h1>Preferências do workspace</h1><label>Tema <select [value]="workspace.theme()"
-                    (change)="workspace.setTheme($any($event.target).value)">
-                    <option value="system">Sistema</option>
-                    <option value="light">Claro</option>
-                    <option value="dark">Escuro</option>
-                    <option value="high-contrast">Alto contraste</option>
-                </select></label><label>Densidade <select [value]="workspace.density()"
-                    (change)="workspace.setDensity($any($event.target).value)">
-                    <option value="comfortable">Confortável</option>
-                    <option value="compact">Compacta</option>
-                </select></label><button type="button" class="reset-button" (click)="workspace.reset()">Restaurar
-                        preferências locais</button>
-                    <div class="trash-settings">
-                        <h2>Retenção da lixeira</h2>
-                        <p>Define o prazo capturado em novas exclusões. A remoção automática permanece desabilitada até a configuração de step-up e auditoria.</p>
-                        <label>Prazo em dias <input type="number" min="1" max="3650" step="1"
-                            [value]="trashSettings.retentionDays() ?? ''"
-                            (change)="saveRetentionDays($any($event.target).value)"
-                            [disabled]="trashSettings.loading() || trashSettings.saving()"
-                            aria-describedby="trash-retention-help"></label>
-                        <small id="trash-retention-help">Deixe vazio para não definir retenção automática.</small>
-                        @if (trashSettings.loading()) { <p role="status">Carregando parâmetro...</p> }
-                        @if (trashSettings.saving()) { <p role="status">Salvando parâmetro...</p> }
-                        @if (trashSettings.saved()) { <p role="status">Parâmetro salvo.</p> }
-                        @if (trashSettings.error(); as settingsError) { <p class="error" role="alert">{{ settingsError }}</p> }
-                    </div>
-        </section> } @else if (isModule('help')) { <app-help-panel (closed)="closeHelp()" /> } @else { <section
-            class="module-page"><span class="empty-code">WORKSPACE / {{ workspace.activeModule() }}</span>
-            <h1>Módulo em preparação.</h1>
-            <p>Esta superfície está reservada para uma feature nativa autorizada.</p>
-        </section> }
-    </main>
-    @if (workspace.contextPanelOpen()) { <aside class="context-panel" [style.width.px]="workspace.contextPanelWidth()"
-        aria-label="Painel contextual">
-        <div class="panel-heading"><span>CONTEXTO</span><button type="button" class="small-button"
-                (click)="workspace.toggleContextPanel()" aria-label="Recolher painel contextual">×</button></div>
-        <div class="resize-handle" role="separator" aria-orientation="vertical" tabindex="0"
-            aria-label="Ajustar largura do painel contextual" aria-valuemin="240" aria-valuemax="480"
-            [attr.aria-valuenow]="workspace.contextPanelWidth()" (pointerdown)="startResize($event, 'context')"
-            (keydown)="resizeFromKeyboard($event, 'context')"></div>
-        <div class="context-placeholder"><strong>{{ selected ? 'Propriedades' : 'Sem contexto' }}</strong>
-            <p>{{ selected ? 'Outline, tags e propriedades aparecerão aqui.' : 'Selecione um documento para ver seus
-                detalhes.' }}</p>
+          </div>
+          <div
+            class="editor-panes"
+            [class.editor-only]="previewMode() === 'editor'"
+            [class.preview-only]="previewMode() === 'preview'"
+          >
+            <textarea
+              #content
+              [value]="note.content"
+              aria-label="Conteúdo Markdown"
+              (input)="save(note.eTag ? note.path : path.value, content.value)"
+            ></textarea>
+            <article class="markdown-preview" aria-label="Preview Markdown">
+              <div class="preview-heading">
+                <span>PREVIEW</span><span class="muted">{{ note.path }}</span>
+              </div>
+              <markdown mermaid katex [data]="note.content"></markdown>
+            </article>
+          </div>
+          <div class="editor-actions">
+            <span class="muted" aria-live="polite">Markdown · salvamento automático</span
+            ><button type="button" (click)="noteRemoved.emit()">Excluir</button>
+          </div>
+        </section>
+      } @else {
+        <section class="empty">
+          <span class="empty-code">N/</span>
+          <h1>Abra uma nota para começar.</h1>
+          <p>Seu vault permanece organizado ao redor do documento atual.</p>
+        </section>
+      }
+    } @else if (isModule('settings')) {
+      <section class="module-page">
+        <span class="empty-code">06 / CONFIGURAÇÕES</span>
+        <h1>Preferências do workspace</h1>
+        <label
+          >Tema
+          <select
+            [value]="workspace.theme()"
+            (change)="workspace.setTheme($any($event.target).value)"
+          >
+            <option value="system">Sistema</option>
+            <option value="light">Claro</option>
+            <option value="dark">Escuro</option>
+            <option value="high-contrast">Alto contraste</option>
+          </select></label
+        ><label
+          >Densidade
+          <select
+            [value]="workspace.density()"
+            (change)="workspace.setDensity($any($event.target).value)"
+          >
+            <option value="comfortable">Confortável</option>
+            <option value="compact">Compacta</option>
+          </select></label
+        ><button type="button" class="reset-button" (click)="workspace.reset()">
+          Restaurar preferências locais
+        </button>
+        <div class="trash-settings">
+          <h2>Retenção da lixeira</h2>
+          <p>
+            Define o prazo capturado em novas exclusões. A remoção automática permanece desabilitada
+            até a configuração de step-up e auditoria.
+          </p>
+          <label
+            >Prazo em dias
+            <input
+              type="number"
+              min="1"
+              max="3650"
+              step="1"
+              [value]="trashSettings.retentionDays() ?? ''"
+              (change)="saveRetentionDays($any($event.target).value)"
+              [disabled]="trashSettings.loading() || trashSettings.saving()"
+              aria-describedby="trash-retention-help"
+          /></label>
+          <small id="trash-retention-help">Deixe vazio para não definir retenção automática.</small>
+          @if (trashSettings.loading()) {
+            <p role="status">Carregando parâmetro...</p>
+          }
+          @if (trashSettings.saving()) {
+            <p role="status">Salvando parâmetro...</p>
+          }
+          @if (trashSettings.saved()) {
+            <p role="status">Parâmetro salvo.</p>
+          }
+          @if (trashSettings.error(); as settingsError) {
+            <p class="error" role="alert">{{ settingsError }}</p>
+          }
         </div>
-    </aside> }
-    <footer class="statusbar"><span>vault: {{ currentVaultId }}</span><span class="status-spacer"></span><span>Altivy
-            Notes
-            Workspace</span></footer>
+      </section>
+    } @else if (isModule('help')) {
+      <app-help-panel (closed)="closeHelp()" />
+    } @else {
+      <section class="module-page">
+        <span class="empty-code">WORKSPACE / {{ workspace.activeModule() }}</span>
+        <h1>Módulo em preparação.</h1>
+        <p>Esta superfície está reservada para uma feature nativa autorizada.</p>
+      </section>
+    }
+  </main>
+  @if (workspace.contextPanelOpen()) {
+    <aside
+      class="context-panel"
+      [style.width.px]="workspace.contextPanelWidth()"
+      aria-label="Painel contextual"
+    >
+      <div class="panel-heading">
+        <span>CONTEXTO</span
+        ><button
+          type="button"
+          class="small-button"
+          (click)="workspace.toggleContextPanel()"
+          aria-label="Recolher painel contextual"
+        >
+          ×
+        </button>
+      </div>
+      <div
+        class="resize-handle"
+        role="separator"
+        aria-orientation="vertical"
+        tabindex="0"
+        aria-label="Ajustar largura do painel contextual"
+        aria-valuemin="240"
+        aria-valuemax="480"
+        [attr.aria-valuenow]="workspace.contextPanelWidth()"
+        (pointerdown)="startResize($event, 'context')"
+        (keydown)="resizeFromKeyboard($event, 'context')"
+      ></div>
+      <div class="context-placeholder">
+        <strong>{{ selected ? 'Propriedades' : 'Sem contexto' }}</strong>
+        <p>
+          {{
+            selected
+              ? 'Outline, tags e propriedades aparecerão aqui.'
+              : 'Selecione um documento para ver seus
+                detalhes.'
+          }}
+        </p>
+      </div>
+    </aside>
+  }
+  <footer class="statusbar">
+    <span>vault: {{ currentVaultId }}</span
+    ><span class="status-spacer"></span><span>Altivy Nodra</span>
+  </footer>
 </div>
