@@ -197,5 +197,18 @@ SPA. As licenças das bases estão registradas em
 [CI/CD e segurança](../../docs/ci-cd-seguranca.md).
 
 Esses builds locais com Podman não comprovam as atestações no Docker Engine
-do GitHub. O job real das cinco imagens, publicação e `republish` continuam
+do GitHub; veja a validação remota abaixo. Publicação e `republish` continuam
 pendentes; T033 não foi concluída.
+
+### Validação remota das imagens — 2026-11-18
+
+O [CI do commit `ff3c72a`](https://github.com/altivy-it/nodra/actions/runs/44376361969)
+construiu e escaneou as cinco imagens, verificou SBOM e proveniência
+`mode=max` de cada uma e concluiu `Container Images` e `Result` com sucesso.
+O artifact `image-security` contém 15 relatórios de build, SBOM e scan.
+
+As verificações dos bugs
+[cache do Trivy](../../.specify/bugs/ci-trivy-cache-permissions/test.md) e
+[imagens vulneráveis](../../.specify/bugs/ci-imagens-vulneraveis/test.md)
+registram o estado local anterior ao envio; a execução acima acrescenta a
+evidência do CI real. Ela não valida publicação, imutabilidade ou `republish`.
