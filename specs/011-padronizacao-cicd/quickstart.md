@@ -128,7 +128,7 @@ docker.io/lzocateli/dotnet-sdk:10.0.403-noble-v1, com o repositorio em /workspac
 
 ```powershell
 pwsh -NoProfile -File tools/scripts/test-cicd-contracts.ps1
-pwsh -NoProfile -File tools/scripts/ci/Test-ManagedFiles.ps1 -Components ci,release,release-preview,publish-containers,publish-github-assets,deploy,dependency-updates,repository-policy
+pwsh -NoProfile -Command '& ./tools/scripts/ci/Test-ManagedFiles.ps1 -Components @("ci","release","release-preview","publish-containers","publish-github-assets","deploy","dependency-updates","repository-policy")'
 pwsh -NoProfile -File tools/scripts/test-validate-repository.ps1
 pwsh -NoProfile -File tools/scripts/validate-repository.ps1
 ```
@@ -169,7 +169,8 @@ com `containerd-snapshotter` e sem `lazy-pull`. O build conserva `--load`,
 `--provenance=mode=max` e SBOM; o gerador
 `docker/buildkit-syft-scanner:1.12.1` é fixado pelo digest do índice
 multiplataforma. O Trivy continua lendo os arquivos locais, sem socket Docker,
-e o CI valida SBOM e proveniência na imagem carregada sem imprimir seus corpos.
+e compartilha um volume de cache descartável entre os scans. O CI valida SBOM e
+proveniência na imagem carregada sem imprimir seus corpos.
 
 A prova isolada em [Docker real no GitHub Actions](https://github.com/altivy-it/nodra/actions/runs/44365783571)
 gerou as duas atestações de uma imagem sintética e executou os dois scans Trivy
@@ -183,3 +184,18 @@ o [Docker Engine 29.9.3](https://github.com/moby/moby/blob/docker-v29.9.3/LICENS
 e o [gerador Syft 1.12.1](https://github.com/docker/buildkit-syft-scanner/blob/v1.12.1/LICENSE)
 declaram Apache-2.0. O [Syft 1.51.0](https://github.com/anchore/syft/blob/v1.51.0/LICENSE)
 incluído no gerador também declara Apache-2.0.
+
+### Validação local das imagens — 2026-11-18
+
+As cinco imagens foram construídas em formato Docker e analisadas por Trivy
+0.72.0: cada uma gerou SBOM CycloneDX e não apresentou achados corrigíveis
+`HIGH,CRITICAL` no gate aplicado. O bundle de migrations incorporou runtime
+.NET 10.0.15, aplicou 12 migrations com a role dedicada e foi reaplicado sem
+alterações em PostgreSQL 18.4 descartável. O worker conectou com a role
+runtime; API, BFF e web responderam pela borda nginx, incluindo o fallback da
+SPA. As licenças das bases estão registradas em
+[CI/CD e segurança](../../docs/ci-cd-seguranca.md).
+
+Esses builds locais com Podman não comprovam as atestações no Docker Engine
+do GitHub. O job real das cinco imagens, publicação e `republish` continuam
+pendentes; T033 não foi concluída.

@@ -12,7 +12,7 @@ RUN dotnet restore backend/apps/bff/Nodra.Bff.csproj
 COPY backend/apps/bff/ backend/apps/bff/
 RUN dotnet publish backend/apps/bff/Nodra.Bff.csproj --configuration Release --no-restore --output /app/publish -p:Version=${RELEASE_VERSION}
 
-FROM docker.io/lzocateli/dotnet-aspnet:10.0.11-noble AS runtime
+FROM docker.io/lzocateli/dotnet-aspnet:10.0.15-noble-v1@sha256:de0e9e46416e3aec0ec28e2e51d401fe4b9d3004133bb93876de0ee16e623c93 AS runtime
 ARG RELEASE_VERSION=0.1.0
 ARG IMAGE_VERSION=${RELEASE_VERSION}
 LABEL org.opencontainers.image.title="nodra-bff" \

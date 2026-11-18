@@ -3,7 +3,8 @@
 Constroi imagens Nodra localmente, gera SBOM e verifica vulnerabilidades.
 .DESCRIPTION
 Orquestra Docker/BuildKit e Trivy fixado por digest, sem publicar imagens e sem
-montar socket Docker no scanner. Usa archives temporarios, removidos ao terminar.
+montar socket Docker no scanner. Usa archives e volume de cache temporarios,
+removidos ao terminar.
 .PARAMETER Image
 api, bff, worker, web, migrations ou all (padrao).
 .PARAMETER Tag
@@ -23,7 +24,8 @@ Dockerfiles e contexto do repositorio, sem credenciais.
 .OUTPUTS
 Relatorios em artifacts/security-local e codigo nao zero em falha.
 .NOTES
-Requer PowerShell 7.4+, Docker com BuildKit e rede para imagens/banco Trivy.
+Requer PowerShell 7.4+, Docker com BuildKit e permissao para criar/remover
+volumes, alem de rede para imagens/banco Trivy.
 O scanner Trivy 0.72.0 possui licenca Apache-2.0 verificada na origem oficial.
 O gerador BuildKit Syft 1.12.1 tambem possui licenca Apache-2.0 verificada.
 .LINK
@@ -47,7 +49,7 @@ if ($RemainingArguments.Count -gt 0) { throw 'Argumento desconhecido. Use --help
 $repository = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $output = Join-Path $repository 'artifacts/security-local'
 $temporary = Join-Path ([IO.Path]::GetTempPath()) "nodra-images-$([Guid]::NewGuid().ToString('N'))"
-$cache = Join-Path $temporary 'cache'
+$cacheVolume = $null
 $scanner = 'docker.io/aquasec/trivy:0.72.0@sha256:c6e969c5662a546ad5de4a73c2a6b7a7c627f86d916903e175aa623af5b97ada'
 $sbomGenerator = 'docker.io/docker/buildkit-syft-scanner:1.12.1@sha256:873a7458c3c8ac8e32c7b796c10e1600b07b963d2aa000a72a2d97aaaa2d6315'
 $definitions = [ordered]@{
@@ -61,14 +63,20 @@ $definitions = [ordered]@{
 function Invoke-Docker([string[]] $Arguments) {
     if ($DryRun) { Write-Output "[dry-run] docker $($Arguments -join ' ')"; return }
     & docker @Arguments
-    if ($LASTEXITCODE -ne 0) { throw 'Validacao de imagens falhou; nenhum push ou deploy foi executado. Use --help.' }
+    if ($LASTEXITCODE -ne 0) {
+        $operation = $Arguments[0]
+        if ($operation -eq 'volume' -and $Arguments.Count -gt 1) { $operation += " $($Arguments[1])" }
+        $message = "Docker $operation retornou codigo $LASTEXITCODE; nenhum push ou deploy foi executado. Use --help."
+        [Console]::Error.WriteLine($message)
+        throw $message
+    }
 }
 
 Push-Location $repository
 try {
     if (-not $DryRun) {
         New-Item -ItemType Directory -Path $output -Force | Out-Null
-        New-Item -ItemType Directory -Path $cache -Force | Out-Null
+        New-Item -ItemType Directory -Path $temporary -Force | Out-Null
     }
     $entries = @()
     if ($ReleaseEntriesPath) {
@@ -86,11 +94,22 @@ try {
         }
     }
     else { Invoke-Docker @('buildx', 'inspect', '--bootstrap') }
+    if ($DryRun) {
+        Invoke-Docker @('volume', 'create')
+        $cacheVolume = 'dry-run-trivy-cache'
+    }
+    else {
+        $createdVolume = @(Invoke-Docker @('volume', 'create'))
+        if ($createdVolume.Count -ne 1 -or $createdVolume[0] -cnotmatch '^[a-f0-9]{64}$') {
+            throw 'Docker retornou um identificador de volume invalido. Use --help.'
+        }
+        $cacheVolume = $createdVolume[0]
+    }
     foreach ($name in $definitions.Keys) {
         if ($Image -ne 'all' -and $Image -ne $name) { continue }
         if ($ReleaseEntriesPath) {
             $entry = @($entries | Where-Object { $_.name -ceq "nodra-$name" })[0]
-            $mounts = @('run', '--rm', '--env', 'TRIVY_USERNAME', '--env', 'TRIVY_PASSWORD', '--volume', "${output}:/reports", '--volume', "${cache}:/root/.cache/trivy", $scanner, 'image', '--image-src', 'remote', "$($entry.reference)@$($entry.digest)")
+            $mounts = @('run', '--rm', '--env', 'TRIVY_USERNAME', '--env', 'TRIVY_PASSWORD', '--volume', "${output}:/reports", '--volume', "${cacheVolume}:/root/.cache/trivy", $scanner, 'image', '--image-src', 'remote', "$($entry.reference)@$($entry.digest)")
         }
         else {
         $reference = "nodra-${name}:$Tag"
@@ -98,13 +117,18 @@ try {
         if ($name -eq 'web') { $build += @('--build-arg', 'WEB_CONFIGURATION=production', '--build-arg', 'WEB_BASE_HREF=/') }
         Invoke-Docker ($build + @('.'))
         Invoke-Docker @('save', '--output', (Join-Path $temporary "$name.tar"), $reference)
-        $mounts = @('run', '--rm', '--volume', "${temporary}:/images:ro", '--volume', "${output}:/reports", '--volume', "${cache}:/root/.cache/trivy", $scanner, 'image', '--input', "/images/$name.tar")
+        $mounts = @('run', '--rm', '--volume', "${temporary}:/images:ro", '--volume', "${output}:/reports", '--volume', "${cacheVolume}:/root/.cache/trivy", $scanner, 'image', '--input', "/images/$name.tar")
         }
         Invoke-Docker ($mounts + @('--format', 'cyclonedx', '--output', "/reports/$name.cdx.json"))
         Invoke-Docker ($mounts + @('--ignore-unfixed', '--severity', 'HIGH,CRITICAL', '--exit-code', '1', '--format', 'json', '--output', "/reports/$name-vulnerabilities.json"))
     }
 }
 finally {
-    Pop-Location
-    if (-not $DryRun -and (Test-Path -LiteralPath $temporary)) { Remove-Item -LiteralPath $temporary -Recurse -Force }
+    try {
+        if ($cacheVolume) { Invoke-Docker @('volume', 'rm', $cacheVolume) }
+    }
+    finally {
+        Pop-Location
+        if (-not $DryRun -and (Test-Path -LiteralPath $temporary)) { Remove-Item -LiteralPath $temporary -Recurse -Force }
+    }
 }

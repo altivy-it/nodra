@@ -349,6 +349,53 @@ esac
         @($result.Output -split "`n" | Where-Object { $_.Contains('--severity HIGH,CRITICAL --exit-code 1') }).Count -eq 5) 'arquivos devem passar pelos dois scans Trivy'
     $result = Invoke-ContractProcess $pwsh @('-NoProfile', '-File', $scanner, '-ReleaseEntriesPath', $entriesPath, '-DryRun')
     Assert-Contract ($result.Code -eq 0 -and $result.Output.Contains('--image-src remote ghcr.io/altivy-it/nodra-api@sha256:') -and -not $result.Output.Contains('buildx')) 'scan deve consumir digests sem rebuild'
+
+    $scanRepository = Join-Path $fixtureRoot 'scan-repository'
+    $scannerCopy = Join-Path $scanRepository 'tools/scripts/validate-release-images.ps1'
+    $scanDockerDir = Join-Path $fixtureRoot 'scan-docker'
+    $scanTemp = Join-Path $fixtureRoot 'scan-temp'
+    New-Item -ItemType Directory -Path @((Split-Path -Parent $scannerCopy), $scanDockerDir, $scanTemp) -Force | Out-Null
+    Copy-Item -LiteralPath $scanner -Destination $scannerCopy
+    $scanDocker = Join-Path $scanDockerDir 'docker'
+    $scanLog = Join-Path $fixtureRoot 'scan-docker-calls'
+    $scanMock = @'
+#!/bin/sh
+printf '%s\n' "$*" >> "$NODRA_IMAGE_DOCKER_LOG"
+case "$1 $2" in
+    'volume create') printf '%064d\n' 7 ;;
+    'volume rm')
+        case "$NODRA_IMAGE_FAIL" in cleanup|both) exit 9 ;; esac ;;
+    'buildx inspect'|'buildx build'|'save --output') ;;
+    'run --rm')
+        case "$NODRA_IMAGE_FAIL" in
+            scan|both) case " $* " in *' --exit-code 1 '*) exit 1 ;; esac ;;
+        esac ;;
+    *) exit 2 ;;
+esac
+'@
+    [IO.File]::WriteAllText($scanDocker, $scanMock.Replace("`r`n", "`n"))
+    & chmod 755 $scanDocker
+    if ($LASTEXITCODE -ne 0) { throw 'Nao foi possivel preparar Docker sintetico do scan.' }
+    $expectedVolume = ('0' * 63) + '7'
+    foreach ($scenario in @('success', 'scan', 'cleanup', 'both')) {
+        if (Test-Path -LiteralPath $scanLog) { Remove-Item -LiteralPath $scanLog }
+        $scanEnvironment = @{
+            PATH = ($scanDockerDir, $env:PATH) -join [IO.Path]::PathSeparator
+            TMPDIR = $scanTemp
+            NODRA_IMAGE_DOCKER_LOG = $scanLog
+            NODRA_IMAGE_FAIL = $scenario
+        }
+        $result = Invoke-ContractProcess $pwsh @('-NoProfile', '-File', $scannerCopy, '-Image', 'api') $scanEnvironment
+        Assert-Contract (($result.Code -eq 0) -eq ($scenario -eq 'success')) "resultado incorreto no scan: $scenario"
+        $calls = @(Get-Content -LiteralPath $scanLog)
+        $scanCalls = @($calls | Where-Object { $_ -like 'run --rm *' })
+        Assert-Contract ($calls -contains 'volume create' -and $calls -contains "volume rm $expectedVolume") "volume nao foi criado e removido: $scenario"
+        Assert-Contract ($scanCalls.Count -eq 2 -and @($scanCalls | Where-Object { -not $_.Contains("--volume ${expectedVolume}:/root/.cache/trivy") }).Count -eq 0) "cache nao foi compartilhado pelo volume: $scenario"
+        Assert-Contract (@(Get-ChildItem -LiteralPath $scanTemp -Force).Count -eq 0) "arquivos temporarios nao foram removidos: $scenario"
+        if ($scenario -in @('scan', 'both')) { Assert-Contract ($result.Output.Contains('Docker run retornou codigo 1')) 'falha do scanner foi ocultada' }
+        if ($scenario -in @('cleanup', 'both')) { Assert-Contract ($result.Output.Contains('Docker volume rm retornou codigo 9')) 'falha da limpeza foi ocultada' }
+    }
+
     $fixture | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $fixturePath
     $converter = Join-Path $RepositoryRoot 'tools/scripts/convert-release-manifest.ps1'
     $output = & (Get-Process -Id $PID).Path -NoProfile -File $converter -ManifestPath $fixturePath

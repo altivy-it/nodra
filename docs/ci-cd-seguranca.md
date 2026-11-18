@@ -86,12 +86,27 @@ No job `Container Images`, um Docker Engine fixado é criado somente no runner
 efêmero com `containerd-snapshotter` ativo e `lazy-pull` desativado. O
 `validate-release-images.ps1` mantém `--load`, proveniência `mode=max` e um
 gerador SBOM fixado por digest; o Trivy lê o arquivo de `docker save` e executa
-os dois scans sem receber o socket Docker. Após os builds, o CI consulta a API
-local do Engine e valida SBOM SPDX e proveniência vinculados à mesma imagem em
-um container sem rede nem socket. A proveniência `mode=max` inclui valores de
+os dois scans sem receber o socket Docker. Seu cache usa um volume exclusivo,
+removido ao fim da validação para evitar problemas de permissões no host.
+Após os builds, o CI consulta a API local do Engine e valida SBOM SPDX e
+proveniência vinculados à mesma imagem em um container sem rede nem socket.
+A proveniência `mode=max` inclui valores de
 argumentos de build: nunca passe secrets por `ARG`. Para testar localmente, use
 um Engine isolado compatível, sem reconfigurar o daemon de um host compartilhado.
 As evidências e limitações estão no [guia da feature 011](../specs/011-padronizacao-cicd/quickstart.md).
+
+As imagens de runtime .NET usam a base `10.0.15-noble-v1` por digest; a
+[receita da base](https://github.com/lzocateli/containers/blob/cca7fba17eca7777b12a437f012a90dbfa9b95ed/LICENSE)
+declara MIT. O bundle autossuficiente de migrations usa o SDK `10.0.404`
+por digest, compatível com `global.json`; a
+[licença do SDK](https://github.com/dotnet/sdk/blob/v10.0.404/LICENSE.TXT) e a
+[licença da receita oficial](https://github.com/dotnet/dotnet-docker/blob/810fe040864a3c1a8a516294bfd39af05d2e1af6/LICENSE)
+são MIT. A web usa nginx `1.30.7-trixie` por digest; o
+[nginx](https://github.com/nginx/nginx/blob/release-1.30.7/LICENSE) e a
+[receita oficial](https://github.com/nginx/docker-nginx/blob/a2a986d19aac4a79a330e6e0b5171aae4e521926/LICENSE)
+declaram BSD-2-Clause. O pacote `zlib1g` corrigido também é fixado no Dockerfile:
+se a versão deixar de estar disponível no repositório Debian, o build deve
+falhar até ser atualizada e novamente verificada, sem dispensar o scan.
 
 A publicação de imagens ainda depende de configuração e homologação no GitHub
 com os secrets da GitHub App; o CI não depende desses secrets. A instalação
