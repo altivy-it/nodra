@@ -135,7 +135,7 @@ function Test-LocalLink {
     )
 
     $normalizedDestination = $Destination.Trim().Trim('<', '>')
-    if ($normalizedDestination -match '^(?:https?://|mailto:|#)') {
+    if ($normalizedDestination -match '^(?:https?://|mailto:|data:|#)') {
         return
     }
 

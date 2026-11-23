@@ -1,0 +1,10 @@
+# Override aplicado por tools/scripts/start-self-hosted.ps1 com -ContainerEngine podman.
+# Podman nao aceita uid=/gid= em tmpfs; a opcao U entrega o tmpfs ao usuario da imagem (nginx, uid 101).
+# /var/run aponta para /run, onde o Podman monta /run/podman-init (init: true); por isso sem noexec.
+services:
+  web:
+    tmpfs: !override
+      - /tmp
+      - /var/cache/nginx:rw,noexec,nosuid,size=32m,mode=0700,U
+      - /var/log/nginx:rw,noexec,nosuid,size=16m,mode=0700,U
+      - /var/run:rw,nosuid,size=4m,mode=0700,U
