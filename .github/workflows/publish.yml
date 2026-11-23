@@ -39,23 +39,23 @@ jobs:
     permissions:
       actions: read
     steps:
-      - name: Require administrative team on protected environments
+      - name: Require administrative reviewer on protected environments
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
-          ADMIN_TEAM: ${{ vars.ALTIVY_ADMIN_TEAM }}
+          ADMIN_REVIEWER: ${{ vars.ALTIVY_ADMIN_REVIEWER }}
         run: |
           $ErrorActionPreference = 'Stop'
-          if ($env:ADMIN_TEAM -notmatch '^[a-z0-9][a-z0-9-]{0,99}$') {
-            throw 'Configure ALTIVY_ADMIN_TEAM com o slug da equipe administrativa validada; nenhuma publicacao foi autorizada.'
+          if ($env:ADMIN_REVIEWER -notmatch '^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$') {
+            throw 'Configure ALTIVY_ADMIN_REVIEWER com o login do reviewer User validado; nenhuma publicacao foi autorizada.'
           }
           foreach ($name in @('release', 'distribution', 'quality', 'production')) {
             $metadata = & gh api "repos/$env:GITHUB_REPOSITORY/environments/$name"
             if ($LASTEXITCODE -ne 0) { throw "Nao foi possivel verificar o Environment $name." }
             $environment = $metadata | ConvertFrom-Json
             $reviewers = @($environment.protection_rules | Where-Object type -eq 'required_reviewers' | ForEach-Object reviewers)
-            $approvedTeam = @($reviewers | Where-Object { $_.type -eq 'Team' -and $_.reviewer.slug -ceq $env:ADMIN_TEAM })
-            if ($approvedTeam.Count -ne 1 -or $reviewers.Count -ne 1) { throw "Environment $name deve aceitar somente a equipe administrativa exigida; publicacao bloqueada." }
+            $approvedUser = @($reviewers | Where-Object { $_.type -eq 'User' -and $_.reviewer.login -ceq $env:ADMIN_REVIEWER })
+            if ($approvedUser.Count -ne 1 -or $reviewers.Count -ne 1) { throw "Environment $name deve aceitar somente o reviewer administrativo configurado; publicacao bloqueada." }
           }
 
   reject-unsupported-preflight:

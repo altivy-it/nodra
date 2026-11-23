@@ -2,10 +2,13 @@
 
 ## Ambiente GitHub
 
-Campos: nome, papel, revisores, prevent_self_review, politica de branches/tags
-e configuracoes por escopo. Nomes permitidos: ci, copilot, quality, release,
-distribution, production. As listas de configuracao contêm nomes, nunca valores
-de secrets em artefatos versionados.
+Campos: nome, papel, revisores (logins concretos do tipo User), prevent_self_review,
+politica de branches/tags e configuracoes por escopo. Nomes permitidos: ci,
+copilot, quality, release, distribution, production. Os quatro ambientes
+protegidos reutilizam exatamente o reviewer User dos ambientes equivalentes do
+Dokpod, validado como owner atual da organizacao e com acesso ao Nodra.
+RepositoryRole/actor_id 5 nao e um reviewer valido de Environment. As listas de
+configuracao contem nomes, nunca valores de secrets em artefatos versionados.
 
 ## Release e Manifesto
 

@@ -14,9 +14,11 @@ hashes para contornar os checks. As seções de ferramentas futuras abaixo não
 representam integrações instaladas ou autorização de dependências adicionais.
 
 CI não usa secrets, não publica nem implanta. O único check agregador é
-`Result`. Publicação exige a equipe administrativa validada nos quatro
-ambientes protegidos; auto-deploy permanece desativado. Nenhum workflow de
-release ou deploy foi executado como parte desta implementação local.
+`Result`. Publicação só será autorizada quando o reviewer User do Dokpod,
+validado como owner da organização, estiver configurado nos quatro ambientes
+protegidos; o catálogo local ainda não materializa essa política. Auto-deploy
+permanece desativado. Nenhum workflow de release ou deploy foi executado como
+parte desta implementação local.
 
 Este documento descreve como utilizar o GitHub para proteger mudanças, executar validações, publicar imagens de container e promover releases do Nodra. O Sonar faz parte dessa estratégia como gate de qualidade e segurança do código, mas não substitui os controles nativos do GitHub.
 
@@ -209,8 +211,8 @@ Os nomes efetivos devem permanecer estáveis. Um check marcado como obrigatório
 O arquivo `.github/CODEOWNERS` pode atribuir responsáveis a áreas como:
 
 ```text
-# Configurar somente com uma equipe GitHub administrativa real e validada.
-# Não usar identificadores fictícios nem conta pessoal como fallback.
+# Configurar somente owners GitHub reais, com acesso de escrita ao repositório.
+# CODEOWNERS não substitui os revisores dos Environments.
 ```
 
 O próprio arquivo e os workflows devem possuir owner explícito. Em uma equipe de uma pessoa, CODEOWNERS ainda documenta responsabilidade, mas não cria independência de aprovação. A exigência de aprovação deve ser ajustada para não bloquear o trabalho individual sem oferecer ganho real.
@@ -401,10 +403,10 @@ Criar environments conforme a topologia real:
 | --- | --- |
 | `ci` | validação sem secrets de release/deploy |
 | `copilot` | automação reservada, sem credenciais operacionais |
-| `quality` | tags v*, equipe administrativa validada e aceite da candidata |
-| `release` | main/tags v*, aprovação administrativa antes de publicar |
-| `distribution` | main/tags v*, autorização de divulgação |
-| `production` | tags v*, implantação explicitamente autorizada; sem auto-deploy |
+| `quality` | tags v*, reviewer User do Dokpod validado e aceite da candidata |
+| `release` | main/tags v*, reviewer User do Dokpod antes de publicar |
+| `distribution` | main/tags v*, reviewer User do Dokpod para autorizar divulgação |
+| `production` | tags v*, reviewer User do Dokpod; implantação explícita, sem auto-deploy |
 
 ## Configuração Necessária para a Feature 011
 
@@ -412,9 +414,9 @@ Cadastrar pelo GitHub, nunca pelo chat ou em arquivos do repositório:
 
 | Nome | Tipo | Escopo | Finalidade |
 | --- | --- | --- | --- |
-| `RELEASE_APP_ID` | variável | repositório | identificador do App instalado no Nodra |
+| `RELEASE_APP_ID` | variável | repositório | Client ID ou App ID numérico do App instalado no Nodra |
 | `RELEASE_APP_PRIVATE_KEY` | secret | repositório/organização com acesso restrito | chave do mesmo App |
-| `ALTIVY_ADMIN_TEAM` | variável | repositório | slug da equipe administrativa validada nos quatro ambientes protegidos |
+| `ALTIVY_ADMIN_REVIEWER` | variável | repositório | login do reviewer User do Dokpod, validado como owner da organização e com acesso ao Nodra |
 | `DEPLOY_SSH_TARGET` | variável | quality/production | usuário e host do Nodra |
 | `DEPLOY_HOOK` | variável | quality/production | caminho absoluto do hook Nodra com apply/check |
 | `DEPLOY_SSH_KEY` | secret | quality/production | chave dedicada de menor privilégio |
@@ -423,21 +425,39 @@ Cadastrar pelo GitHub, nunca pelo chat ou em arquivos do repositório:
 O inventário versionado de nomes, escopos e dos seis ambientes está em
 `.github/ci-cd.json` (`repositorySetup`). Ele não contém valores e não cria
 configuração no GitHub. Groundwork 0.11.3 não consegue materializar hoje esse
-contrato: faltam `ci`/`copilot`, variáveis próprias e reviewers de equipe. A
-política remota permanece bloqueada até atualização suportada do catálogo,
-identificação da equipe e revisão do dry-run; não sincronize a política atual.
+contrato: não gera `ci`/`copilot`, mantém fallback `release-pr` e pode tentar
+configurar `release` ou `quality` sem reviewer após uma resposta HTTP 422.
+Com `preview_acceptance=deploy`, reviewers informados são gerados para
+`quality`, mas `requireReviewers=false` não garante falha fechada. Os
+parâmetros locais já identificam o reviewer User, mas a política gerenciada
+permanece inalterada até haver suporte canônico compatível. A política remota
+permanece bloqueada; não sincronize a política atual.
 
 O nome legado `RELEASE_APP_CLIENT_ID` foi substituído no fluxo por
 `RELEASE_APP_ID`; não copiar nem apagar valores sem conferir a migração.
-A equipe administrativa ainda não foi identificada; não basta usar o papel
-RepositoryRole/5 dos rulesets como reviewer de Environment. A publicação
-verifica uma equipe real nos quatro ambientes e falha fechada se faltar.
-O CODEOWNERS legado aguarda essa equipe, sem inventar destinatário.
+No manifesto Groundwork, `release_app_id` deve ser o App ID numérico, usado
+no ruleset de tags; ele não é o Client ID. Para `RELEASE_APP_ID`, o GitHub
+recomenda o Client ID, mas também aceita o App ID numérico como emissor do
+JWT. A emissão real do token ainda não foi verificada com a chave privada.
+O reviewer User foi validado como owner da organização e com permissão admin no
+Nodra; `ALTIVY_ADMIN_REVIEWER` deve conter o login correspondente. O manifesto
+Groundwork local registra esse login nos parâmetros `release_reviewers` e
+`deploy_reviewers`, mas `.github/repository-policy.json` não foi regenerado e
+não representa a configuração remota atual. O papel RepositoryRole/5 dos
+rulesets não substitui o reviewer de Environment. Quando a política compatível
+for gerada e aplicada com autorização, a publicação verificará que somente
+esse usuário está configurado nos quatro ambientes e falhará fechada se houver
+divergência. CODEOWNERS permanece separado e não recebe atribuições por efeito
+colateral.
 
-As consultas realizadas encontraram ausência de cadastros diretos; herança da
-organização não foi confirmada. Instalar o App e conceder acesso são ações do
-operador. Nenhum PAT, chave SSH ou segredo deve ser enviado ao assistente.
-O CI funciona sem essas configurações; release/deploy permanecem bloqueados.
+O App `altivy-release` está instalado para todos os repositórios da organização;
+seu ID foi registrado no manifesto local, sem regenerar a política. Em
+2026-11-19, a consulta dos nomes de configurações diretas e da organização
+disponíveis ao Nodra não encontrou `RELEASE_APP_ID`,
+`RELEASE_APP_PRIVATE_KEY` ou `ALTIVY_ADMIN_REVIEWER`. O operador deve
+configurá-los ou conceder acesso conforme necessário. Nenhum PAT, chave SSH ou
+segredo deve ser enviado ao assistente. O CI funciona sem essas configurações;
+release/deploy permanecem bloqueados.
 
 Para releases self-hosted:
 

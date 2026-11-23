@@ -41,38 +41,42 @@
         "name": "quality",
         "purpose": "Validacao de candidata",
         "requiredReviewers": true,
-        "reviewerGroup": "Administradores da Altivy",
-        "reviewerTeamSlugConfigured": false,
+        "reviewerPurpose": "Administradores da Altivy",
+        "reviewerType": "User",
+        "reviewerSource": "dokpod",
         "allowedRefs": ["tag:v*"]
       },
       {
         "name": "release",
         "purpose": "Preparacao e publicacao de release",
         "requiredReviewers": true,
-        "reviewerGroup": "Administradores da Altivy",
-        "reviewerTeamSlugConfigured": false,
+        "reviewerPurpose": "Administradores da Altivy",
+        "reviewerType": "User",
+        "reviewerSource": "dokpod",
         "allowedRefs": ["branch:main", "tag:v*"]
       },
       {
         "name": "distribution",
         "purpose": "Autorizacao de divulgacao",
         "requiredReviewers": true,
-        "reviewerGroup": "Administradores da Altivy",
-        "reviewerTeamSlugConfigured": false,
+        "reviewerPurpose": "Administradores da Altivy",
+        "reviewerType": "User",
+        "reviewerSource": "dokpod",
         "allowedRefs": ["branch:main", "tag:v*"]
       },
       {
         "name": "production",
         "purpose": "Deploy manual de release publicada",
         "requiredReviewers": true,
-        "reviewerGroup": "Administradores da Altivy",
-        "reviewerTeamSlugConfigured": false,
+        "reviewerPurpose": "Administradores da Altivy",
+        "reviewerType": "User",
+        "reviewerSource": "dokpod",
         "allowedRefs": ["tag:v*"]
       }
     ],
     "variables": [
       { "name": "RELEASE_APP_ID", "scope": "repository", "required": true },
-      { "name": "ALTIVY_ADMIN_TEAM", "scope": "repository", "required": true },
+      { "name": "ALTIVY_ADMIN_REVIEWER", "scope": "repository", "required": true },
       { "name": "DEPLOY_SSH_TARGET", "scope": "environment:quality", "required": true },
       { "name": "DEPLOY_HOOK", "scope": "environment:quality", "required": true },
       { "name": "DEPLOY_SSH_TARGET", "scope": "environment:production", "required": true },
