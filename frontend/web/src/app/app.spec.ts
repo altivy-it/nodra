@@ -8,6 +8,8 @@ import { App } from './app';
 import { routes } from './app.routes';
 import { VaultRealtimeService } from './core/vault-realtime.service';
 import { SessionService } from './core/session.service';
+import { NotesService } from './core/notes.service';
+import { FolderExplorerService } from './data-access/folder-explorer.service';
 
 const realtime = {
   status: signal<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected'),
@@ -105,5 +107,60 @@ describe('App', () => {
     expect(compiled.textContent).toContain('Principal');
     expect(Array.from(compiled.querySelectorAll('button')).some(button => button.textContent?.includes('Nova nota'))).toBe(true);
     http.verify();
+  });
+
+  describe('salvamento automático', () => {
+    function setup() {
+      const app = TestBed.createComponent(App).componentInstance as unknown as {
+        save(path: string, content: string): void;
+        flushPendingSave(): Promise<void>;
+      };
+      const notes = TestBed.inject(NotesService);
+      const explorer = TestBed.inject(FolderExplorerService);
+      const reload = vi.spyOn(explorer, 'reload').mockImplementation(() => undefined);
+      const http = TestBed.inject(HttpTestingController);
+      notes.activateVault('vault-1', true);
+      return { app, notes, reload, http };
+    }
+
+    const noteUrl = '/api/v1/vaults/vault-1/notes/nova.md';
+
+    it('envia PUT com o ETag criado quando a nota nova é editada durante o POST', async () => {
+      const { app, notes, reload, http } = setup();
+      notes.newNote();
+      app.save('nova', '# Nova\n');
+      const flushing = app.flushPendingSave();
+      const create = http.expectOne(request => request.method === 'POST' && request.url === noteUrl);
+      app.save('nova', '# Nova\ntexto');
+      create.flush(null, { status: 201, statusText: 'Created' });
+      await vi.waitFor(() => http.expectOne(request => request.method === 'GET' && request.url === noteUrl)
+        .flush({ path: 'nova.md', content: '# Nova\n' }, { headers: { ETag: '"v1"' } }));
+      const update = await vi.waitFor(() => http.expectOne(request => request.method === 'PUT' && request.url === noteUrl));
+      expect(update.request.headers.get('If-Match')).toBe('"v1"');
+      expect(update.request.body).toEqual({ content: '# Nova\ntexto' });
+      update.flush(null, { status: 204, statusText: 'No Content' });
+      await vi.waitFor(() => http.expectOne(request => request.method === 'GET' && request.url === noteUrl)
+        .flush({ path: 'nova.md', content: '# Nova\ntexto' }, { headers: { ETag: '"v2"' } }));
+      await flushing;
+      expect(notes.error()).toBeNull();
+      expect(notes.selected()?.eTag).toBe('v2');
+      expect(reload).toHaveBeenCalledTimes(1);
+      http.match('/bff/session');
+      http.verify();
+    });
+
+    it('mantém o conflito quando a versão enfileirada não veio do salvamento anterior', async () => {
+      const { app, notes, http } = setup();
+      notes.selected.set({ path: 'nova.md', content: 'a', eTag: 'v1' });
+      app.save('nova.md', 'ab');
+      const flushing = app.flushPendingSave();
+      const first = http.expectOne(request => request.method === 'PUT' && request.url === noteUrl);
+      expect(first.request.headers.get('If-Match')).toBe('"v1"');
+      first.flush({ title: 'Conflito' }, { status: 412, statusText: 'Precondition Failed' });
+      await flushing;
+      expect(notes.error()).toContain('Não foi possível salvar');
+      http.match('/bff/session');
+      http.verify();
+    });
   });
 });
