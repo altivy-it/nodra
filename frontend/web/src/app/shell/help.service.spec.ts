@@ -5,6 +5,23 @@ import { describe, expect, it } from 'vitest';
 import { HelpService } from './help.service';
 
 describe('HelpService', () => {
+  it('resolve help.md sob o base path da aplicação', async () => {
+    const base = document.createElement('base');
+    base.href = '/notes/';
+    document.head.prepend(base);
+    try {
+      TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
+      const service = TestBed.inject(HelpService);
+      const http = TestBed.inject(HttpTestingController);
+      const load = service.load();
+      http.expectOne('/notes/help.md').flush('# Ajuda');
+      await load;
+      expect(service.content()).toBe('# Ajuda');
+    } finally {
+      base.remove();
+    }
+  });
+
   it('carrega o asset local somente uma vez', async () => {
     TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
     const service = TestBed.inject(HelpService);

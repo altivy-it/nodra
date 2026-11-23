@@ -1,5 +1,5 @@
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { describe, expect, it } from 'vitest';
@@ -105,6 +105,29 @@ describe('WorkspaceShell', () => {
     component.closeHelp();
 
     expect(component.workspace.activeModule()).toBe('settings');
+  });
+
+  it('não repete a carga da ajuda em loop após falha e mantém a saída disponível', async () => {
+    await TestBed.configureTestingModule({
+      imports: [WorkspaceShell],
+      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter(routes)],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(WorkspaceShell);
+    fixture.componentInstance.userName = 'Pessoa';
+    fixture.detectChanges();
+    const http = TestBed.inject(HttpTestingController);
+
+    fixture.componentInstance.selectModule('help');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.close-help')).not.toBeNull();
+    http.expectOne(request => request.url.endsWith('/help.md')).flush('x', { status: 404, statusText: 'Not Found' });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    http.expectNone(request => request.url.endsWith('/help.md'));
+    expect(fixture.nativeElement.textContent).toContain('Não foi possível carregar a ajuda local.');
+    fixture.nativeElement.querySelector('.close-help').click();
+    expect(fixture.componentInstance.workspace.activeModule()).not.toBe('help');
   });
 
   it('abre a ajuda pelo atalho e devolve o foco para a área central', async () => {

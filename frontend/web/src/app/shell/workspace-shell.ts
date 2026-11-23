@@ -1,5 +1,5 @@
 import { DOCUMENT } from '@angular/common';
-import { Component, computed, effect, EventEmitter, HostListener, Inject, Input, Optional, Output, signal } from '@angular/core';
+import { Component, computed, effect, EventEmitter, HostListener, Inject, Input, Optional, Output, signal, untracked } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { MarkdownComponent } from 'ngx-markdown';
 import { filter } from 'rxjs';
@@ -68,8 +68,12 @@ export class WorkspaceShell {
     @Optional() private readonly router: Router | null) {
     effect(() => this.syncIcons(this.workspace.theme()));
     effect(() => {
-      if (this.workspace.activeModule() === 'help') void this.help.load();
-      if (this.workspace.activeModule() === 'settings') void this.trashSettings.load();
+      const module = this.workspace.activeModule();
+      // Os loaders leem os próprios signals; sem untracked, cada falha reexecutaria o effect em loop.
+      untracked(() => {
+        if (module === 'help') void this.help.load();
+        if (module === 'settings') void this.trashSettings.load();
+      });
     });
     const initialModule = this.router?.url.split('/').pop();
     if (initialModule) this.selectModuleFromRoute(initialModule);
