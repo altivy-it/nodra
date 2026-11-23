@@ -5,8 +5,7 @@
 >
   <header class="topbar">
     <div class="context">
-      <span class="brand-mark" aria-hidden="true">N/</span
-      ><app-vault-selector
+      <nd-brand class="brand-mark" [size]="22" [showName]="false" /><app-vault-selector
         [vaults]="vaults"
         [currentVaultId]="currentVaultId"
         [loading]="vaultsLoading"
@@ -20,28 +19,30 @@
         aria-label="Recolher explorador"
         (click)="workspace.togglePrimaryPanel()"
       >
-        ☰</button
+        <nd-icon name="panel-left" [size]="17" /></button
       ><button
         type="button"
         class="icon-button"
-        aria-label="Alternar tema"
+        [attr.aria-label]="'Alternar tema (atual: ' + themeLabel() + ')'"
+        [title]="'Tema: ' + themeLabel() + ' — clique para alternar'"
         (click)="workspace.cycleTheme()"
       >
-        ◐</button
+        <nd-icon [name]="themeIcon()" [size]="17" /></button
       ><button type="button" class="icon-button" aria-label="Notificações">
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" />
-        </svg></button
+        <nd-icon name="bell" [size]="17" /></button
       ><span class="connection" [attr.aria-label]="'Conexão ' + realtimeStatus"
         ><span aria-hidden="true"></span> {{ realtimeStatus }}</span
-      ><span class="account">{{ userName || 'Conta' }}</span
+      ><a class="account" [href]="accountUrl()" title="Gerenciar perfil e senha no Keycloak"
+        [attr.aria-label]="'Gerenciar conta de ' + (userName || 'usuário')"
+        ><nd-icon name="user" [size]="15" /><span class="account-name">{{ userName || 'Conta' }}</span></a
       ><button
         type="button"
         class="logout-button"
         aria-label="Encerrar sessão"
+        title="Encerrar sessão"
         (click)="loggedOut.emit()"
       >
-        Sair
+        <nd-icon name="log-out" [size]="15" /><span>Sair</span>
       </button>
     </div>
   </header>
@@ -54,11 +55,12 @@
         [attr.aria-label]="item.label"
         [attr.data-activity]="item.id"
         [attr.aria-current]="workspace.activeModule() === item.id ? 'page' : null"
+        [attr.title]="item.label"
         [attr.tabindex]="workspace.activeModule() === item.id ? 0 : -1"
         (click)="selectModule(item.id)"
         (keydown)="moveActivity($event, item.id)"
       >
-        {{ item.symbol }}<span>{{ item.label }}</span>
+        <nd-icon [name]="item.icon" [size]="19" />
       </button>
     }
   </nav>
@@ -75,24 +77,34 @@
           class="small-button"
           (click)="noteCreated.emit(folderExplorer.noteParentPath)"
           aria-label="Criar nota"
+          title="Criar nota"
         >
-          +
+          <nd-icon name="file-plus" [size]="16" />
         </button>
       </div>
       <div class="panel-actions">
         <button type="button" (click)="noteCreated.emit(folderExplorer.noteParentPath)">
-          Nova nota</button
-        ><button type="button" (click)="folderExplorer.toggleFolderForm()">Nova pasta</button
+          <nd-icon name="file-plus" [size]="14" />Nova nota</button
+        ><button type="button" (click)="folderExplorer.toggleFolderForm()">
+          <nd-icon name="folder-plus" [size]="14" />Nova pasta</button
         ><button
           type="button"
+          class="panel-icon"
           (click)="folderExplorer.reload(); notesReloaded.emit()"
           aria-label="Atualizar arquivos"
+          title="Atualizar arquivos"
         >
-          ↻
+          <nd-icon name="refresh" [size]="14" />
+        </button
+        ><button
+          type="button"
+          class="panel-icon"
+          (click)="folderExplorer.openTrash()"
+          aria-label="Lixeira"
+          title="Lixeira"
+        >
+          <nd-icon name="trash" [size]="14" />
         </button>
-      </div>
-      <div class="panel-actions">
-        <button type="button" (click)="folderExplorer.openTrash()">Lixeira</button>
       </div>
       <div
         class="resize-handle"
@@ -128,8 +140,8 @@
   }
   <main class="content" aria-label="Área de trabalho">
     <div class="document-tabs">
-      <span class="tab active">{{ selected?.path || 'Workspace' }}</span
-      ><button type="button" aria-label="Fechar documento">×</button>
+      <span class="tab active"><nd-icon [name]="selected ? 'file-text' : 'graph'" [size]="14" /><span class="tab-label">{{ selected?.path || 'Workspace' }}</span></span
+      ><button type="button" aria-label="Fechar documento" title="Fechar documento"><nd-icon name="x" [size]="15" /></button>
     </div>
     @if (error) {
       <p class="error" role="alert">
@@ -174,7 +186,7 @@
                 (click)="setPreviewMode(previewMode() === 'preview' ? 'split' : 'preview')"
                 [attr.aria-label]="previewMode() === 'preview' ? 'Abrir editor' : 'Recolher editor'"
               >
-                <span aria-hidden="true">{{ previewMode() === 'preview' ? '←' : '→' }}</span>
+                <nd-icon [name]="previewMode() === 'preview' ? 'panel-left' : 'panel-right'" [size]="15" />
               </button>
             </div>
           </div>
@@ -198,14 +210,17 @@
           </div>
           <div class="editor-actions">
             <span class="muted" aria-live="polite">Markdown · salvamento automático</span
-            ><button type="button" (click)="noteRemoved.emit()">Excluir</button>
+            ><button type="button" class="danger" (click)="noteRemoved.emit()"><nd-icon name="trash" [size]="14" />Excluir</button>
           </div>
         </section>
       } @else {
         <section class="empty">
-          <span class="empty-code">N/</span>
+          <nd-brand [size]="52" [showName]="false" />
           <h1>Abra uma nota para começar.</h1>
           <p>Seu vault permanece organizado ao redor do documento atual.</p>
+          <div class="empty-actions">
+            <button type="button" (click)="noteCreated.emit(null)"><nd-icon name="file-plus" [size]="15" />Criar nota</button>
+          </div>
         </section>
       }
     } @else if (isModule('settings')) {
@@ -291,8 +306,9 @@
           class="small-button"
           (click)="workspace.toggleContextPanel()"
           aria-label="Recolher painel contextual"
+          title="Recolher painel contextual"
         >
-          ×
+          <nd-icon name="x" [size]="15" />
         </button>
       </div>
       <div

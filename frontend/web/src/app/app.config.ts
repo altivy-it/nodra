@@ -1,16 +1,17 @@
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import DOMPurify from 'dompurify';
 import { KATEX_OPTIONS, MARKED_OPTIONS, MERMAID_OPTIONS, provideMarkdown, SANITIZE } from 'ngx-markdown';
 
 import { routes } from './app.routes';
 import { appBasePathInterceptor } from './core/app-base-path';
+import { sanitizeMarkdownPreview } from './core/markdown-preview-policy';
+import { sessionExpiryInterceptor } from './core/session-expiry.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideHttpClient(withInterceptors([appBasePathInterceptor])),
+    provideHttpClient(withInterceptors([sessionExpiryInterceptor, appBasePathInterceptor])),
     provideRouter(routes),
     provideMarkdown({
       markedOptions: {
@@ -36,12 +37,7 @@ export const appConfig: ApplicationConfig = {
       },
       sanitize: {
         provide: SANITIZE,
-        useValue: (html: string) => DOMPurify.sanitize(html, {
-          USE_PROFILES: { html: true, mathMl: true },
-          ADD_TAGS: ['input'],
-          ADD_ATTR: ['type', 'checked', 'disabled'],
-          ALLOWED_URI_REGEXP: /^https?:/i
-        })
+        useValue: sanitizeMarkdownPreview
       }
     })
   ]

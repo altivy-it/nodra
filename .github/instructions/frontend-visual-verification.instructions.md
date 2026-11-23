@@ -15,7 +15,7 @@ applyTo: "frontend/web/**, frontend/libs/frontend/**"
   Não reaproveite um servidor se não for possível comprovar o proxy nginx na rota.
 - Capture screenshot em pelo menos dois viewports por iteração: desktop (largura ≥ 1280px) e mobile (largura ≤ 480px), com `screenshot_page`. Capture também qualquer estado relevante da tela (loading, vazio, erro, forbidden, offline, conflito, foco) antes de concluir.
 - Analise cada screenshot contra estes critérios antes de decidir que a tela está correta:
-  - fora do editor Markdown e do grafo de notas, usa exclusivamente componentes PO UI, conforme `frontend-po-ui.instructions.md`; nenhum elemento parece reimplementado ou de outra biblioteca;
+  - fora do editor Markdown e do grafo de notas, usa exclusivamente componentes PO UI, conforme `frontend-po-ui.instructions.md`, ou, durante a exceção do ADR 2026-0010, os componentes `nd-*` do design system local; nenhum elemento parece reimplementado ou de outra biblioteca;
   - no editor Markdown e no grafo de notas, o comportamento e o layout seguem `frontend-design-system.instructions.md` para essas duas superfícies dedicadas;
   - layout sem sobreposição, corte de texto, quebra inesperada ou espaçamento inconsistente em nenhum dos viewports capturados;
   - hierarquia visual, contraste, temas (claro/escuro/alto contraste) e densidade coerentes com os tokens do Nodra;

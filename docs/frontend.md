@@ -148,17 +148,19 @@ Evolução posterior:
 
 ### 6.1 Direção visual
 
-O Nodra deve transmitir precisão, permanência e foco. A interface usa superfícies neutras, Manrope como família única de display, conteúdo e controles, e IBM Plex Mono para código, paths e dados técnicos, conforme `Altivy/docs/brand/tokens/typography.md`. Cores de destaque serão reservadas para ações, links, seleção e estados.
+O Nodra deve transmitir precisão, permanência e foco. A base visual é o Obsidian escuro (ribbon, explorador, abas, editor, painel lateral e barra de status), com acento violeta reservado para ações, links, seleção e estados. Outfit é a família de display, conteúdo e controles, e JetBrains Mono a de código, paths e dados técnicos, ambas OFL-1.1 versionadas em `frontend/web/src/styles/fonts`. A decisão e a exceção ao PO UI estão no [ADR 2026-0010](adr/2026-0010-design-system-proprio-base-obsidian.md).
+
+Os tokens ficam em `frontend/web/src/styles/tokens.css`, fonte única compartilhada com o tema de login do Keycloak. Os componentes locais (`nd-icon`, `nd-button`, `nd-card`, `nd-empty-state` e `nd-brand`) ficam em `frontend/web/src/app/design-system`, e a marca (símbolo, wordmark e favicons) em `frontend/web/public/brand` e `frontend/web/public/icons`.
 
 Tokens mínimos:
 
 - cores de superfície, texto, borda, foco, seleção e estados;
 - tipografia de interface, conteúdo e código;
 - escala de espaçamento baseada em 4 px;
-- raios de até 8 px;
+- raios de 4 a 10 px nos controles densos; cartões de vidro e CTAs em pílula podem usar raios maiores;
 - elevação restrita a overlays;
 - densidade compacta, confortável e configurável;
-- temas claro, escuro e alto contraste.
+- tema escuro padrão, com claro, sistema e alto contraste.
 
 ### 6.2 Componentes base
 
@@ -178,6 +180,13 @@ Usar Lucide Angular para ícones, com labels acessíveis e tooltips em ações n
 - sanitizar a saída usando política única e testada;
 - não usar `bypassSecurityTrustHtml` em features;
 - bloquear `javascript:`, data URLs não permitidas e iframes arbitrários;
+- o preview Markdown usa a política única de
+  `frontend/web/src/app/core/markdown-preview-policy.ts`: preserva HTML, SVG,
+  MathML, task lists, `details`, `kbd`, `style`, `id`, `data-*`, links
+  relativos, `mailto:` e imagens `data:`; remove apenas o que executa código
+  (`script`, handlers `on*`, URLs `javascript:` e `srcdoc`). Iframes só aceitam
+  `https` externo, com `sandbox` e `referrerpolicy=no-referrer` forçados. A
+  política afeta somente a renderização: o arquivo `.md` é gravado sem alteração;
 - adotar CSP sem `unsafe-eval` em produção;
 - nunca integrar o Angular diretamente ao Keycloak nem expor access token ou refresh token ao browser;
 - usar apenas a sessão same-origin do BFF com cookie `Secure`, `HttpOnly` e antiforgery nas mutações;

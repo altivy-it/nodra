@@ -1,5 +1,5 @@
 import { DOCUMENT } from '@angular/common';
-import { Component, effect, EventEmitter, HostListener, Inject, Input, Optional, Output, signal } from '@angular/core';
+import { Component, computed, effect, EventEmitter, HostListener, Inject, Input, Optional, Output, signal } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { MarkdownComponent } from 'ngx-markdown';
 import { filter } from 'rxjs';
@@ -14,10 +14,20 @@ import { HelpPanel } from './help-panel';
 import { HelpService } from './help.service';
 import { VaultSelector } from './vault-selector';
 import { WorkspaceService } from './workspace.service';
+import { NdBrand, NdIcon } from '../design-system';
+import { appPath } from '../core/app-base-path';
+import { Theme } from './preferences.service';
+
+const THEME_DISPLAY: Record<Theme, { icon: string; label: string }> = {
+  system: { icon: 'monitor', label: 'Sistema' },
+  light: { icon: 'sun', label: 'Claro' },
+  dark: { icon: 'moon', label: 'Escuro' },
+  'high-contrast': { icon: 'contrast', label: 'Alto contraste' }
+};
 
 @Component({
   selector: 'app-workspace-shell',
-  imports: [FolderExplorerComponent, HelpPanel, MarkdownComponent, VaultSelector],
+  imports: [FolderExplorerComponent, HelpPanel, MarkdownComponent, VaultSelector, NdBrand, NdIcon],
   templateUrl: './workspace-shell-v2.html',
   styleUrl: './workspace-shell.css'
 })
@@ -43,6 +53,9 @@ export class WorkspaceShell {
   @Output() readonly loggedOut = new EventEmitter<void>();
   @Output() readonly vaultSelected = new EventEmitter<string>();
   readonly previewMode = signal<'editor' | 'split' | 'preview'>('split');
+  readonly themeIcon = computed(() => THEME_DISPLAY[this.workspace.theme()].icon);
+  readonly themeLabel = computed(() => THEME_DISPLAY[this.workspace.theme()].label);
+  readonly accountUrl = computed(() => appPath('/bff/account', this.document.baseURI));
   private resizing: { panel: 'primary' | 'context'; startX: number; startWidth: number } | null = null;
   private previousModule = 'files';
 
@@ -165,6 +178,8 @@ export class WorkspaceShell {
 
   private syncIcons(theme: string): void {
     const dark = theme === 'dark' || theme === 'high-contrast';
+    // Overlays fora do shell (diálogos, toasts) herdam os tokens do tema escolhido.
+    this.document.documentElement.dataset['theme'] = theme;
     const links = this.document.querySelectorAll<HTMLLinkElement>('[id^="favicon-"], [id^="apple-touch-"]');
     links.forEach(link => {
       const isDarkLink = link.id.includes('dark');

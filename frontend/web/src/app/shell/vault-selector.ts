@@ -17,7 +17,7 @@ import { VaultSummary } from '../core/vaults.service';
     styles: [`
     :host { display: inline-flex; min-width: 0; align-items: center; }
     label { min-width: 0; }
-    select { width: min(34vw, 260px); min-width: 120px; padding: 5px 24px 5px 7px; border: 1px solid var(--line); border-radius: 2px; background: var(--surface-raised); color: var(--text); font: 12px var(--font-mono); }
+    select { width: min(34vw, 260px); min-width: 120px; padding: 5px 24px 5px 7px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-input); color: var(--text-normal); font: 500 13px var(--font-sans); }
     select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
     .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
   `]
