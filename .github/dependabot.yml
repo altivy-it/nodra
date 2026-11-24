@@ -3,6 +3,9 @@ version: 2
 updates:
   - package-ecosystem: github-actions
     directory: /
+    # Workflows gw-*.yml são gerenciados pelo Altivy.Groundwork; atualize-os com groundwork update.
+    exclude-paths:
+      - ".github/workflows/gw-*.yml"
     schedule:
       interval: weekly
       day: monday
