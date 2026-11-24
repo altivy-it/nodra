@@ -1,7 +1,9 @@
-import { provideHttpClient } from '@angular/common/http';
+import { DOCUMENT } from '@angular/common';
+import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { describe, expect, it, vi } from 'vitest';
+import { sessionExpiryInterceptor } from './session-expiry.interceptor';
 import { SessionService } from './session.service';
 
 describe('SessionService', () => {
@@ -68,9 +70,58 @@ describe('SessionService', () => {
         submit.mockRestore();
     });
 
-    function createService(): { service: SessionService; http: HttpTestingController } {
+    it('marca como expirada uma sessão autenticada após 401 de outra chamada', async () => {
+        const { service, http } = createService();
+        http.expectOne('/bff/session').flush({ authenticated: true, subject: 'user-123', name: 'Ada' });
+        await vi.waitFor(() => expect(service.state()).toBe('authenticated'));
+
+        TestBed.inject(HttpClient).get('/api/v1/vaults').subscribe({ error: () => { } });
+        http.expectOne('/api/v1/vaults').flush(null, { status: 401, statusText: 'Unauthorized' });
+
+        expect(service.state()).toBe('expired');
+        const reload = service.load();
+        http.expectOne('/bff/session').flush({ authenticated: true, subject: 'user-123', name: 'Ada' });
+        await reload;
+        expect(service.state()).toBe('authenticated');
+        http.verify();
+    });
+
+    it('não expira sessão anônima nem reage a 401 da própria leitura da sessão', async () => {
+        const { service, http } = createService();
+        http.expectOne('/bff/session').flush({ authenticated: false, subject: null, name: null });
+        await vi.waitFor(() => expect(service.state()).toBe('anonymous'));
+
+        TestBed.inject(HttpClient).get('/api/v1/vaults').subscribe({ error: () => { } });
+        http.expectOne('/api/v1/vaults').flush(null, { status: 401, statusText: 'Unauthorized' });
+        const reload = service.load();
+        http.expectOne('/bff/session').flush(null, { status: 401, statusText: 'Unauthorized' });
+        await reload;
+
+        expect(service.expired()).toBe(false);
+        expect(service.state()).toBe('error');
+        http.verify();
+    });
+
+    it('gera a URL de login sem returnUrl na raiz e com o caminho atual fora dela', () => {
+        const root = createService(fakeDocument('/notes/', '')).service;
+        expect(root.loginUrl()).toBe('/notes/bff/login');
+
+        TestBed.resetTestingModule();
+        const deep = createService(fakeDocument('/notes/vaults/a', '?nota=x')).service;
+        expect(deep.loginUrl()).toBe(`/notes/bff/login?returnUrl=${encodeURIComponent('/notes/vaults/a?nota=x')}`);
+    });
+
+    function fakeDocument(pathname: string, search: string): Document {
+        return { baseURI: 'https://nodra.test/notes/', location: { pathname, search } } as unknown as Document;
+    }
+
+    function createService(doc?: Document): { service: SessionService; http: HttpTestingController } {
         TestBed.configureTestingModule({
-            providers: [provideHttpClient(), provideHttpClientTesting()]
+            providers: [
+                provideHttpClient(withInterceptors([sessionExpiryInterceptor])),
+                provideHttpClientTesting(),
+                ...(doc ? [{ provide: DOCUMENT, useValue: doc }] : [])
+            ]
         });
 
         return {

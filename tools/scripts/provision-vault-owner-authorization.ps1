@@ -104,6 +104,7 @@ if ($DryRun) {
 }
 
 function Import-LocalEnvironment {
+    if ([string]::IsNullOrWhiteSpace($env:APPDATA)) { return }
     $environmentPath = Join-Path $env:APPDATA 'Microsoft/UserSecrets/Altivy.Notes/.env'
     if (-not (Test-Path -LiteralPath $environmentPath -PathType Leaf)) { return }
 

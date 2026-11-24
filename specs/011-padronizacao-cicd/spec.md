@@ -7,8 +7,16 @@
 
 **Revisao humana**: Escopo aprovado pelo usuario nesta conversa em 2026-11-11
 para preparar plano e tarefas. Por instrucao posterior do usuario, as aprovacoes
-cabem aos administradores da Altivy, sem vinculo pessoal nos documentos.
+cabem aos administradores da Altivy. Para os quatro ambientes protegidos, usar
+exatamente os revisores do tipo User configurados no Dokpod, apos validar que
+sao proprietarios atuais da organizacao e possuem acesso de leitura ao Nodra.
 Namespace GHCR escolhido explicitamente: ghcr.io/altivy-it/nodra-*.
+
+## Clarifications
+
+### Session 2026-11-18
+
+- Q: Voce autoriza que os quatro ambientes protegidos do Nodra usem exatamente os mesmos revisores individuais do Dokpod, em vez de uma equipe dos proprietarios da organizacao? → A: Usar os mesmos revisores de usuario configurados no Dokpod, apos validar que sao proprietarios da Altivy e tem acesso ao Nodra; nao usar papel coletivo ou substituto.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -98,7 +106,7 @@ aplicar a mesma release de forma idempotente e verificar a versao em execucao.
 - **FR-013**: Branches da origin so PODEM ser excluidas apos comprovacao de integracao em origin/main e protecao contra mudanca do SHA; main e branches de PRs pendentes DEVEM ser preservadas.
 - **FR-014**: Publicacao, deploy, alteracao de secrets ou criacao de credenciais NAO DEVEM ocorrer como efeito colateral da implementacao ou validacao.
 - **FR-015**: Futuras imagens do produto DEVEM usar ghcr.io/altivy-it/nodra-*; consumidores ativos DEVEM ser alinhados sem mover, sobrescrever ou publicar imagens automaticamente.
-- **FR-016**: A proposta DEVE atribuir responsabilidade e revisao aos administradores da Altivy, nao a uma conta pessoal. Contribuicoes desta manutencao e da automacao configurada DEVEM usar lunadev00 <luna@altivy.it>, sem reatribuir autoria de terceiros ou reescrever historico implicitamente.
+- **FR-016**: A proposta DEVE atribuir responsabilidade e revisao aos administradores da Altivy. Os quatro ambientes protegidos DEVEM usar exatamente os revisores GitHub do tipo User configurados no Dokpod; antes de usa-los, confirmar que cada revisor e proprietario atual da organizacao e tem acesso de leitura ao Nodra. Nao usar RepositoryRole/actor_id 5 como revisor de Environment, outro usuario como fallback ou identidade inventada. Contribuicoes desta manutencao e da automacao configurada DEVEM usar lunadev00 <luna@altivy.it>, sem reatribuir autoria de terceiros ou reescrever historico implicitamente.
 
 ### Key Entities
 
@@ -126,5 +134,5 @@ aplicar a mesma release de forma idempotente e verificar a versao em execucao.
 - O catalogo canonico Altivy.Groundwork 0.11.3 foi identificado em altivy-it/altivy-groundwork, tag v0.11.3, commit c848afb4fa0b43cb9227abd2c347ab4ecccd6296. O LICENSE dessa tag foi consultado e confirma MIT; a adocao planejada usa essa origem, nao os arquivos do Dokpod AGPL.
 - Revisao humana da especificacao, plano e tarefas antecede alteracoes de workflows e protecoes operacionais.
 - Alterar definicoes de ambientes e aprovacoes nao autoriza executar publicacao, deploy ou acessar infraestrutura externa.
-- O papel administrativo observado nos rulesets do Dokpod e RepositoryRole com actor_id 5. Required reviewers de Environment e CODEOWNERS exigem usuario/equipe concretos; a equipe que representa os administradores deve ser identificada e validada antes da aplicacao, sem fallback para conta pessoal.
+- O papel administrativo observado nos rulesets do Dokpod e RepositoryRole com actor_id 5 e nao pode ser usado como required reviewer de Environment. Os quatro ambientes protegidos do Nodra devem usar os revisores User ja configurados nos ambientes equivalentes do Dokpod, apos validar que cada um e owner atual da organizacao e possui acesso de leitura ao Nodra. Se a validacao falhar, bloquear a configuracao sem substituto.
 - A limpeza autorizada excluiu somente 009-migracao-prompts-skills-revisao e chore/adotar-spec-kit; permaneceram main e 010-renomeacao-nodra.

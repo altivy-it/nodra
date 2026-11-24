@@ -60,6 +60,22 @@ Todas as dependências declaradas em `frontend/web/package.json`:
 | `typescript` | 6.0.2 | Apache-2.0 | Compilador TypeScript (dev) |
 | `vitest` | 4.0.8 | MIT | Motor de testes unitários frontend (dev) |
 
+### 2.2.1 Fontes e marca versionadas (spec 007)
+
+Fontes copiadas dos pacotes `@fontsource` (subset latin, woff2) para
+`frontend/web/src/styles/fonts`, com os textos de licença ao lado; não há
+dependência npm nem CDN. O tema do Keycloak recebe as mesmas cópias pelo
+`deploy/keycloak/build-theme.ps1`.
+
+| Ativo | Origem | Licença | sha256 do tarball |
+| --- | --- | --- | --- |
+| Outfit 400/500/600 | `@fontsource/outfit` 5.3.0 | OFL-1.1 | `1060497f…ad8d` |
+| JetBrains Mono 400/500 | `@fontsource/jetbrains-mono` 5.3.0 | OFL-1.1 | `1bbea47d…b4a6` |
+| Marca, favicons e ícones Nodra | criados no repositório | MIT (licença do Nodra) | — |
+
+Manrope e IBM Plex foram removidas. Nenhum asset do Dokpod (AGPL-3.0) foi
+incorporado ([ADR 2026-0010](adr/2026-0010-design-system-proprio-base-obsidian.md)).
+
 ### 2.3 Containers e Imagens Base
 
 | Imagem Docker | Base OS | Licença da Aplicação / Sistema |

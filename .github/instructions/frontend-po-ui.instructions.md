@@ -6,7 +6,7 @@ applyTo: "frontend/web/**, frontend/libs/frontend/**"
 
 # PO UI
 
-- Compatibilidade de versão é requisito: não instale uma versão de PO UI cujos `peerDependencies` não incluam a versão major do Angular do projeto. Se isso bloquear uma entrega explicitamente solicitada, use controles Angular nativos e locais somente para as capacidades sem alternativa compatível, sem adicionar outra biblioteca visual; registre a exceção e seu escopo no plano. Reavalie a exceção quando PO UI suportar a major adotada.
+- Compatibilidade de versão é requisito: não instale uma versão de PO UI cujos `peerDependencies` não incluam a versão major do Angular do projeto. Se isso bloquear uma entrega explicitamente solicitada, use controles Angular nativos e locais somente para as capacidades sem alternativa compatível, sem adicionar outra biblioteca visual; registre a exceção e seu escopo no plano. Reavalie a exceção quando PO UI suportar a major adotada. Exceção vigente: Angular 22 com o design system local `nd-*` da spec 007 ([ADR 2026-0010](../../docs/adr/2026-0010-design-system-proprio-base-obsidian.md)).
 
 - PO UI (`@po-ui/ng-components`, com `@po-ui/ng-templates` quando um page template resolver o layout) é a única biblioteca de componentes de UI genéricos aprovada para o Nodra. Não instale nem invente componente visual alternativo (Material, PrimeNG, Bootstrap, CSS customizado que duplica um componente PO UI existente).
 - Exceção explícita e já aprovada: o editor Markdown (CodeMirror 6) e o grafo de notas (Cytoscape) são superfícies especializadas sem equivalente no portfólio PO UI; permanecem implementações dedicadas. Fora dessas duas superfícies, siga a regra de portfólio abaixo.

@@ -36,19 +36,21 @@ gate; deve haver implementacao testada ou recusa explicita.
 production com aprovacao da administracao da Altivy. quality/production aceitam tags v*; release e
 distribution aceitam main e tags v*. prevent_self_review=false na referencia.
 
-**Justificativa**: Politicas reais consultadas pela API. Nodra atualmente tem
-somente quality e production, sem required reviewers nas respostas obtidas.
+**Justificativa**: Politicas reais consultadas pela API. Em 2026-11-18, Nodra
+tinha ci, quality e production sem required reviewers; release e distribution
+ainda nao existiam no repositorio.
 
 **Alternativas**: Criar apenas nomes nao reproduz a protecao; enfraquecer a
 politica quando indisponivel nao e aceitavel.
 
-**Revisao posterior solicitada pelo usuario**: retirar a atribuicao pessoal e
-usar os administradores da Altivy. Nova consulta ao Dokpod confirmou papel
-RepositoryRole/actor_id 5 nos rulesets, mas aprovadores de Environment ainda
-individuais. Nao ha equipe administrativa identificada nas equipes visiveis da
-organizacao consultadas. Como Environment e CODEOWNERS exigem usuario/equipe
-concretos, a proposta nao deve fingir que um papel administrativo e um Team ID;
-resolver e validar a equipe na implementacao antes de aplicar protecoes.
+**Esclarecimento aprovado pelo usuario em 2026-11-18**: usar exatamente os
+revisores User configurados nos quatro environments protegidos equivalentes
+do Dokpod, em vez de exigir uma equipe. A API confirmou um reviewer por
+ambiente e a mesma identidade nos quatro. A consulta de membership confirmou
+que essa conta e admin/owner da organizacao; a consulta de permissao do Nodra
+confirmou permissao admin no repositorio. O login nao e reproduzido aqui.
+RepositoryRole/actor_id 5 continua sendo um ator de ruleset e nao substitui o
+reviewer User de Environment. CODEOWNERS permanece separado.
 
 ## Namespace e Configuracoes
 
@@ -102,15 +104,58 @@ trocar os workflows resolve conectividade ou homologacao.
 
 ## Bloqueios Confirmados do Catalogo e da Plataforma
 
-O dry-run oficial `github --sync --dry-run` recusou o contrato local antes
-de qualquer acesso ou mutacao remota: distribution exige revisores e a lista
-esta vazia. O seed editavel `.github/ci-cd.json` agora declara os seis ambientes,
-os quatro requisitos de aprovacao e o inventario de nomes/escopos sem valores.
-A politica gerenciada ainda possui apenas release/distribution/quality/
-production; ci/copilot faltam. quality esta com requireReviewers false e release
-com fallback release-pr. O inventario local nao e aplicado pelo Groundwork 0.11.3
-e nao significa que os ambientes existem remotamente. Nao editar hashes. A equipe
-administrativa e o App ainda precisam ser identificados.
+O dry-run anterior `groundwork github --sync --dry-run` recusou o contrato local
+antes de qualquer acesso ou mutacao remota porque `distribution` exigia
+revisores e a lista estava vazia. O seed editavel `.github/ci-cd.json` declara
+os seis ambientes, os quatro requisitos de aprovacao e o inventario de nomes e
+escopos sem valores. Os parametros `release_reviewers` e `deploy_reviewers` do
+manifesto agora registram o reviewer validado, mas `.github/repository-policy.json`
+permanece sem essa atualizacao.
+
+A fonte fixada em `c848afb4fa0b43cb9227abd2c347ab4ecccd6296` confirma que o
+template 0.11.3 so gera `release`/`distribution` quando `release` esta
+selecionado e ambientes de deploy conforme `deploy_environments`; nao gera
+`ci` nem `copilot`. Tambem inclui `reviewersFallback: release-pr` em `release`
+e define `quality.requireReviewers=false` quando `preview_acceptance=deploy`.
+Correcao: isso nao impede configurar reviewers em `quality`; com a lista
+preenchida, o gerador os inclui, como no Dokpod. Entretanto, em `release` e
+`quality`, o sincronizador pode repetir uma operacao rejeitada com HTTP 422
+sem reviewers, pois `requireReviewers` nao e verdadeiro. Isso nao atende ao
+fail-closed exigido por T018. O dry-run local de `groundwork update` tambem
+propoe alteracoes em documentos gerenciados fora do escopo da tarefa. Nenhuma
+geracao local ampla, edicao manual de hashes ou sincronizacao remota foi
+aplicada; T018 permanece bloqueada ate haver suporte canonico compativel.
+
+Em 2026-11-19, o App `altivy-release`, ID `5441343`, foi confirmado na
+organizacao com instalacao para todos os repositorios e permissoes de escrita
+em contents e pull requests. O ID foi preenchido em `release_app_id` no
+manifesto local; a politica gerenciada ainda nao foi regenerada. A variable
+`RELEASE_APP_ID` e o secret `RELEASE_APP_PRIVATE_KEY` nao apareceram nos
+cadastros diretos nem nas listas de configuracoes da organizacao disponiveis
+ao Nodra. Nenhum valor de secret foi lido ou alterado. O reviewer User foi
+validado como owner da organizacao e com permissao admin no Nodra; a
+configuracao local do manifesto nao cria nem altera ambientes no GitHub.
+Na mesma data, o usuario solicitou configurar o ambiente como o Dokpod; a
+solicitacao nao elimina os gates de T018/T019 nem autoriza publicar, implantar
+ou compartilhar secrets entre produtos.
+
+O `release_app_id` do manifesto e o App ID numerico exigido pelo ruleset. A
+action `actions/create-github-app-token` fixada em `64ab729a6294000f5aa4a4bc0b73d1f32bc45510`
+encaminha `client-id` e o antigo `app-id` pelo mesmo caminho de autenticacao.
+O [GitHub](https://docs.github.com/en/apps/creating-github-apps/authenticating-with-a-github-app/generating-a-json-web-token-jwt-for-a-github-app)
+aceita Client ID ou App ID como emissor do JWT e recomenda o primeiro. A
+emissao real de token nao foi testada, pois a chave privada nao foi acessada.
+
+Na validacao de T018 em 2026-11-18, `test-cicd-contracts.ps1`,
+`actionlint 1.7.12` para `publish.yml` e `git diff --check` passaram.
+`Test-ManagedFiles` para `repository-policy` confirmou dois arquivos. A
+verificacao ampla dos oito componentes reportou 17 divergencias de hash em
+arquivos gerenciados de `ci`, `release`, `release-preview`, `deploy`,
+`publish-containers` e `publish-github-assets`; nenhum hash foi ajustado
+manualmente. Em 2026-11-19, uma verificacao somente em memoria confirmou que
+essas 17 divergencias correspondem aos finais de linha CRLF previstos em
+`.gitattributes`; os demais 20 hashes coincidem diretamente. O checkout nao
+foi alterado e `Test-ManagedFiles` continua falhando nos bytes atuais.
 
 O catalogo tambem gera documentos gerenciados em ingles e espanhol. A regra
 pt-BR e a integridade dos arquivos gerenciados precisam de reconciliacao na

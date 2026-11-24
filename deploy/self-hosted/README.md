@@ -55,6 +55,59 @@ Esse e o comando principal de instalacao e atualizacao. Nao execute migrations,
 `docker compose up` ou scripts OIDC separadamente: o inicializador aplica essas
 etapas na ordem correta e interrompe o fluxo se alguma delas falhar.
 
+## Laboratorio local com Podman (Linux)
+
+Para testar a stack completa numa maquina Linux com Podman rootless antes do
+CI/CD, use o orquestrador abaixo a partir da raiz do Nodra. Ele sobe a
+identidade compartilhada a partir do checkout irmao `architecture-knowledge-base`
+(sem altera-lo), configura o realm, provisiona os grants dos vaults de
+laboratorio e chama `start-self-hosted.ps1 -ContainerEngine podman`.
+
+Pre-requisitos: Podman 5+, `podman.socket` de usuario ativo, PowerShell 7.4+ e
+um provider Docker Compose v2+ fora do `PATH` (padrao
+`~/.local/lib/nodra-lab/docker-compose`; `podman-compose` nao suporta
+`config --format json` nem `up --wait`).
+
+```bash
+pwsh -NoProfile -File tools/scripts/start-local-lab.ps1 -Build      # build + subida
+pwsh -NoProfile -File tools/scripts/start-local-lab.ps1             # reutiliza imagens :lab
+pwsh -NoProfile -File tools/scripts/start-local-lab.ps1 -RecreateConsumers -RunE2E
+pwsh -NoProfile -File tools/scripts/start-local-lab.ps1 -Stop       # preserva dados e secrets
+pwsh -NoProfile -File tools/scripts/start-local-lab.ps1 --help
+```
+
+- Acesso somente pela borda nginx: `https://localhost:7443/notes`. Importe
+  `~/.local/share/nodra-lab/certs/rootCA.pem` como autoridade confiavel no
+  navegador.
+- O gateway publica somente `127.0.0.1:7443` no host Linux. Com VS Code Remote
+  SSH, o navegador roda na sua estacao: encaminhe a porta `7443` para a mesma
+  porta local `7443` (painel **Ports** > **Forward a Port** > `7443`), porque o
+  Keycloak e o BFF redirecionam para `https://localhost:7443`. O
+  [.vscode/settings.json](../../.vscode/settings.json) do repositorio pede
+  `requireLocalPort` e detecao por processo, mas o encaminhamento manual e o
+  caminho garantido. Sem VS Code, use
+  `ssh -N -L 7443:127.0.0.1:7443 <usuario>@<host-do-laboratorio>`. Copie
+  `rootCA.pem` para a estacao e importe-a como autoridade confiavel (no Windows,
+  em "Autoridades de Certificacao Raiz Confiaveis" do usuario atual).
+- Secrets, certificados e dados ficam em `~/.local/share/nodra-lab` (modo
+  `0700`/`0600`), criados uma unica vez e nunca impressos. O usuario de
+  laboratorio esta em `secrets/lab-user.env`.
+- Vaults sinteticos: `lab-0001`, `lab-0002` e `lab-write-e2e` com grant de
+  owner; `lab-denied` sem permissao.
+- O inicializador copia o documento modelo
+  [documento-modelo.md](../../tests/fixtures/markdown/documento-modelo.md) para
+  `lab-0001/documento-modelo.md` somente se o arquivo ainda nao existir, para
+  preservar edicoes. Ele demonstra no preview a sintaxe Markdown/GFM, HTML com
+  cores, KaTeX e diagramas Mermaid. Para restaurar o original, apague o arquivo
+  do vault e rode o inicializador de novo.
+- Com Podman, o inicializador aplica [compose.podman.yaml](compose.podman.yaml)
+  (tmpfs do web sem `uid=`/`gid=`, que o Podman nao aceita) e constroi as imagens
+  com `--format docker` para preservar os healthchecks.
+- `-RunE2E` executa `frontend/tests/e2e/test_bff_session.py` pelo runner
+  `lzocateli/playwright-e2e:0.1.0`; com `-RecreateConsumers`, a nota gravada na
+  execucao anterior valida a persistencia apos recriar os containers.
+- Contrato do inicializador: `pwsh -NoProfile -File tools/scripts/test-local-container-engine.ps1`.
+
 ## Versoes e imagens
 
 A versao inicial dos programas e `0.1.0`:

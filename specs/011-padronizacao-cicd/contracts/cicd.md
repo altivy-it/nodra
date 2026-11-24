@@ -37,11 +37,13 @@ prevent_self_review=false como na referencia. Revisores indisponiveis no plano
 GitHub ou falta de permissao sao bloqueios, nao paridade presumida.
 Regras legadas nao sao removidas sem revisao e autorizacao especifica do diff.
 
-O papel administrativo usado pelo Dokpod nos rulesets e RepositoryRole com
-actor_id 5. Required reviewers aceitam apenas IDs de usuarios/equipes, e
-CODEOWNERS exige identificadores GitHub validos com permissao adequada.
-Identificar a equipe administrativa real antes de aplica-los; se ausente,
-bloquear configuracao em vez de usar conta pessoal ou remover a aprovacao.
+O papel administrativo usado pelo Dokpod nos rulesets e
+RepositoryRole/actor_id 5, que nao pode ser usado como required reviewer de
+Environment. Os quatro environments protegidos do Nodra usam exatamente o
+reviewer User configurado nos environments equivalentes do Dokpod, depois de
+validar que e owner atual da organizacao e possui acesso ao Nodra. Nao usar
+substituto se essa validacao falhar. CODEOWNERS e um contrato separado e nao
+recebe esse reviewer automaticamente.
 
 ## Autoria Institucional
 

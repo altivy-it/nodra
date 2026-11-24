@@ -127,14 +127,14 @@ $actualEnvironments = @($setup.environments | ForEach-Object { $_.name })
 Assert-Contract ($actualEnvironments.Count -eq 6 -and (($actualEnvironments | Sort-Object) -join '|') -ceq (($expectedEnvironments | Sort-Object) -join '|')) 'inventario deve declarar os seis ambientes'
 foreach ($name in @('quality', 'release', 'distribution', 'production')) {
     $environment = @($setup.environments | Where-Object name -ceq $name)[0]
-    Assert-Contract ($environment.requiredReviewers -and $environment.reviewerGroup -ceq 'Administradores da Altivy') "$name deve requerer administradores da Altivy"
-    Assert-Contract (-not $environment.reviewerTeamSlugConfigured) "$name nao pode inventar slug de equipe"
+    Assert-Contract ($environment.requiredReviewers -and $environment.reviewerPurpose -ceq 'Administradores da Altivy') "$name deve requerer administradores da Altivy"
+    Assert-Contract ($environment.reviewerType -ceq 'User' -and $environment.reviewerSource -ceq 'dokpod') "$name deve reutilizar o reviewer User validado do Dokpod"
 }
 foreach ($name in @('ci', 'copilot')) {
     $environment = @($setup.environments | Where-Object name -ceq $name)[0]
     Assert-Contract (-not $environment.requiredReviewers) "$name nao deve herdar aprovacao de deploy"
 }
-$requiredVariables = @('RELEASE_APP_ID|repository', 'ALTIVY_ADMIN_TEAM|repository', 'DEPLOY_SSH_TARGET|environment:quality', 'DEPLOY_HOOK|environment:quality', 'DEPLOY_SSH_TARGET|environment:production', 'DEPLOY_HOOK|environment:production')
+$requiredVariables = @('RELEASE_APP_ID|repository', 'ALTIVY_ADMIN_REVIEWER|repository', 'DEPLOY_SSH_TARGET|environment:quality', 'DEPLOY_HOOK|environment:quality', 'DEPLOY_SSH_TARGET|environment:production', 'DEPLOY_HOOK|environment:production')
 $actualVariables = @($setup.variables | ForEach-Object { "$($_.name)|$($_.scope)" })
 Assert-Contract ($actualVariables.Count -eq $requiredVariables.Count -and (($actualVariables | Sort-Object) -join '|') -ceq (($requiredVariables | Sort-Object) -join '|')) 'nomes/escopos das variables divergem do contrato'
 $requiredSecrets = @('RELEASE_APP_PRIVATE_KEY|repository', 'DEPLOY_SSH_KEY|environment:quality', 'DEPLOY_SSH_KNOWN_HOSTS|environment:quality', 'DEPLOY_SSH_KEY|environment:production', 'DEPLOY_SSH_KNOWN_HOSTS|environment:production')
@@ -297,17 +297,203 @@ esac
     $approvalPath = Join-Path $fixtureRoot 'approvals.ps1'
     $approvalScript = $publish['jobs']['approvals']['steps'][0]['run']
     [IO.File]::WriteAllText($approvalPath, $approvalScript)
-    $result = Invoke-ContractProcess $pwsh @('-NoProfile', '-File', $approvalPath) @{ ADMIN_TEAM = '' }
-    Assert-Contract ($result.Code -ne 0 -and $result.Output.Contains('Configure ALTIVY_ADMIN_TEAM')) 'aprovacao ausente nao recusada antes da API'
-    foreach ($reviewerCase in @('missing', 'team', 'mixed')) {
-        $reviewers = @(if ($reviewerCase -ne 'missing') { @{ type = 'Team'; reviewer = @{ slug = 'administracao-test' } } })
-        if ($reviewerCase -eq 'mixed') { $reviewers += @{ type = 'User'; reviewer = @{ login = 'individual-fixture' } } }
+    $result = Invoke-ContractProcess $pwsh @('-NoProfile', '-File', $approvalPath) @{ ADMIN_REVIEWER = '' }
+    Assert-Contract ($result.Code -ne 0 -and $result.Output.Contains('Configure ALTIVY_ADMIN_REVIEWER')) 'reviewer User ausente nao recusado antes da API'
+    foreach ($reviewerCase in @('missing', 'user', 'wrong-user', 'team', 'mixed')) {
+        $reviewers = @()
+        if ($reviewerCase -in @('user', 'wrong-user', 'mixed')) {
+            $login = if ($reviewerCase -eq 'wrong-user') { 'different-user' } else { 'admin-test' }
+            $reviewers += @{ type = 'User'; reviewer = @{ login = $login } }
+        }
+        if ($reviewerCase -in @('team', 'mixed')) { $reviewers += @{ type = 'Team'; reviewer = @{ slug = 'administracao-test' } } }
         $metadata = @{ protection_rules = @(@{ type = 'required_reviewers'; reviewers = $reviewers }) } | ConvertTo-Json -Depth 10 -Compress
         $mock = "function gh { `$global:LASTEXITCODE = 0; '$metadata' }`n"
         [IO.File]::WriteAllText($approvalPath, $mock + $approvalScript)
-        $result = Invoke-ContractProcess $pwsh @('-NoProfile', '-File', $approvalPath) @{ ADMIN_TEAM = 'administracao-test'; GITHUB_REPOSITORY = 'altivy-it/nodra' }
-        Assert-Contract (($result.Code -eq 0) -eq ($reviewerCase -eq 'team')) 'gate de equipes nao corresponde a politica sintetica'
+        $result = Invoke-ContractProcess $pwsh @('-NoProfile', '-File', $approvalPath) @{ ADMIN_REVIEWER = 'admin-test'; GITHUB_REPOSITORY = 'altivy-it/nodra' }
+        Assert-Contract (($result.Code -eq 0) -eq ($reviewerCase -eq 'user')) 'gate de reviewer User nao corresponde a politica sintetica'
     }
+
+    $publisherDockerDir = Join-Path $fixtureRoot 'publisher-docker'
+    New-Item -ItemType Directory -Path $publisherDockerDir | Out-Null
+    $publisherDocker = Join-Path $publisherDockerDir 'docker'
+    $publisherDockerLog = Join-Path $fixtureRoot 'publisher-docker-calls'
+    $existingImageDigest = 'sha256:' + ('c' * 64)
+    $publisherDockerMock = @'
+#!/bin/sh
+printf '%s\n' "$*" >> "$NODRA_RELEASE_DOCKER_LOG"
+if [ "$1" = "buildx" ] && [ "$2" = "imagetools" ] && [ "$3" = "inspect" ]; then
+    printf '{"digest":"%s"}\n' "$NODRA_RELEASE_IMAGE_DIGEST"
+    exit 0
+fi
+echo 'Unexpected Docker operation' >&2
+exit 9
+'@
+    [IO.File]::WriteAllText($publisherDocker, $publisherDockerMock.Replace("`r`n", "`n"))
+    & chmod 755 $publisherDocker
+    if ($LASTEXITCODE -ne 0) { throw 'Nao foi possivel preparar Docker sintetico do publisher.' }
+    $imageEntries = Join-Path $fixtureRoot 'existing-image.json'
+    $imageOutput = Join-Path $fixtureRoot 'existing-image-output'
+    $imageEnvironment = @{
+        PATH = ($publisherDockerDir, $env:PATH) -join [IO.Path]::PathSeparator
+        NODRA_RELEASE_DOCKER_LOG = $publisherDockerLog
+        NODRA_RELEASE_IMAGE_DIGEST = $existingImageDigest
+    }
+    $imagePublisher = Join-Path $RepositoryRoot 'tools/scripts/ci/Publish-ContainerImage.ps1'
+    $result = Invoke-ContractProcess $pwsh @(
+        '-NoProfile', '-File', $imagePublisher, '-Tag', 'v0.1.0', '-Name', 'nodra-api',
+        '-Context', '.', '-Dockerfile', 'backend/apps/api/Dockerfile', '-Registry', 'ghcr.io/altivy-it',
+        '-EntriesPath', $imageEntries, '-OutputPath', $imageOutput
+    ) $imageEnvironment
+    $imageEntry = @(Get-Content -Raw -LiteralPath $imageEntries | ConvertFrom-Json -AsHashtable)[0]
+    Assert-Contract ($result.Code -eq 0 -and $imageEntry.digest -ceq $existingImageDigest) "imagem existente nao foi reutilizada com o digest publicado: $($result.Output)"
+    Assert-Contract (@(Get-Content -LiteralPath $publisherDockerLog).Count -eq 1 -and
+        (Get-Content -Raw -LiteralPath $publisherDockerLog) -notmatch 'buildx build') 'publisher reconstruiu ou sobrescreveu imagem existente'
+    Assert-Contract ((Get-Content -Raw -LiteralPath $imageOutput).Contains('pushed=false')) 'saida nao identificou imagem existente como nao publicada'
+
+    $publisherGhDir = Join-Path $fixtureRoot 'publisher-gh'
+    New-Item -ItemType Directory -Path $publisherGhDir | Out-Null
+    $publisherGh = Join-Path $publisherGhDir 'gh'
+    $publisherGhLog = Join-Path $fixtureRoot 'publisher-gh-calls'
+    $assetDirectory = Join-Path $fixtureRoot 'existing-assets'
+    New-Item -ItemType Directory -Path $assetDirectory | Out-Null
+    $assetName = 'nodra-self-hosted-v0.1.0.tar.gz'
+    $assetPath = Join-Path $assetDirectory $assetName
+    [IO.File]::WriteAllText($assetPath, 'synthetic release asset')
+    $assetDigest = 'sha256:' + (Get-FileHash -LiteralPath $assetPath -Algorithm SHA256).Hash.ToLowerInvariant()
+    $assetReleaseFixture = Join-Path $fixtureRoot 'asset-release.json'
+    $assetRelease = @{
+        tag_name = 'v0.1.0'
+        draft = $false
+        prerelease = $false
+        assets = @(@{ id = 901; name = $assetName; digest = $assetDigest })
+    }
+    ConvertTo-Json -InputObject @($assetRelease) -Depth 10 -Compress |
+        Set-Content -LiteralPath $assetReleaseFixture -Encoding utf8NoBOM
+    $publisherGhMock = @'
+#!/bin/sh
+printf '%s\n' "$*" >> "$NODRA_RELEASE_GH_LOG"
+if [ "$1" = "api" ]; then
+    cat "$NODRA_RELEASE_RELEASE_FIXTURE"
+    exit $?
+fi
+echo 'Unexpected GitHub CLI operation' >&2
+exit 9
+'@
+    [IO.File]::WriteAllText($publisherGh, $publisherGhMock.Replace("`r`n", "`n"))
+    & chmod 755 $publisherGh
+    if ($LASTEXITCODE -ne 0) { throw 'Nao foi possivel preparar GitHub CLI sintetica do publisher.' }
+    $assetEntries = Join-Path $fixtureRoot 'existing-assets.json'
+    $assetPublisher = Join-Path $RepositoryRoot 'tools/scripts/ci/Publish-ReleaseAssets.ps1'
+    $assetEnvironment = @{
+        PATH = ($publisherGhDir, $env:PATH) -join [IO.Path]::PathSeparator
+        NODRA_RELEASE_GH_LOG = $publisherGhLog
+        NODRA_RELEASE_RELEASE_FIXTURE = $assetReleaseFixture
+    }
+    $result = Invoke-ContractProcess $pwsh @(
+        '-NoProfile', '-File', $assetPublisher, '-Tag', 'v0.1.0',
+        '-Path', $assetDirectory, '-Repository', 'altivy-it/nodra', '-EntriesPath', $assetEntries
+    ) $assetEnvironment
+    $assetEntry = @(Get-Content -Raw -LiteralPath $assetEntries | ConvertFrom-Json -AsHashtable)[0]
+    Assert-Contract ($result.Code -eq 0 -and $assetEntry.digest -ceq $assetDigest) "asset existente nao preservou o digest publicado: $($result.Output)"
+    Assert-Contract ((Get-Content -Raw -LiteralPath $publisherGhLog) -notmatch 'release upload') 'publisher reenviou ou sobrescreveu asset existente'
+
+    $releaseCommit = 'c' * 40
+    $releaseManifestPath = Join-Path $fixtureRoot 'release-manifest-fixture.json'
+    $releaseManifest = @{
+        schemaVersion = 1
+        repository = 'altivy-it/nodra'
+        version = '0.1.0'
+        tag = 'v0.1.0'
+        commit = $releaseCommit
+        rollbackMinimumVersion = '0.0.0'
+        attestation = 'github'
+        artifacts = @(@{ kind = 'container'; name = 'nodra-api'; reference = 'ghcr.io/altivy-it/nodra-api'; digest = $existingImageDigest })
+    }
+    $releaseManifestFixture = Join-Path $fixtureRoot 'release-manifest-content.json'
+    $releaseFixture = Join-Path $fixtureRoot 'deploy-release.json'
+    $deployRelease = @{
+        tag_name = 'v0.1.0'
+        draft = $false
+        prerelease = $false
+        assets = @(@{ id = 902; name = 'release-manifest.json'; digest = $null })
+    }
+    ConvertTo-Json -InputObject @($deployRelease) -Depth 10 -Compress |
+        Set-Content -LiteralPath $releaseFixture -Encoding utf8NoBOM
+    $deployGhMock = @'
+#!/bin/sh
+printf '%s\n' "$*" >> "$NODRA_RELEASE_GH_LOG"
+if [ "$1" = "api" ]; then
+    case "$*" in
+        *"releases/assets/"*) cat "$NODRA_RELEASE_MANIFEST" ;;
+        *) cat "$NODRA_RELEASE_RELEASE_FIXTURE" ;;
+    esac
+    exit $?
+fi
+if [ "$1" = "attestation" ]; then
+    echo 'Synthetic attestation verification failure' >&2
+    exit "$NODRA_RELEASE_ATTESTATION_EXIT"
+fi
+echo 'Unexpected GitHub CLI operation' >&2
+exit 9
+'@
+    [IO.File]::WriteAllText($publisherGh, $deployGhMock.Replace("`r`n", "`n"))
+    $publisherGitDir = Join-Path $fixtureRoot 'publisher-git'
+    New-Item -ItemType Directory -Path $publisherGitDir | Out-Null
+    $publisherGit = Join-Path $publisherGitDir 'git'
+    $publisherGitMock = @'
+#!/bin/sh
+printf '%s\n' "$*" >> "$NODRA_RELEASE_GIT_LOG"
+case "$*" in
+    "rev-parse --verify refs/tags/v0.1.0^{commit}"|"rev-parse HEAD")
+        printf '%s\n' "$NODRA_RELEASE_COMMIT"
+        ;;
+    "rev-parse --verify --quiet refs/remotes/origin/main")
+        exit 0
+        ;;
+    "merge-base --is-ancestor "*)
+        exit 0
+        ;;
+    *)
+        exit 8
+        ;;
+esac
+'@
+    [IO.File]::WriteAllText($publisherGit, $publisherGitMock.Replace("`r`n", "`n"))
+    & chmod 755 $publisherGh $publisherGit
+    if ($LASTEXITCODE -ne 0) { throw 'Nao foi possivel preparar os comandos sinteticos do guard.' }
+    $deployGuard = Join-Path $RepositoryRoot 'tools/scripts/ci/Assert-DeployableRelease.ps1'
+    $deployEnvironment = @{
+        PATH = ($publisherGhDir, $publisherGitDir, $env:PATH) -join [IO.Path]::PathSeparator
+        NODRA_RELEASE_GH_LOG = Join-Path $fixtureRoot 'deploy-gh-calls'
+        NODRA_RELEASE_GIT_LOG = Join-Path $fixtureRoot 'deploy-git-calls'
+        NODRA_RELEASE_RELEASE_FIXTURE = $releaseFixture
+        NODRA_RELEASE_MANIFEST = $releaseManifestFixture
+        NODRA_RELEASE_COMMIT = $releaseCommit
+        NODRA_RELEASE_ATTESTATION_EXIT = '1'
+    }
+    $deployManifestOutput = Join-Path $fixtureRoot 'deploy-manifest-output.json'
+    $deployOutput = Join-Path $fixtureRoot 'deploy-guard-output'
+    $deploySummary = Join-Path $fixtureRoot 'deploy-guard-summary.md'
+    $deployArguments = @(
+        '-NoProfile', '-File', $deployGuard, '-Tag', 'v0.1.0', '-Environment', 'quality',
+        '-Repository', 'altivy-it/nodra', '-DefaultBranch', 'main', '-ManifestPath', $deployManifestOutput,
+        '-OutputPath', $deployOutput, '-SummaryPath', $deploySummary
+    )
+    $releaseManifest.commit = 'd' * 40
+    ConvertTo-Json -InputObject $releaseManifest -Depth 10 |
+        Set-Content -LiteralPath $releaseManifestFixture -Encoding utf8NoBOM
+    $result = Invoke-ContractProcess $pwsh $deployArguments $deployEnvironment
+    Assert-Contract ($result.Code -ne 0 -and $result.Output.Contains('aponta para outro commit')) 'guard aceitou manifesto de outro commit'
+    Assert-Contract (-not (Test-Path -LiteralPath $deployEnvironment.NODRA_RELEASE_GH_LOG) -or
+        (Get-Content -Raw -LiteralPath $deployEnvironment.NODRA_RELEASE_GH_LOG) -notmatch 'attestation verify') 'atestacao foi consultada antes de validar o commit do manifesto'
+
+    $releaseManifest.commit = $releaseCommit
+    ConvertTo-Json -InputObject $releaseManifest -Depth 10 |
+        Set-Content -LiteralPath $releaseManifestFixture -Encoding utf8NoBOM
+    Remove-Item -LiteralPath $deployEnvironment.NODRA_RELEASE_GH_LOG -Force -ErrorAction SilentlyContinue
+    $result = Invoke-ContractProcess $pwsh $deployArguments $deployEnvironment
+    Assert-Contract ($result.Code -ne 0 -and $result.Output.Contains('Atestação do release-manifest.json ausente ou inválida')) 'guard nao bloqueou falha de atestacao do GitHub'
+    Assert-Contract ((Get-Content -Raw -LiteralPath $deployEnvironment.NODRA_RELEASE_GH_LOG).Contains('attestation verify')) 'guard nao verificou a atestacao do manifesto'
 
     $guard = Join-Path $RepositoryRoot 'tools/scripts/ci/Assert-DeployableRelease.ps1'
     foreach ($arguments in @(

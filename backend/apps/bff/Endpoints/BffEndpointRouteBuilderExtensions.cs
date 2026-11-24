@@ -81,6 +81,8 @@ public static class BffEndpointRouteBuilderExtensions
             Results.Ok(BffSessionResponse.FromPrincipal(context.User)))
             .AllowAnonymous();
 
+        MapAccountEndpoint(endpoints);
+
         _ = endpoints.MapPost("/bff/logout", async (IAntiforgery antiforgery, HttpContext context) =>
         {
             await antiforgery.ValidateRequestAsync(context);
@@ -96,4 +98,14 @@ public static class BffEndpointRouteBuilderExtensions
 
         return endpoints;
     }
+
+    /// <summary>
+    /// Redireciona o usuário autenticado ao console de conta do Keycloak, onde perfil e senha são geridos.
+    /// </summary>
+    private static void MapAccountEndpoint(IEndpointRouteBuilder endpoints) =>
+        _ = endpoints.MapGet("/bff/account", (IOptions<KeycloakOptions> keycloakOptions) =>
+            Results.Redirect(KeycloakAccountConsole.BuildUrl(
+                keycloakOptions.Value.Authority,
+                keycloakOptions.Value.ClientId)))
+            .RequireAuthorization();
 }

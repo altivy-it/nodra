@@ -12,6 +12,8 @@ Diretorio externo. Padrao Windows: APPDATA/Microsoft/UserSecrets/Altivy.Notes/ce
 CA externa contendo rootCA.pem e rootCA-key.pem. Necessaria apenas para emissao.
 .PARAMETER ValidateOnly
 Valida cadeia, SAN, validade, chave privada e senha do PFX sem alterar arquivos.
+.PARAMETER ContainerEngine
+docker (padrao) ou podman para executar o OpenSSL em container.
 .PARAMETER RemainingArguments
 Aceita literalmente --help.
 .EXAMPLE
@@ -23,7 +25,7 @@ Arquivo externo de ambiente e CA externa aprovada pelo operador.
 .OUTPUTS
 Somente confirmacao sanitizada; nao exibe chaves, senhas ou certificado PFX.
 .NOTES
-Requer PowerShell 7.4+, Docker Linux e CA mkcert previamente instalada/confiavel.
+Requer PowerShell 7.4+, Docker Linux ou Podman e CA mkcert previamente instalada/confiavel.
 OpenSSL executa em lzocateli/dotnet-sdk:10.0.400-noble. Nao emite TLS publico.
 .LINK
 ../../deploy/self-hosted/README.md
@@ -34,6 +36,7 @@ param(
     [string] $CertificateDirectory,
     [string] $AuthorityDirectory,
     [switch] $ValidateOnly,
+    [ValidateSet('docker','podman')][string] $ContainerEngine = 'docker',
     [Parameter(ValueFromRemainingArguments)][string[]] $RemainingArguments
 )
 if ($RemainingArguments -contains '--help') { Get-Help $PSCommandPath -Full; return }
@@ -131,7 +134,7 @@ $arguments += @('--entrypoint','/bin/bash','lzocateli/dotnet-sdk:10.0.400-noble'
 $localPreference = $ErrorActionPreference
 $ErrorActionPreference = 'Continue'
 try {
-    $output = & docker @arguments 2>&1
+    $output = & $ContainerEngine @arguments 2>&1
     $exitCode = $LASTEXITCODE
 } finally { $ErrorActionPreference = $localPreference; $output = $null }
 if ($exitCode -ne 0) { throw 'Emissao/validacao TLS falhou; confira CA, paths e senha externamente. Nenhum arquivo existente foi sobrescrito. Use --help.' }

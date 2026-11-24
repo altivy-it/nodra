@@ -101,8 +101,8 @@ notepad (Join-Path $SecretsDirectory '.env')
 ```
 
 O arquivo externo de secrets não pertence ao repositório. O banco em `.tmp/`
-e o artefato em `.build/` são ignorados pelo Git. O build copia os assets
-canônicos de `Altivy/docs/brand` sem alterar essa fonte.
+e o artefato em `.build/` são ignorados pelo Git. O build copia tokens, fontes
+e símbolo de `frontend/web` sem alterar essas fontes.
 
 ### 5.2 Publicar tema e iniciar a plataforma central
 
@@ -263,8 +263,8 @@ O Compose usa `lzocateli/keycloak:26.7.0` e
 `lzocateli/postgresql:18.4-pgvector0.8.6-bookworm`, publica somente em
 `127.0.0.1` e mantém o banco em `$env:APPDATA\keycloak\postgres-data` por bind mount.
 
-O empacotador lê a fonte canônica no repositório irmão `Altivy`, copia os
-arquivos para um artefato descartável e não altera a fonte de branding:
+O empacotador combina a fonte versionada do tema com os tokens, as fontes e o
+símbolo mantidos em `frontend/web` (spec 007), em um artefato descartável:
 
 ```powershell
 ./deploy/keycloak/build-theme.ps1 --help
@@ -272,10 +272,13 @@ arquivos para um artefato descartável e não altera a fonte de branding:
 Get-Content ./deploy/keycloak/.build/keycloak-theme/SHA256SUMS
 ```
 
-O tema versionado em `deploy/keycloak/themes/altivy/login` inclui `logo.svg`,
-`logo-dark.svg`, os subsets aprovados de Manrope (400, 500 e 600),
-`theme.properties` e `login.css`. O diretório `deploy/keycloak/.build` é saída
-de build local e não deve conter secrets nem ser tratado como fonte canônica.
+O tema versionado em `deploy/keycloak/themes/altivy/login` contém somente
+`theme.properties` (pai `keycloak.v2`, sem JavaScript, `darkMode=false`) e
+`resources/css/login.css`. O build acrescenta `css/tokens.css` e `css/fonts.css`
+de `frontend/web/src/styles`, as fontes Outfit e JetBrains Mono com suas licenças
+OFL-1.1 e `img/nodra-mark.svg` de `frontend/web/public/brand`. O diretório
+`deploy/keycloak/.build` é saída de build local e não deve conter secrets nem ser
+tratado como fonte canônica.
 
 Abra uma sessão privada para validar o fluxo sem cookies antigos. Alterações no
 tema exigem novo build e recriação do serviço `keycloak`.
@@ -289,13 +292,11 @@ Valide, quando habilitados no realm:
 5. foco visível, contraste mínimo WCAG 2.2 AA e leitura em viewport móvel;
 6. ausência de fontes, imagens, scripts ou CSS carregados de URLs externas.
 
-O tema usa `Manrope` para controles e títulos,
-Archive Ink nas superfícies claras, superfícies escuras sem glassmorphism e
-foco visível. A fonte de verdade desses tokens, logos, licenças e checksums é o
-diretório `Altivy/docs/brand`, especialmente `guide.md`, `tokens/tokens.css`,
-`tokens/tokens.json`, `tokens/typography.md`, `licenses.md`,
-`frontend-asset-integration-playbook.md`, `fonts/SHA256SUMS` e
-`assets/dist/SHA256SUMS`.
+O tema segue a identidade do app: base escura Obsidian, véus violeta, cartão
+de vidro com fallback para `prefers-reduced-transparency`, CTA em pílula,
+símbolo Nodra no cabeçalho e foco visível. Os seletores PatternFly usados pelo
+E2E (`.pf-v5-c-alert__title`, campos e botão **Sign In**) são preservados. A
+decisão está no [ADR 2026-0010](adr/2026-0010-design-system-proprio-base-obsidian.md).
 
 #### Rollback do tema
 
@@ -1045,6 +1046,12 @@ indisponível. Registre eventos `IDENTITY_PROVIDER_*`, `SOCIAL_LINK`,
 | API | Mesmo issuer e audience obrigatória `altivy-api` |
 | API | Credencial de resource server para Protection API |
 | API | Mapeamento endpoint -> recurso opaco + scope `vault:*` |
+
+O nome do usuário na barra superior do Nodra aponta para `GET /bff/account`.
+O endpoint exige sessão autenticada e redireciona para o console de conta do
+Keycloak (`{Authority}/account/?referrer={ClientId}`), onde o usuário altera
+perfil, senha e OTP. O link de retorno usa o `baseUrl` do client `altivy-bff`;
+o Nodra não implementa edição de perfil.
 
 O cookie do BFF deve ser host-only, `Secure`, `HttpOnly` e ter `SameSite` explícito. Mutações e SignalR exigem antiforgery e validação de `Origin`. Cookies ou headers de identidade enviados pelo browser devem ser removidos antes do relay. Nenhum token aparece em URL, Web Storage, telemetria ou logs.
 

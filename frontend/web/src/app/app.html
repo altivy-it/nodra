@@ -1,37 +1,70 @@
-@if (session.loading()) {
-<section class="state" aria-live="polite">Consultando sua sessão...</section>
-} @else if (session.error()) {
-<section class="state state-error" aria-live="assertive">Não foi possível consultar o BFF. <button type="button"
-    (click)="session.load()">Tentar novamente</button></section>
-} @else if (session.session()?.authenticated && vaults.loading()) {
-<section class="state" aria-live="polite">Carregando vaults autorizados...</section>
-} @else if (session.session()?.authenticated && vaults.error()) {
-<section class="state state-error" role="alert">{{ vaults.error() }} <button type="button"
-    (click)="reloadVaults()">Tentar novamente</button></section>
-} @else if (session.session()?.authenticated && vaults.vaults().length === 0) {
-<main class="welcome" aria-labelledby="no-vault-title">
-  <p class="eyebrow">ALTIVY NOTES / ACESSO</p>
-  <h1 id="no-vault-title">Nenhum vault disponível.</h1>
-  <p>Solicite acesso a um vault para abrir seu workspace.</p>
-  <button type="button" class="action" [disabled]="session.loggingOut()" (click)="session.logout()">Encerrar sessão</button>
-  @if (session.logoutError()) {
-  <p role="alert">Não foi possível encerrar a sessão. Tente novamente.</p>
+@switch (session.state()) {
+  @case ('authenticated') {
+    @if (vaults.loading()) {
+      <main class="nd-page entry">
+        <nd-empty-state class="entry-state" kind="loading" title="Carregando vaults autorizados" />
+      </main>
+    } @else if (vaults.error()) {
+      <main class="nd-page entry">
+        <nd-empty-state class="entry-state" kind="error" title="Não foi possível carregar os vaults" [detail]="vaults.error()">
+          <button nd-button type="button" startIcon="refresh" (click)="reloadVaults()">Tentar novamente</button>
+        </nd-empty-state>
+      </main>
+    } @else if (vaults.vaults().length === 0) {
+      <main class="nd-page entry" aria-labelledby="no-vault-title">
+        <section class="entry-card nd-glass">
+          <nd-brand [size]="44" />
+          <h1 id="no-vault-title">Nenhum vault disponível.</h1>
+          <p class="entry-lead">Solicite acesso a um vault para abrir seu workspace.</p>
+          <button nd-button type="button" variant="secondary" startIcon="log-out" [loading]="session.loggingOut()" (click)="session.logout()">Encerrar sessão</button>
+          @if (session.logoutError()) {
+            <p class="entry-error" role="alert">Não foi possível encerrar a sessão. Tente novamente.</p>
+          }
+        </section>
+      </main>
+    } @else {
+      <app-workspace-shell [userName]="session.session()?.name ?? null" [notes]="notes.notes()" [selected]="notes.selected()"
+        [loading]="notes.loading()" [error]="notes.error()" (noteOpened)="open($event)" (noteCreated)="create($event)"
+        (notesReloaded)="notes.load()" (noteChanged)="save($event.path, $event.content)" (noteRemoved)="remove()"
+        (noteMoved)="move($event)" (folderMoved)="folderMoved($event.from, $event.to)"
+        (trashRequested)="trashEntry($event)"
+        (noteDropped)="dropNote($event.path, $event.eTag, $event.destination)"
+        [vaults]="vaults.vaults()" [currentVaultId]="vaults.current()?.id ?? null" [vaultsLoading]="vaults.loading()"
+        [realtimeStatus]="realtime.status()" (vaultSelected)="selectVault($event)" (loggedOut)="session.logout()" />
+    }
   }
-</main>
-} @else if (session.session()?.authenticated) {
-<app-workspace-shell [userName]="session.session()?.name ?? null" [notes]="notes.notes()" [selected]="notes.selected()"
-  [loading]="notes.loading()" [error]="notes.error()" (noteOpened)="open($event)" (noteCreated)="create($event)"
-  (notesReloaded)="notes.load()" (noteChanged)="save($event.path, $event.content)" (noteRemoved)="remove()"
-  (noteMoved)="move($event)" (folderMoved)="folderMoved($event.from, $event.to)"
-  (trashRequested)="trashEntry($event)"
-  (noteDropped)="dropNote($event.path, $event.eTag, $event.destination)"
-  [vaults]="vaults.vaults()" [currentVaultId]="vaults.current()?.id ?? null" [vaultsLoading]="vaults.loading()"
-  [realtimeStatus]="realtime.status()" (vaultSelected)="selectVault($event)" (loggedOut)="session.logout()" />
-} @else {
-<main class="welcome" aria-labelledby="page-title">
-  <p class="eyebrow">ALTIVY NOTES / KNOWLEDGE WORKSPACE</p>
-  <h1 id="page-title">Seu conhecimento, em um só lugar.</h1>
-  <p>Entre para abrir seu workspace.</p><a class="action" [href]="loginUrl">Entrar no Nodra <span
-      aria-hidden="true">↗</span></a>
-</main>
+  @case ('loading') {
+    <main class="nd-page entry">
+      <nd-empty-state class="entry-state" kind="loading" title="Consultando sua sessão" />
+    </main>
+  }
+  @case ('error') {
+    <main class="nd-page entry">
+      <nd-empty-state class="entry-state" kind="error" title="Não foi possível consultar o BFF"
+        detail="O serviço de sessão não respondeu. Verifique a conexão e tente novamente.">
+        <button nd-button type="button" startIcon="refresh" (click)="session.load()">Tentar novamente</button>
+      </nd-empty-state>
+    </main>
+  }
+  @case ('expired') {
+    <main class="nd-page entry">
+      <nd-empty-state class="entry-state" kind="expired"
+        detail="Por segurança, entre novamente. Alterações já salvas no vault foram preservadas.">
+        <a nd-button variant="primary" endIcon="arrow-right" [href]="session.loginUrl()">Entrar novamente</a>
+      </nd-empty-state>
+    </main>
+  }
+  @default {
+    <main class="nd-page entry" aria-labelledby="page-title">
+      <section class="entry-card nd-glass">
+        <nd-brand [size]="56" />
+        <p class="nd-eyebrow">Knowledge workspace</p>
+        <h1 id="page-title">Seu conhecimento, em um só lugar.</h1>
+        <p class="entry-lead">Your connected knowledge workspace.</p>
+        <p class="entry-detail">Entre para abrir seu workspace.</p>
+        <a nd-button variant="primary" size="lg" endIcon="arrow-right" [block]="true" [href]="session.loginUrl()">Entrar no Nodra</a>
+        <p class="entry-foot"><nd-icon name="lock" [size]="13" /> Autenticação gerenciada pelo Keycloak</p>
+      </section>
+    </main>
+  }
 }

@@ -88,13 +88,14 @@ export class NotesService {
         this.selected.set({ path, content: '# Nova nota\n', eTag: '' });
     }
 
-    async save(note: Note): Promise<void> {
+    /** Salva a nota; retorna o caminho normalizado e o novo ETag, ou `null` em falha. */
+    async save(note: Note): Promise<{ path: string; eTag: string } | null> {
         const context = this.context();
-        if (!context) return;
+        if (!context) return null;
         this.error.set(null);
         let normalizedPath: string;
         try { normalizedPath = normalizeNotePath(note.path); }
-        catch (error) { this.error.set((error as Error).message); return; }
+        catch (error) { this.error.set((error as Error).message); return null; }
         const normalizedNote = { ...note, path: normalizedPath };
         try {
             if (normalizedNote.eTag) {
@@ -102,9 +103,9 @@ export class NotesService {
             } else {
                 await firstValueFrom(this.http.post(this.noteUrl(context.baseUrl, normalizedPath), { content: normalizedNote.content }));
             }
-            if (!this.isCurrent(context)) return;
+            if (!this.isCurrent(context)) return null;
             const response = await firstValueFrom(this.http.get<{ path: string; content: string }>(this.noteUrl(context.baseUrl, normalizedPath), { observe: 'response' }));
-            if (!this.isCurrent(context)) return;
+            if (!this.isCurrent(context)) return null;
             const eTag = response.headers.get('ETag')?.replaceAll('"', '') ?? normalizedNote.eTag;
             this.selected.update(current => current &&
                 (current.path === note.path || current.path === normalizedPath) &&
@@ -114,7 +115,11 @@ export class NotesService {
             this.notes.update(items => items.some(item => item.path === normalizedPath)
                 ? items.map(item => item.path === normalizedPath ? { ...item, eTag } : item)
                 : [...items, { path: normalizedPath, eTag }].sort((left, right) => left.path.localeCompare(right.path)));
-        } catch { if (this.isCurrent(context)) this.error.set('Não foi possível salvar. A nota pode ter sido alterada por outra pessoa.'); }
+            return { path: normalizedPath, eTag };
+        } catch {
+            if (this.isCurrent(context)) this.error.set('Não foi possível salvar. A nota pode ter sido alterada por outra pessoa.');
+            return null;
+        }
     }
 
     /** Move ou renomeia uma nota salva; retorna `null` em sucesso ou a mensagem de erro. */

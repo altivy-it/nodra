@@ -39,7 +39,7 @@ applyTo: "frontend/web/**, frontend/libs/frontend/**"
 - Features não importam arquivos internos de outras features; integração ocorre por rotas, contratos públicos ou fachadas pequenas.
 - Componentes de apresentação não chamam HTTP, IndexedDB ou SignalR diretamente.
 - O cliente HTTP é gerado do OpenAPI; não duplique DTOs manualmente.
-- Use componentes PO UI (`@po-ui/ng-components`) para toda UI genérica; não invente componente nem adote outra biblioteca de componentes fora do editor Markdown e do grafo de notas. Veja `frontend-po-ui.instructions.md`.
+- Use componentes PO UI (`@po-ui/ng-components`) para toda UI genérica; não invente componente nem adote outra biblioteca de componentes fora do editor Markdown e do grafo de notas. Veja `frontend-po-ui.instructions.md`; enquanto o PO UI não suportar Angular 22, use os componentes `nd-*` de `frontend/web/src/app/design-system` (ADR 2026-0010).
 
 ## Estado e assincronicidade
 

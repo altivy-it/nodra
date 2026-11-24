@@ -1,24 +1,27 @@
-import { DOCUMENT } from '@angular/common';
-import { Component, effect, inject } from '@angular/core';
+import { Component, effect } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs';
-import { Note, NotesService } from './core/notes.service';
+import { normalizeNotePath, Note, NotesService } from './core/notes.service';
 import { SessionService } from './core/session.service';
 import { VaultRealtimeService } from './core/vault-realtime.service';
 import { VaultsService } from './core/vaults.service';
 import { FolderExplorerService, remapPath, VaultEntry } from './data-access/folder-explorer.service';
 import { WorkspaceShell } from './shell/workspace-shell';
 import { WorkspaceService } from './shell/workspace.service';
-import { appPath } from './core/app-base-path';
+import { NdBrand, NdButton, NdEmptyState, NdIcon } from './design-system';
+
+function sameNotePath(path: string, normalizedPath: string): boolean {
+  try { return normalizeNotePath(path) === normalizedPath; }
+  catch { return false; }
+}
 
 @Component({
   selector: 'app-root',
-  imports: [WorkspaceShell],
+  imports: [WorkspaceShell, NdBrand, NdButton, NdEmptyState, NdIcon],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
 export class App {
-  readonly loginUrl = appPath('/bff/login', inject(DOCUMENT).baseURI);
   private subject: string | null = null;
   private activeContext: string | null = null;
   private saveTimer: ReturnType<typeof setTimeout> | null = null;
@@ -62,10 +65,17 @@ export class App {
     if (this.saving || !this.pendingSave) return;
     this.saving = true;
     try {
+      let previous: { path: string; sentETag: string; eTag: string } | null = null;
       while (this.pendingSave) {
-        const note = this.pendingSave;
+        let note: Note = this.pendingSave;
         this.pendingSave = null;
-        await this.notes.save(note);
+        // Edits queued while the previous save was in flight still carry the version that save replaced.
+        if (previous && note.eTag === previous.sentETag && sameNotePath(note.path, previous.path)) {
+          note = { ...note, eTag: previous.eTag };
+        }
+        const saved = await this.notes.save(note);
+        previous = saved ? { path: saved.path, sentETag: note.eTag, eTag: saved.eTag } : null;
+        if (saved && !note.eTag) this.explorer.reload();
       }
     } finally {
       this.saving = false;

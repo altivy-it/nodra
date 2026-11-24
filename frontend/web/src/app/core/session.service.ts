@@ -1,6 +1,6 @@
 import { DOCUMENT } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { Inject, Injectable, signal } from '@angular/core';
+import { computed, Inject, Injectable, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { appPath } from './app-base-path';
 
@@ -9,6 +9,8 @@ export interface BffSession {
     subject: string | null;
     name: string | null;
 }
+
+export type SessionState = 'loading' | 'error' | 'anonymous' | 'authenticated' | 'expired';
 
 interface AntiforgeryTokenResponse {
     requestToken: string;
@@ -21,6 +23,13 @@ export class SessionService {
     readonly error = signal(false);
     readonly loggingOut = signal(false);
     readonly logoutError = signal(false);
+    readonly expired = signal(false);
+    readonly state = computed<SessionState>(() => {
+        if (this.loading()) return 'loading';
+        if (this.error()) return 'error';
+        if (this.expired()) return 'expired';
+        return this.session()?.authenticated ? 'authenticated' : 'anonymous';
+    });
 
     constructor(
         private readonly http: HttpClient,
@@ -35,11 +44,31 @@ export class SessionService {
         try {
             const session = await firstValueFrom(this.http.get<BffSession>('/bff/session'));
             this.session.set(session);
+            this.expired.set(false);
         } catch {
             this.error.set(true);
         } finally {
             this.loading.set(false);
         }
+    }
+
+    /** Marca a sessão como expirada depois de um 401; só uma sessão autenticada pode expirar. */
+    expire(): void {
+        if (this.session()?.authenticated) this.expired.set(true);
+    }
+
+    /**
+     * URL de login no BFF. Fora da raiz da aplicação, preserva o caminho atual em
+     * `returnUrl`; o BFF aceita somente caminhos locais (`LocalRedirect`).
+     */
+    loginUrl(): string {
+        const login = appPath('/bff/login', this.document.baseURI);
+        const location = this.document.location;
+        const current = `${location?.pathname ?? ''}${location?.search ?? ''}`;
+        const root = `${new URL(this.document.baseURI).pathname.replace(/\/+$/, '')}/`;
+        return current && current !== root && current !== root.slice(0, -1)
+            ? `${login}?returnUrl=${encodeURIComponent(current)}`
+            : login;
     }
 
     async logout(): Promise<void> {

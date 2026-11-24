@@ -31,6 +31,10 @@ Reutiliza imagens locais ja construidas.
 Fixture opcional lab-* para ensaio de escrita. Nao cria nem altera grants Keycloak.
 .PARAMETER RecreateConsumers
 Recria web, BFF, API e worker sem alterar a stack compartilhada.
+.PARAMETER ContainerEngine
+docker (padrao) ou podman. Podman exige provider Docker Compose v2+ em
+PODMAN_COMPOSE_PROVIDER e constroi imagens com --format docker para manter
+os healthchecks.
 .PARAMETER RemainingArguments
 Aceita somente --help.
 .EXAMPLE
@@ -39,12 +43,15 @@ Aceita somente --help.
 pwsh -NoProfile -File tools/scripts/start-self-hosted.ps1 -EnvironmentFile /secure/altivy.env -CertificateDirectory /secure/certs -DataRoot /srv/altivy -ValidateOnly
 .EXAMPLE
 pwsh -NoProfile -File tools/scripts/start-self-hosted.ps1 -EnvironmentFile /secure/altivy.env -IdentityEnvironmentFile /secure/identity.env -ReleaseImageManifest /secure/release/images.env -NoBuild -SyncOidc
+.EXAMPLE
+pwsh -NoProfile -File tools/scripts/start-self-hosted.ps1 -ContainerEngine podman -EnvironmentFile /secure/altivy.env -CertificateDirectory /secure/certs -DataRoot /srv/altivy -NoBuild
 .INPUTS
 Secrets apenas em arquivos externos ou variaveis injetadas com seguranca.
 .OUTPUTS
 Etapas sanitizadas e URL da aplicacao. Nunca mostra configuracao resolvida.
 .NOTES
-Requer PowerShell 7.4+, Docker Engine/Desktop e Compose v2. Runtimes rodam em containers.
+Requer PowerShell 7.4+, Docker Engine/Desktop e Compose v2, ou Podman 5+ com
+provider Docker Compose v2+. Runtimes rodam em containers.
 Keycloak, SMTP e certificados confiaveis precisam estar configurados pelo operador.
 .LINK
 ../../deploy/self-hosted/README.md
@@ -64,6 +71,7 @@ param(
     [switch] $NoBuild,
     [ValidatePattern('^lab-[a-z0-9][a-z0-9-]{0,58}$')][string] $ValidationVaultId,
     [switch] $RecreateConsumers,
+    [ValidateSet('docker','podman')][string] $ContainerEngine = 'docker',
     [Parameter(ValueFromRemainingArguments)][string[]] $RemainingArguments
 )
 if ($RemainingArguments -contains '--help') { Get-Help $PSCommandPath -Full; return }
@@ -90,10 +98,11 @@ function Invoke-Docker {
     $ErrorActionPreference = 'Continue'
     try {
         $result = if ($PSBoundParameters.ContainsKey('InputText')) {
-            $InputText | & docker @Arguments 2>&1
-        } else { & docker @Arguments 2>&1 }
+            $InputText | & $ContainerEngine @Arguments 2>&1
+        } else { & $ContainerEngine @Arguments 2>&1 }
         $nativeExit = $LASTEXITCODE
     } finally { $ErrorActionPreference = $localPreference }
+    if ($nativeExit -ne 0 -and -not $Quiet -and -not $Capture) { foreach ($entry in $result) { Write-Host $entry } }
     if ($nativeExit -ne 0) { throw "Etapa Docker falhou (exit $nativeExit); configuracao/saida sensivel nao exibida. Use --help." }
     if ($Capture) { return ($result | Out-String).Trim() }
     if (-not $Quiet) { foreach ($entry in $result) { Write-Host $entry } }
@@ -129,6 +138,16 @@ function Get-RoleConnection {
 $savedEnvironment = @{}
 Push-Location $repository
 try {
+    if (-not (Get-Command $ContainerEngine -CommandType Application -ErrorAction SilentlyContinue)) {
+        throw "Engine $ContainerEngine indisponivel no PATH. Use --help."
+    }
+    if ($ContainerEngine -eq 'podman') {
+        Set-ProcessSetting 'PODMAN_COMPOSE_WARNING_LOGS' 'false'
+        $composeVersion = Invoke-Docker -Arguments @('compose','version') -Capture
+        if ($composeVersion -notmatch 'Docker Compose version v?(?<major>\d+)\.' -or [int]$Matches.major -lt 2) {
+            throw 'Podman exige provider Docker Compose v2+ em PODMAN_COMPOSE_PROVIDER (podman-compose nao suporta config json e up --wait). Use --help.'
+        }
+    }
     $fileArguments = @()
     foreach ($file in $environmentFiles) { $fileArguments += @('--env-file', [IO.Path]::GetFullPath($file)) }
     $sourcePath = Join-Path $repository 'deploy/self-hosted/configuration.yaml'
@@ -247,6 +266,7 @@ try {
     if (-not [Net.IPAddress]::TryParse($gatewayIp, [ref]([Net.IPAddress]$null))) { throw 'Gateway compartilhado sem IP valido na identity-global.' }
     Set-ProcessSetting 'IDENTITY_GATEWAY_IP' $gatewayIp
     $compose = @('compose','--progress','plain') + $fileArguments + @('-p',$ProjectName,'-f','deploy/self-hosted/compose.yaml')
+    if ($ContainerEngine -eq 'podman') { $compose += @('-f','deploy/self-hosted/compose.podman.yaml') }
     Invoke-Docker -Arguments ($compose + @('config','--quiet')) -Quiet
     Write-Host 'Preflight Production aprovado; secrets mantidos somente em memoria.'
     if ($ValidateOnly) { return }
@@ -265,7 +285,9 @@ try {
     $databaseContainer = Invoke-Docker -Arguments @('ps','--filter','label=com.docker.compose.project=altivy-identity','--filter','label=com.docker.compose.service=postgres','--format','{{.ID}}') -Capture
     if ([string]::IsNullOrWhiteSpace($databaseContainer) -or $databaseContainer -match "`r?`n") { throw 'PostgreSQL compartilhado altivy-identity nao esta em execucao de forma univoca.' }
     $databaseImageId = Invoke-Docker -Arguments @('inspect','--format','{{.Image}}',$databaseContainer) -Capture
-    if ($databaseImageId -notmatch '^sha256:[a-f0-9]{64}$') { throw 'Imagem PostgreSQL nao resolvida por ID.' }
+    # Podman retorna o ID sem o prefixo sha256:; ambos identificam a mesma imagem.
+    if ($databaseImageId -notmatch '^(sha256:)?(?<digest>[a-f0-9]{64})$') { throw 'Imagem PostgreSQL nao resolvida por ID.' }
+    $databaseImageId = "sha256:$($Matches.digest)"
     $backupId = [DateTimeOffset]::UtcNow.ToString('yyyyMMddTHHmmss') + '-' + [Guid]::NewGuid().ToString('N')
     $metadataPartialPath = Join-Path $DataRoot "backups/$backupId.metadata.json.partial"
     $metadataPartialCreated = $false
@@ -292,12 +314,13 @@ try {
         $metadataPartialCreated = $true
         try { $metadataStream.Write($metadataBytes,0,$metadataBytes.Length) }
         finally { $metadataStream.Dispose() }
-        $archiveCommand = "set -eu; umask 077; trap 'rm -f /data/backups/$backupId.tar.gz.partial /data/backups/$backupId.sha256.partial /data/backups/$backupId.files.sha256.partial /data/backups/$backupId.metadata.json.partial' EXIT; cd /data; find vaults bff-keys -type f -print0 | sort -z | xargs -0 -r sha256sum > /data/backups/$backupId.files.sha256.partial; tar -czf /data/backups/$backupId.tar.gz.partial -C /data vaults bff-keys; mv /data/backups/$backupId.tar.gz.partial /data/backups/$backupId.tar.gz; mv /data/backups/$backupId.files.sha256.partial /data/backups/$backupId.files.sha256; mv /data/backups/$backupId.metadata.json.partial /data/backups/$backupId.metadata.json; cd /data/backups; sha256sum $backupId.dump $backupId.tar.gz $backupId.metadata.json > $backupId.sha256.partial; sha256sum --check $backupId.sha256.partial; mv $backupId.sha256.partial $backupId.sha256; cd /data; sha256sum --check backups/$backupId.files.sha256; chmod 0600 backups/$backupId.dump backups/$backupId.tar.gz backups/$backupId.sha256 backups/$backupId.files.sha256 backups/$backupId.metadata.json"
+        $archiveCommand = "set -eu; umask 077; trap 'rm -f /data/backups/$backupId.tar.gz.partial /data/backups/$backupId.sha256.partial /data/backups/$backupId.files.sha256.partial /data/backups/$backupId.metadata.json.partial' EXIT; cd /data; find vaults bff-keys -type f -print0 | sort -z | xargs -0 -r sha256sum > /data/backups/$backupId.files.sha256.partial; tar -czf /data/backups/$backupId.tar.gz.partial -C /data vaults bff-keys; mv /data/backups/$backupId.tar.gz.partial /data/backups/$backupId.tar.gz; mv /data/backups/$backupId.files.sha256.partial /data/backups/$backupId.files.sha256; mv /data/backups/$backupId.metadata.json.partial /data/backups/$backupId.metadata.json; cd /data/backups; sha256sum $backupId.dump $backupId.tar.gz $backupId.metadata.json > $backupId.sha256.partial; sha256sum --check $backupId.sha256.partial; mv $backupId.sha256.partial $backupId.sha256; cd /data; if [ -s backups/$backupId.files.sha256 ]; then sha256sum --check backups/$backupId.files.sha256; fi; chmod 0600 backups/$backupId.dump backups/$backupId.tar.gz backups/$backupId.sha256 backups/$backupId.files.sha256 backups/$backupId.metadata.json"
         Invoke-Docker -Arguments @('run','--rm','--network','none','--user','0:0','--volume',"${DataRoot}:/data",'--entrypoint','/bin/sh','lzocateli/dotnet-aspnet:10.0.11-noble','-ec',$archiveCommand) -Quiet
         Write-Host "Backup pre-migration verificado (ID $backupId)."
         $migrationImage = [string]$settings.ALTIVY_MIGRATIONS_IMAGE
         if (-not $NoBuild) {
-            Invoke-Docker -Arguments @('build','--build-arg',"IMAGE_VERSION=$($source.BACKEND_VERSION)",'--tag',$migrationImage,'--file','deploy/production/migrations.Dockerfile','.')
+            $formatArguments = if ($ContainerEngine -eq 'podman') { @('--format','docker') } else { @() }
+            Invoke-Docker -Arguments (@('build') + $formatArguments + @('--build-arg',"IMAGE_VERSION=$($source.BACKEND_VERSION)",'--tag',$migrationImage,'--file','deploy/production/migrations.Dockerfile','.'))
         } elseif ($ReleaseImageManifest) {
             Invoke-Docker -Arguments @('pull',$migrationImage)
         }
@@ -309,11 +332,8 @@ try {
         }
         Write-Host 'Migrations validadas no PostgreSQL compartilhado.'
         if ($ValidationVaultId) {
-            $fixtureDirectory = Join-Path $DataRoot "vaults/$ValidationVaultId"
-            if ((Test-Path -LiteralPath $fixtureDirectory) -and
-                (Get-Item -LiteralPath $fixtureDirectory).Attributes -band [IO.FileAttributes]::ReparsePoint) {
-                throw 'Diretorio de fixture nao pode ser link simbolico.'
-            }
+            # Criado em container: com Podman rootless, vaults/ pertence a um subuid e nao e acessivel pelo host.
+            Invoke-Docker -Arguments @('run','--rm','--network','none','--user','0:0','--volume',"$([IO.Path]::GetFullPath((Join-Path $DataRoot 'vaults'))):/vaults",'--entrypoint','/bin/sh','lzocateli/dotnet-aspnet:10.0.11-noble','-ec',"test ! -L /vaults/$ValidationVaultId; if [ ! -e /vaults/$ValidationVaultId ]; then mkdir /vaults/$ValidationVaultId; chown 1654:1654 /vaults/$ValidationVaultId; chmod 0700 /vaults/$ValidationVaultId; fi; test -d /vaults/$ValidationVaultId") -Quiet
             $fixtureSql = @"
 BEGIN;
 INSERT INTO altivy.vaults ("Id", "Name", state)
@@ -324,10 +344,6 @@ THEN RAISE EXCEPTION 'Fixture colide com vault existente; nenhum dado foi altera
 END `$fixture`$;
 COMMIT;
 "@
-            if (-not (Test-Path -LiteralPath $fixtureDirectory)) {
-                New-Item -ItemType Directory -Path $fixtureDirectory | Out-Null
-                Invoke-Docker -Arguments @('run','--rm','--network','none','--user','0:0','--volume',"${fixtureDirectory}:/fixture",'--entrypoint','/bin/sh','lzocateli/dotnet-aspnet:10.0.11-noble','-ec','chown 1654:1654 /fixture; chmod 0700 /fixture') -Quiet
-            }
             Set-ProcessSetting 'PGPASSWORD' $migrator.get_Item('Password')
             Invoke-Docker -Arguments @('run','--rm','--network','identity-client','--env','PGPASSWORD','--entrypoint','psql','lzocateli/postgresql:18.4-pgvector0.8.6-bookworm','-X','-q','-h','postgres','-U','altivy_migrator','-d','altivy','-v','ON_ERROR_STOP=1') -InputText $fixtureSql -Quiet
             Set-ProcessSetting 'PGPASSWORD' $null
@@ -341,7 +357,20 @@ COMMIT;
             Write-Host 'Callbacks OIDC sincronizados na identidade compartilhada.'
         }
         $startArguments = @('up','-d','--wait','--wait-timeout','240')
-        if (-not $NoBuild) { $startArguments += '--build' }
+        if (-not $NoBuild -and $ContainerEngine -eq 'podman') {
+            # Compose via API Podman nao garante formato docker; construir explicitamente preserva HEALTHCHECK.
+            $builds = @(
+                @{ Image=$settings.ALTIVY_WEB_IMAGE; File='frontend/web/Dockerfile'; Args=@("IMAGE_VERSION=$($source.WEB_VERSION)",'WEB_CONFIGURATION=production','WEB_BASE_HREF=/notes/') }
+                @{ Image=$settings.ALTIVY_BFF_IMAGE; File='backend/apps/bff/Dockerfile'; Args=@("IMAGE_VERSION=$($source.BACKEND_VERSION)") }
+                @{ Image=$settings.ALTIVY_API_IMAGE; File='backend/apps/api/Dockerfile'; Args=@("IMAGE_VERSION=$($source.BACKEND_VERSION)") }
+                @{ Image=$settings.ALTIVY_WORKER_IMAGE; File='backend/apps/worker/Dockerfile'; Args=@("IMAGE_VERSION=$($source.BACKEND_VERSION)") }
+            )
+            foreach ($build in $builds) {
+                $buildArguments = @('build','--format','docker','--tag',[string]$build.Image,'--file',$build.File)
+                foreach ($argument in $build.Args) { $buildArguments += @('--build-arg',$argument) }
+                Invoke-Docker -Arguments ($buildArguments + @('.'))
+            }
+        } elseif (-not $NoBuild) { $startArguments += '--build' }
         $startServices = @()
         if ($RecreateConsumers) {
             $startArguments += @('--no-deps','--force-recreate')

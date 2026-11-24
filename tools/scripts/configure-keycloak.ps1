@@ -253,7 +253,10 @@ function Invoke-KeycloakApi {
                 }
             }
             $detail = if ($keycloakError) { " Motivo informado pelo Keycloak: $keycloakError" } else { '' }
-            throw "Falha na Admin API ($Method $Path): $($_.Exception.Message)$detail"
+            # Preserva o status HTTP para que chamadores tratem 404 como recurso ausente.
+            $failure = [InvalidOperationException]::new("Falha na Admin API ($Method $Path): $($_.Exception.Message)$detail")
+            $failure.Data['StatusCode'] = $statusCode
+            throw $failure
         }
     }
 }
@@ -331,7 +334,7 @@ function Ensure-ClientRole {
         Invoke-KeycloakApi PUT "/admin/realms/$Realm/clients/$encodedClientId/roles/$encodedRole" $representation | Out-Null
     }
     catch {
-        if ($_.Exception.Response.StatusCode.value__ -ne 404) { throw }
+        if ($_.Exception.Data['StatusCode'] -ne 404) { throw }
         Invoke-KeycloakApi POST "/admin/realms/$Realm/clients/$encodedClientId/roles" @{
             name = $RoleName; description = $Description
         } | Out-Null
@@ -450,7 +453,7 @@ function Ensure-IdentityProvider {
         Write-Output "Atualizado IdP $($Provider.alias)."
     }
     catch {
-        if ($_.Exception.Response.StatusCode.value__ -ne 404) { throw }
+        if ($_.Exception.Data['StatusCode'] -ne 404) { throw }
         Invoke-KeycloakApi POST "/admin/realms/$Realm/identity-provider/instances" $representation | Out-Null
         Write-Output "Criado IdP $($Provider.alias)."
     }
@@ -475,14 +478,14 @@ if ($Bootstrap) {
         $realmRepresentation = Invoke-KeycloakApi GET "/admin/realms/$Realm"
     }
     catch {
-        if ($_.Exception.Response.StatusCode.value__ -ne 404) { throw }
-        Invoke-KeycloakApi POST '/admin/realms' @{ realm = $Realm; enabled = $true; displayName = 'Altivy' } | Out-Null
+        if ($_.Exception.Data['StatusCode'] -ne 404) { throw }
+        Invoke-KeycloakApi POST '/admin/realms' @{ realm = $Realm; enabled = $true; displayName = 'Nodra' } | Out-Null
         $realmRepresentation = Invoke-KeycloakApi GET "/admin/realms/$Realm"
         Write-Output "Criado realm $Realm."
     }
 
     $realmSettings = @{
-        displayName = 'Altivy'; enabled = $true; sslRequired = 'external'; loginTheme = 'altivy'
+        displayName = 'Nodra'; enabled = $true; sslRequired = 'external'; loginTheme = 'altivy'
         registrationAllowed = $false; rememberMe = $false; verifyEmail = $true
         loginWithEmailAllowed = $true; duplicateEmailsAllowed = $false; resetPasswordAllowed = [bool]$smtpHost
         editUsernameAllowed = $false; bruteForceProtected = $true; permanentLockout = $false
@@ -537,6 +540,24 @@ $provisionerClient = @{
 }
 if ($script:provisionerSecret) { $provisionerClient.secret = $script:provisionerSecret }
 $provisionerClientUuid = Ensure-Client $provisionerClient
+if ($Bootstrap) {
+    # Concede à service account somente as roles documentadas; o provisioner não pode conceder a si mesmo.
+    $serviceAccountUser = Invoke-KeycloakApi GET "/admin/realms/$Realm/clients/$provisionerClientUuid/service-account-user"
+    $realmManagement = @(Invoke-KeycloakApi GET "/admin/realms/$Realm/clients?clientId=realm-management") |
+        Where-Object clientId -eq 'realm-management' | Select-Object -First 1
+    if (-not $serviceAccountUser -or -not $realmManagement) { throw 'Service account do provisioner ou realm-management não localizado.' }
+    $mappingPath = "/admin/realms/$Realm/users/$($serviceAccountUser.id)/role-mappings/clients/$($realmManagement.id)"
+    $currentProvisionerRoles = @(Invoke-KeycloakApi GET $mappingPath).name
+    $missingProvisionerRoles = @(foreach ($roleName in @('manage-clients', 'manage-users', 'manage-authorization')) {
+            if ($currentProvisionerRoles -notcontains $roleName) {
+                Invoke-KeycloakApi GET "/admin/realms/$Realm/clients/$($realmManagement.id)/roles/$roleName"
+            }
+        })
+    if ($missingProvisionerRoles.Count -gt 0) {
+        Invoke-KeycloakApi POST $mappingPath $missingProvisionerRoles | Out-Null
+        Write-Output "Concedidas ao provisioner: $($missingProvisionerRoles.name -join ', ')."
+    }
+}
 
 $bffClient = @{
     clientId = 'altivy-bff'; name = 'Altivy BFF'; enabled = $true; publicClient = $false

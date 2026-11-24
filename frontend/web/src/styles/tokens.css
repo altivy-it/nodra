@@ -1,0 +1,153 @@
+/*
+ * Tokens do Nodra (spec 007, ADR 2026-0010). Fonte única de cor, raio, sombra e
+ * tipografia, compartilhada pelo app Angular e pelo tema de login do Keycloak
+ * (copiada por deploy/keycloak/build-theme.ps1). Base visual: Obsidian escuro.
+ */
+:root {
+  color-scheme: dark;
+
+  --font-sans: "Outfit", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+  --surface-base: #161616;
+  --surface-editor: #1e1e1e;
+  --surface-panel: #262626;
+  --surface-ribbon: #202020;
+  --surface-raised: #2c2c2c;
+  --surface-input: #1a1a1a;
+  --hover-wash: rgba(255, 255, 255, 0.06);
+  --selection: rgba(167, 139, 250, 0.18);
+
+  --border: #363636;
+  --border-strong: #4a4a4a;
+  --hairline: rgba(255, 255, 255, 0.08);
+
+  --text-normal: #dadada;
+  --text-strong: #f4f4f5;
+  --text-muted: #a3a3a3;
+  --text-faint: #8a8a8a;
+
+  --accent: #a78bfa;
+  --accent-strong: #8b5cf6;
+  --accent-ink: #17112a;
+  --accent-tint: rgba(167, 139, 250, 0.14);
+  --accent-border: rgba(167, 139, 250, 0.42);
+  --link: #b9a3ff;
+
+  --signal-success: #4ade80;
+  --signal-warning: #fbbf24;
+  --signal-error: #f87171;
+  --signal-info: #60a5fa;
+  --success-tint: rgba(74, 222, 128, 0.14);
+  --warning-tint: rgba(251, 191, 36, 0.14);
+  --error-tint: rgba(248, 113, 113, 0.16);
+  --info-tint: rgba(96, 165, 250, 0.14);
+
+  --glass-fill: rgba(38, 38, 38, 0.66);
+  --glass-fill-strong: rgba(30, 30, 30, 0.82);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-highlight: rgba(255, 255, 255, 0.07);
+  --backdrop: blur(18px) saturate(140%);
+  --veil-violet: rgba(139, 92, 246, 0.24);
+  --veil-indigo: rgba(99, 102, 241, 0.14);
+
+  --cta-top: #c4b5fd;
+  --cta-bottom: #8b5cf6;
+
+  --shadow-glass: 0 24px 60px rgba(0, 0, 0, 0.45);
+  --shadow-popover: 0 12px 32px rgba(0, 0, 0, 0.5);
+  --shadow-cta: 0 10px 28px rgba(139, 92, 246, 0.32);
+  --focus-ring: 0 0 0 3px rgba(167, 139, 250, 0.35);
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-pill: 999px;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+  --surface-base: #f2f2f2;
+  --surface-editor: #ffffff;
+  --surface-panel: #f6f6f6;
+  --surface-ribbon: #ececec;
+  --surface-raised: #ffffff;
+  --surface-input: #ffffff;
+  --hover-wash: rgba(0, 0, 0, 0.05);
+  --selection: rgba(124, 58, 237, 0.12);
+  --border: #e0e0e0;
+  --border-strong: #c8c8c8;
+  --hairline: rgba(0, 0, 0, 0.08);
+  --text-normal: #222222;
+  --text-strong: #000000;
+  --text-muted: #5c5c5c;
+  --text-faint: #6e6e6e;
+  --accent: #7c3aed;
+  --accent-strong: #6d28d9;
+  --accent-ink: #ffffff;
+  --accent-tint: rgba(124, 58, 237, 0.1);
+  --accent-border: rgba(124, 58, 237, 0.4);
+  --link: #6d28d9;
+  --signal-success: #15803d;
+  --signal-warning: #a16207;
+  --signal-error: #b91c1c;
+  --signal-info: #1d4ed8;
+}
+
+@media (prefers-color-scheme: light) {
+  [data-theme="system"] {
+    color-scheme: light;
+    --surface-base: #f2f2f2;
+    --surface-editor: #ffffff;
+    --surface-panel: #f6f6f6;
+    --surface-ribbon: #ececec;
+    --surface-raised: #ffffff;
+    --surface-input: #ffffff;
+    --hover-wash: rgba(0, 0, 0, 0.05);
+    --selection: rgba(124, 58, 237, 0.12);
+    --border: #e0e0e0;
+    --border-strong: #c8c8c8;
+    --hairline: rgba(0, 0, 0, 0.08);
+    --text-normal: #222222;
+    --text-strong: #000000;
+    --text-muted: #5c5c5c;
+    --text-faint: #6e6e6e;
+    --accent: #7c3aed;
+    --accent-strong: #6d28d9;
+    --accent-ink: #ffffff;
+    --accent-tint: rgba(124, 58, 237, 0.1);
+    --accent-border: rgba(124, 58, 237, 0.4);
+    --link: #6d28d9;
+    --signal-success: #15803d;
+    --signal-warning: #a16207;
+    --signal-error: #b91c1c;
+    --signal-info: #1d4ed8;
+  }
+}
+
+[data-theme="high-contrast"] {
+  color-scheme: dark;
+  --surface-base: #000000;
+  --surface-editor: #000000;
+  --surface-panel: #000000;
+  --surface-ribbon: #000000;
+  --surface-raised: #0a0a0a;
+  --surface-input: #000000;
+  --hover-wash: rgba(255, 255, 255, 0.14);
+  --selection: #2e1065;
+  --border: #ffffff;
+  --border-strong: #ffffff;
+  --hairline: #ffffff;
+  --text-normal: #ffffff;
+  --text-strong: #ffffff;
+  --text-muted: #ffffff;
+  --text-faint: #ffffff;
+  --accent: #ffd166;
+  --accent-strong: #ffd166;
+  --accent-ink: #000000;
+  --accent-tint: #1f1600;
+  --accent-border: #ffd166;
+  --link: #ffd166;
+}

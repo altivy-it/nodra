@@ -1,0 +1,22 @@
+# Override somente para o laboratório local com Podman rootless.
+# Aplica-se sobre architecture-knowledge-base/platforms/identity/compose.yaml,
+# sem alterar o Compose canônico da plataforma de identidade.
+# O gateway do AKB usa o resolver 127.0.0.11, que existe apenas no Docker.
+# No Podman o DNS (aardvark-dns) responde no gateway da rede; por isso a rede
+# identity-global recebe sub-rede fixa e o nginx usa esse resolver.
+# API e BFF fixam "localhost" no IP do gateway (extra_hosts) ao serem criados;
+# o IP estático evita que recriar só o gateway quebre o OIDC dos consumidores.
+services:
+  gateway:
+    volumes:
+      - ${NODRA_LAB_GATEWAY_NGINX_CONF:?Defina NODRA_LAB_GATEWAY_NGINX_CONF}:/etc/nginx/nginx.conf:ro
+    networks:
+      identity-global:
+        ipv4_address: 10.89.250.250
+
+networks:
+  identity-global:
+    ipam:
+      config:
+        - subnet: 10.89.250.0/24
+          gateway: 10.89.250.1

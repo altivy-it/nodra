@@ -25,6 +25,8 @@ COPY deploy/nginx/conf.d/web.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /src/dist/nodra-web/browser/ /usr/share/nginx/html/
 RUN apt-get update \
   && apt-get install --yes --no-install-recommends curl zlib1g=1:1.3.dfsg+really1.3.1-1+deb13u1 \
+    libgssapi-krb5-2=1.21.3-5+deb13u2 libk5crypto3=1.21.3-5+deb13u2 \
+    libkrb5-3=1.21.3-5+deb13u2 libkrb5support0=1.21.3-5+deb13u2 \
   && rm -rf /var/lib/apt/lists/* \
   && sed -i 's#^[[:space:]]*pid[[:space:]].*#pid /tmp/nginx.pid;#' /etc/nginx/nginx.conf \
   && chown -R nginx:nginx /usr/share/nginx/html /var/cache/nginx /var/log/nginx /var/run

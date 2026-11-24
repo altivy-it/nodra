@@ -1,0 +1,12 @@
+{
+  "remote.autoForwardPorts": true,
+  "remote.autoForwardPortsSource": "process",
+  "remote.portsAttributes": {
+    "7443": {
+      "label": "Nodra laboratorio local (nginx)",
+      "protocol": "https",
+      "requireLocalPort": true,
+      "onAutoForward": "notify"
+    }
+  }
+}

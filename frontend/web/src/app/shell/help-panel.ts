@@ -6,13 +6,13 @@ import { HelpService } from './help.service';
   selector: 'app-help-panel',
   template: `
     <article class="module-page help-page help-runtime" aria-labelledby="help-title">
+      <div class="help-heading"><span class="empty-code">05 / AJUDA</span><button type="button" class="close-help" (click)="closed.emit()">Fechar ajuda</button></div>
       @if (help.loading()) {
         <p class="muted">Carregando ajuda...</p>
       } @else if (help.error()) {
         <p class="error" role="alert">Não foi possível carregar a ajuda local.</p>
         <button type="button" class="reset-button" (click)="help.load()">Tentar novamente</button>
       } @else {
-        <div class="help-heading"><span class="empty-code">05 / AJUDA</span><button type="button" class="close-help" (click)="closed.emit()">Fechar ajuda</button></div>
         <label class="help-search">Buscar na ajuda <input [value]="query()" (input)="setQuery($event)" type="search" placeholder="Digite um termo"></label>
         @if (filteredBlocks().length === 0) { <p class="muted">Nenhum resultado nesta ajuda.</p> }
         @for (block of filteredBlocks(); track $index) {

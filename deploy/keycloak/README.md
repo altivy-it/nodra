@@ -12,7 +12,8 @@ paralela: o PostgreSQL central preserva o bind mount legado
 
 ## Gerar e publicar o tema
 
-Na raiz do Nodra, gere o artefato a partir dos assets canônicos:
+Na raiz do Nodra, gere o artefato; ele combina este tema com os tokens, as
+fontes e o símbolo de `frontend/web` (spec 007):
 
 ```powershell
 ./deploy/keycloak/build-theme.ps1

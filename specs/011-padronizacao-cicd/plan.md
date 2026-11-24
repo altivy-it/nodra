@@ -91,7 +91,7 @@ do Dokpod; nao instalar componentes desnecessarios.
 4. Integrar .groundwork-new conscientemente; migrar arquivos seed conflitantes sem sobrescrita silenciosa. Remover workflows legados duplicados somente apos substitutos e testes prontos; resolver conflitos com comando oficial, sem editar hashes.
 5. Adaptar CI: PR/merge_group/main/dispatch, hygiene, gitleaks, testes backend/PostgreSQL UTC, frontend, imagens e Result. CI permanece sem secrets e nao depende de configuracao de producao.
 6. Adaptar seeds de publicacao e deploy aos cinco artefatos Nodra e GHCR aprovado. Implementar apenas modos realmente suportados; preflight/publish_only nao implementados devem falhar fechado, nao aparentar validacao.
-7. Configurar repositorio: dry-run de politicas, revisar diferencas e aplicar os seis ambientes com aprovacao da administracao da Altivy. Identificar e validar a equipe GitHub administrativa antes de alterar required reviewers ou CODEOWNERS; nao usar conta pessoal como fallback. Nao apagar regras legadas com --replace-legacy sem uma autorizacao humana especifica para o diff; nao reduzir gates para destravar PR.
+7. Configurar repositorio: dry-run de politicas, revisar diferencas e aplicar os seis ambientes com aprovacao da administracao da Altivy. Usar nos quatro ambientes protegidos exatamente os revisores GitHub do tipo User configurados no Dokpod, validando que cada revisor e owner atual da organizacao e possui acesso ao Nodra. Nao usar RepositoryRole/actor_id 5 como reviewer de Environment nem substituir revisores. CODEOWNERS e separado e nao sera migrado sem destinatario valido e autorizacao especifica. Nao apagar regras legadas com --replace-legacy sem uma autorizacao humana especifica para o diff; nao reduzir gates para destravar PR.
 8. Documentar App e SSH por escopo; o operador cadastra secrets no GitHub fora do modelo. Nao habilitar publish/deploy para testar credenciais.
 9. Validar arquivos gerenciados, actionlint, contratos e simulacoes nao destrutivas. Publicar branch/PR somente se autorizado; sem merge automatico e sem executar release/deploy.
 
@@ -101,28 +101,30 @@ do Dokpod; nao instalar componentes desnecessarios.
 | --- | --- | --- | --- |
 | ci | Validacao | PR/main/merge group conforme job | Sem secrets de publicacao/producao |
 | copilot | Automacao reservada | Conforme configuracao do GitHub | Sem secrets de deploy |
-| quality | Validacao de candidata | tags v* | Administradores da Altivy |
-| release | Preparacao/publicacao autorizada | main e tags v* | Administradores da Altivy |
-| distribution | Autorizacao de divulgacao | main e tags v* | Administradores da Altivy |
-| production | Implantacao manual de release | tags v* | Administradores da Altivy |
+| quality | Validacao de candidata | tags v* | Mesmo reviewer User do Dokpod, validado como owner e com acesso ao Nodra |
+| release | Preparacao/publicacao autorizada | main e tags v* | Mesmo reviewer User do Dokpod, validado como owner e com acesso ao Nodra |
+| distribution | Autorizacao de divulgacao | main e tags v* | Mesmo reviewer User do Dokpod, validado como owner e com acesso ao Nodra |
+| production | Implantacao manual de release | tags v* | Mesmo reviewer User do Dokpod, validado como owner e com acesso ao Nodra |
 
 Espelhar a referencia prevent_self_review=false sem alterar para true
 silenciosamente. Se o plano GitHub nao permitir uma protecao, registrar bloqueio
 e manter a operacao fechada; nao declarar paridade inexistente.
 
-A referencia administrativa do Dokpod nos rulesets e RepositoryRole com ID 5;
-isso nao e um required reviewer de Environment nem uma entrada CODEOWNERS.
-O inventario nao retornou equipes visiveis: a identificacao e validacao da
-equipe administrativa permanece pre-requisito, sem criar um slug ficticio.
+A API do Dokpod confirmou em 2026-11-18 um reviewer User por ambiente protegido,
+com a mesma identidade nos quatro ambientes. A conta foi validada como owner da
+organizacao e com permissao admin no Nodra. RepositoryRole/actor_id 5 nos
+rulesets nao e um required reviewer de Environment nem uma entrada CODEOWNERS.
+Nao migrar CODEOWNERS como efeito colateral da configuracao dos environments.
 
 ## Identidade das Contribuicoes
 
 Contribuicoes desta manutencao e da automacao configurada usam autor/committer
 lunadev00 <luna@altivy.it>. A identidade Git foi configurada apenas neste clone;
 nao altera usuarios globais, autoria de terceiros, commits publicados ou
-assinaturas criptograficas. Nomes pessoais nao devem aparecer como titulares
-de aprovacao ou autoria nos novos artefatos. Referencias tecnicas reais de
-fornecedores e avisos legais obrigatorios nao sao substituidos por nome ficticio.
+assinaturas criptograficas. A politica operacional e a documentacao gerada do
+contrato registram o login do reviewer User validado; esse identificador nao e
+um secret. Referencias tecnicas reais de fornecedores e avisos legais
+obrigatorios nao sao substituidos por nome ficticio.
 
 ## Registro de Complexidade
 
