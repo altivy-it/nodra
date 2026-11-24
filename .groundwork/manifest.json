@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "toolVersion": "0.11.3",
-  "catalogVersion": "0.11.3",
+  "toolVersion": "0.13.0",
+  "catalogVersion": "0.13.0",
   "parameters": {
     "auto_deploy_environment": "",
     "commit_scopes": "web,api,worker,frontend,backend,contracts,db,deploy,deps,actions,security,observability,docs,tooling,repo",
@@ -41,6 +41,8 @@
     "require_signed_commits": "false",
     "required_approvals": "1",
     "secrets_dir_name": "Altivy.Notes",
+    "strict_environment_reviewers": "false",
+    "unrestricted_environments": "",
     "version_files": "backend/Directory.Build.props,frontend/web/package.json"
   },
   "components": [
@@ -60,7 +62,7 @@
     },
     ".github/REPOSITORY-POLICY.md": {
       "component": "repository-policy",
-      "sha256": "ae62067c94e5f8de194934111220552de725c1d1c80389b65e442d9d38e1ec05"
+      "sha256": "66cb20f047ce2ea0d3265fb03a2eb9055c25b7e969ddf93433ac1a5499defa15"
     },
     ".github/instructions/release-integrity.instructions.md": {
       "component": "release",
@@ -68,7 +70,7 @@
     },
     ".github/repository-policy.json": {
       "component": "repository-policy",
-      "sha256": "0b26a713bb4c1da3de053f5ee531dbd3364b1ff1666c96d42efa21360be31a27"
+      "sha256": "4808b117cde0ae0175293a518a90953c9227c60169e72c24adf4d668cd33b3cc"
     },
     ".github/workflows/gw-container-images.yml": {
       "component": "publish-containers",
@@ -100,11 +102,11 @@
     },
     ".github/workflows/gw-preview.yml": {
       "component": "release-preview",
-      "sha256": "88967a422d63d2c09310fabd9bd7aba9d144390d02473b18b3dacabb3ca0a4b6"
+      "sha256": "6392d191325b92c64988950f743c45b219ab2ab88baf4ec86f798d6a6bf60137"
     },
     ".github/workflows/gw-release.yml": {
       "component": "release",
-      "sha256": "f36588108ed5e8021040cdc79d349523998492ae726f5477940c274a6a46c2c7"
+      "sha256": "7ad94744452d05f86f6bcdbdaacb01b4fe27506d9321bc8089a038b6c9b24a01"
     },
     "docs/en/release-integrity.md": {
       "component": "release",
@@ -116,7 +118,7 @@
     },
     "docs/estrategia-de-release.md": {
       "component": "release-preview",
-      "sha256": "de355a439f1d687b8d08385952a95173ffe4f6b78876a335f48d9fa46209159b"
+      "sha256": "fb05e55cd39e7aa8f339b679681a123d1b1b1bbaf2375e26c8d533fbe917c71c"
     },
     "docs/release-integrity.md": {
       "component": "release",
@@ -124,7 +126,7 @@
     },
     "docs/runbooks/deploy-e-rollback.md": {
       "component": "deploy",
-      "sha256": "ad21de52127075cde223d0dc1baae67957c6543f1c447bef1cdf6de7b3db855a"
+      "sha256": "92c498e64265087b46cd57349b69810d9cbc28d5eb22c1b0be5169a416261f3d"
     },
     "docs/runbooks/release-preview.md": {
       "component": "release-preview",

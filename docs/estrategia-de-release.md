@@ -80,7 +80,7 @@ estável; as notas da estável ganham a linha "Validada na `vX.Y.Z-rc.N`".
 
 | Environment | Refs aceitas | Revisores | Uso |
 | --- | --- | --- | --- |
-| `release` | `main`, `v*` |  | credenciais de componentes que ainda usam esse Environment; não substitui `distribution` |
+| `release` | `main`, `v*` | `@lzocateli` | credenciais de componentes que ainda usam esse Environment; não substitui `distribution` |
 | `distribution` | `main`, `v*` | obrigatórios | autorização humana antes de divulgar a candidata ou a estável; com `distributionAfterValidation=true`, ocorre após o preflight privado |
 | `quality` | `v*` | opcionais | deploy e aceite da candidata; também aceita estáveis |
 | `production` | `v*` | obrigatórios | somente estáveis com candidata validada |

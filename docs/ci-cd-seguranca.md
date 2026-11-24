@@ -424,14 +424,15 @@ Cadastrar pelo GitHub, nunca pelo chat ou em arquivos do repositório:
 
 O inventário versionado de nomes, escopos e dos seis ambientes está em
 `.github/ci-cd.json` (`repositorySetup`). Ele não contém valores e não cria
-configuração no GitHub. Groundwork 0.11.3 não consegue materializar hoje esse
-contrato: não gera `ci`/`copilot`, mantém fallback `release-pr` e pode tentar
-configurar `release` ou `quality` sem reviewer após uma resposta HTTP 422.
-Com `preview_acceptance=deploy`, reviewers informados são gerados para
-`quality`, mas `requireReviewers=false` não garante falha fechada. Os
-parâmetros locais já identificam o reviewer User, mas a política gerenciada
-permanece inalterada até haver suporte canônico compatível. A política remota
-permanece bloqueada; não sincronize a política atual.
+configuração no GitHub. A partir do Groundwork 0.13.0,
+`.github/repository-policy.json` exige o reviewer User em `release`,
+`distribution`, `quality` e `production`, e registra o App `altivy-release`
+como bypass do ruleset de tags. Em 2026-11-24 a política foi aplicada com
+`groundwork github --sync`, com autorização administrativa: rulesets `gw-*`,
+os quatro Environments com reviewer e refs do inventário, secret scanning e
+push protection. O Environment reservado `copilot` foi criado sem proteção nem
+secrets. A proteção clássica de `main` permanece até validar um PR sob os
+rulesets; depois, remova-a com `groundwork github --sync --replace-legacy`.
 
 O nome legado `RELEASE_APP_CLIENT_ID` foi substituído no fluxo por
 `RELEASE_APP_ID`; não copiar nem apagar valores sem conferir a migração.
@@ -440,24 +441,18 @@ no ruleset de tags; ele não é o Client ID. Para `RELEASE_APP_ID`, o GitHub
 recomenda o Client ID, mas também aceita o App ID numérico como emissor do
 JWT. A emissão real do token ainda não foi verificada com a chave privada.
 O reviewer User foi validado como owner da organização e com permissão admin no
-Nodra; `ALTIVY_ADMIN_REVIEWER` deve conter o login correspondente. O manifesto
-Groundwork local registra esse login nos parâmetros `release_reviewers` e
-`deploy_reviewers`, mas `.github/repository-policy.json` não foi regenerado e
-não representa a configuração remota atual. O papel RepositoryRole/5 dos
-rulesets não substitui o reviewer de Environment. Quando a política compatível
-for gerada e aplicada com autorização, a publicação verificará que somente
-esse usuário está configurado nos quatro ambientes e falhará fechada se houver
-divergência. CODEOWNERS permanece separado e não recebe atribuições por efeito
-colateral.
+Nodra; `ALTIVY_ADMIN_REVIEWER` contém o login correspondente. O papel
+RepositoryRole/5 dos rulesets não substitui o reviewer de Environment. A
+publicação verifica que somente esse usuário está configurado nos quatro
+ambientes e falha fechada se houver divergência. CODEOWNERS permanece separado
+e não recebe atribuições por efeito colateral.
 
-O App `altivy-release` está instalado para todos os repositórios da organização;
-seu ID foi registrado no manifesto local, sem regenerar a política. Em
-2026-11-19, a consulta dos nomes de configurações diretas e da organização
-disponíveis ao Nodra não encontrou `RELEASE_APP_ID`,
-`RELEASE_APP_PRIVATE_KEY` ou `ALTIVY_ADMIN_REVIEWER`. O operador deve
-configurá-los ou conceder acesso conforme necessário. Nenhum PAT, chave SSH ou
-segredo deve ser enviado ao assistente. O CI funciona sem essas configurações;
-release/deploy permanecem bloqueados.
+O App `altivy-release` está instalado para todos os repositórios da organização.
+Em 2026-11-24 foram cadastradas as variáveis de repositório `RELEASE_APP_ID`
+(App ID numérico) e `ALTIVY_ADMIN_REVIEWER`. O secret `RELEASE_APP_PRIVATE_KEY`
+continua ausente e deve ser cadastrado pelo operador. Nenhum PAT, chave SSH ou
+segredo deve ser enviado ao assistente. O CI funciona sem essa chave;
+release/deploy permanecem bloqueados até ela existir.
 
 Para releases self-hosted:
 

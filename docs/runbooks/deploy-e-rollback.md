@@ -7,7 +7,7 @@ para o catálogo. Destinos, runner, migrações e contatos ficam em
 Repositório: `altivy-it/nodra` · Environments de deploy:
 `quality`, `production` ·
 auto-deploy: desativado ·
-revisores: .
+revisores: `@lzocateli`.
 
 ## 1. Princípios
 
