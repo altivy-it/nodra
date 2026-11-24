@@ -2,7 +2,7 @@
     <PropertyGroup>
         <UserSecretsId>Altivy.Notes</UserSecretsId>
         <TargetFramework>net10.0</TargetFramework>
-        <VersionPrefix>0.1.0</VersionPrefix>
+        <VersionPrefix>0.2.0</VersionPrefix>
         <Company>Altivy</Company>
         <Product>Altivy Nodra</Product>
         <ImplicitUsings>enable</ImplicitUsings>
