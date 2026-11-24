@@ -27,7 +27,7 @@
         [loading]="notes.loading()" [error]="notes.error()" (noteOpened)="open($event)" (noteCreated)="create($event)"
         (notesReloaded)="notes.load()" (noteChanged)="save($event.path, $event.content)" (noteRemoved)="remove()"
         (noteMoved)="move($event)" (folderMoved)="folderMoved($event.from, $event.to)"
-        (trashRequested)="trashEntry($event)"
+        (trashRequested)="trashEntry($event)" [readOnly]="readOnly()" (noteRestored)="restoreOriginal()"
         (noteDropped)="dropNote($event.path, $event.eTag, $event.destination)"
         [vaults]="vaults.vaults()" [currentVaultId]="vaults.current()?.id ?? null" [vaultsLoading]="vaults.loading()"
         [realtimeStatus]="realtime.status()" (vaultSelected)="selectVault($event)" (loggedOut)="session.logout()" />

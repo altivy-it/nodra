@@ -49,6 +49,7 @@ internal static class TrashPurgeEndpoint
         }
         var header = context.Request.Headers.Authorization.ToString();
         if (!header.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)) return Results.Unauthorized();
+        if (ReadOnlyVaultProblem.For(parsedVaultId.Value, scope) is { } readOnly) return readOnly;
         var decision = await authorization.EvaluateAsync(
             header["Bearer ".Length..].Trim(),
             VaultAuthorization.ResourceFor(parsedVaultId.Value),

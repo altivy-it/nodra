@@ -97,7 +97,7 @@
             class="tree-row"
             [class.pending]="explorer.pendingFolders().has(row.entry.path) || explorer.movingEntries().has(row.entry.path)"
             [class.drop-target]="dropTarget() === row.entry.path"
-            [attr.draggable]="!explorer.pendingFolders().has(row.entry.path) && !explorer.movingEntries().has(row.entry.path) && (row.entry.kind === 'folder' || !!row.entry.eTag)"
+            [attr.draggable]="!readOnly && !explorer.pendingFolders().has(row.entry.path) && !explorer.movingEntries().has(row.entry.path) && (row.entry.kind === 'folder' || !!row.entry.eTag)"
             [disabled]="explorer.pendingFolders().has(row.entry.path) || explorer.movingEntries().has(row.entry.path)"
             role="treeitem"
             [attr.aria-label]="entryAccessibilityLabel(row.entry)"
@@ -158,7 +158,7 @@
     </div>
 }
 
-@if (activeFolderPath(); as folderPath) {
+@if (readOnly ? null : activeFolderPath(); as folderPath) {
     <div class="folder-actions">
         <span class="folder-action-path" [title]="folderPath">{{ folderPath }}</span>
         @if (moveFormOpen()) {

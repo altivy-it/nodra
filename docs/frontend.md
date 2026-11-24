@@ -79,6 +79,11 @@ Signals devem representar estado local e derivações. RxJS deve permanecer nas 
 	respostas HTTP que pertençam a outra geração do vault ativo;
 - o cliente encerra a conexão SignalR anterior antes de ingressar no grupo do
 	novo vault.
+- vaults com `readOnly: true`, como o vault de exemplo `nodra-exemplo`, exibem
+	o selo "Somente leitura" e ocultam criação, exclusão, movimentação, lixeira
+	e menu de contexto; o editor continua livre, mas as edições ficam apenas em
+	memória, sem requisições de escrita, e "Restaurar original" relê a nota do
+	servidor.
 
 ## 5. Experiência principal
 

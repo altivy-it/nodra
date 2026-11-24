@@ -6,4 +6,7 @@
         <ProjectReference Include="../../libs/application/Nodra.Backend.Application.csproj" />
         <ProjectReference Include="../../libs/infrastructure/data/Nodra.Backend.Infra.Data.Postgres.csproj" />
     </ItemGroup>
+    <ItemGroup>
+        <EmbeddedResource Include="SampleVault/documento-modelo.md" LogicalName="Nodra.Notes.Api.SampleVault.documento-modelo.md" />
+    </ItemGroup>
 </Project>

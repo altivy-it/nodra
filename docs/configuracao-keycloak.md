@@ -775,6 +775,25 @@ nunca deve ser inserida na linha de comando. Registre a execução nos eventos
 administrativos do Keycloak e valide a decisão UMA antes de marcar o vault como
 pronto.
 
+### 11.3 Conceder leitura do vault de exemplo
+
+O vault de sistema `nodra-exemplo` ("Vault de exemplo") contém o documento
+modelo Markdown e é registrado por migration. Para que todos os usuários do
+realm o vejam, um administrador executa o script idempotente abaixo. Ele cria o
+recurso `vault-nodra-exemplo` somente com `vault:read`, a role policy
+`vault-nodra-exemplo-all-users` sobre `default-roles-<realm>` (com
+`fetchRoles`) e a permission `vault-nodra-exemplo-vault-read`.
+
+```powershell
+.\tools\scripts\provision-sample-vault-authorization.ps1 -BaseUrl https://localhost:7443
+```
+
+Não conceda `vault:write`, `vault:manage` nem `vault:delete` nesse recurso: a
+API recusa qualquer escrita no vault de exemplo com o problema
+`vault-read-only`, mesmo quando outra policy ampla concede esses scopes. Sem a
+permission, o vault apenas não aparece para os usuários. O inicializador do
+laboratório executa o script automaticamente.
+
 ## 12. Parte H: configurar o ambiente real
 
 ### 12.1 Rede, TLS, hostname e proxy

@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Nodra API
-  version: 1.0.0
+  version: 1.1.0
   description: API versionada do Nodra com autorização contextual delegada ao Keycloak.
 servers:
   - url: http://localhost:8081
@@ -498,7 +498,7 @@ components:
     VaultSummary:
       type: object
       additionalProperties: false
-      required: [id, name]
+      required: [id, name, readOnly]
       properties:
         id:
           type: string
@@ -511,6 +511,12 @@ components:
           description: Nome de exibição do vault autorizado.
           maxLength: 200
           example: Laboratório de produto
+        readOnly:
+          type: boolean
+          description: >-
+            Indica um vault de sistema que recusa qualquer escrita com o problema
+            `vault-read-only`, independentemente das permissões concedidas.
+          example: false
     VaultPage:
       type: object
       additionalProperties: false
@@ -688,7 +694,9 @@ components:
           schema:
             $ref: "#/components/schemas/ProblemDetails"
     Forbidden:
-      description: Permissão vault:read negada pelo Keycloak
+      description: >-
+        Permissão negada pelo Keycloak ou escrita recusada em vault somente leitura
+        (`code: vault-read-only`, por exemplo no vault de exemplo `nodra-exemplo`).
       content:
         application/problem+json:
           schema:

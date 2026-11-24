@@ -178,12 +178,13 @@ def test_authenticated_catalog_contains_only_authorized_vaults(
 
     assert response.status == 200
     data = response.json()
-    expected_vaults = {"lab-0001", "lab-0002"}
+    expected_vaults = {"lab-0001", "lab-0002", "nodra-exemplo"}
     write_vault_id = pytestconfig.getoption("write_vault_id")
     if write_vault_id:
         expected_vaults.add(write_vault_id)
     assert {item["id"] for item in data["items"]} == expected_vaults
-    assert all(set(item) == {"id", "name"} for item in data["items"])
+    assert all(set(item) == {"id", "name", "readOnly"} for item in data["items"])
+    assert {item["id"] for item in data["items"] if item["readOnly"]} == {"nodra-exemplo"}
 
 
 @pytest.mark.e2e
@@ -225,3 +226,60 @@ def test_authenticated_reload_keeps_authorized_vault_and_module(
 
     expect(authenticated_page).to_have_url(f"{base_url}/workspace/{vault_id}/{module}")
     expect(authenticated_page.get_by_role("combobox", name="Vault ativo")).to_have_value(vault_id)
+
+@pytest.mark.e2e
+@pytest.mark.authenticated
+def test_sample_vault_allows_editing_without_persisting(
+    authenticated_page: Page,
+    base_url: str,
+) -> None:
+    vault_id = "nodra-exemplo"
+    note_url = f"{base_url}/api/v1/vaults/{vault_id}/notes/documento-modelo.md"
+    original = authenticated_page.request.get(note_url)
+    assert original.status == 200
+    original_content = original.json()["content"]
+
+    rejected = authenticated_page.evaluate("""async ({ url, antiforgeryUrl, eTag }) => {
+        const antiforgery = await (await fetch(antiforgeryUrl, { credentials: 'include' })).json();
+        const response = await fetch(url, {
+            method: 'PUT',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+                'If-Match': eTag,
+                'X-Altivy-Antiforgery': antiforgery.requestToken
+            },
+            body: JSON.stringify({ content: '# Sobrescrita' })
+        });
+        return { status: response.status, type: response.headers.get('content-type'), body: await response.json() };
+    }""", {"url": note_url, "antiforgeryUrl": f"{base_url}/bff/antiforgery", "eTag": original.headers["etag"]})
+    assert rejected["status"] == 403
+    assert rejected["type"].startswith("application/problem+json")
+    assert rejected["body"]["code"] == "vault-read-only"
+
+    writes: list[str] = []
+    authenticated_page.on(
+        "request",
+        lambda request: writes.append(f"{request.method} {request.url}")
+        if request.method in {"POST", "PUT", "PATCH", "DELETE"} and "/api/v1/" in request.url
+        else None,
+    )
+    selector = authenticated_page.get_by_role("combobox", name="Vault ativo")
+    selector.select_option(vault_id)
+    expect(authenticated_page).to_have_url(f"{base_url}/workspace/{vault_id}/files")
+    expect(authenticated_page.get_by_text("Somente leitura", exact=True)).to_be_visible()
+    expect(authenticated_page.get_by_role("button", name="Nova nota")).to_have_count(0)
+    expect(authenticated_page.get_by_role("button", name="Lixeira")).to_have_count(0)
+
+    authenticated_page.get_by_role("treeitem", name="documento-modelo.md").click()
+    content = authenticated_page.get_by_role("textbox", name="Conteúdo Markdown")
+    expect(content).to_have_value(original_content)
+    expect(authenticated_page.get_by_role("button", name="Excluir")).to_have_count(0)
+    content.fill("# Experimento do usuário")
+    authenticated_page.wait_for_timeout(2_500)
+    expect(content).to_have_value("# Experimento do usuário")
+    assert writes == []
+
+    authenticated_page.get_by_role("button", name="Restaurar original").click()
+    expect(content).to_have_value(original_content)
+    assert authenticated_page.request.get(note_url).json()["content"] == original_content

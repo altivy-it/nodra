@@ -13,7 +13,8 @@ public sealed class LabVaultReader : IVaultReader
     private static readonly VaultCandidate[] s_candidates =
     [
         new("lab-0001", "Laboratório principal"),
-        new("lab-0002", "Laboratório secundário")
+        new("lab-0002", "Laboratório secundário"),
+        new(SampleVault.Id, SampleVault.Name)
     ];
 
     /// <summary>

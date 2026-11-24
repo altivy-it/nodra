@@ -1,4 +1,4 @@
-import { Component, effect } from '@angular/core';
+import { Component, computed, effect } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs';
 import { normalizeNotePath, Note, NotesService } from './core/notes.service';
@@ -27,6 +27,7 @@ export class App {
   private saveTimer: ReturnType<typeof setTimeout> | null = null;
   private pendingSave: Note | null = null;
   private saving = false;
+  protected readonly readOnly = computed(() => this.vaults.current()?.readOnly === true);
 
   constructor(
     protected readonly session: SessionService,
@@ -49,11 +50,19 @@ export class App {
 
   open(path: string): void { void this.notes.open(path); }
 
-  create(parentPath: string | null): void { this.notes.newNote(parentPath); }
+  create(parentPath: string | null): void {
+    if (this.readOnly()) return;
+    this.notes.newNote(parentPath);
+  }
 
   save(path: string, content: string): void {
     const note = this.notes.selected();
     if (!note) return;
+    // Em vault somente leitura a edição vive só em memória: o caminho não muda e nada é enviado ao servidor.
+    if (this.readOnly()) {
+      this.notes.selected.set({ ...note, content });
+      return;
+    }
     const changedNote = { ...note, path, content };
     this.notes.selected.set(changedNote);
     this.pendingSave = changedNote;
@@ -82,9 +91,14 @@ export class App {
     }
   }
 
+  restoreOriginal(): void {
+    const note = this.notes.selected();
+    if (note?.eTag) void this.notes.open(note.path);
+  }
+
   async remove(): Promise<void> {
     const note = this.notes.selected();
-    if (!note) return;
+    if (!note || this.readOnly()) return;
     if (!note.eTag) {
       this.notes.selected.set(null);
       return;
@@ -107,6 +121,7 @@ export class App {
   }
 
   async trashEntry(entry: VaultEntry): Promise<void> {
+    if (this.readOnly()) return;
     const selected = this.notes.selected();
     const removesSelected = !!selected && (selected.path === entry.path ||
       (entry.kind === 'folder' && selected.path.startsWith(`${entry.path}/`)));
@@ -125,6 +140,7 @@ export class App {
   }
 
   async move(destination: string): Promise<void> {
+    if (this.readOnly()) return;
     await this.flushPendingSave();
     const note = this.notes.selected();
     if (!note) return;
@@ -133,6 +149,7 @@ export class App {
   }
 
   async dropNote(path: string, eTag: string, destination: string): Promise<void> {
+    if (this.readOnly()) return;
     await this.flushPendingSave();
     const selected = this.notes.selected();
     const note = selected?.path === path ? selected : { path, eTag, content: '' };

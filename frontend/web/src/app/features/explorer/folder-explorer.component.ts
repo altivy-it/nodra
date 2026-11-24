@@ -24,6 +24,7 @@ export class FolderExplorerComponent implements OnChanges {
     @Input() vaultId: string | null = null;
     @Input() selectedPath: string | null = null;
     @Input() expandedPaths: string[] = [];
+    @Input() readOnly = false;
     @Output() readonly noteOpened = new EventEmitter<string>();
     @Output() readonly noteCreated = new EventEmitter<string | null>();
     @Output() readonly noteDropped = new EventEmitter<{ note: VaultEntry; destination: string }>();
@@ -132,6 +133,7 @@ export class FolderExplorerComponent implements OnChanges {
     }
 
     openTrash(): void {
+        if (this.readOnly) return;
         this.closeContextMenu();
         this.trashOpen.set(true);
         this.restoreEntryId.set(null);
@@ -255,6 +257,7 @@ export class FolderExplorerComponent implements OnChanges {
     }
 
     toggleFolderForm(): void {
+        if (this.readOnly && !this.folderFormOpen()) return;
         const opening = !this.folderFormOpen();
         this.folderFormOpen.set(opening);
         this.folderName.set('');
@@ -383,6 +386,10 @@ export class FolderExplorerComponent implements OnChanges {
     }
 
     startEntryDrag(entry: VaultEntry, event: DragEvent): void {
+        if (this.readOnly) {
+            event.preventDefault();
+            return;
+        }
         if (!event.dataTransfer || (entry.kind === 'note' && !entry.eTag)) return;
         this.draggedEntry.set(entry);
         event.dataTransfer.effectAllowed = 'move';
@@ -471,6 +478,7 @@ export class FolderExplorerComponent implements OnChanges {
 
     openContextMenu(entry: VaultEntry, event: MouseEvent | KeyboardEvent): void {
         event.preventDefault();
+        if (this.readOnly) return;
         this.activePath.set(entry.path);
         const host = (event.currentTarget as HTMLElement).getBoundingClientRect();
         const x = event instanceof MouseEvent ? event.clientX : host.right;

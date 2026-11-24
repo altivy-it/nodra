@@ -94,12 +94,14 @@ pwsh -NoProfile -File tools/scripts/start-local-lab.ps1 --help
   laboratorio esta em `secrets/lab-user.env`.
 - Vaults sinteticos: `lab-0001`, `lab-0002` e `lab-write-e2e` com grant de
   owner; `lab-denied` sem permissao.
-- O inicializador copia o documento modelo
-  [documento-modelo.md](../../tests/fixtures/markdown/documento-modelo.md) para
-  `lab-0001/documento-modelo.md` somente se o arquivo ainda nao existir, para
-  preservar edicoes. Ele demonstra no preview a sintaxe Markdown/GFM, HTML com
-  cores, KaTeX e diagramas Mermaid. Para restaurar o original, apague o arquivo
-  do vault e rode o inicializador de novo.
+- O documento modelo
+  [documento-modelo.md](../../backend/apps/api/SampleVault/documento-modelo.md)
+  fica no vault de sistema `nodra-exemplo` ("Vault de exemplo"), somente
+  leitura. A API o restaura a cada inicializacao e recusa escritas com
+  `vault-read-only`; o inicializador concede `vault:read` a todos os usuarios
+  com [provision-sample-vault-authorization.ps1](../../tools/scripts/provision-sample-vault-authorization.ps1).
+  Ele demonstra no preview a sintaxe Markdown/GFM, HTML com cores, KaTeX e
+  diagramas Mermaid; edicoes no editor ficam apenas em memoria.
 - Com Podman, o inicializador aplica [compose.podman.yaml](compose.podman.yaml)
   (tmpfs do web sem `uid=`/`gid=`, que o Podman nao aceita) e constroi as imagens
   com `--format docker` para preservar os healthchecks.

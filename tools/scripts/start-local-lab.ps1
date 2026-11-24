@@ -320,6 +320,7 @@ try {
     foreach ($vault in $ownedVaults) {
         Invoke-TrustedPwsh @('-File', (Join-Path $PSScriptRoot 'provision-vault-owner-authorization.ps1'), '-VaultId', $vault, '-OwnerUsername', $user.ALTIVY_E2E_USERNAME, '-BaseUrl', $publicBase)
     }
+    Invoke-TrustedPwsh @('-File', (Join-Path $PSScriptRoot 'provision-sample-vault-authorization.ps1'), '-BaseUrl', $publicBase)
     foreach ($name in @('ALTIVY_KEYCLOAK_ADMIN_USERNAME', 'ALTIVY_KEYCLOAK_ADMIN_PASSWORD', 'ALTIVY_BFF_CLIENT_SECRET', 'ALTIVY_PROVISIONER_CLIENT_SECRET', 'ALTIVY_E2E_USERNAME', 'ALTIVY_E2E_PASSWORD')) { Set-ProcessSetting $name $null }
 
     if (-not $Build) {
@@ -345,11 +346,7 @@ try {
     }
     Set-ProcessSetting 'PGPASSWORD' $null
 
-    # O documento modelo só é copiado quando ausente, para preservar edições feitas no laboratório.
-    $sampleNote = Join-Path $repository 'tests/fixtures/markdown/documento-modelo.md'
-    Invoke-Podman -Arguments @('run', '--rm', '--network', 'none', '--user', '0:0', '--volume', "$(Join-Path $LabRoot 'data/vaults'):/vaults", '--volume', "${sampleNote}:/seed/documento-modelo.md:ro", '--entrypoint', '/bin/sh', $helperImage, '-ec',
-        'target=/vaults/lab-0001/documento-modelo.md; test ! -L "$target"; if [ ! -e "$target" ]; then cp /seed/documento-modelo.md "$target"; chown 1654:1654 "$target"; chmod 0600 "$target"; fi')
-    Write-Host 'Documento modelo disponivel em lab-0001/documento-modelo.md.'
+    Write-Host 'Documento modelo disponivel no vault de exemplo (nodra-exemplo), somente leitura.'
     Write-Host "Fixtures sinteticas prontas: $($labVaults -join ', ') (lab-denied sem permissao)."
 
     if ($RunE2E) {

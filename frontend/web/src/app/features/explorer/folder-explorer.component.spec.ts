@@ -182,6 +182,36 @@ describe('FolderExplorerComponent', () => {
         expect(fixture.nativeElement.textContent).toContain('Nova pasta em: projetos');
     });
 
+    it('bloqueia menu de contexto, arrastar, pasta nova e lixeira em vault somente leitura', async () => {
+        await TestBed.configureTestingModule({
+            imports: [FolderExplorerComponent],
+            providers: [provideHttpClient(), provideHttpClientTesting()]
+        }).compileComponents();
+        const fixture = TestBed.createComponent(FolderExplorerComponent);
+        const component = fixture.componentInstance;
+        component.explorer.children.set(new Map<string, VaultEntry[]>([
+            ['', [
+                { path: 'projetos', name: 'projetos', kind: 'folder', eTag: null },
+                { path: 'documento-modelo.md', name: 'documento-modelo.md', kind: 'note', eTag: 'v1' }
+            ]]
+        ]));
+        fixture.componentRef.setInput('readOnly', true);
+        fixture.componentRef.setInput('selectedPath', 'projetos');
+        fixture.detectChanges();
+
+        const rows = fixture.nativeElement.querySelectorAll('[role="treeitem"]') as NodeListOf<HTMLButtonElement>;
+        expect(rows[0].getAttribute('draggable')).toBe('false');
+        rows[1].dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+        component.toggleFolderForm();
+        component.openTrash();
+        fixture.detectChanges();
+
+        expect(component.contextEntry()).toBeNull();
+        expect(component.folderFormOpen()).toBe(false);
+        expect(component.trashOpen()).toBe(false);
+        expect(fixture.nativeElement.querySelector('.folder-actions')).toBeNull();
+    });
+
     it('mantém a seleção e o foco lógico da árvore durante atualização manual', async () => {
         await TestBed.configureTestingModule({
             imports: [FolderExplorerComponent],
