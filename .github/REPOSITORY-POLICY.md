@@ -31,11 +31,14 @@ consegue fazer merge com o `Result` vermelho nem com histórico não linear.
 
 ## Environments
 
-- `release`: revisores ; aceita `main` e `tag:v*`
+- `release`: revisores `@lzocateli`; aceita `main` e `tag:v*`
   (publicação inicial e `republish`). Em repositório privado sem plano que suporte revisores, o
   controle humano é o merge do Release PR sob `gw-main-review` (reportado como *compensado*).
-- `quality`: aceita **somente** `tag:v*`; revisores . É o que impede, no próprio GitHub, deploy fora de uma release.
-- `production`: aceita **somente** `tag:v*`; revisores  (obrigatórios). É o que impede, no próprio GitHub, deploy fora de uma release.
+- `distribution`:
+  aceita `main` e `tag:v*`;
+  revisores `@lzocateli` são obrigatórios.
+- `quality`: aceita **somente** `tag:v*`; revisores `@lzocateli`. É o que impede, no próprio GitHub, deploy fora de uma release.
+- `production`: aceita **somente** `tag:v*`; revisores `@lzocateli` (obrigatórios). É o que impede, no próprio GitHub, deploy fora de uma release.
 
 `prevent_self_review` fica desligado para que o mantenedor único possa aprovar.
 
