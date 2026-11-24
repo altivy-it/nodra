@@ -8,7 +8,7 @@ services:
       dockerfile: frontend/web/Dockerfile
       args:
         WEB_CONFIGURATION: e2e
-        WEB_BASE_HREF: /notes/
+        WEB_BASE_HREF: /nodra/
     image: nodra-web:e2e
     restart: "no"
     stop_grace_period: 10s

@@ -93,7 +93,7 @@ param(
     [string] $FulanoEmail,
 
     [ValidatePattern('^https?://')]
-    [string] $BffBaseUrl = 'https://localhost:7443/notes',
+    [string] $BffBaseUrl = 'https://localhost:7443/nodra',
 
     [switch] $SkipUser,
 

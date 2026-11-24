@@ -42,6 +42,7 @@ Formato: `[ID] [P?] [História] Descrição`. `[P]` indica tarefa paralelizável
 - [x] T018 Atualizar `docs/configuracao-keycloak.md`, `docs/backend.md` e `docs/frontend.md`
 - [x] T019 Rebuild do laboratório, remover o `documento-modelo.md` legado de `lab-0001` e validar o quickstart pelo nginx com Playwright e screenshot
 - [x] T020 Executar build, formatação e testes do backend e frontend
+- [x] T021 Publicar o produto em `https://localhost:7443/nodra` (antes `/notes`): `ForwardedPrefixMiddleware`, `WEB_BASE_HREF`, `ORIGIN`, scripts do laboratório/Keycloak, gateway com redirect `/notes` → `/nodra`, testes e documentação
 
 ## Dependências
 

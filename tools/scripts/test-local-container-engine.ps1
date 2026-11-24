@@ -93,7 +93,7 @@ try {
     $probeOk = try { & (Join-Path $probe.Bin 'probe') compose version *> $null; $LASTEXITCODE -eq 0 } catch { $false }
     if (-not $probeOk) { throw 'Diretorio temporario sem permissao de execucao (noexec). Use --help.' }
     $envFile = Join-Path $root 'altivy.env'
-    [IO.File]::WriteAllText($envFile, "ALTIVY_PUBLIC_ORIGIN=https://localhost:7443/notes`n")
+    [IO.File]::WriteAllText($envFile, "ALTIVY_PUBLIC_ORIGIN=https://localhost:7443/nodra`n")
     $common = @('-EnvironmentFile', $envFile, '-CertificateDirectory', (Join-Path $root 'certs'), '-DataRoot', (Join-Path $root 'data'), '-ValidateOnly')
 
     $result = Invoke-Script -Script $starter -Arguments @('--help')

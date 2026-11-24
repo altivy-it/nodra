@@ -11,14 +11,14 @@ describe('app base path', () => {
     });
 
     it('prefixes browser navigation paths when hosted below a base path', () => {
-        expect(appPath('/bff/reauthenticate', 'https://localhost:7443/notes/'))
-            .toBe('/notes/bff/reauthenticate');
+        expect(appPath('/bff/reauthenticate', 'https://localhost:7443/nodra/'))
+            .toBe('/nodra/bff/reauthenticate');
     });
 
     it('prefixes only BFF and API requests using the document base', async () => {
         const document = window.document.implementation.createHTMLDocument();
         const base = document.createElement('base');
-        base.href = 'https://localhost:7443/notes/';
+        base.href = 'https://localhost:7443/nodra/';
         document.head.append(base);
         TestBed.configureTestingModule({
             providers: [
@@ -31,7 +31,7 @@ describe('app base path', () => {
         const http = TestBed.inject(HttpTestingController);
         const client = TestBed.inject(HttpClient);
         const response = firstValueFrom(client.get('/bff/session'));
-        const request = http.expectOne('/notes/bff/session');
+        const request = http.expectOne('/nodra/bff/session');
         request.flush({ authenticated: false });
         await response;
         http.verify();

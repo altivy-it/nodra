@@ -103,16 +103,16 @@ describe('SessionService', () => {
     });
 
     it('gera a URL de login sem returnUrl na raiz e com o caminho atual fora dela', () => {
-        const root = createService(fakeDocument('/notes/', '')).service;
-        expect(root.loginUrl()).toBe('/notes/bff/login');
+        const root = createService(fakeDocument('/nodra/', '')).service;
+        expect(root.loginUrl()).toBe('/nodra/bff/login');
 
         TestBed.resetTestingModule();
-        const deep = createService(fakeDocument('/notes/vaults/a', '?nota=x')).service;
-        expect(deep.loginUrl()).toBe(`/notes/bff/login?returnUrl=${encodeURIComponent('/notes/vaults/a?nota=x')}`);
+        const deep = createService(fakeDocument('/nodra/vaults/a', '?nota=x')).service;
+        expect(deep.loginUrl()).toBe(`/nodra/bff/login?returnUrl=${encodeURIComponent('/nodra/vaults/a?nota=x')}`);
     });
 
     function fakeDocument(pathname: string, search: string): Document {
-        return { baseURI: 'https://nodra.test/notes/', location: { pathname, search } } as unknown as Document;
+        return { baseURI: 'https://nodra.test/nodra/', location: { pathname, search } } as unknown as Document;
     }
 
     function createService(doc?: Document): { service: SessionService; http: HttpTestingController } {

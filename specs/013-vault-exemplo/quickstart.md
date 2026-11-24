@@ -3,7 +3,7 @@
 ## Pré-requisitos
 
 - Laboratório Podman em execução (`pwsh tools/scripts/start-local-lab.ps1 -Build`).
-- Acesso pela borda nginx: `https://localhost:7443/notes`.
+- Acesso pela borda nginx: `https://localhost:7443/nodra`.
 
 ## 1. Provisionar a leitura
 

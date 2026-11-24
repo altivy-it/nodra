@@ -30,9 +30,9 @@ public sealed class LocalRedirectTests
     }
 
     [Theory]
-    [InlineData(null, "/notes/", "/notes/")]
-    [InlineData("https://attacker.example", "/notes/", "/notes/")]
-    [InlineData("/notes/workspace/lab-0001/files", "/notes/", "/notes/workspace/lab-0001/files")]
+    [InlineData(null, "/nodra/", "/nodra/")]
+    [InlineData("https://attacker.example", "/nodra/", "/nodra/")]
+    [InlineData("/nodra/workspace/lab-0001/files", "/nodra/", "/nodra/workspace/lab-0001/files")]
     public void NormalizeUsesSafeFallbackWithinApplicationBasePath(
         string? returnUrl,
         string fallbackUrl,

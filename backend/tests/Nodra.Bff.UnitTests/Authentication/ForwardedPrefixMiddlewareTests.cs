@@ -13,14 +13,14 @@ public sealed class ForwardedPrefixMiddlewareTests
     {
         var context = new DefaultHttpContext();
         context.Connection.RemoteIpAddress = IPAddress.Parse("192.0.2.10");
-        context.Request.Headers["X-Forwarded-Prefix"] = "/notes";
+        context.Request.Headers["X-Forwarded-Prefix"] = "/nodra";
         var middleware = new ForwardedPrefixMiddleware(
             _ => Task.CompletedTask,
             Options.Create(new BffSecurityOptions { TrustedProxies = ["192.0.2.10"] }));
 
         await middleware.InvokeAsync(context);
 
-        Assert.Equal("/notes", context.Request.PathBase);
+        Assert.Equal("/nodra", context.Request.PathBase);
         Assert.False(context.Request.Headers.ContainsKey("X-Forwarded-Prefix"));
     }
 
@@ -29,7 +29,7 @@ public sealed class ForwardedPrefixMiddlewareTests
     {
         var context = new DefaultHttpContext();
         context.Connection.RemoteIpAddress = IPAddress.Parse("192.0.2.20");
-        context.Request.Headers["X-Forwarded-Prefix"] = "/notes";
+        context.Request.Headers["X-Forwarded-Prefix"] = "/nodra";
         var middleware = new ForwardedPrefixMiddleware(
             _ => Task.CompletedTask,
             Options.Create(new BffSecurityOptions { TrustedProxies = ["192.0.2.10"] }));

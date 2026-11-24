@@ -16,7 +16,7 @@ public sealed class ForwardedPrefixMiddleware(
         _ = context.Request.Headers.Remove("X-Forwarded-Prefix");
 
         if (IsTrustedProxy(context.Connection.RemoteIpAddress) &&
-            string.Equals(prefix, "/notes", StringComparison.Ordinal))
+            string.Equals(prefix, "/nodra", StringComparison.Ordinal))
         {
             context.Request.PathBase = new PathString(prefix);
         }

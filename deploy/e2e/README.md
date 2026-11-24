@@ -4,7 +4,7 @@ O arquivo canônico desta stack é
 `deploy/e2e/docker-compose-nodra.yaml`. Ele cria um ambiente local para
 os E2E do BFF. O reverse proxy global não pertence a este Compose: ele roda na
 plataforma `architecture-knowledge-base/platforms/identity` e publica
-`https://localhost:7443/notes`. BFF, API e Web não possuem portas publicadas neste
+`https://localhost:7443/nodra`. BFF, API e Web não possuem portas publicadas neste
 Compose; Web e BFF entram na rede `identity-global` para que o gateway encaminhe
 as rotas de aplicação e OIDC em uma única origem pública.
 
@@ -66,11 +66,11 @@ Na raiz do repositório, defina paths absolutos locais e secretos. Não versione
 os valores nem os arquivos montados.
 
 O gateway global é a única origem pública. Configure o Keycloak para anunciar
-`https://localhost:7443` e o produto em `https://localhost:7443/notes`:
+`https://localhost:7443` e o produto em `https://localhost:7443/nodra`:
 
 ```powershell
 $env:KEYCLOAK_PUBLIC_URL = 'https://localhost:7443'
-$env:APP_PUBLIC_URL = 'https://localhost:7443/notes'
+$env:APP_PUBLIC_URL = 'https://localhost:7443/nodra'
 $gatewayContainer = docker ps --filter 'name=altivy-identity-gateway-1' --format '{{.ID}}' | Select-Object -First 1
 if (-not $gatewayContainer) { throw 'Inicie a plataforma global de identidade antes do Compose E2E.' }
 $env:IDENTITY_GATEWAY_IP = docker inspect --format '{{with index .NetworkSettings.Networks "identity-global"}}{{.IPAddress}}{{end}}' $gatewayContainer
@@ -109,7 +109,7 @@ Neste laboratório, BFF e API usam sempre
 `https://localhost:7443/realms/altivy` pelo gateway global. Não defina
 `ALTIVY_E2E_KEYCLOAK_AUTHORITY`; ela pertence à topologia anterior.
 
-O Keycloak deve permitir `https://localhost:7443/notes` como redirect URI e web
+O Keycloak deve permitir `https://localhost:7443/nodra` como redirect URI e web
 origin do client `altivy-bff`. O Compose não publica portas da API ou do BFF.
 O primeiro comando termina sem saída quando a configuração é válida e não
 imprime os valores resolvidos.
@@ -148,13 +148,13 @@ BFF e API recebem a CA local do `mkcert` em modo somente leitura e usam
 
 Não altere o arquivo hosts. BFF e API acessam a plataforma pelo gateway central em `localhost:7443`.
 O Playwright usa `--network host`, para que o Chromium do container alcance a
-mesma borda `https://localhost:7443/notes` do navegador no Windows.
+mesma borda `https://localhost:7443/nodra` do navegador no Windows.
 
-O client `altivy-bff` usa somente os callbacks `https://localhost:7443/notes`.
+O client `altivy-bff` usa somente os callbacks `https://localhost:7443/nodra`.
 Para um realm já existente, reconcilie-os pela borda:
 
 ```powershell
-.\tools\scripts\configure-keycloak.ps1 -BaseUrl https://localhost:7443 -BffBaseUrl https://localhost:7443/notes -SkipUser
+.\tools\scripts\configure-keycloak.ps1 -BaseUrl https://localhost:7443 -BffBaseUrl https://localhost:7443/nodra -SkipUser
 ```
 
 O gateway global fixa `X-Forwarded-Proto=https` e encaminha o host público.
@@ -169,7 +169,7 @@ Após o Compose indicar todos os serviços como `healthy`, confirme a sessão
 anônima pelo proxy HTTPS sem passar pelo proxy corporativo:
 
 ```powershell
-curl.exe --noproxy "*" --insecure https://localhost:7443/notes/bff/session
+curl.exe --noproxy "*" --insecure https://localhost:7443/nodra/bff/session
 ```
 
 O resultado esperado é `{"authenticated":false,"subject":null,"name":null}`.
@@ -214,7 +214,7 @@ impacto nesses ambientes exige decisão humana específica.
 Com o laboratório ativo, execute a imagem de testes a partir da raiz:
 
 ```powershell
-$env:ALTIVY_E2E_BASE_URL = 'https://localhost:7443/notes'
+$env:ALTIVY_E2E_BASE_URL = 'https://localhost:7443/nodra'
 docker run --rm --network host `
   --volume "${PWD}/frontend/tests:/app/tests:ro" `
   lzocateli/playwright-e2e:0.1.0 `

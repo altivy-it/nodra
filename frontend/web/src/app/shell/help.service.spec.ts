@@ -7,14 +7,14 @@ import { HelpService } from './help.service';
 describe('HelpService', () => {
   it('resolve help.md sob o base path da aplicação', async () => {
     const base = document.createElement('base');
-    base.href = '/notes/';
+    base.href = '/nodra/';
     document.head.prepend(base);
     try {
       TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting()] });
       const service = TestBed.inject(HelpService);
       const http = TestBed.inject(HttpTestingController);
       const load = service.load();
-      http.expectOne('/notes/help.md').flush('# Ajuda');
+      http.expectOne('/nodra/help.md').flush('# Ajuda');
       await load;
       expect(service.content()).toBe('# Ajuda');
     } finally {

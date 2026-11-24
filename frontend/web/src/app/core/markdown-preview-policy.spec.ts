@@ -52,7 +52,7 @@ describe('política do preview Markdown', () => {
   it('isola iframes externos e bloqueia iframes da própria origem', () => {
     const host = render(
       '<iframe src="https://www.youtube.com/embed/abc"></iframe>' +
-      `<iframe src="${window.location.origin}/notes/bff/session"></iframe>` +
+      `<iframe src="${window.location.origin}/nodra/bff/session"></iframe>` +
       '<iframe srcdoc="<script>alert(1)</script>"></iframe>'
     );
     const [external, sameOrigin, inline] = host.querySelectorAll('iframe');
