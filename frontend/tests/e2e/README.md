@@ -14,7 +14,7 @@ Playwright ou browsers no host.
 Testes e ferramentas rodam em containers. Quando a aplicação estiver em
 execução, o navegador e o runner acessam somente nginx em container, nunca a
 porta do Angular, BFF ou API. O laboratório real usa o gateway HTTPS em
-`https://localhost:7443/notes`, conforme `deploy/e2e/README.md`.
+`https://localhost:7443/nodra`, conforme `deploy/e2e/README.md`.
 
 ## Executar cenários com API simulada
 
@@ -66,7 +66,7 @@ docker network rm altivy-mocked-e2e
 No PowerShell, a partir da raiz do repositório:
 
 ```powershell
-$env:ALTIVY_E2E_BASE_URL = 'https://localhost:7443/notes'
+$env:ALTIVY_E2E_BASE_URL = 'https://localhost:7443/nodra'
 docker run --rm --network host `
   --volume "${PWD}/frontend/tests:/app/tests:ro" `
   --volume "${PWD}/artifacts/e2e:/app/reports" `
@@ -121,7 +121,7 @@ docker run --rm --network host `
   --volume "${PWD}/artifacts/e2e:/app/reports" `
   lzocateli/playwright-e2e:0.1.0 `
   /app/tests/e2e/test_bff_session.py `
-  --base-url=https://localhost:7443/notes -m authenticated -k autosave
+  --base-url=https://localhost:7443/nodra -m authenticated -k autosave
 ```
 
 O teste confirma POST, leitura com ETag, atualização PUT com `If-Match` e
@@ -140,7 +140,7 @@ docker run --rm --network host `
   --volume "${PWD}/frontend/tests:/app/tests:ro" `
   lzocateli/playwright-e2e:0.1.0 `
   /app/tests/e2e/test_bff_session.py `
-  --base-url=https://localhost:7443/notes -m authenticated -k persisted_note
+  --base-url=https://localhost:7443/nodra -m authenticated -k persisted_note
 ```
 
 No laboratório atual, `lab-0002` é o recurso de negação usado pelo cenário
@@ -156,7 +156,7 @@ O conjunto completo pode ser executado dentro da imagem oficial, a partir da
 raiz do repositório:
 
 ```powershell
-$env:ALTIVY_E2E_BASE_URL = 'https://localhost:7443/notes'
+$env:ALTIVY_E2E_BASE_URL = 'https://localhost:7443/nodra'
 docker run --rm --network host `
   --volume "${PWD}/frontend/tests:/app/tests:ro" `
   lzocateli/playwright-e2e:0.1.0 `

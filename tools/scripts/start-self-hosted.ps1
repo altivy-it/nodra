@@ -165,7 +165,7 @@ try {
     if (-not $PublicOrigin) { $PublicOrigin = $source.ORIGIN }
     $origin = [Uri]$PublicOrigin
     $authority = [Uri]$source.AUTHORITY
-    if (-not $origin.IsAbsoluteUri -or $origin.Scheme -ne 'https' -or $origin.AbsolutePath.TrimEnd('/') -ne '/notes' -or
+    if (-not $origin.IsAbsoluteUri -or $origin.Scheme -ne 'https' -or $origin.AbsolutePath.TrimEnd('/') -ne '/nodra' -or
         $origin.Query -or $origin.Fragment -or -not $authority.IsAbsoluteUri -or $authority.Scheme -ne 'https') {
         throw 'Origem e issuer devem ser HTTPS validos. Use --help.'
     }
@@ -360,7 +360,7 @@ COMMIT;
         if (-not $NoBuild -and $ContainerEngine -eq 'podman') {
             # Compose via API Podman nao garante formato docker; construir explicitamente preserva HEALTHCHECK.
             $builds = @(
-                @{ Image=$settings.ALTIVY_WEB_IMAGE; File='frontend/web/Dockerfile'; Args=@("IMAGE_VERSION=$($source.WEB_VERSION)",'WEB_CONFIGURATION=production','WEB_BASE_HREF=/notes/') }
+                @{ Image=$settings.ALTIVY_WEB_IMAGE; File='frontend/web/Dockerfile'; Args=@("IMAGE_VERSION=$($source.WEB_VERSION)",'WEB_CONFIGURATION=production','WEB_BASE_HREF=/nodra/') }
                 @{ Image=$settings.ALTIVY_BFF_IMAGE; File='backend/apps/bff/Dockerfile'; Args=@("IMAGE_VERSION=$($source.BACKEND_VERSION)") }
                 @{ Image=$settings.ALTIVY_API_IMAGE; File='backend/apps/api/Dockerfile'; Args=@("IMAGE_VERSION=$($source.BACKEND_VERSION)") }
                 @{ Image=$settings.ALTIVY_WORKER_IMAGE; File='backend/apps/worker/Dockerfile'; Args=@("IMAGE_VERSION=$($source.BACKEND_VERSION)") }

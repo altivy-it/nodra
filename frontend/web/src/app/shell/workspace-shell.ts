@@ -41,6 +41,7 @@ export class WorkspaceShell {
   @Input() currentVaultId: string | null = null;
   @Input() vaultsLoading = false;
   @Input() realtimeStatus: VaultRealtimeStatus = 'disconnected';
+  @Input() readOnly = false;
   @Output() readonly noteOpened = new EventEmitter<string>();
   @Output() readonly noteCreated = new EventEmitter<string | null>();
   @Output() readonly notesReloaded = new EventEmitter<void>();
@@ -50,6 +51,7 @@ export class WorkspaceShell {
   @Output() readonly folderMoved = new EventEmitter<{ from: string; to: string }>();
   @Output() readonly noteDropped = new EventEmitter<{ path: string; eTag: string; destination: string }>();
   @Output() readonly trashRequested = new EventEmitter<VaultEntry>();
+  @Output() readonly noteRestored = new EventEmitter<void>();
   @Output() readonly loggedOut = new EventEmitter<void>();
   @Output() readonly vaultSelected = new EventEmitter<string>();
   readonly previewMode = signal<'editor' | 'split' | 'preview'>('split');

@@ -5,6 +5,8 @@ import { firstValueFrom } from 'rxjs';
 export interface VaultSummary {
     id: string;
     name: string;
+    /** Vault de sistema que recusa qualquer escrita; edições ficam apenas em memória. */
+    readOnly?: boolean;
 }
 
 interface VaultPage {

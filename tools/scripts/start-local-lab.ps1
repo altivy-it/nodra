@@ -11,7 +11,7 @@ própria do laboratório, certificados, temas e dados. Depois reconcilia banco,
 realm Keycloak, usuário de laboratório, autorizações UMA e fixtures sintéticas,
 e delega a subida do Nodra para start-self-hosted.ps1. Reexecuções são
 idempotentes e preservam dados. O acesso ocorre somente pela borda nginx em
-https://localhost:7443/notes.
+https://localhost:7443/nodra.
 
 .PARAMETER LabRoot
 Diretório externo do laboratório. Padrão: ~/.local/share/nodra-lab.
@@ -73,7 +73,7 @@ if ($RemainingArguments.Count -gt 0) { [Console]::Error.WriteLine('Argumento des
 $ErrorActionPreference = 'Stop'
 $repository = Split-Path (Split-Path $PSScriptRoot)
 $publicBase = 'https://localhost:7443'
-$origin = "$publicBase/notes"
+$origin = "$publicBase/nodra"
 $labVaults = @('lab-0001', 'lab-0002', 'lab-write-e2e', 'lab-denied')
 $ownedVaults = @('lab-0001', 'lab-0002', 'lab-write-e2e')
 $helperImage = 'docker.io/lzocateli/dotnet-sdk:10.0.400-noble'
@@ -241,6 +241,14 @@ try {
             ALTIVY_SMTP_PASSWORD = (New-Secret); ALTIVY_SMTP_FROM = 'nodra@example.test'; ALTIVY_SMTP_TO = 'operator@example.test'
         })
     }
+    # Laboratorios criados antes da troca de /notes para /nodra mantem a origem antiga; so essa chave publica e reconciliada.
+    $nodraLines = [IO.File]::ReadAllLines($nodraEnv)
+    $originLine = "ALTIVY_PUBLIC_ORIGIN=$origin"
+    if ($nodraLines -match '^ALTIVY_PUBLIC_ORIGIN=' -and $nodraLines -notcontains $originLine) {
+        $updated = foreach ($line in $nodraLines) { if ($line -match '^ALTIVY_PUBLIC_ORIGIN=') { $originLine } else { $line } }
+        [IO.File]::WriteAllText($nodraEnv, (($updated -join "`n") + "`n"), [Text.UTF8Encoding]::new($false))
+        Write-Host "Origem publica do laboratorio atualizada para $origin."
+    }
     if (-not (Test-Path -LiteralPath $userEnv)) {
         Write-SecretFile $userEnv ([ordered]@{
             ALTIVY_E2E_USERNAME = 'lzocateli'; ALTIVY_E2E_PASSWORD = "Lab-$(New-Secret 24)"
@@ -290,6 +298,9 @@ try {
     if ($schema -notmatch '^[a-z_][a-z0-9_]*$') { throw 'KEYCLOAK_DB_SCHEMA invalido.' }
     Invoke-Podman -Arguments @('exec', '-i', $databaseContainer, 'sh', '-c', 'exec psql -X -q -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d keycloak') -InputText "CREATE SCHEMA IF NOT EXISTS $schema;"
     Invoke-Podman -Arguments ($identityCommand + @('up', '-d', '--wait', '--wait-timeout', '300'))
+    # O Compose nao recria o gateway quando so conf.d muda; o reload aplica rotas novas, como /nodra.
+    $gatewayContainer = Invoke-Podman -Arguments ($identityCommand + @('ps', '-q', 'gateway')) -Capture
+    Invoke-Podman -Arguments @('exec', $gatewayContainer, 'nginx', '-s', 'reload')
     Write-Host 'Identidade AKB saudavel em https://localhost:7443.'
 
     $exists = Invoke-Podman -Arguments @('exec', $databaseContainer, 'sh', '-c', 'psql -X -tA -U "$POSTGRES_USER" -d keycloak -c "SELECT 1 FROM pg_database WHERE datname = ''altivy''"') -Capture
@@ -320,6 +331,7 @@ try {
     foreach ($vault in $ownedVaults) {
         Invoke-TrustedPwsh @('-File', (Join-Path $PSScriptRoot 'provision-vault-owner-authorization.ps1'), '-VaultId', $vault, '-OwnerUsername', $user.ALTIVY_E2E_USERNAME, '-BaseUrl', $publicBase)
     }
+    Invoke-TrustedPwsh @('-File', (Join-Path $PSScriptRoot 'provision-sample-vault-authorization.ps1'), '-BaseUrl', $publicBase)
     foreach ($name in @('ALTIVY_KEYCLOAK_ADMIN_USERNAME', 'ALTIVY_KEYCLOAK_ADMIN_PASSWORD', 'ALTIVY_BFF_CLIENT_SECRET', 'ALTIVY_PROVISIONER_CLIENT_SECRET', 'ALTIVY_E2E_USERNAME', 'ALTIVY_E2E_PASSWORD')) { Set-ProcessSetting $name $null }
 
     if (-not $Build) {
@@ -345,11 +357,7 @@ try {
     }
     Set-ProcessSetting 'PGPASSWORD' $null
 
-    # O documento modelo só é copiado quando ausente, para preservar edições feitas no laboratório.
-    $sampleNote = Join-Path $repository 'tests/fixtures/markdown/documento-modelo.md'
-    Invoke-Podman -Arguments @('run', '--rm', '--network', 'none', '--user', '0:0', '--volume', "$(Join-Path $LabRoot 'data/vaults'):/vaults", '--volume', "${sampleNote}:/seed/documento-modelo.md:ro", '--entrypoint', '/bin/sh', $helperImage, '-ec',
-        'target=/vaults/lab-0001/documento-modelo.md; test ! -L "$target"; if [ ! -e "$target" ]; then cp /seed/documento-modelo.md "$target"; chown 1654:1654 "$target"; chmod 0600 "$target"; fi')
-    Write-Host 'Documento modelo disponivel em lab-0001/documento-modelo.md.'
+    Write-Host 'Documento modelo disponivel no vault de exemplo (nodra-exemplo), somente leitura.'
     Write-Host "Fixtures sinteticas prontas: $($labVaults -join ', ') (lab-denied sem permissao)."
 
     if ($RunE2E) {

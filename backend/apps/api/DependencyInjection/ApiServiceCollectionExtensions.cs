@@ -89,6 +89,7 @@ public static class ApiServiceCollectionExtensions
         _ = services.AddSingleton<ITrashStore>(provider => provider.GetRequiredService<IFolderStore>());
         _ = services.AddSingleton<IVaultFileSystemProvisioner>(
             new FileSystemVaultProvisioner(vaultRoot));
+        _ = services.AddSampleVault(vaultRoot);
         _ = services.AddScoped<CreateNoteCommandHandler>();
         _ = services.AddScoped<DeleteEmptyFolderCommandHandler>();
         _ = services.AddScoped<MoveEntryToTrashCommandHandler>();

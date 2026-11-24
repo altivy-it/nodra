@@ -114,6 +114,69 @@ public sealed class ApiContractTests : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task ListVaultsMarksOnlyTheSampleVaultAsReadOnly()
+    {
+        factory.VaultReader.SetCandidates(
+        [
+            new VaultCandidate("lab-0001", "Laboratório um"),
+            new VaultCandidate(SampleVault.Id, SampleVault.Name)
+        ]);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+
+        using var response = await client.GetAsync("/api/v1/vaults");
+        var body = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Contains("{\"id\":\"lab-0001\",\"name\":\"Laboratório um\",\"readOnly\":false}", body, StringComparison.Ordinal);
+        Assert.Contains("{\"id\":\"nodra-exemplo\",\"name\":\"Vault de exemplo\",\"readOnly\":true}", body, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("POST", "notes/nova.md")]
+    [InlineData("PUT", "notes/documento-modelo.md")]
+    [InlineData("PATCH", "notes/documento-modelo.md")]
+    [InlineData("DELETE", "notes/documento-modelo.md")]
+    [InlineData("PUT", "folders/pasta")]
+    [InlineData("PATCH", "folders/pasta")]
+    [InlineData("DELETE", "folders/pasta")]
+    [InlineData("PATCH", "trash/7f3c2f0e-0000-4000-8000-000000000001")]
+    [InlineData("DELETE", "trash")]
+    public async Task WritesToTheSampleVaultAreRejectedBeforeAuthorization(string method, string path)
+    {
+        factory.DecisionService.Decision = new AuthorizationDecision(true, true, 200);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+        using var request = new HttpRequestMessage(new HttpMethod(method), $"/api/v1/vaults/nodra-exemplo/{path}")
+        {
+            Content = JsonContent.Create(new { content = "# Alterado", destinationPath = "outra.md", restore = true })
+        };
+        request.Headers.IfMatch.ParseAdd("\"etag\"");
+
+        using var response = await client.SendAsync(request);
+        var body = await response.Content.ReadAsStringAsync();
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+        Assert.Contains("\"code\":\"vault-read-only\"", body, StringComparison.Ordinal);
+        Assert.Null(factory.DecisionService.Resource);
+    }
+
+    [Fact]
+    public async Task ReadingTheSampleVaultStillRequiresKeycloakDecision()
+    {
+        factory.DecisionService.Decision = new AuthorizationDecision(false, true, 403);
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "synthetic-token");
+
+        using var response = await client.GetAsync("/api/v1/vaults/nodra-exemplo/notes");
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal("vault-nodra-exemplo", factory.DecisionService.Resource);
+        Assert.Equal(VaultAuthorization.ReadScope, factory.DecisionService.Scope);
+    }
+
+    [Fact]
     public async Task ListVaultsWithUnavailableDecisionReturnsNoPartialPage()
     {
         factory.VaultReader.SetCandidates(
@@ -769,8 +832,11 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         AuditStore.Reset();
     }
 
+    public string VaultRoot { get; } = Path.Combine(Path.GetTempPath(), $"nodra-api-tests-{Guid.NewGuid():N}");
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        _ = builder.UseSetting("VaultStorage:Root", VaultRoot);
         _ = builder.ConfigureServices(services =>
         {
             _ = services.RemoveAll<IAuthorizationDecisionService>();

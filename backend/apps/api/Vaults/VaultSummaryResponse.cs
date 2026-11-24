@@ -5,4 +5,5 @@ namespace Nodra.Notes.Api.Vaults;
 /// </summary>
 /// <param name="Id">Identificador técnico e opaco do vault.</param>
 /// <param name="Name">Nome de exibição do vault.</param>
-public sealed record VaultSummaryResponse(string Id, string Name);
+/// <param name="ReadOnly">Indica que o vault recusa qualquer escrita, independentemente das permissões.</param>
+public sealed record VaultSummaryResponse(string Id, string Name, bool ReadOnly);

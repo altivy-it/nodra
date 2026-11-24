@@ -8,7 +8,7 @@ services:
       args:
         IMAGE_VERSION: ${ALTIVY_WEB_VERSION:-0.1.0}
         WEB_CONFIGURATION: production
-        WEB_BASE_HREF: /notes/
+        WEB_BASE_HREF: /nodra/
     image: ${ALTIVY_WEB_IMAGE:-nodra-web:0.1.0}
     pull_policy: missing
     restart: unless-stopped

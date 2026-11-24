@@ -171,6 +171,16 @@ qualquer decisão necessária estiver indisponível, a requisição inteira reto
 quatro decisões simultâneas, aceita páginas de 1 a 100 itens e não persiste
 membership, policy ou cache de autorização.
 
+O vault de sistema `nodra-exemplo` ("Vault de exemplo") é criado pela migration
+`AddSampleVault` e materializado pela API no startup a partir do recurso
+embarcado `SampleVault/documento-modelo.md`, sempre sobrescrevendo a cópia em
+disco. Ele aparece em `GET /api/v1/vaults` com `readOnly: true`; qualquer
+operação com scope diferente de `vault:read` retorna `403` com
+`code: vault-read-only` antes da consulta ao Keycloak. A leitura continua
+exigindo a permission `vault-nodra-exemplo-vault-read`, provisionada por
+`tools/scripts/provision-sample-vault-authorization.ps1`. Detalhes em
+`specs/013-vault-exemplo/`.
+
 ### 3.3 Notes
 
 - CRUD de notas e pastas;

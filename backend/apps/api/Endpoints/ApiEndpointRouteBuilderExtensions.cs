@@ -181,7 +181,7 @@ public static class ApiEndpointRouteBuilderExtensions
                     if (decisions[index].Allowed)
                     {
                         var candidate = page.Items[index];
-                        authorizedVaults.Add(new VaultSummaryResponse(candidate.Id, candidate.Name));
+                        authorizedVaults.Add(new VaultSummaryResponse(candidate.Id, candidate.Name, SampleVault.IsReadOnly(candidate.Id)));
                     }
                 }
 
@@ -595,6 +595,7 @@ public static class ApiEndpointRouteBuilderExtensions
         if (!VaultId.TryParse(vaultId, out var parsedVaultId)) return Results.Problem(statusCode: 400, title: "Identificador de vault inválido.");
         var header = context.Request.Headers.Authorization.ToString();
         if (!header.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase)) return Results.Unauthorized();
+        if (ReadOnlyVaultProblem.For(parsedVaultId.Value, scope) is { } readOnly) return readOnly;
         var decision = await authorization.EvaluateAsync(header["Bearer ".Length..].Trim(), VaultAuthorization.ResourceFor(parsedVaultId.Value), scope, cancellationToken);
         if (!decision.Available) return Results.Problem(statusCode: 503, title: "Serviço de autorização indisponível.");
         return decision.Allowed ? null : Results.Problem(statusCode: 403, title: "Acesso negado.");

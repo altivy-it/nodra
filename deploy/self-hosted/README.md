@@ -76,7 +76,7 @@ pwsh -NoProfile -File tools/scripts/start-local-lab.ps1 -Stop       # preserva d
 pwsh -NoProfile -File tools/scripts/start-local-lab.ps1 --help
 ```
 
-- Acesso somente pela borda nginx: `https://localhost:7443/notes`. Importe
+- Acesso somente pela borda nginx: `https://localhost:7443/nodra`. Importe
   `~/.local/share/nodra-lab/certs/rootCA.pem` como autoridade confiavel no
   navegador.
 - O gateway publica somente `127.0.0.1:7443` no host Linux. Com VS Code Remote
@@ -94,12 +94,14 @@ pwsh -NoProfile -File tools/scripts/start-local-lab.ps1 --help
   laboratorio esta em `secrets/lab-user.env`.
 - Vaults sinteticos: `lab-0001`, `lab-0002` e `lab-write-e2e` com grant de
   owner; `lab-denied` sem permissao.
-- O inicializador copia o documento modelo
-  [documento-modelo.md](../../tests/fixtures/markdown/documento-modelo.md) para
-  `lab-0001/documento-modelo.md` somente se o arquivo ainda nao existir, para
-  preservar edicoes. Ele demonstra no preview a sintaxe Markdown/GFM, HTML com
-  cores, KaTeX e diagramas Mermaid. Para restaurar o original, apague o arquivo
-  do vault e rode o inicializador de novo.
+- O documento modelo
+  [documento-modelo.md](../../backend/apps/api/SampleVault/documento-modelo.md)
+  fica no vault de sistema `nodra-exemplo` ("Vault de exemplo"), somente
+  leitura. A API o restaura a cada inicializacao e recusa escritas com
+  `vault-read-only`; o inicializador concede `vault:read` a todos os usuarios
+  com [provision-sample-vault-authorization.ps1](../../tools/scripts/provision-sample-vault-authorization.ps1).
+  Ele demonstra no preview a sintaxe Markdown/GFM, HTML com cores, KaTeX e
+  diagramas Mermaid; edicoes no editor ficam apenas em memoria.
 - Com Podman, o inicializador aplica [compose.podman.yaml](compose.podman.yaml)
   (tmpfs do web sem `uid=`/`gid=`, que o Podman nao aceita) e constroi as imagens
   com `--format docker` para preservar os healthchecks.
@@ -174,8 +176,8 @@ A stack `nodra` ingressa nas redes externas ja existentes:
 - `app`: comunicacao interna entre os quatro servicos do produto.
 
 Nenhuma porta e publicada diretamente pelo Compose do produto. A borda publica
-e o gateway compartilhado, que encaminha `/notes` para os aliases `notes-web` e
-`notes-bff`. A URL canonica local e `https://localhost:7443/notes`.
+e o gateway compartilhado, que encaminha `/nodra` para os aliases `notes-web` e
+`notes-bff`. A URL canonica local e `https://localhost:7443/nodra`.
 
 ## Sequencia de execucao
 
@@ -228,7 +230,7 @@ O script executa automaticamente, nesta ordem:
 3. prepara os diretorios persistentes e suas permissoes;
 4. interrompe temporariamente writers existentes e cria um backup verificado;
 5. constroi ou baixa a imagem transitoria de migrations e aplica o schema;
-6. sincroniza os callbacks OIDC de `/notes` por meio do script pertencente ao
+6. sincroniza os callbacks OIDC de `/nodra` por meio do script pertencente ao
    repositorio `architecture-knowledge-base`;
 7. inicia ou atualiza somente `web`, `bff`, `api` e `worker` no projeto Compose
    `nodra` e aguarda os health checks;
@@ -250,7 +252,7 @@ seu checksum devem conter referencias imutaveis por digest.
 Confirme a sessao anonima pela borda compartilhada:
 
 ```powershell
-Invoke-RestMethod -Uri 'https://localhost:7443/notes/bff/session'
+Invoke-RestMethod -Uri 'https://localhost:7443/nodra/bff/session'
 ```
 
 O retorno esperado antes do login informa `authenticated: false`. Para estado e

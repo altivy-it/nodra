@@ -8,7 +8,7 @@ import { VaultSummary } from '../core/vaults.service';
       <span class="visually-hidden">Vault ativo</span>
       <select [value]="currentVaultId" [disabled]="loading" (change)="vaultSelected.emit($any($event.target).value)">
         @for (vault of vaults; track vault.id) {
-          <option [value]="vault.id">{{ vault.name }}</option>
+          <option [value]="vault.id">{{ vault.name }}{{ vault.readOnly ? ' · somente leitura' : '' }}</option>
         }
       </select>
     </label>

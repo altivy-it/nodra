@@ -10,6 +10,7 @@ import { VaultRealtimeService } from './core/vault-realtime.service';
 import { SessionService } from './core/session.service';
 import { NotesService } from './core/notes.service';
 import { FolderExplorerService } from './data-access/folder-explorer.service';
+import { VaultsService } from './core/vaults.service';
 
 const realtime = {
   status: signal<'disconnected' | 'connecting' | 'connected' | 'error'>('disconnected'),
@@ -159,6 +160,46 @@ describe('App', () => {
       first.flush({ title: 'Conflito' }, { status: 412, statusText: 'Precondition Failed' });
       await flushing;
       expect(notes.error()).toContain('Não foi possível salvar');
+      http.match('/bff/session');
+      http.verify();
+    });
+  });
+
+  describe('vault somente leitura', () => {
+    const sampleUrl = '/api/v1/vaults/nodra-exemplo/notes/documento-modelo.md';
+
+    function setup() {
+      const app = TestBed.createComponent(App).componentInstance as unknown as {
+        save(path: string, content: string): void;
+        flushPendingSave(): Promise<void>;
+        remove(): Promise<void>;
+        restoreOriginal(): void;
+      };
+      TestBed.inject(VaultsService).current.set({ id: 'nodra-exemplo', name: 'Vault de exemplo', readOnly: true });
+      const notes = TestBed.inject(NotesService);
+      const http = TestBed.inject(HttpTestingController);
+      notes.activateVault('nodra-exemplo', true);
+      notes.selected.set({ path: 'documento-modelo.md', content: '# Modelo', eTag: 'v1' });
+      return { app, notes, http };
+    }
+
+    it('mantém a edição em memória sem enviar escrita ao servidor', async () => {
+      const { app, notes, http } = setup();
+      app.save('outro-caminho.md', '# Modelo editado');
+      await app.flushPendingSave();
+      await app.remove();
+      expect(notes.selected()).toEqual({ path: 'documento-modelo.md', content: '# Modelo editado', eTag: 'v1' });
+      http.match('/bff/session');
+      http.verify();
+    });
+
+    it('restaura o conteúdo original relendo a nota do servidor', async () => {
+      const { app, notes, http } = setup();
+      app.save('documento-modelo.md', '# Modelo editado');
+      app.restoreOriginal();
+      await vi.waitFor(() => http.expectOne(request => request.method === 'GET' && request.url === sampleUrl)
+        .flush({ path: 'documento-modelo.md', content: '# Modelo' }, { headers: { ETag: '"v1"' } }));
+      await vi.waitFor(() => expect(notes.selected()?.content).toBe('# Modelo'));
       http.match('/bff/session');
       http.verify();
     });
